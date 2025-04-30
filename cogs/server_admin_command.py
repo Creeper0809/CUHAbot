@@ -19,6 +19,7 @@ class ServerAdminCammand(commands.Cog):
         description="채널에서 최근 메시지 n개를 삭제합니다."
     )
     @app_commands.describe(amount="삭제할 메시지 수 (1~100)")
+    @commands.has_permissions(administrator=True)
     async def clear(self, interaction: discord.Interaction, amount: int):
 
         if not interaction.channel.permissions_for(interaction.user).manage_messages:
@@ -45,6 +46,7 @@ class ServerAdminCammand(commands.Cog):
         description="이 서버의 슬래시 커맨드를 전부 삭제한 뒤, 코드 기준으로 재등록합니다."
     )
     @app_commands.guilds(GUILD_ID)
+    @commands.has_permissions(administrator=True)
     async def reload_tree(self, interaction: discord.Interaction):
 
         self.bot.tree.clear_commands(guild=discord.Object(id=GUILD_ID))
@@ -55,5 +57,15 @@ class ServerAdminCammand(commands.Cog):
             f"{len(synced)}개의 슬래시 커맨드를 재등록했습니다:\n`{', '.join(c.name for c in synced)}`",
             ephemeral=True
         )
+    @app_commands.command(
+        name="checkdatabase",
+        description="데베 연결 확인"
+    )
+    @commands.has_permissions(administrator=True)
+    @app_commands.guilds(GUILD_ID)
+    async def check_database(self,interaction: discord.Interaction):
+        from db.models.account import User
+        users = await User.all()
+        await interaction.response.send_message(f"{len(users)}명이 데이터베이스에 존재합니다.")
 async def setup(bot: commands.Bot):
     await bot.add_cog(ServerAdminCammand(bot))

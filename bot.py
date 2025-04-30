@@ -54,7 +54,6 @@ class MyBot(commands.Bot):
         self.tree.clear_commands(guild=discord.Object(id=GUILD_ID))
         logging.info("🗑 길드 커맨드 삭제 완료")
 
-        # 3) Cog 로딩
         for fn in os.listdir("./cogs"):
             if fn.endswith(".py"):
                 await self.load_extension(f"cogs.{fn[:-3]}")
