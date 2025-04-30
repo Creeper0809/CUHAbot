@@ -1,2 +1,2 @@
-# 모델 생성시 명시 바람
-from .account import User
+# 자동 생성된 모델 import
+from .account import *
