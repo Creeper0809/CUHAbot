@@ -4,21 +4,38 @@ import discord
 from discord.app_commands import CommandSignatureMismatch
 from discord.ext import commands
 from dotenv import load_dotenv
+from tortoise import Tortoise
 
+import logging
+
+# 로그 기본 설정
+logging.basicConfig(
+    level=logging.INFO,  # DEBUG, INFO, WARNING, ERROR, CRITICAL
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S"
+)
 load_dotenv()
 
 is_dev = os.getenv('DEV')
 GUILD_ID = int(os.getenv('GUILD_ID') or 0)
 if is_dev == "TRUE":
     APPLICATION_ID = int(os.getenv('DEV_APPLICATION_ID') or 0)
-    TOKEN          = os.getenv('DEV_DISCORD_TOKEN')
+    TOKEN = os.getenv('DEV_DISCORD_TOKEN')
 else:
     APPLICATION_ID = int(os.getenv('APPLICATION_ID') or 0)
     TOKEN = os.getenv('DEV_DISCORD_TOKEN')
 
+DATABASE_URL = os.getenv('DATABASE_URL')
+DATABASE_USER = os.getenv('DATABASE_USER')
+DATABASE_PASSWORD = os.getenv('DATABASE_PASSWORD')
+DATABASE_PORT = int(os.getenv('DATABASE_PORT') or 0)
+DATABASE_TABLE = os.getenv('DATABASE_TABLE')
 
 if not TOKEN or not APPLICATION_ID or not GUILD_ID:
     raise RuntimeError("환경변수 DISCORD_TOKEN, APPLICATION_ID, GUILD_ID를 .env에 모두 설정해주세요")
+
+if not DATABASE_URL or not DATABASE_USER or not DATABASE_PASSWORD or not DATABASE_PORT or not DATABASE_TABLE:
+    raise RuntimeError("데이터 베이스 설정에 필요한 정보가 부족합니다 .env를 확인해주세요")
 
 class MyBot(commands.Bot):
     def __init__(self):
@@ -30,51 +47,48 @@ class MyBot(commands.Bot):
         )
 
     async def setup_hook(self):
-        # 1) 전역(Global) 커맨드 전부 삭제
-        self.tree.clear_commands(guild=None)
-        print("🗑 전역 커맨드 삭제 완료")
 
-        # 2) 길드(GUILD_ID) 전용 커맨드 전부 삭제
+        self.tree.clear_commands(guild=None)
+        logging.info("🗑 전역 커맨드 삭제 완료")
+
         self.tree.clear_commands(guild=discord.Object(id=GUILD_ID))
-        print("🗑 길드 커맨드 삭제 완료")
+        logging.info("🗑 길드 커맨드 삭제 완료")
 
         # 3) Cog 로딩
         for fn in os.listdir("./cogs"):
             if fn.endswith(".py"):
                 await self.load_extension(f"cogs.{fn[:-3]}")
-                print(f"✅ Loaded cogs.{fn[:-3]}")
+                logging.info(f"Loaded cogs.{fn[:-3]}")
 
-        # 4) 전역 커맨드 Sync (인자 없이 호출해야 전역이 갱신됩니다)
-        global_synced = await self.tree.sync()
-        print(f"🌐 전역 {len(global_synced)}개 re-synced:", [c.name for c in global_synced])
-
-        # 5) 길드 커맨드 Sync
         guild_synced = await self.tree.sync(guild=discord.Object(id=GUILD_ID))
-        print(f"🏷 길드 {len(guild_synced)}개 re-synced:", [c.name for c in guild_synced])
+        logging.info(f"전역 {len(guild_synced)}개 re-synced: {[c.name for c in guild_synced]}")
+
+
+    async def init_db(self):
+        await Tortoise.init(
+            db_url=f"mysql://{DATABASE_USER}:{DATABASE_PASSWORD}@{DATABASE_URL}:{DATABASE_PORT}/{DATABASE_TABLE}",
+            modules={"models": ["db.models"]}
+        )
+        await Tortoise.generate_schemas()
 
     async def on_ready(self):
-        print(f"Logged in as {self.user} (ID: {self.user.id})")
+        logging.info("데이터 베이스 연결 시작")
+        await self.init_db()
+        logging.info("데이터 베이스 연결")
+        logging.info(f"Logged in as {self.user} (ID: {self.user.id})")
 
 if __name__ == "__main__":
     bot = MyBot()
-
-
     @bot.tree.error
     async def on_app_command_error(interaction: discord.Interaction, error):
-        # 1) 시그니처 불일치 감지
         if isinstance(error, CommandSignatureMismatch):
             await interaction.response.defer(ephemeral=True, thinking=True)
-
-            # 2) 문제 생긴 길드에서 전역이 아닌 “길드 전용”만 Sync
             synced = await bot.tree.sync(guild=discord.Object(id=GUILD_ID))
-
-            # 3) 유저에게 안내
             return await interaction.followup.send(
                 f"⚠️ 명령 시그니처가 갱신되어 `{', '.join(c.name for c in synced)}` 명령어를 재등록했습니다.\n"
                 "다시 시도해 주세요.",
                 ephemeral=True
             )
-
-        # 그 외 에러는 원래 대로 핸들링
         raise error
+
     bot.run(TOKEN)
