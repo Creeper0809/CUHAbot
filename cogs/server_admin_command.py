@@ -64,8 +64,9 @@ class ServerAdminCammand(commands.Cog):
     @commands.has_permissions(administrator=True)
     @app_commands.guilds(GUILD_ID)
     async def check_database(self,interaction: discord.Interaction):
-        from db.models.users import User
+        from models import User
         users = await User.all()
         await interaction.response.send_message(f"{len(users)}명이 데이터베이스에 존재합니다.")
+
 async def setup(bot: commands.Bot):
     await bot.add_cog(ServerAdminCammand(bot))

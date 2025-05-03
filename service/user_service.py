@@ -1,7 +1,7 @@
 import re
 
 import bcrypt
-from db.models import User
+from models import User
 
 async def register_user(username: str, raw_password1: str, raw_password2: str, discord_id: int) -> User:
     if not is_valid_password(raw_password1,raw_password2):
