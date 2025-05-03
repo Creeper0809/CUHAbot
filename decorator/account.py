@@ -1,6 +1,6 @@
 from discord import Interaction, app_commands
 
-from models import get_account_by_discord_id
+from models.repos import get_account_by_discord_id
 
 
 def requires_registration():

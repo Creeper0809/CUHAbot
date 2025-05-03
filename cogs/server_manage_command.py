@@ -5,8 +5,8 @@ from discord import app_commands
 
 from DTO.register_form import RegisterForm
 from bot import GUILD_ID
-from models import get_account_by_discord_id
 from decorator.account import requires_registration
+from models.repos import get_account_by_discord_id
 
 user = app_commands.Group(
     name="user",
@@ -64,6 +64,7 @@ class ServerManageCommand(commands.Cog):
         description="테스트용"
     )
     @app_commands.guilds(GUILD_ID)
+    # 회원가입 체크용 데코레이터
     @requires_registration()
     async def register_user(self, interaction: discord.Interaction):
         await interaction.response.send_message("회원 가입 된 유저")

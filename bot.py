@@ -14,6 +14,7 @@ logging.basicConfig(
     format="%(asctime)s [%(levelname)s] %(message)s",
     datefmt="%Y-%m-%d %H:%M:%S"
 )
+
 load_dotenv()
 
 is_dev = os.getenv('DEV')
@@ -66,7 +67,7 @@ class MyBot(commands.Bot):
     async def init_db(self):
         await Tortoise.init(
             db_url=f"mysql://{DATABASE_USER}:{DATABASE_PASSWORD}@{DATABASE_URL}:{DATABASE_PORT}/{DATABASE_TABLE}",
-            modules={"models": ["db.models"]}
+            modules={"models": ["models"]}
         )
         await Tortoise.generate_schemas()
 
