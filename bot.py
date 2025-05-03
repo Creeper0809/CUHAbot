@@ -84,7 +84,7 @@ if __name__ == "__main__":
             await interaction.response.defer(ephemeral=True, thinking=True)
             synced = await bot.tree.sync(guild=discord.Object(id=GUILD_ID))
             return await interaction.followup.send(
-                f"⚠️ 명령 시그니처가 갱신되어 `{', '.join(c.name for c in synced)}` 명령어를 재등록했습니다.\n "
+                f"⚠️ 명령 시그니처가 갱신되어 `{', '.join(c.name for c in synced)}` 명령어를 재등록했습니다 .\n "
                 "다시 시도해 주세요.",
                 ephemeral=True
             )
