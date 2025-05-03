@@ -3,7 +3,10 @@ import discord
 from discord.ext import commands
 from discord import app_commands
 
+from DTO.register_form import RegisterForm
 from bot import GUILD_ID
+from db.models.repos.users_repo import get_account_by_discord_id
+from decorator.account import requires_registration
 
 user = app_commands.Group(
     name="user",
@@ -43,6 +46,27 @@ class ServerManageCommand(commands.Cog):
             else ("이겼습니다" if (choice_rsp, bot_choice) in [("가위", "보"), ("바위", "가위"), ("보", "바위")] else "졌습니다")
         )
         await interaction.response.send_message(f"쿠하 봇의 선택은? : {bot_choice} \n"+result)
+
+    @app_commands.command(
+        name="register",
+        description="회원 가입하기"
+    )
+    @app_commands.guilds(GUILD_ID)
+    async def register(self, interaction: discord.Interaction):
+        user = await get_account_by_discord_id(interaction.user.id)
+        if user is not None:
+            await interaction.response.send_message(f"{interaction.user.display_name}님은 이미 회원가입을 하셨습니다.")
+            return
+        await interaction.response.send_modal(RegisterForm())
+
+    @app_commands.command(
+        name="check_registered",
+        description="테스트용"
+    )
+    @app_commands.guilds(GUILD_ID)
+    @requires_registration()
+    async def register_user(self, interaction: discord.Interaction):
+        await interaction.response.send_message("회원 가입 된 유저")
 
 
 async def setup(bot: commands.Bot):

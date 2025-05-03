@@ -49,10 +49,10 @@ class MyBot(commands.Bot):
     async def setup_hook(self):
 
         self.tree.clear_commands(guild=None)
-        logging.info("🗑 전역 커맨드 삭제 완료")
+        logging.info("전역 커맨드 삭제 완료")
 
         self.tree.clear_commands(guild=discord.Object(id=GUILD_ID))
-        logging.info("🗑 길드 커맨드 삭제 완료")
+        logging.info("길드 커맨드 삭제 완료")
 
         for fn in os.listdir("./cogs"):
             if fn.endswith(".py"):
