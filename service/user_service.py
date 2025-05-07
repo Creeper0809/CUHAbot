@@ -7,7 +7,7 @@ from models.repos import exists_account_by_username
 
 
 async def register_user(username: str, raw_password1: str, raw_password2: str, discord_id: int,gender : str) -> User:
-    if exists_account_by_username(username):
+    if await exists_account_by_username(username):
         raise Exception('존재하는 유저 이름입니다.')
     if raw_password1 != raw_password2:
         raise Exception('패스워드가 동일하지 않습니다.')
@@ -25,8 +25,9 @@ async def register_user(username: str, raw_password1: str, raw_password2: str, d
                 discord_id=discord_id,
                 cuha_point=0,
                 gender=gender,
-                baekjoon_id=None,
-                created_at=datetime.now())
+                baekjoon_id="",
+                created_at=datetime.now(),
+                user_role="user")
     await user.save()
     return user
 

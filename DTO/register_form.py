@@ -28,7 +28,7 @@ class RegisterForm(discord.ui.Modal,title = "회원가입"):
         max_length=64
     )
     gender = discord.ui.TextInput(
-        label="성별",
+        label="성별 (남성, 여성)",
         style=discord.TextStyle.short,
         required=True,
         max_length=64

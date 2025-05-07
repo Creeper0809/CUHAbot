@@ -6,7 +6,7 @@ from discord import app_commands
 from DTO.register_form import RegisterForm
 from bot import GUILD_ID
 from decorator.account import requires_registration
-from models.repos import find_account_by_discordid
+from models.repos import find_account_by_discordid, exists_account_by_discordid
 
 user = app_commands.Group(
     name="user",
@@ -49,26 +49,14 @@ class ServerManageCommand(commands.Cog):
 
     @app_commands.command(
         name="register",
-        description="회원 가입하기"
+        description="회원가입하기"
     )
     @app_commands.guilds(GUILD_ID)
     async def register(self, interaction: discord.Interaction):
-        user = await find_account_by_discordid(interaction.user.id)
-        if user is not None:
+        if await exists_account_by_discordid(interaction.user.id):
             await interaction.response.send_message(f"{interaction.user.display_name}님은 이미 회원가입을 하셨습니다.")
             return
         await interaction.response.send_modal(RegisterForm())
-
-    @app_commands.command(
-        name="check_registered",
-        description="테스트용"
-    )
-    @app_commands.guilds(GUILD_ID)
-    # 회원가입 체크용 데코레이터
-    @requires_registration()
-    async def register_user(self, interaction: discord.Interaction):
-        await interaction.response.send_message("회원 가입 된 유저")
-
 
 async def setup(bot: commands.Bot):
     bot.tree.add_command(user)

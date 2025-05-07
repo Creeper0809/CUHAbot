@@ -9,6 +9,6 @@ class User(models.Model):
     gender = fields.CharField(max_length=255)
     cuha_point = fields.BigIntField()
     created_at = fields.DatetimeField(auto_now_add=True)
-
+    user_role = fields.CharField(max_length=255)
     class Meta:
         table = "users"
