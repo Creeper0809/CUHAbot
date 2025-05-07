@@ -5,6 +5,10 @@ class User(models.Model):
     discord_id = fields.BigIntField()
     username = fields.CharField(max_length=255)
     password = fields.CharField(max_length=255)
+    baekjoon_id = fields.CharField(max_length=255)
+    gender = fields.CharField(max_length=255)
+    cuha_point = fields.BigIntField()
+    created_at = fields.DatetimeField(auto_now_add=True)
 
     class Meta:
         table = "users"
