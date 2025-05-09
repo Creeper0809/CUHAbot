@@ -26,7 +26,7 @@ if is_dev == "TRUE":
     TOKEN = os.getenv('DEV_DISCORD_TOKEN')
 else:
     APPLICATION_ID = int(os.getenv('APPLICATION_ID') or 0)
-    TOKEN = os.getenv('DEV_DISCORD_TOKEN')
+    TOKEN = os.getenv('DISCORD_TOKEN')
 
 DATABASE_URL = os.getenv('DATABASE_URL')
 DATABASE_USER = os.getenv('DATABASE_USER')

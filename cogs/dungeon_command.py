@@ -95,6 +95,7 @@ class DungeonCommand(commands.Cog):
             except FileNotFoundError:
                 pass
 
+
         for key, value in item_data.items():
             if key not in ['이름', '설명', '종류']:
                 emoji = stat_emoji.get(key, "📌")
