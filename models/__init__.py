@@ -2,5 +2,6 @@
 
 from .dungeon import *
 from .dungeon_spawn import *
+from .item import *
 from .monster import *
 from .users import *

@@ -39,6 +39,7 @@ class ServerAdminCammand(commands.Cog):
             await interaction.response.send_message("1부터 100 사이의 수를 입력해주세요.", ephemeral=True)
             return
 
+
         await interaction.response.defer(ephemeral=True)
         try:
             deleted = await interaction.channel.purge(limit=amount)
