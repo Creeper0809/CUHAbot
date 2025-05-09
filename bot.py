@@ -77,7 +77,7 @@ class MyBot(commands.Bot):
     async def on_ready(self):
         logging.info("데이터 베이스 연결 시작")
         await self.init_db()
-        logging.info("데이터 베이스 연결")
+        logging.info("데이터 베이스 연결 완료")
         logging.info(f"Logged in as {self.user} (ID: {self.user.id})")
 
 if __name__ == "__main__":

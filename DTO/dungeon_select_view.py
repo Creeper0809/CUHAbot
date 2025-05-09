@@ -1,6 +1,11 @@
 import discord
 from discord.ext import commands
 
+from models.repos.dungeon_repo import find_all_dungeon_spawn_monster_by
+from models.repos.monster_repo import find_monster_by_id
+from models.repos.static_cache import monster_cache_by_id
+
+
 class DungeonDropdown(discord.ui.Select):
     def __init__(self, dungeons):
         self.dungeons = dungeons
@@ -29,6 +34,16 @@ class DungeonDropdown(discord.ui.Select):
 
         embed.add_field(name="입장 조건", value=f"최소 레벨: {dungeon.require_level}", inline=False)
 
+        dungeon_spawn_monsters = find_all_dungeon_spawn_monster_by(dungeon.id)
+        monsters_name = []
+        for spawn in dungeon_spawn_monsters:
+            monster = find_monster_by_id(spawn.monster_id)
+            if monster:
+                monsters_name.append(monster.name)
+        self.view.selected_dungeon_monsters = monsters_name
+        monster_list_str = ", ".join(monsters_name) if monsters_name else "없음"
+        embed.add_field(name="등장 몬스터", value=monster_list_str, inline=False)
+
         if not level_ok:
             embed.add_field(
                 name="⚠️ 경고",
@@ -36,7 +51,6 @@ class DungeonDropdown(discord.ui.Select):
                 inline=False
             )
 
-        # ✅ 입장 버튼 비활성화
         for child in self.view.children:
             if isinstance(child, EnterButton):
                 child.disabled = not level_ok
@@ -79,7 +93,6 @@ class DungeonSelectView(discord.ui.View):
         self.selected_dungeon = None
         self.message = None
         self.add_item(DungeonDropdown(dungeons))
-
         self.add_item(EnterButton())
         self.add_item(CancelButton())
 
@@ -90,6 +103,7 @@ class DungeonSelectView(discord.ui.View):
         if self.message:
             try:
                 await self.message.edit(view=None)
+                self.selected_dungeon = None
             except discord.NotFound:
                 pass
 

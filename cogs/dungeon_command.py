@@ -7,6 +7,7 @@ from DTO.dungeon_select_view import DungeonSelectView
 from bot import GUILD_ID
 from decorator.account import requires_registration
 from models.repos import find_account_by_discordid
+from models.repos.dungeon_repo import find_all_dungeon, find_all_dungeon_spawn_monster_by
 from models.repos.static_cache import dungeon_cache
 from service.dungeon_service import start_dungeon
 from service.session import is_in_session, create_session, end_session
@@ -31,7 +32,7 @@ class DungeonCommand(commands.Cog):
         user: User = await find_account_by_discordid(session.user_id)
         session.user = user
 
-        dungeons = list(models.repos.static_cache.get_dungeons().values())
+        dungeons = find_all_dungeon()
         if not dungeons:
             await interaction.response.send_message("등록된 던전이 없습니다.")
             return
@@ -50,6 +51,7 @@ class DungeonCommand(commands.Cog):
         await interaction.followup.send(f"{view.selected_dungeon.name} 던전에 입장합니다!")
 
         session.dungeon = view.selected_dungeon
+
         ended = await start_dungeon(session, interaction)
 
         await interaction.followup.send(f"던전에서 탈출했습니다")

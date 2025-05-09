@@ -21,9 +21,12 @@ class ServerAdminCammand(commands.Cog):
     )
     @app_commands.describe(amount="삭제할 메시지 수 (1~100)")
     @commands.has_permissions(administrator=True)
-    @app_commands.guilds(GUILD_ID)
     async def clear(self, interaction: discord.Interaction, amount: int):
-
+        if isinstance(interaction.channel, discord.DMChannel):
+            async for msg in interaction.channel.history(limit=50):
+                if msg.author == interaction.client.user:
+                    await msg.delete()
+            return
         if not interaction.channel.permissions_for(interaction.user).manage_messages:
             await interaction.response.send_message("메시지 관리 권한이 필요합니다.", ephemeral=True)
             return
@@ -47,7 +50,6 @@ class ServerAdminCammand(commands.Cog):
         name="데베재캐시",
         description="데이터베이스 변동시 다시 캐시합니다"
     )
-    @app_commands.guilds(GUILD_ID)
     @commands.has_permissions(administrator=True)
     async def re_cache(self, interaction: discord.Interaction):
         await load_static_data()
