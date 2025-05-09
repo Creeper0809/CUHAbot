@@ -5,8 +5,7 @@ from discord import app_commands
 
 from DTO.register_form import RegisterForm
 from bot import GUILD_ID
-from decorator.account import requires_registration
-from models.repos import find_account_by_discordid, exists_account_by_discordid
+from models.repos import exists_account_by_discordid
 
 user = app_commands.Group(
     name="user",

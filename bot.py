@@ -8,6 +8,8 @@ from tortoise import Tortoise
 
 import logging
 
+from models.repos.static_cache import load_static_data
+
 # 로그 기본 설정
 logging.basicConfig(
     level=logging.INFO,  # DEBUG, INFO, WARNING, ERROR, CRITICAL
@@ -70,11 +72,12 @@ class MyBot(commands.Bot):
             modules={"models": ["models"]}
         )
         await Tortoise.generate_schemas()
+        await load_static_data()
 
     async def on_ready(self):
         logging.info("데이터 베이스 연결 시작")
         await self.init_db()
-        logging.info("데이터 베이스 연결")
+        logging.info("데이터 베이스 연결 완료")
         logging.info(f"Logged in as {self.user} (ID: {self.user.id})")
 
 if __name__ == "__main__":
@@ -92,3 +95,4 @@ if __name__ == "__main__":
         raise error
 
     bot.run(TOKEN)
+
