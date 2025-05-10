@@ -6,6 +6,7 @@ from discord.ext import commands, tasks
 intents = discord.Intents.default()
 bot = commands.Bot(command_prefix="/", intents=intents)
 
+today_lotto_data = {}
 last_draw = None
 
 @bot.command(name="로또")
@@ -18,6 +19,11 @@ async def lotto(ctx, num1: int, num2: int, num3: int, num4: int, num5: int, num6
         await ctx.send(
             f"당신이 선택한 로또 번호는 {lotto_num[0]}, {lotto_num[1]}, {lotto_num[2]}, {lotto_num[3]}, {lotto_num[4]}, {lotto_num[5]} 입니다."
         )
+    user_id = ctx.author.id
+
+    if user_id in today_lotto_data.get(user_id):
+        await ctx.send("이미 오늘 로또에 참여했습니다. 내일 다시 시도해주세요")
+        return
 
 @tasks.loop(minutes=60)
 async def lotto_task():
