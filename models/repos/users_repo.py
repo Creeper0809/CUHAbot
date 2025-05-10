@@ -8,3 +8,4 @@ async def exists_account_by_discordid(id) -> bool:
 
 async def exists_account_by_username(username) -> bool:
     return await User.exists(username=username)
+
