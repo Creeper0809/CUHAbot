@@ -1,6 +1,6 @@
 import logging
 
-from models import Dungeon, Monster, DungeonSpawn
+from models import Dungeon, Monster, DungeonSpawn, Item
 
 dungeon_cache = {}
 monster_cache_by_id = {}
@@ -20,6 +20,10 @@ async def load_static_data():
     all_spawns = await DungeonSpawn.all()
     for spawn in all_spawns:
         spawn_info.setdefault(spawn.dungeon_id, []).append(spawn)
+
+    #아이템 관련
+    items = await Item.all()
+    item_cache = {i.id: i for i in items}
 
 
 def get_dungeons():
