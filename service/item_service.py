@@ -27,7 +27,7 @@ async def get_item_info(item_name: str) -> Optional[discord.Embed]:
         return None
     return await create_item_embed(item)
 
-# 장비 아이템 정보 추가
+# 아이템 스탯이 추가 될 경우 📌로 표시
 async def add_equipment_stats(embed: discord.Embed, equipment) -> None:
     stats = equipment.get_stats()
     for stat_name, stat_value in stats.items():
