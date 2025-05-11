@@ -45,8 +45,8 @@ class BlackJack:
                     aces += 1
                 else:
                     score += int(cards)
-@bot.command
-async def 블랙잭(ctx):
+@bot.command(name="블랙잭")
+async def blackjack(ctx):
     blackjack = BlackJack()
     user_game_history[ctx.author.id] = blackjack
 
@@ -61,8 +61,8 @@ async def 블랙잭(ctx):
                    f"🃏딜러의 카드: {', '.join(blackjack.dealer_hand)} (총합: ??)\n"
                    f"🃏/hit, /stand으로 카드 추가, /stand으로 중단할 수 있습니다.")
 
-@bot.command
-async def 히트(ctx):
+@bot.command(name="hit")
+async def hit(ctx):
     if ctx.author.id not in user_game_history:
         await ctx.send("먼저 블랙잭을 시작하세요.")
         return
