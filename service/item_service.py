@@ -15,9 +15,9 @@ TYPE_EMOJI = {
 STAT_EMOJI = {
     "공격력": "⚔️",
     "체력": "❤️",
-    "주문력": "🔮",
-    "방어력": "🛡️",
-    "마법 저항력": "✨"
+    "속도": "🏃",
+    "HP 회복량": "💊"
+
 }
 
 # 아이템 정보
@@ -81,9 +81,16 @@ async def create_item_embed(item: Item) -> discord.Embed:
             await add_equipment_grade(embed, equipment)
             await add_equipment_position(embed, equipment)
 
+    # 소비 아이템 추가 정보
+    if item.type == ItemType.CONSUME:
+        consume_items = await item.consume_item.all()
+        if consume_items:
+            consume = consume_items[0]
+            await add_equipment_stats(embed, consume)
+
 # 모든 아이템 타입에 공통으로 가격 표시
     embed.add_field(name="💰 가격",
-                    value=f"```      {item.cost:,} 골드      ```",
+                    value=f"```   {item.cost:,} 골드   ```",
                     inline=True)
 
     return embed
