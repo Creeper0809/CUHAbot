@@ -32,6 +32,7 @@ class EquipmentItem(models.Model):
     class Meta:
         table = "equipment_item"
 
+
 # 장비 아이템 정보 변환
     def get_stats(self):
         stats = {}
