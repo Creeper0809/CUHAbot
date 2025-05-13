@@ -83,7 +83,7 @@ async def fight(session: DungeonSession, interaction: discord.Interaction):
         user_prob = 50 + advantage
         return "user" if random.random() < (user_prob / 100) else "monster"
 
-    while True:
+    while session.user.now_hp > 0 and monster.now_hp > 0:
         first, second = (session.user, monster) if determine_turn_order(session.user, monster) == "user" else (
         monster, session.user)
         first_skill = first.next_skill()
