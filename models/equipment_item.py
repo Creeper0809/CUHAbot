@@ -1,27 +1,19 @@
 from tortoise import models, fields
 from enum import Enum
 
-# 임시 등급
-class Grade(Enum):
-    D = 1
-    C = 2
-    B = 3
-    A = 4
-    S = 5
+class Grade(str, Enum):
+    S = "S"
+    A = "A"
+    B = "B"
+    C = "C"
+    D = "D"
 
-# 임시 pos
-class EquipPosition(Enum):
-    오른손 = 1
-    왼손 = 2
-    머리 = 3
-    상의 = 4
-    하의 = 5
-    신발 = 6
-    반지 = 7
-    귀걸이 = 8
-    #ACCESSORY_추후 추가 = 9
-    #ACCESSORY_추후 추가 = 10
-
+class EquipPosition(str, Enum):
+    무기 = "Weapon"
+    보조무기 = "sub_Weapon"
+    모자 = "Hat"
+    흉갑 = "armor"
+    신발 = "shoes"
 
 class EquipmentItem(models.Model):
     equipment_item_id = fields.IntField(pk=True)
@@ -33,14 +25,13 @@ class EquipmentItem(models.Model):
     )
     attack = fields.IntField(null=True)
     hp = fields.IntField(null=True)
-    ap_attack = fields.IntField(null=True)
-    ad_defanse = fields.IntField(null=True)
-    ap_defanse = fields.IntField(null=True)
-    grade = fields.IntField()
-    equip_pos = fields.IntField()
+    speed = fields.IntField(null=True)
+    grade = fields.CharEnumField(Grade)
+    equip_pos = fields.CharEnumField(EquipPosition)
 
     class Meta:
         table = "equipment_item"
+
 
 # 장비 아이템 정보 변환
     def get_stats(self):
@@ -48,9 +39,8 @@ class EquipmentItem(models.Model):
         stats_mapping = {
             'attack': ('공격력', self.attack),
             'hp': ('체력', self.hp),
-            'ap_attack': ('주문력', self.ap_attack),
-            'ad_defanse': ('방어력', self.ad_defanse),
-            'ap_defanse': ('마법 저항력', self.ap_defanse)
+            'speed': ('속도', self.speed)
+
         }
 
         for _, (name, value) in stats_mapping.items():

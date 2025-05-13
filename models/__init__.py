@@ -7,3 +7,4 @@ from .skill import *
 from .users import *
 from .item import *
 from .equipment_item import *
+from .consume_item import *
