@@ -4,6 +4,7 @@ from models import Dungeon, Monster, DungeonSpawn, Item
 from models import Dungeon, Monster, DungeonSpawn, Skill_Model
 from service.dungeon.skill import Skill
 from service.dungeon.skill_component import get_component_by_tag
+from models import Dungeon, Monster, DungeonSpawn, Item
 
 dungeon_cache = {}
 monster_cache_by_id = {}
@@ -41,6 +42,10 @@ async def load_static_data():
     print(skill_cache_by_id)
 
 
+
+    #아이템 관련
+    items = await Item.all()
+    item_cache = {i.id: i for i in items}
 
 
 def get_dungeons():
