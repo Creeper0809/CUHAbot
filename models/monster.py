@@ -38,6 +38,20 @@ class Monster(models.Model):
         new_monster.status = deepcopy(self.status)
         return new_monster
 
+    def on_turn_start(self):
+        pass
+    def on_turn_end(self):
+        pass
+    def get_stat(self):
+        from models import UserStatEnum
+        stat = {
+            UserStatEnum.HP : self.hp,
+            UserStatEnum.SPEED : self.speed,
+            UserStatEnum.ATTACK : self.attack
+        }
+        for buff in self.status:
+            buff.apply_stat(stat)
+        return stat
 
     class Meta:
         table = "monster"

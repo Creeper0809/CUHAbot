@@ -6,20 +6,19 @@ class Skill:
     def on_turn(self, attacker, target):
         logs = []
         for component in self.__components:
-            logs.append(component.on_turn(attacker,target,self.__skill_model.name))
+            logs.append(component.on_turn(attacker,target))
         return "\n".join(logs)
-
 
     def on_turn_end(self, attacker, target):
         logs = []
         for component in self.__components:
-            logs.append(component.on_turn_end(attacker, target, self.__skill_model.name))
+            logs.append(component.on_turn_end(attacker, target))
         return "\n".join(logs)
 
     def on_turn_start(self, attacker, target):
         logs = []
         for component in self.__components:
-            logs.append(component.on_turn_start(attacker, target, self.__skill_model.name))
+            logs.append(component.on_turn_start(attacker, target))
         return "\n".join(logs)
 
 

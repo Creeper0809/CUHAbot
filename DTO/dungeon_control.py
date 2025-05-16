@@ -1,6 +1,6 @@
 import discord
 
-from service.session import DungeonSession
+from service.session import DungeonSession, SessionType
 
 
 class DungeonControlView(discord.ui.View):
@@ -11,8 +11,10 @@ class DungeonControlView(discord.ui.View):
 
     @discord.ui.button(label="🛑 던전 종료", style=discord.ButtonStyle.danger)
     async def stop_dungeon(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if self.session.status != SessionType.IDLE:
+            return
         self.session.ended = True
-        await interaction.response.send_message("던전이 종료되었습니다.", ephemeral=True)
+        await interaction.response.send_message("던전이 종료 되었습니다.", ephemeral=True)
         await self.message.delete()
 
     @discord.ui.button(label="⏸️ 일시정지 (미구현)", style=discord.ButtonStyle.secondary, disabled=True)

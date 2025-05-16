@@ -10,7 +10,7 @@ from models import Monster
 from models.repos.dungeon_repo import find_all_dungeon_spawn_monster_by
 from models.repos.monster_repo import find_monster_by_id
 from service.dungeon.skill import Skill
-from service.session import DungeonSession
+from service.session import DungeonSession, SessionType
 from models.repos.users_repo import *
 
 import random
@@ -34,15 +34,16 @@ async def start_dungeon(session: DungeonSession, interaction: discord.Interactio
         session.dm_message = dm_msg
     except discord.Forbidden:
         await interaction.followup.send("⚠️ DM을 보낼 수 없습니다. 던전 제어가 제한됩니다.", ephemeral=True)
-        
+
     await asyncio.sleep(5)
 
     while not session.ended and session.user.now_hp > 0:
+        session.status = SessionType.EVENT
         event_result = await fight(session, interaction)
+        session.status = SessionType.IDLE
         event_queue.append(event_result)
 
         await update_log(session, event_queue)
-
         await asyncio.sleep(5)
 
     return True
@@ -54,7 +55,6 @@ async def update_log(session: DungeonSession, log):
     session.message = await session.message.edit(embed=update_embed)
 
 async def fight(session: DungeonSession, interaction: discord.Interaction):
-    # 몬스터 스폰 확률에 따라 선택
     monsters_spawn = find_all_dungeon_spawn_monster_by(session.dungeon.id)
     random_monster_spawn = random.choices(
         population=monsters_spawn,
@@ -65,7 +65,6 @@ async def fight(session: DungeonSession, interaction: discord.Interaction):
     if not monster:
         return "몬스터 정보를 찾을 수 없습니다."
 
-    # 전투 여부 확인
     will_fight = await ask_to_fight(interaction, monster)
     if will_fight is None:
         return f"{session.user.get_name()}은 아무 행동도 하지 않았다..."
@@ -136,13 +135,12 @@ async def fight(session: DungeonSession, interaction: discord.Interaction):
     await asyncio.sleep(2)
     await combat_message.delete()
 
-    # 승자 판단
     if session.user.now_hp <= 0 and monster.now_hp <= 0:
         return f"{session.user.get_name()}과 {monster.name}은 동시에 쓰러졌다!"
     elif session.user.now_hp <= 0:
         return f"{session.user.get_name()}은 {monster.name}에게 패배했다..."
     else:
-        return f"{session.user.get_name()}의 승리!"
+        return f"{monster.name}에게 {session.user.get_name()}의 승리!"
 
 
 def create_battle_embed(player : User, monster : Monster,log):
@@ -153,13 +151,13 @@ def create_battle_embed(player : User, monster : Monster,log):
 
     embed.add_field(
         name=f"👤 {player.get_name()}",
-        value=f"체력:{player.now_hp}/{player.hp}\n**버프**\n" + ("\n".join(player.status) or "없음"),
+        value=f"체력:{player.now_hp}/{player.hp}\n**버프**\n" + ("\n".join([s.get_description() for s in player.status]) or "없음"),
         inline=True
     )
 
     embed.add_field(
         name=f"👹 {monster.get_name()}",
-        value=f"체력:{monster.now_hp}/{monster.hp}\n**버프**\n" + ("\n".join(monster.status) or "없음"),
+        value=f"체력:{monster.now_hp}/{monster.hp}\n**버프**\n" + ("\n".join([s.get_description() for s in monster.status]) or "없음"),
         inline=True
     )
 

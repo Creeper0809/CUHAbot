@@ -30,7 +30,7 @@ async def load_static_data():
         components = []
         for skill_component,config in skill.config.items():
             component = get_component_by_tag(skill_component)
-            component.apply_config(config)
+            component.apply_config(config,skill.name)
             components.append(component)
         skill_cache_by_id[skill.id] = Skill(skill, components)
     print(skill_cache_by_id)

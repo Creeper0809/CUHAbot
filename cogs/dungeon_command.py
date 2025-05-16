@@ -51,8 +51,6 @@ class DungeonCommand(commands.Cog):
         session.dungeon = view.selected_dungeon
 
         ended = await start_dungeon(session, interaction)
-
-        await interaction.followup.send(f"던전에서 탈출했습니다")
         await end_session(user_id=interaction.user.id)
 
     @app_commands.command(
