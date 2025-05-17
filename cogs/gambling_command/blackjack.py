@@ -25,6 +25,14 @@ def card_value(card):
         return int(rank)
 
 class blackjack(View):
-    def __init__(self, ctx):
+    def __init__(self, ctx, deck, sum_list, selected):
         super().__init__(timeout = 120)
         self.ctx = ctx
+        self.deck = deck
+        self.sum_list = sum_list
+        self.selected = selected
+        self.card = 0
+        self.use_ace = 0
+        self.my_hand = [sum_list[0] + sum_list[2], f"{selected[0]} | {selected[2]}"]
+        self.dealer_hand = [sum_list[1] + sum_list[3], f"{selected[1]} | {selected[3]}"]
+        self.message = None
