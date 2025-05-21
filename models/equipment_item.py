@@ -1,19 +1,6 @@
 from tortoise import models, fields
-from enum import Enum
-
-class Grade(str, Enum):
-    S = "S"
-    A = "A"
-    B = "B"
-    C = "C"
-    D = "D"
-
-class EquipPosition(str, Enum):
-    무기 = "Weapon"
-    보조무기 = "sub_Weapon"
-    모자 = "Hat"
-    흉갑 = "armor"
-    신발 = "shoes"
+from models.grade import Grade
+from models.equip_pos import EquipPos
 
 class EquipmentItem(models.Model):
     equipment_item_id = fields.IntField(pk=True)
@@ -26,21 +13,18 @@ class EquipmentItem(models.Model):
     attack = fields.IntField(null=True)
     hp = fields.IntField(null=True)
     speed = fields.IntField(null=True)
-    grade = fields.CharEnumField(Grade)
-    equip_pos = fields.CharEnumField(EquipPosition)
+    grade = fields.IntField(null=True)
+    equip_pos = fields.IntField(null=True)
 
     class Meta:
         table = "equipment_item"
 
-
-# 장비 아이템 정보 변환
     def get_stats(self):
         stats = {}
         stats_mapping = {
             'attack': ('공격력', self.attack),
             'hp': ('체력', self.hp),
             'speed': ('속도', self.speed)
-
         }
 
         for _, (name, value) in stats_mapping.items():
@@ -48,6 +32,16 @@ class EquipmentItem(models.Model):
                 stats[name] = value
 
         return stats
+
+    async def get_grade_info(self):
+        if self.grade:
+            return await Grade.get(id=self.grade)
+        return None
+
+    async def get_equip_pos_info(self):
+        if self.equip_pos:
+            return await EquipPos.get(id=self.equip_pos)
+        return None
 
     def __str__(self):
         return f"Equipment {self.equipment_item_id}"

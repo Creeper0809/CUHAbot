@@ -8,3 +8,6 @@ from .users import *
 from .item import *
 from .equipment_item import *
 from .consume_item import *
+from .grade import *
+from .equip_pos import *
+from .item_grade_probability import *

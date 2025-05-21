@@ -1,6 +1,7 @@
 import discord
 from models.item import Item, ItemType
-from models.equipment_item import Grade, EquipPosition
+from models.equipment_item import Grade
+from models.equip_pos import EquipPos
 from typing import Optional
 
 # 타입별 이모지
@@ -41,22 +42,24 @@ async def add_equipment_grade(embed: discord.Embed, equipment) -> None:
     if not hasattr(equipment, 'grade') or equipment.grade is None:
         return
     try:
-        grade = Grade(equipment.grade)
-        embed.add_field(name="등급",
-                       value=f"```      {grade.name}      ```",
-                       inline=True)
-    except ValueError:
+        grade_info = await Grade.get(id=equipment.grade)
+        if grade_info and grade_info.name:
+            embed.add_field(name="등급",
+                          value=f"```      {grade_info.name}      ```",
+                          inline=True)
+    except Exception:
         pass
 
 # 장비 장착 위치 정보 추가
 async def add_equipment_position(embed: discord.Embed, equipment) -> None:
     try:
-        pos = EquipPosition(equipment.equip_pos).name
-        formatted_pos = pos.replace('_', ' ').title()
-        embed.add_field(name="장착 위치",
-                        value=f"```      {formatted_pos}      ```",
-                        inline=True)
-    except (ValueError, AttributeError):
+        if hasattr(equipment, 'equip_pos') and equipment.equip_pos:
+            pos_info = await EquipPos.get(id=equipment.equip_pos)
+            if pos_info and pos_info.pos_name:
+                embed.add_field(name="장착 위치",
+                              value=f"```      {pos_info.pos_name}      ```",
+                              inline=True)
+    except Exception:
         pass
 
 # 아이템 정보 임베드 생성

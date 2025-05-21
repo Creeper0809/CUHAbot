@@ -8,6 +8,7 @@ from decorator.account import requires_registration
 from models.repos import find_account_by_discordid
 from models.repos.dungeon_repo import find_all_dungeon
 from service.dungeon.dungeon_service import start_dungeon
+from service.dungeon.item_service import get_item_info
 from service.session import is_in_session, create_session, end_session
 from models import User
 
@@ -60,7 +61,6 @@ class DungeonCommand(commands.Cog):
     @app_commands.guilds(GUILD_ID)
     @app_commands.describe(item_name="검색할 아이템 이름")
     async def search_item(self, interaction: discord.Interaction, item_name: str):
-        from service.item_service import get_item_info
 
         embed = await get_item_info(item_name)
 
