@@ -2,7 +2,6 @@ import discord
 from typing import Dict, List
 from resources.item_emoji import ItemType, ItemEmoji
 
-
 class ItemEmbed:
     def __init__(self, item):
         self.item = item
@@ -28,7 +27,8 @@ class ItemEmbed:
         return self.embed
 
     def _add_cost_info(self) -> None:
-        self._add_field("💰 가격", f"{self.item.cost:,} 골드")
+        if self.item.cost is not None:
+            self._add_field("💰 가격", f"{self.item.cost:,} 골드")
 
     # 아이템 타입 세부 정보 처리
     async def _get_type_specific_items(self) -> List:

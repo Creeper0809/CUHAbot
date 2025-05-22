@@ -8,7 +8,7 @@ from decorator.account import requires_registration
 from models.repos import find_account_by_discordid
 from models.repos.dungeon_repo import find_all_dungeon
 from service.dungeon.dungeon_service import start_dungeon
-from service.dungeon.item_service import ItemService
+from service.dungeon.item_service import ItemService, ItemNotFoundException
 from service.session import is_in_session, create_session, end_session
 from models import User
 
@@ -61,13 +61,11 @@ class DungeonCommand(commands.Cog):
     @app_commands.guilds(GUILD_ID)
     @app_commands.describe(item_name="검색할 아이템 이름")
     async def search_item(self, interaction: discord.Interaction, item_name: str):
-        embed = await ItemService.get_item_info(item_name)
+        try:
+            embed = await ItemService.get_item_info(item_name)
+            await interaction.response.send_message(embed=embed)
+        except ItemNotFoundException as e:
+            await interaction.response.send_message(str(e))
 
-        if not embed:
-            await interaction.response.send_message(f"'{item_name}' 아이템을 찾을 수 없습니다.")
-            return
-
-        await interaction.response.send_message(embed=embed)
-
-async def setup(bot: commands.Bot):
+async def setup(bot):
     await bot.add_cog(DungeonCommand(bot))
