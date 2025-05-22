@@ -65,3 +65,15 @@ class blackjack(View):
                 self.stop()
         else:
             await self.send_embed()
+
+    @discord.ui.button(label = "히트", style = discord.ButtonStyle.green, emoji="🔥")
+    async def hit(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user != self.ctx.author:
+            await interaction.response.send_message("다른 사람의 차례입니다.", ephemeral = True)
+            return
+        self.card += 1
+        self.my_hand[0] += self.sum_list[self.card + 4]
+        self.my_hand[1] += f" | {self.selected[self.card + 4]}"
+        await self.update_hand()
+        await interaction.response.defer()
+
