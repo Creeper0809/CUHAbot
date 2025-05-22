@@ -20,3 +20,25 @@ class ButtonView(View):
     def __init__(self, ctx):
         super().__init__()
         self.ctx = ctx
+
+    @discord.ui.button(label="가위", style=discord.ButtonStyle.green, emoji="✌️")
+    async def scissor(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await self.process_result(interaction, "가위")
+
+    @discord.ui.button(label="바위", style=discord.ButtonStyle.blurple, emoji="✊")
+    async def rock(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await self.process_result(interaction, "바위")
+
+    @discord.ui.button(label="보", style=discord.ButtonStyle.red, emoji="🖐️")
+    async def paper(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await self.process_result(interaction, "보")
+
+    async def process_result(self, interaction: discord.Interaction, user_choice):
+        bot_choice = random.choice(["가위", "바위", "보"])
+        result_text = result(user_choice, bot_choice)
+
+        embed = discord.Embed(title="가위바위보", color=0x00ff00)
+        embed.add_field(name=f"당신의 선택", value=f"{user_choice}", inline=False)
+        embed.add_field(name="총 합", value=f"{bot}", inline=False)
+        embed.add_field(name=f"{self.ctx.author.name}의 결과", value=f"{result_text}", inline=False)
+        await interaction.response.edit_message(embed=embed, view=self)
