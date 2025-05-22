@@ -78,7 +78,7 @@ class BlackJackGame(View):
             await self.send_embed()
 
     @discord.ui.button(label = "히트", style = discord.ButtonStyle.green, emoji="🔥")
-    async def hit(self, interaction: discord.Interaction):
+    async def hit(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user != self.ctx.author:
             await interaction.response.send_message("다른 사람의 차례입니다.", ephemeral = True)
             return
@@ -89,7 +89,7 @@ class BlackJackGame(View):
         await interaction.response.defer()
 
     @discord.ui.button(label="스탠드", style=discord.ButtonStyle.success, emoji="✅")
-    async def stand(self, interaction: discord.Interaction):
+    async def stand(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user != self.ctx.author:
             await interaction.response.send_message("당신의 차례가 아닙니다!", ephemeral=True)
             return
@@ -97,7 +97,7 @@ class BlackJackGame(View):
         self.stop()
 
     @discord.ui.button(label="더블다운", style=discord.ButtonStyle.danger, emoji="🌟")
-    async def double_down(self, interaction: discord.Interaction):
+    async def double_down(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user != self.ctx.author:
             await interaction.response.send_message("당신의 차례가 아닙니다!", ephemeral=True)
             return
