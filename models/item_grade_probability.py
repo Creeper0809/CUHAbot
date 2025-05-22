@@ -10,10 +10,10 @@ class GradeEnum(str, Enum):
 
 class ItemGradeProbability(models.Model):
     id = fields.IntField(pk=True)
-    cheat_id = fields.IntField()
-    grade = fields.CharField(max_length=1)
-    probability = fields.IntField()
-    grade_idx = fields.IntField()
+    cheat_id = fields.IntField(null=True)
+    grade = fields.CharField(max_length=1, null=True, enum=GradeEnum)
+    probability = fields.IntField(null=True)
+    grade_idx = fields.IntField(null=True)
 
     def __str__(self):
         return f"Grade {self.grade} (Index: {self.grade_idx})"
