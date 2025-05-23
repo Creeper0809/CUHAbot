@@ -8,6 +8,7 @@ from decorator.account import requires_registration
 from models.repos import find_account_by_discordid
 from models.repos.dungeon_repo import find_all_dungeon
 from service.dungeon.dungeon_service import start_dungeon
+from service.dungeon.item_service import ItemService, ItemNotFoundException
 from service.session import is_in_session, create_session, end_session
 from models import User
 
@@ -60,47 +61,11 @@ class DungeonCommand(commands.Cog):
     @app_commands.guilds(GUILD_ID)
     @app_commands.describe(item_name="검색할 아이템 이름")
     async def search_item(self, interaction: discord.Interaction, item_name: str):
-        from resources.itemdata import items, type_emoji, stat_emoji
-
-        item_data = items.get(item_name)
-
-        if not item_data:
-            await interaction.response.send_message(f"'{item_name}' 아이템을 찾을 수 없습니다.")
-            return
-
-        item_type = item_data.get('종류', '기타')
-        type_icon = type_emoji.get(item_type, "📦")
-
-        embed = discord.Embed(
-            title=f"{item_data['이름']} {type_icon}",
-            description=item_data['설명'],
-            color=0x00ff00
-        )
-
-        image_path = f"resources/images/{item_name}.png"
-        file = None
-
         try:
-            file = discord.File(image_path, filename="image.png")
-            embed.set_thumbnail(url="attachment://image.png")
-        except FileNotFoundError:
-            try:
-                image_path = f"resources/images/{item_name}.jpg"
-                file = discord.File(image_path, filename="image.jpg")
-                embed.set_thumbnail(url="attachment://image.jpg")
-            except FileNotFoundError:
-                pass
-
-        for key, value in item_data.items():
-            if key not in ['이름', '설명', '종류']:
-                emoji = stat_emoji.get(key, "📌")
-                embed.add_field(name=f"{emoji} {key}", value=str(value), inline=True)
-
-        if file:
-            await interaction.response.send_message(file=file, embed=embed)
-        else:
+            embed = await ItemService.get_item_info(item_name)
             await interaction.response.send_message(embed=embed)
+        except ItemNotFoundException as e:
+            await interaction.response.send_message(str(e))
 
-
-async def setup(bot: commands.Bot):
+async def setup(bot):
     await bot.add_cog(DungeonCommand(bot))
