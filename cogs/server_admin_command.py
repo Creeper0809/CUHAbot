@@ -54,5 +54,6 @@ class ServerAdminCammand(commands.Cog):
     async def re_cache(self, interaction: discord.Interaction):
         await load_static_data()
         await interaction.response.send_message("데이터베이스 재캐시 완료")
+
 async def setup(bot: commands.Bot):
     await bot.add_cog(ServerAdminCammand(bot))

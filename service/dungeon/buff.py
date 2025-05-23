@@ -10,7 +10,6 @@ def register_buff_with_tag(tag):
     return decorator
 
 def get_buff_by_tag(tag):
-    print(tag)
     return buff_register[tag]()
 
 class Buff(TurnConfig):
