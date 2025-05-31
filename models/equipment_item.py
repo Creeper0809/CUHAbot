@@ -2,9 +2,32 @@ from tortoise import models, fields
 from typing import Dict, Optional
 from models.grade import Grade
 from models.equip_pos import EquipPos
+from enum import Enum
+from models.base_item import BaseItem
+
+class ItemInfoKey(Enum):
+    GRADE = "등급"
+    EQUIP_POSITION = "장착 위치"
+
+class StatKey(Enum):
+    ATTACK = ("attack", "공격력")
+    HP = ("hp", "체력")
+    SPEED = ("speed", "속도")
+
+    def __init__(self, key: str, display: str):
+        self._key = key
+        self._display = display
+
+    @property
+    def key(self) -> str:
+        return self._key
+
+    @property
+    def display(self) -> str:
+        return self._display
 
 # 장비 아이템 및 스탯
-class EquipmentItem(models.Model):
+class EquipmentItem(BaseItem):
     id = fields.BigIntField(pk=True)
     equipment_item_id = fields.IntField(null=True)
     item = fields.ForeignKeyField(
@@ -22,32 +45,36 @@ class EquipmentItem(models.Model):
     class Meta:
         table = "equipment_item"
 
-    # 장비 스탯 정보를 딕셔너리 형태로 변환, 스탯 매핑
-    def get_stats(self) -> Dict[str, int]:
-        stats = {}
-        stats_mapping = {
-            'attack': ('공격력', self.attack),
-            'hp': ('체력', self.hp),
-            'speed': ('속도', self.speed)
+    @property
+    def raw_stats(self) -> Dict[StatKey, Optional[int]]:
+        return {
+            StatKey.ATTACK: self.attack,
+            StatKey.HP: self.hp,
+            StatKey.SPEED: self.speed
         }
 
-        for _, (name, value) in stats_mapping.items():
-            if value is not None and value != 0:
-                stats[name] = value
+    async def apply_to_embed(self, embed) -> None:
+        
+        # 스탯 정보 추가
+        self.add_stats_to_embed(embed, self.raw_stats)
 
-        return stats
-
-    async def get_display_info(self) -> Dict[str, str]:
-        info = {}
+        # 등급 정보 추가
         grade_name = await self.get_grade_name()
         if grade_name:
-            info['등급'] = grade_name
+            embed.add_field(
+                name=ItemInfoKey.GRADE.value,
+                value=f"```      {grade_name}      ```",
+                inline=True
+            )
 
+        # 장착 위치 정보 추가
         pos_name = await self.get_position_name()
         if pos_name:
-            info['장착 위치'] = pos_name
-
-        return info
+            embed.add_field(
+                name=ItemInfoKey.EQUIP_POSITION.value,
+                value=f"```      {pos_name}      ```",
+                inline=True
+            )
 
     async def get_grade_name(self) -> Optional[str]:
         grade = await Grade.get_or_none(id=self.grade)

@@ -22,7 +22,7 @@ class Item(Model):
         table = "item"
 
     async def get_description_embed(self) -> discord.Embed:
-        return await ItemEmbed(self).build()
+        return await ItemEmbed.create_description_embed(self)
 
     def __str__(self):
         return self.name or str(self.id)

@@ -9,6 +9,7 @@ from tortoise import Tortoise
 import logging
 
 from models.repos.static_cache import load_static_data
+from resources.item_emoji import ItemEmoji  # 이모지 매니저 임포트
 
 # 로그 기본 설정
 logging.basicConfig(
@@ -43,6 +44,8 @@ if not DATABASE_URL or not DATABASE_USER or not DATABASE_PASSWORD or not DATABAS
 class MyBot(commands.Bot):
     def __init__(self):
         intents = discord.Intents.default()
+        intents.message_content = True
+        intents.emojis = True  # 이모지 권한 추가
         super().__init__(
             command_prefix="!",
             intents=intents,
@@ -78,6 +81,14 @@ class MyBot(commands.Bot):
         logging.info("데이터 베이스 연결 시작")
         await self.init_db()
         logging.info("데이터 베이스 연결 완료")
+        
+        # 이모지 초기화
+        try:
+            ItemEmoji.initialize(self)
+            logging.info("이모지 초기화 완료")
+        except Exception as e:
+            logging.error(f"이모지 초기화 실패: {e}")
+            
         logging.info(f"Logged in as {self.user} (ID: {self.user.id})")
 
 if __name__ == "__main__":
