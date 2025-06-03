@@ -1,8 +1,7 @@
-from csv import excel
-
 import discord
 import random
 import asyncio
+from discord import Interaction
 from discord.ext import commands
 from discord.ui import Button, button, View
 
@@ -60,44 +59,24 @@ class BlackJackGame(View):
         self._adjust_score_for_aces('player')
         self._adjust_score_for_aces('dealer')
 
+    async def interaction_check(self, interaction: Interaction, /) -> bool:
+        if interaction.user.id == self.author_id:
+            await interaction.response.send_message("당신의 게임이 아닙니다.", ephemeral=True)
+            return False
+        if self.game_over:
+            await interaction.response.send_message("게임이 이미 종료되었습니다.", ephemeral=True)
+            return False
+        return True
+    async def _adjust_score_for_aces(self, hand_owner):
+        score = 'player_score'
+        hand_str_list = self.player_hand_str
+        aces_as_one_attr = 'player_aces_as_one'
 
-@bot.command()
-async def blackjack(ctx):
-    deck = create_card()
-    random.shuffle(deck)
-    pick = random.sample(range(0, 52), 20)
-    selected = [deck[i] for i in pick]
-    sum_list = [card_value(card) for card in selected]
+        if hand_owner == 'dealer':
+            score = 'dealer_score'
+            hand_str_list = self.dealer_hand_str
+            aces_as_one_attr = 'dealer_aces_as_one'
 
-    game_view = BlackJackGame(ctx, deck, sum_list, selected)
-    user_game_history[ctx.author.id] = game_view
-    await game_view.send_embed()
-
-    async def send_embed(self):
-        embed = discord.Embed(title = "Blackjack", color = 0x00ff00)
-        embed.add_field(name = f"{self.ctx.author.name}의 패", value = f"{self.my_hand[1]}\n 합계: {self.my_hand[0]}", inline = False)
-        embed.add_field(name = "총 합", value = f"{self.sum_list[0]} | {self.sum_list[2]}\n{self.sum_list[1]} | {self.sum_list[3]}", inline = False)
-        embed.add_field(name = "딜러의 패", value = f"{self.selected[1]} | ❔", inline = False)
-        embed.add_field(name = f"{self.ctx.author.name}의 차례입니다.", value = "버튼을 눌러주세요.", inline = False)
-
-        if self.message:
-            await self.message.edit(embed = embed, view = self)
-        else:
-            self.message = await self.ctx.send(embed = embed, view = self)
-
-    async def hand_update(self):
-        if self.my_hand[0] == 21 and self.card:
-            self.my_hand[0] = "블랙잭"
-            await self.send_embed()
-            self.stop()
-        elif isinstance(self.my_hand[0], int) and self.my_hand[0] >= 22:
-            if self.my_hand[1].count("A") - self.use_ace >= 1:
-                self.my_hand[0] -= 10
-                self.use_ace += 1
-                await self.send_embed()
-            else:
-                self.my_hand[0] = "버스트"
-                await self.send_embed()
-                self.stop()
-        else:
-            await self.send_embed()
+        score_current = getattr(self, score)
+        setattr(self, aces_as_one_attr, 0)
+        
