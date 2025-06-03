@@ -1,18 +1,23 @@
+from csv import excel
+
 import discord
 import random
+import asyncio
 from discord.ext import commands
-from discord.ui import Button, View
+from discord.ui import Button, button, View
 
 intents = discord.Intents.default()
 intents.message_content = True
-bot = commands.Bot(command_prefix = '/', intents = intents)
+bot = commands.Bot(command_prefix='/', intents=intents)
 
 user_game_history = {}
 
 def create_card():
     suits = ['♠', '♥', '♦', '♣']
     ranks = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K']
-    return [f"{rank}{suit}" for suit in suits for rank in ranks]
+    deck =  [f"{rank}{suit}" for suit in suits for rank in ranks]
+    random.shuffle(deck)
+    return deck
 
 def card_value(card):
     rank = card[:-1]
@@ -21,7 +26,40 @@ def card_value(card):
     elif card == 'A':
         return 11
     else:
-        return int(rank)
+        try:
+            return int(rank)
+        except ValueError:
+            print("오류")
+            return 0
+
+
+class BlackJackGame(View):
+    def __init__(self, ctx, pre_selected_cards):
+        super().__init__
+        self.ctx = ctx
+        self.author_id = ctx.author.id
+
+        self.all_cards_in_play_str = pre_selected_cards
+        self.all_cards_in_play_val = [card_value(card) for card in pre_selected_cards]
+
+        self.player_cards_drawn_count = 0  # 플레이어가 "히트"로 가져간 카드 수
+        self.player_aces_as_one = 0  # 플레이어의 에이스 중 현재 1로 계산되는 수
+
+        self.dealer_aces_as_one = 0  # 딜러의 에이스 중 현재 1로 계산되는 수
+
+        # 초기 패 분배
+        self.player_hand_str = [self.all_cards_in_play_str[0], self.all_cards_in_play_str[2]]
+        self.player_score = card_value(self.player_hand_str[0]) + card_value(self.player_hand_str[1])
+
+        self.dealer_hand_str = [self.all_cards_in_play_str[1], self.all_cards_in_play_str[3]]
+        self.dealer_score = card_value(self.dealer_hand_str[0]) + card_value(self.dealer_hand_str[1])
+
+        self.message = None  # 이 뷰가 첨부된 메시지를 저장할 변수
+        self.game_over = False
+
+        self._adjust_score_for_aces('player')
+        self._adjust_score_for_aces('dealer')
+
 
 @bot.command()
 async def blackjack(ctx):
@@ -34,19 +72,6 @@ async def blackjack(ctx):
     game_view = BlackJackGame(ctx, deck, sum_list, selected)
     user_game_history[ctx.author.id] = game_view
     await game_view.send_embed()
-
-class BlackJackGame(View):
-    def __init__(self, ctx, deck, sum_list, selected):
-        super().__init__(timeout = 120)
-        self.ctx = ctx
-        self.deck = deck
-        self.sum_list = sum_list
-        self.selected = selected
-        self.card = 0
-        self.use_ace = 0
-        self.my_hand = [sum_list[0] + sum_list[2], f"{selected[0]} | {selected[2]}"]
-        self.dealer_hand = [sum_list[1] + sum_list[3], f"{selected[1]} | {selected[3]}"]
-        self.message = None
 
     async def send_embed(self):
         embed = discord.Embed(title = "Blackjack", color = 0x00ff00)
@@ -76,34 +101,3 @@ class BlackJackGame(View):
                 self.stop()
         else:
             await self.send_embed()
-
-    @discord.ui.button(label = "히트", style = discord.ButtonStyle.green, emoji="🔥")
-    async def hit(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if interaction.user != self.ctx.author:
-            await interaction.response.send_message("다른 사람의 차례입니다.", ephemeral = True)
-            return
-        self.card += 1
-        self.my_hand[0] += self.sum_list[self.card + 4]
-        self.my_hand[1] += f" | {self.selected[self.card + 4]}"
-        await self.hand_update()
-        await interaction.response.defer()
-
-    @discord.ui.button(label="스탠드", style=discord.ButtonStyle.success, emoji="✅")
-    async def stand(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if interaction.user != self.ctx.author:
-            await interaction.response.send_message("당신의 차례가 아닙니다!", ephemeral=True)
-            return
-        await interaction.response.defer()
-        self.stop()
-
-    @discord.ui.button(label="더블다운", style=discord.ButtonStyle.danger, emoji="🌟")
-    async def double_down(self, interaction: discord.Interaction, button: discord.ui.Button):
-        if interaction.user != self.ctx.author:
-            await interaction.response.send_message("당신의 차례가 아닙니다!", ephemeral=True)
-            return
-        self.card += 1
-        self.my_hand[0] += self.sum_list[self.card + 4]
-        self.my_hand[1] += f" | {self.selected[self.card + 4]}"
-        await self.update_hand()
-        self.stop()
-        await interaction.response.defer()

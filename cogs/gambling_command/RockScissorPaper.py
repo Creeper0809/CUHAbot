@@ -22,8 +22,8 @@ class ButtonView(View):
         self.ctx = ctx
 
     @discord.ui.button(label="가위", style=discord.ButtonStyle.green, emoji="✌️")
-    async def scissor(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await self.process_result(interaction, "가위")
+    async def scissors(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.send_message(interaction.user.mention, ephemeral=True)
 
     @discord.ui.button(label="바위", style=discord.ButtonStyle.blurple, emoji="✊")
     async def rock(self, interaction: discord.Interaction, button: discord.ui.Button):
