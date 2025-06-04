@@ -79,4 +79,16 @@ class BlackJackGame(View):
 
         score_current = getattr(self, score)
         setattr(self, aces_as_one_attr, 0)
-        
+    def update_button_state(self):
+        hit_button = discord.utils.get(self.children, custom_id="hit_button")
+        stand_button = discord.utils.get(self.children, custom_id="stand_button")
+        double_button = discord.utils.get(self.children, custom_id="double_button")
+
+        if self.game_over or self.player_score >= 21:
+            if hit_button: hit_button.disabled = True
+            if stand_button: stand_button.disabled = True
+            if double_button: double_button.disabled = True
+        else:
+            if hit_button: hit_button.disabled = False
+            if stand_button: stand_button.disabled = False
+            if double_button: double_button.disabled = not (len(self.all_cards_in_play_str) == 2 and self.player_cards_drawn_count == 0)
