@@ -1,7 +1,12 @@
 import asyncio
 import logging
+from enum import IntEnum
 
 from models import Dungeon
+class SessionType(IntEnum):  # 숫자 기반 enum
+    IDLE = 1
+    FIGHT = 2
+    EVENT = 3
 
 class DungeonSession:
     def __init__(self, user_id):
@@ -13,6 +18,7 @@ class DungeonSession:
         self.ui_message = None
         self.user = None
         self.dm_message = None
+        self.status = SessionType.IDLE
 
 active_sessions: dict[int, DungeonSession] = {}
 
