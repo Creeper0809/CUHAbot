@@ -4,7 +4,7 @@ from discord.ext import commands
 
 from DTO.dungeon_select_view import DungeonSelectView
 from bot import GUILD_ID
-from decorator.account import requires_registration
+from decorator.account import requires_account
 from models.repos import find_account_by_discordid
 from models.repos.dungeon_repo import find_all_dungeon
 from service.dungeon.dungeon_service import start_dungeon
@@ -17,7 +17,7 @@ class DungeonCommand(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
-    @requires_registration()
+    @requires_account()
     @app_commands.command(
         name="던전입장",
         description="던전에 입장합니다"
