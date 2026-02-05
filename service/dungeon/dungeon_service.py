@@ -524,13 +524,35 @@ async def _ask_fight_or_flee(
     Returns:
         True: 전투, False: 도주, None: 타임아웃
     """
+    # 몬스터 스킬 이름 조회
+    from models.repos.skill_repo import get_skill_by_id
+    skill_names = []
+    monster_skill_ids = getattr(monster, 'skill_ids', [])
+    for sid in monster_skill_ids:
+        if sid != 0:
+            skill = get_skill_by_id(sid)
+            if skill and skill.name not in skill_names:
+                skill_names.append(skill.name)
+
     embed = discord.Embed(
         title=f"🐲 {monster.name} 이(가) 나타났다!",
         description=monster.description or "무서운 기운이 느껴진다...",
         color=EmbedColor.ERROR
     )
-    embed.add_field(name="체력", value=f"{monster.hp}")
-    embed.add_field(name="공격력", value=f"{monster.attack}")
+    embed.add_field(name="❤️ 체력", value=f"{monster.hp}", inline=True)
+    embed.add_field(name="⚔️ 공격력", value=f"{monster.attack}", inline=True)
+    embed.add_field(name="🔮 마공", value=f"{getattr(monster, 'ap_attack', 0)}", inline=True)
+    embed.add_field(name="🛡️ 방어력", value=f"{getattr(monster, 'defense', 0)}", inline=True)
+    embed.add_field(name="🌀 마방", value=f"{getattr(monster, 'ap_defense', 0)}", inline=True)
+    embed.add_field(name="💨 속도", value=f"{getattr(monster, 'speed', 10)}", inline=True)
+    embed.add_field(name="💫 회피", value=f"{getattr(monster, 'evasion', 0)}%", inline=True)
+
+    if skill_names:
+        embed.add_field(
+            name="📜 스킬",
+            value=", ".join(skill_names),
+            inline=False
+        )
 
     view = FightOrFleeView(user=interaction.user)
     msg = await interaction.user.send(embed=embed, view=view)
@@ -573,16 +595,16 @@ async def _execute_combat(
     logger.info(f"User equipped_skill: {session.user.equipped_skill}")
     logger.info(f"User skill_queue: {session.user.skill_queue}")
 
-    # 전투 상태 설정
+    # 전투 상태 설정 (try 블록 전에 설정하되 finally에서 항상 해제)
     set_combat_state(session.user_id, True)
 
-    combat_log: deque[str] = deque(maxlen=COMBAT.COMBAT_LOG_MAX_LENGTH)
-    embed = _create_battle_embed(session.user, monster, combat_log)
-    combat_message = await interaction.user.send(embed=embed)
-
-    turn_count = 1
-
     try:
+        combat_log: deque[str] = deque(maxlen=COMBAT.COMBAT_LOG_MAX_LENGTH)
+        embed = _create_battle_embed(session.user, monster, combat_log)
+        combat_message = await interaction.user.send(embed=embed)
+
+        turn_count = 1
+
         while session.user.now_hp > 0 and monster.now_hp > 0:
             turn_result = await _process_turn(
                 session.user,
@@ -657,10 +679,70 @@ async def _process_combat_result(
         f"exp={exp_gained}, gold={gold_gained}, turns={turn_count}"
     )
 
-    return (
+    # 스킬 드롭 확인
+    dropped_skill_msg = await _try_drop_monster_skill(user, monster)
+
+    # 결과 메시지 생성
+    result_msg = (
         f"🏆 **{monster.name}** 처치! ({turn_count}턴)\n"
         f"   ⭐ +**{exp_gained}** EXP │ 💰 +**{gold_gained}** G"
     )
+
+    if dropped_skill_msg:
+        result_msg += f"\n   {dropped_skill_msg}"
+
+    return result_msg
+
+
+async def _try_drop_monster_skill(user: User, monster: Monster) -> Optional[str]:
+    """
+    몬스터 스킬 드롭 시도
+
+    Args:
+        user: 플레이어
+        monster: 처치한 몬스터
+
+    Returns:
+        드롭 메시지 또는 None
+    """
+    from config import DROP
+    from service.skill_ownership_service import SkillOwnershipService
+
+    # 몬스터가 스킬이 없으면 드롭 없음
+    monster_skills = getattr(monster, 'skill_ids', [])
+    if not monster_skills:
+        return None
+
+    # 0 (빈 슬롯) 제외
+    valid_skills = [sid for sid in monster_skills if sid != 0]
+    if not valid_skills:
+        return None
+
+    # 드롭 확률 판정 (0.1%)
+    if random.random() > DROP.SKILL_DROP_RATE:
+        return None
+
+    # 랜덤 스킬 선택
+    dropped_skill_id = random.choice(valid_skills)
+
+    # 유저에게 스킬 지급
+    try:
+        await SkillOwnershipService.add_skill(user, dropped_skill_id, 1)
+
+        # 스킬 이름 조회
+        from models.repos.skill_repo import get_skill_by_id
+        skill = get_skill_by_id(dropped_skill_id)
+        skill_name = skill.name if skill else f"스킬 #{dropped_skill_id}"
+
+        logger.info(
+            f"Skill drop: user={user.discord_id}, monster={monster.name}, "
+            f"skill_id={dropped_skill_id}, skill_name={skill_name}"
+        )
+
+        return f"✨ **희귀 드롭!** 「{skill_name}」 스킬 획득!"
+    except Exception as e:
+        logger.error(f"Failed to drop skill: {e}")
+        return None
 
 
 async def _process_turn(
@@ -971,9 +1053,10 @@ def _create_dungeon_embed(
     event_queue: deque[str]
 ) -> discord.Embed:
     """던전 임베드 생성"""
+    user_name = session.user.get_name()
     embed = discord.Embed(
         title=f"🏰 {session.dungeon.name}",
-        description=f"*{session.dungeon.description}*" if session.dungeon.description else None,
+        description=f"**{user_name}**의 탐험\n*{session.dungeon.description}*" if session.dungeon.description else f"**{user_name}**의 탐험",
         color=EmbedColor.DUNGEON
     )
 
@@ -993,7 +1076,7 @@ def _create_dungeon_embed(
     hp_pct = int((session.user.now_hp / session.user.hp) * 100) if session.user.hp > 0 else 0
 
     embed.add_field(
-        name="👤 상태",
+        name=f"👤 {user_name}",
         value=(
             f"{hp_bar}\n"
             f"HP **{session.user.now_hp}** / {session.user.hp} ({hp_pct}%)"

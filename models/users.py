@@ -43,7 +43,7 @@ class User(models.Model):
     user_role = fields.CharField(max_length=255, default="user")
 
     # 기본 스탯 (분배 가능)
-    hp = fields.IntField(default=100)  # 기본 HP
+    hp = fields.IntField(default=300)  # 기본 HP
     attack = fields.IntField(default=10)  # 물리 공격력
     defense = fields.IntField(default=5)  # 물리 방어력
     speed = fields.IntField(default=10)  # 속도

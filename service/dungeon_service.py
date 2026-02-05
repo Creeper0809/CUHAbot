@@ -74,13 +74,32 @@ async def fight(session : DungeonSession, interaction : discord.Interaction):
 
 
 async def ask_to_fight(interaction: discord.Interaction, monster):
+    from models.repos.skill_repo import get_skill_by_id
+
     embed = discord.Embed(
         title=f"🐲 {monster.name} 이(가) 나타났다!",
         description=monster.description or "무서운 기운이 느껴진다...",
         color=discord.Color.red()
     )
-    embed.add_field(name="체력", value=f"{monster.hp}")
-    embed.add_field(name="공격력", value=f"{monster.attack}")
+    embed.add_field(name="❤️ 체력", value=f"{monster.hp}", inline=True)
+    embed.add_field(name="⚔️ 공격력", value=f"{monster.attack}", inline=True)
+    embed.add_field(name="🔮 마공", value=f"{getattr(monster, 'ap_attack', 0)}", inline=True)
+    embed.add_field(name="🛡️ 방어력", value=f"{getattr(monster, 'defense', 0)}", inline=True)
+    embed.add_field(name="🌀 마방", value=f"{getattr(monster, 'ap_defense', 0)}", inline=True)
+    embed.add_field(name="💨 속도", value=f"{getattr(monster, 'speed', 10)}", inline=True)
+    embed.add_field(name="💫 회피", value=f"{getattr(monster, 'evasion', 0)}%", inline=True)
+
+    # 스킬 정보
+    monster_skill_ids = getattr(monster, 'skill_ids', [])
+    skill_names = []
+    for sid in monster_skill_ids:
+        if sid != 0:
+            skill = get_skill_by_id(sid)
+            if skill and skill.name not in skill_names:
+                skill_names.append(skill.name)
+
+    if skill_names:
+        embed.add_field(name="📜 스킬", value=", ".join(skill_names), inline=False)
 
     view = FightOrFleeView(user=interaction.user)
     msg = await interaction.user.send(embed=embed, view=view)

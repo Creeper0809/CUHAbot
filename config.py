@@ -273,6 +273,10 @@ class DropConfig:
     BOSS_DROP_MULTIPLIER: float = 10.0
     """보스 몬스터 드롭률 배율"""
 
+    # 스킬 드롭
+    SKILL_DROP_RATE: float = 0.001
+    """몬스터 스킬 드롭 확률 (0.1%)"""
+
 
 DROP = DropConfig()
 

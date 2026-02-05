@@ -20,7 +20,7 @@ from service.collection_service import CollectionService, EntryNotFoundError
 from service.dungeon.item_service import get_item_info, ItemNotFoundException
 from service.healing_service import HealingService
 from service.inventory_service import InventoryService
-from service.session import is_in_session, is_in_combat, create_session, end_session
+from service.session import is_in_combat, create_session, end_session
 from service.skill_deck_service import SkillDeckService
 from service.skill_ownership_service import SkillOwnershipService
 from models import User
@@ -37,68 +37,71 @@ class DungeonCommand(commands.Cog):
     )
     @app_commands.guilds(GUILD_ID)
     async def enter_dungeon(self, interaction: discord.Interaction):
-        if is_in_session(interaction.user.id):
+        # 원자적 세션 생성 (이미 존재하면 None 반환)
+        session = await create_session(interaction.user.id)
+        if session is None:
             await interaction.response.send_message("이미 던전 탐험중입니다.")
             return
-        session = create_session(interaction.user.id)
 
-        user: User = await find_account_by_discordid(session.user_id)
-        session.user = user
+        try:
+            user: User = await find_account_by_discordid(session.user_id)
+            session.user = user
 
-        # 스킬 덱 로드 (전투에서 사용)
-        await SkillDeckService.load_deck_to_user(user)
+            # 스킬 덱 로드 (전투에서 사용)
+            await SkillDeckService.load_deck_to_user(user)
 
-        # 자연 회복 적용
-        await HealingService.apply_natural_regen(user)
+            # 자연 회복 적용
+            await HealingService.apply_natural_regen(user)
 
-        # HP 체크 - 너무 낮으면 경고
-        hp_percent = (user.now_hp / user.hp) * 100
-        if hp_percent < 30:
-            # 완전 회복까지 예상 시간 계산
-            hp_needed = int(user.hp * 0.3) - user.now_hp
-            minutes_needed = (hp_needed + user.hp_regen - 1) // user.hp_regen if user.hp_regen > 0 else 999
+            # HP 체크 - 너무 낮으면 경고
+            hp_percent = (user.now_hp / user.hp) * 100
+            if hp_percent < 30:
+                # 완전 회복까지 예상 시간 계산
+                hp_needed = int(user.hp * 0.3) - user.now_hp
+                minutes_needed = (hp_needed + user.hp_regen - 1) // user.hp_regen if user.hp_regen > 0 else 999
 
-            await interaction.response.send_message(
-                f"⚠️ HP가 너무 낮습니다! ({user.now_hp}/{user.hp}, {hp_percent:.0f}%)\n"
-                f"HP 30% 이상이 되어야 입장 가능합니다.\n"
-                f"자연 회복으로 약 **{minutes_needed}분** 후 입장 가능합니다.",
-                ephemeral=True
+                await interaction.response.send_message(
+                    f"⚠️ HP가 너무 낮습니다! ({user.now_hp}/{user.hp}, {hp_percent:.0f}%)\n"
+                    f"HP 30% 이상이 되어야 입장 가능합니다.\n"
+                    f"자연 회복으로 약 **{minutes_needed}분** 후 입장 가능합니다.",
+                    ephemeral=True
+                )
+                return
+
+            dungeons = find_all_dungeon()
+            if not dungeons:
+                await interaction.response.send_message("등록된 던전이 없습니다.")
+                return
+
+            embed = discord.Embed(
+                title="🎯 던전을 선택하세요",
+                description="드롭다운에서 던전을 선택한 후 입장하거나 취소하세요.",
+                color=discord.Color.blurple()
             )
+            view = DungeonSelectView(interaction.user, dungeons, session)
+            await interaction.response.send_message(embed=embed, view=view)
+            view.message = await interaction.original_response()
+            await view.wait()
+
+            if view.selected_dungeon is None:
+                await interaction.followup.send("던전 입장이 취소되었습니다.")
+                return
+
+            # 레벨 체크 (방어 로직)
+            if user.level < view.selected_dungeon.require_level:
+                await interaction.followup.send(
+                    f"⚠️ 레벨이 부족합니다. (현재: {user.level}, 필요: {view.selected_dungeon.require_level})"
+                )
+                return
+
+            await interaction.followup.send(f"{view.selected_dungeon.name} 던전에 입장합니다!")
+
+            session.dungeon = view.selected_dungeon
+            await start_dungeon(session, interaction)
+
+        finally:
+            # 예외 발생 여부와 관계없이 세션 정리 보장
             await end_session(user_id=interaction.user.id)
-            return
-
-        dungeons = find_all_dungeon()
-        if not dungeons:
-            await interaction.response.send_message("등록된 던전이 없습니다.")
-            return
-        embed = discord.Embed(
-            title="🎯 던전을 선택하세요",
-            description="드롭다운에서 던전을 선택한 후 입장하거나 취소하세요.",
-            color=discord.Color.blurple()
-        )
-        view = DungeonSelectView(interaction.user, dungeons, session)
-        message = await interaction.response.send_message(embed=embed, view=view)
-        view.message = await interaction.original_response()
-        await view.wait()
-        if view.selected_dungeon is None:
-            await interaction.followup.send("던전 입장이 취소되었습니다.")
-            await end_session(user_id=interaction.user.id)
-            return
-
-        # 레벨 체크 (방어 로직)
-        if user.level < view.selected_dungeon.require_level:
-            await interaction.followup.send(
-                f"⚠️ 레벨이 부족합니다. (현재: {user.level}, 필요: {view.selected_dungeon.require_level})"
-            )
-            await end_session(user_id=interaction.user.id)
-            return
-
-        await interaction.followup.send(f"{view.selected_dungeon.name} 던전에 입장합니다!")
-
-        session.dungeon = view.selected_dungeon
-
-        ended = await start_dungeon(session, interaction)
-        await end_session(user_id=interaction.user.id)
 
     @app_commands.command(
         name="아이템검색",

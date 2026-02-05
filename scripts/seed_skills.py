@@ -30,130 +30,130 @@ NEUTRAL_ATTACK_SKILLS = [
     {
         "id": 1001,
         "name": "강타",
-        "description": "적에게 100% 물리 데미지를 입힌다.",
+        "description": "물리(1.0AD) 공격을 준다.",
         "config": {
             "components": [
-                {"tag": "attack", "damage": 1.0}
+                {"tag": "attack", "ad_ratio": 1.0}
             ]
         }
     },
     {
         "id": 1002,
         "name": "연속 베기",
-        "description": "적에게 60% 데미지를 2회 입힌다.",
+        "description": "2회 물리(0.6AD) 공격을 준다.",
         "config": {
             "components": [
-                {"tag": "attack", "damage": 0.6, "hit_count": 2}
+                {"tag": "attack", "ad_ratio": 0.6, "hit_count": 2}
             ]
         }
     },
     {
         "id": 1003,
         "name": "급소 찌르기",
-        "description": "적에게 120% 데미지, 치명타 확률 +30%.",
+        "description": "물리(1.2AD) 공격, 치명타 확률 +30%.",
         "config": {
             "components": [
-                {"tag": "attack", "damage": 1.2, "crit_bonus": 0.3}
+                {"tag": "attack", "ad_ratio": 1.2, "crit_bonus": 0.3}
             ]
         }
     },
     {
         "id": 1004,
         "name": "회전 참격",
-        "description": "적에게 70% 데미지를 입힌다. (전체 공격용)",
+        "description": "물리(0.7AD) 공격을 준다. (전체 공격용)",
         "config": {
             "components": [
-                {"tag": "attack", "damage": 0.7}
+                {"tag": "attack", "ad_ratio": 0.7}
             ]
         }
     },
     {
         "id": 1005,
         "name": "파워 스트라이크",
-        "description": "적에게 150% 데미지, 방어력 20% 무시.",
+        "description": "물리(1.5AD) 공격, 방어력 20% 무시.",
         "config": {
             "components": [
-                {"tag": "attack", "damage": 1.5, "armor_pen": 0.2}
+                {"tag": "attack", "ad_ratio": 1.5, "armor_pen": 0.2}
             ]
         }
     },
     {
         "id": 1006,
         "name": "일섬",
-        "description": "적에게 200% 데미지, 100% 치명타.",
+        "description": "물리(2.0AD) 공격, 100% 치명타.",
         "config": {
             "components": [
-                {"tag": "attack", "damage": 2.0, "crit_bonus": 1.0}
+                {"tag": "attack", "ad_ratio": 2.0, "crit_bonus": 1.0}
             ]
         }
     },
     {
         "id": 1007,
         "name": "천공검",
-        "description": "적에게 350% 데미지, 방어력 완전 무시.",
+        "description": "물리(3.5AD) 공격, 방어력 70% 무시.",
         "config": {
             "components": [
-                {"tag": "attack", "damage": 3.5, "armor_pen": 0.7}
+                {"tag": "attack", "ad_ratio": 3.5, "armor_pen": 0.7}
             ]
         }
     },
     {
         "id": 1008,
         "name": "돌진",
-        "description": "적에게 80% 데미지를 입히고 선제공격한다.",
+        "description": "물리(0.8AD) 공격, 선제공격.",
         "config": {
             "components": [
-                {"tag": "attack", "damage": 0.8}
+                {"tag": "attack", "ad_ratio": 0.8}
             ]
         }
     },
     {
         "id": 1009,
         "name": "집중 공격",
-        "description": "적에게 130% 데미지를 입힌다.",
+        "description": "물리(1.3AD) 공격을 준다.",
         "config": {
             "components": [
-                {"tag": "attack", "damage": 1.3}
+                {"tag": "attack", "ad_ratio": 1.3}
             ]
         }
     },
     {
         "id": 1010,
         "name": "난무",
-        "description": "적에게 40% 데미지를 4회 입힌다.",
+        "description": "4회 물리(0.4AD) 공격을 준다.",
         "config": {
             "components": [
-                {"tag": "attack", "damage": 0.4, "hit_count": 4}
+                {"tag": "attack", "ad_ratio": 0.4, "hit_count": 4}
             ]
         }
     },
     {
         "id": 1011,
         "name": "맹공",
-        "description": "적에게 180% 데미지를 입힌다.",
+        "description": "물리(1.8AD) 공격을 준다.",
         "config": {
             "components": [
-                {"tag": "attack", "damage": 1.8}
+                {"tag": "attack", "ad_ratio": 1.8}
             ]
         }
     },
     {
         "id": 1012,
         "name": "처형",
-        "description": "적에게 250% 데미지. HP가 낮을수록 위력 증가.",
+        "description": "물리(2.5AD) 공격. HP가 낮을수록 위력 증가.",
         "config": {
             "components": [
-                {"tag": "attack", "damage": 2.5}
+                {"tag": "attack", "ad_ratio": 2.5}
             ]
         }
     },
     {
         "id": 1013,
         "name": "분쇄",
-        "description": "적에게 200% 데미지, 방어력 30% 무시.",
+        "description": "물리(2.0AD) 공격, 방어력 30% 무시.",
         "config": {
             "components": [
-                {"tag": "attack", "damage": 2.0, "armor_pen": 0.3}
+                {"tag": "attack", "ad_ratio": 2.0, "armor_pen": 0.3}
             ]
         }
     },
@@ -194,7 +194,7 @@ HEAL_SKILLS = [
     {
         "id": 2004,
         "name": "생명력 흡수",
-        "description": "적에게 80% 데미지를 입히고 피해량의 30%를 회복한다.",
+        "description": "물리(0.8AD) 공격, 피해량의 30% 회복.",
         "config": {
             "components": [
                 {"tag": "lifesteal", "ad_ratio": 0.8, "lifesteal": 0.3}

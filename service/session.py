@@ -15,6 +15,9 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+# 세션 생성/삭제 동기화를 위한 락
+_session_lock = asyncio.Lock()
+
 
 class SessionType(IntEnum):
     """세션 상태 열거형"""
@@ -85,20 +88,29 @@ class DungeonSession:
 active_sessions: dict[int, DungeonSession] = {}
 
 
-def create_session(user_id: int) -> DungeonSession:
+async def create_session(user_id: int) -> Optional[DungeonSession]:
     """
-    세션 생성
+    세션 생성 (원자적 연산)
+
+    이미 세션이 존재하면 None을 반환합니다.
+    Race condition을 방지하기 위해 락을 사용합니다.
 
     Args:
         user_id: Discord 사용자 ID
 
     Returns:
-        생성된 DungeonSession 객체
+        생성된 DungeonSession 객체 또는 None (이미 존재 시)
     """
-    logger.info(f"Creating session for user {user_id}")
-    session = DungeonSession(user_id=user_id)
-    active_sessions[user_id] = session
-    return session
+    async with _session_lock:
+        # 이미 세션이 존재하면 None 반환
+        if user_id in active_sessions and not active_sessions[user_id].ended:
+            logger.warning(f"Session already exists for user {user_id}")
+            return None
+
+        logger.info(f"Creating session for user {user_id}")
+        session = DungeonSession(user_id=user_id)
+        active_sessions[user_id] = session
+        return session
 
 
 def get_session(user_id: int) -> Optional[DungeonSession]:
@@ -116,23 +128,31 @@ def get_session(user_id: int) -> Optional[DungeonSession]:
 
 async def end_session(user_id: int) -> None:
     """
-    세션 종료 및 사용자 데이터 저장
+    세션 종료 및 사용자 데이터 저장 (원자적 연산)
 
     Args:
         user_id: Discord 사용자 ID
     """
-    if user_id not in active_sessions:
-        return
+    async with _session_lock:
+        if user_id not in active_sessions:
+            return
 
-    logger.info(f"Ending session for user {user_id}")
-    session = active_sessions[user_id]
-    session.ended = True
+        logger.info(f"Ending session for user {user_id}")
+        session = active_sessions[user_id]
+        session.ended = True
 
-    # 사용자 데이터 저장
-    if session.user:
-        await session.user.save()
+        # 전투 상태 강제 해제 (리소스 정리)
+        session.in_combat = False
+        session.status = SessionType.IDLE
 
-    del active_sessions[user_id]
+        # 사용자 데이터 저장
+        if session.user:
+            try:
+                await session.user.save()
+            except Exception as e:
+                logger.error(f"Failed to save user data on session end: {e}")
+
+        del active_sessions[user_id]
 
 
 def is_in_session(user_id: int) -> bool:

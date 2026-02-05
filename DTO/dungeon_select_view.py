@@ -67,9 +67,13 @@ class EnterButton(discord.ui.Button):
         if not view.selected_dungeon:
             await interaction.response.send_message("던전을 선택해주세요.", ephemeral=True)
             return
-        view.stop()
-        await interaction.message.edit(view=None)
+        # 먼저 응답 후 메시지 수정
         await interaction.response.defer()
+        try:
+            await interaction.message.edit(view=None)
+        except discord.NotFound:
+            pass
+        view.stop()
 
 
 class CancelButton(discord.ui.Button):
@@ -79,9 +83,13 @@ class CancelButton(discord.ui.Button):
     async def callback(self, interaction: discord.Interaction):
         view: DungeonSelectView = self.view
         view.selected_dungeon = None
-        view.stop()
-        await interaction.message.edit(view=None)
+        # 먼저 응답 후 메시지 수정
         await interaction.response.defer()
+        try:
+            await interaction.message.edit(view=None)
+        except discord.NotFound:
+            pass
+        view.stop()
 
 
 class DungeonSelectView(discord.ui.View):

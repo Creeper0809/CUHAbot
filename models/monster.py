@@ -30,11 +30,23 @@ class Monster(models.Model):
     description = fields.TextField()
     hp = fields.IntField()
     attack = fields.IntField()
+    """물리 공격력"""
+    defense = fields.IntField(default=0)
+    """물리 방어력"""
+    ap_attack = fields.IntField(default=0)
+    """마법 공격력"""
+    ap_defense = fields.IntField(default=0)
+    """마법 방어력"""
+    speed = fields.IntField(default=10)
+    """속도"""
+    evasion = fields.IntField(default=0)
+    """회피율 (%)"""
+    skill_ids = fields.JSONField(default=[])
+    """몬스터가 사용하는 스킬 ID 목록 (최대 10개)"""
 
     # ==========================================================================
     # 런타임 필드 (DB 미저장) - __init__에서 초기화
     # ==========================================================================
-    speed: int
     now_hp: int
     status: list["Buff"]
     use_skill: list[int]
@@ -46,10 +58,17 @@ class Monster(models.Model):
 
     def _init_runtime_fields(self) -> None:
         """런타임 필드 초기화 (인스턴스별로 독립적인 리스트 생성)"""
-        self.speed = 10
         self.now_hp = getattr(self, 'hp', 0)
         self.status = []
-        self.use_skill = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+
+        # DB에서 로드한 skill_ids가 있으면 use_skill에 할당
+        db_skill_ids = getattr(self, 'skill_ids', [])
+        if db_skill_ids and len(db_skill_ids) > 0:
+            # 10개 슬롯에 맞게 패딩
+            self.use_skill = (list(db_skill_ids) + [0] * 10)[:10]
+        else:
+            self.use_skill = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+
         self.skill_queue = []
 
     def next_skill(self) -> Optional["Skill"]:
@@ -83,7 +102,7 @@ class Monster(models.Model):
             독립적인 런타임 상태를 가진 몬스터 복사본
         """
         # DB에서 로드 시 런타임 필드가 없을 수 있음
-        if not hasattr(self, 'speed'):
+        if not hasattr(self, 'status'):
             self._init_runtime_fields()
 
         new_monster = Monster(
@@ -92,9 +111,14 @@ class Monster(models.Model):
             description=self.description,
             hp=self.hp,
             attack=self.attack,
+            defense=getattr(self, 'defense', 0),
+            ap_attack=getattr(self, 'ap_attack', 0),
+            ap_defense=getattr(self, 'ap_defense', 0),
+            speed=getattr(self, 'speed', 10),
+            evasion=getattr(self, 'evasion', 0),
+            skill_ids=getattr(self, 'skill_ids', []),
         )
         new_monster.now_hp = self.hp
-        new_monster.speed = getattr(self, 'speed', 10)
         new_monster.status = deepcopy(getattr(self, 'status', []))
         new_monster.use_skill = getattr(self, 'use_skill', [0] * 10)[:]
         new_monster.skill_queue = []
@@ -119,8 +143,11 @@ class Monster(models.Model):
 
         stat = {
             UserStatEnum.HP: self.hp,
-            UserStatEnum.SPEED: self.speed,
+            UserStatEnum.SPEED: getattr(self, 'speed', 10),
             UserStatEnum.ATTACK: self.attack,
+            UserStatEnum.DEFENSE: getattr(self, 'defense', 0),
+            UserStatEnum.AP_ATTACK: getattr(self, 'ap_attack', 0),
+            UserStatEnum.AP_DEFENSE: getattr(self, 'ap_defense', 0),
         }
 
         for buff in self.status:

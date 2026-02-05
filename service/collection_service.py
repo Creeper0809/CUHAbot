@@ -323,22 +323,46 @@ class CollectionService:
     @staticmethod
     def _create_monster_embed(monster: Monster, is_collected: bool) -> discord.Embed:
         """몬스터 Embed 생성"""
+        from models.repos.skill_repo import get_skill_by_id
+
         embed = discord.Embed(
             title=f"👹 {monster.name}",
             description=monster.description or "설명 없음",
             color=discord.Color.red()
         )
 
+        # 기본 스탯
         embed.add_field(
             name="기본 스탯",
             value=(
                 f"```\n"
-                f"HP     : {monster.hp}\n"
-                f"공격력 : {monster.attack}\n"
+                f"HP       : {monster.hp}\n"
+                f"공격력   : {monster.attack}\n"
+                f"마법공격 : {getattr(monster, 'ap_attack', 0)}\n"
+                f"방어력   : {getattr(monster, 'defense', 0)}\n"
+                f"마법방어 : {getattr(monster, 'ap_defense', 0)}\n"
+                f"속도     : {getattr(monster, 'speed', 10)}\n"
+                f"회피율   : {getattr(monster, 'evasion', 0)}%\n"
                 f"```"
             ),
             inline=False
         )
+
+        # 스킬 정보
+        monster_skill_ids = getattr(monster, 'skill_ids', [])
+        skill_names = []
+        for sid in monster_skill_ids:
+            if sid != 0:
+                skill = get_skill_by_id(sid)
+                if skill and skill.name not in skill_names:
+                    skill_names.append(skill.name)
+
+        if skill_names:
+            embed.add_field(
+                name="📜 스킬",
+                value=", ".join(skill_names),
+                inline=False
+            )
 
         CollectionService._add_collection_status(embed, is_collected)
         return embed

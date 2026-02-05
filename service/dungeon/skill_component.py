@@ -112,10 +112,9 @@ class DamageComponent(SkillComponent):
         # 치명타 확률 (기본 5% + 보너스)
         crit_rate = DAMAGE.DEFAULT_CRITICAL_RATE + self.crit_bonus
 
-        total_damage = 0
-        critical_hits = 0
+        hit_logs = []
 
-        for _ in range(self.hit_count):
+        for hit_num in range(self.hit_count):
             if self.is_physical:
                 result = DamageCalculator.calculate_physical_damage(
                     attack=attack_power,
@@ -134,15 +133,12 @@ class DamageComponent(SkillComponent):
                 )
 
             target.take_damage(result.damage)
-            total_damage += result.damage
-            if result.is_critical:
-                critical_hits += 1
 
-        # 결과 메시지 생성
-        crit_text = " 💥" if critical_hits > 0 else ""
-        hit_text = f" x{self.hit_count}" if self.hit_count > 1 else ""
+            # 각 타격별 로그 생성
+            crit_text = " 💥" if result.is_critical else ""
+            hit_logs.append(f"⚔️ **{attacker.get_name()}** 「{self.skill_name}」 → **{result.damage}**{crit_text}")
 
-        return f"⚔️ **{attacker.get_name()}** 「{self.skill_name}」{hit_text} → **{total_damage}**{crit_text}"
+        return "\n".join(hit_logs)
 
 
 @register_skill_with_tag("heal")
@@ -350,10 +346,10 @@ class LifestealComponent(SkillComponent):
 
         crit_rate = DAMAGE.DEFAULT_CRITICAL_RATE + self.crit_bonus
 
+        hit_logs = []
         total_damage = 0
-        critical_hits = 0
 
-        for _ in range(self.hit_count):
+        for hit_num in range(self.hit_count):
             if self.is_physical:
                 result = DamageCalculator.calculate_physical_damage(
                     attack=attack_power,
@@ -373,18 +369,19 @@ class LifestealComponent(SkillComponent):
 
             target.take_damage(result.damage)
             total_damage += result.damage
-            if result.is_critical:
-                critical_hits += 1
 
-        # 흡혈 계산
+            # 각 타격별 로그 생성
+            crit_text = " 💥" if result.is_critical else ""
+            hit_logs.append(f"🩸 **{attacker.get_name()}** 「{self.skill_name}」 → **{result.damage}**{crit_text}")
+
+        # 흡혈 계산 (모든 타격 후)
         heal_amount = int(total_damage * self.lifesteal)
         old_hp = attacker.now_hp
         attacker.now_hp = min(attacker.now_hp + heal_amount, max_hp)
         actual_heal = attacker.now_hp - old_hp
 
-        # 결과 메시지
-        crit_text = " 💥" if critical_hits > 0 else ""
-        hit_text = f" x{self.hit_count}" if self.hit_count > 1 else ""
-        heal_text = f" 💚+{actual_heal}" if actual_heal > 0 else ""
+        # 마지막에 흡혈 회복량 추가
+        if actual_heal > 0:
+            hit_logs.append(f"   💚 흡혈 회복: **+{actual_heal}** HP")
 
-        return f"🩸 **{attacker.get_name()}** 「{self.skill_name}」{hit_text} → **{total_damage}**{crit_text}{heal_text}"
+        return "\n".join(hit_logs)
