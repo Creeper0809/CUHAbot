@@ -29,7 +29,6 @@ class StatKey(Enum):
 # 장비 아이템 및 스탯
 class EquipmentItem(BaseItem):
     id = fields.BigIntField(pk=True)
-    equipment_item_id = fields.IntField(null=True)
     item = fields.ForeignKeyField(
         'models.Item',
         related_name='equipment_item',
@@ -85,4 +84,4 @@ class EquipmentItem(BaseItem):
         return pos.pos_name if pos else None
 
     def __str__(self):
-        return f"Equipment {self.equipment_item_id}"
+        return f"Equipment {self.id}"

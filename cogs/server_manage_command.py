@@ -3,9 +3,7 @@ import discord
 from discord.ext import commands
 from discord import app_commands
 
-from DTO.register_form import RegisterForm
 from bot import GUILD_ID
-from models.repos import exists_account_by_discordid
 
 user = app_commands.Group(
     name="user",
@@ -45,17 +43,6 @@ class ServerManageCommand(commands.Cog):
             else ("이겼습니다" if (choice_rsp, bot_choice) in [("가위", "보"), ("바위", "가위"), ("보", "바위")] else "졌습니다")
         )
         await interaction.response.send_message(f"쿠하 봇의 선택은? : {bot_choice} \n"+result)
-
-    @app_commands.command(
-        name="register",
-        description="회원가입하기"
-    )
-    @app_commands.guilds(GUILD_ID)
-    async def register(self, interaction: discord.Interaction):
-        if await exists_account_by_discordid(interaction.user.id):
-            await interaction.response.send_message(f"{interaction.user.display_name}님은 이미 회원가입을 하셨습니다.")
-            return
-        await interaction.response.send_modal(RegisterForm())
 
 async def setup(bot: commands.Bot):
     bot.tree.add_command(user)

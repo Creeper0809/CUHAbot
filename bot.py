@@ -27,7 +27,7 @@ if is_dev == "TRUE":
     TOKEN = os.getenv('DEV_DISCORD_TOKEN')
 else:
     APPLICATION_ID = int(os.getenv('APPLICATION_ID') or 0)
-    TOKEN = os.getenv('DEV_DISCORD_TOKEN')
+    TOKEN = os.getenv('DISCORD_TOKEN')
 
 DATABASE_URL = os.getenv('DATABASE_URL')
 DATABASE_USER = os.getenv('DATABASE_USER')
@@ -71,7 +71,7 @@ class MyBot(commands.Bot):
 
     async def init_db(self):
         await Tortoise.init(
-            db_url=f"mysql://{DATABASE_USER}:{DATABASE_PASSWORD}@{DATABASE_URL}:{DATABASE_PORT}/{DATABASE_TABLE}",
+            db_url=f"postgres://{DATABASE_USER}:{DATABASE_PASSWORD}@{DATABASE_URL}:{DATABASE_PORT}/{DATABASE_TABLE}",
             modules={"models": ["models"]}
         )
         await Tortoise.generate_schemas()

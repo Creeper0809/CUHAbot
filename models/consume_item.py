@@ -19,7 +19,6 @@ class ConsumeStatKey(Enum):
 
 class ConsumeItem(models.Model):
     id = fields.IntField(pk=True)
-    consume_id = fields.IntField()
     item = fields.ForeignKeyField(
         'models.Item',
         related_name='consume_item',
