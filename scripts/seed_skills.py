@@ -174,7 +174,7 @@ HEAL_SKILLS = [
     {
         "id": 2002,
         "name": "재생",
-        "description": "3턴간 매 턴 HP의 6%를 회복한다.",
+        "description": "HP의 6%를 회복한다. (재생 효과)",
         "config": {
             "components": [
                 {"tag": "heal", "percent": 0.06}
@@ -197,15 +197,14 @@ HEAL_SKILLS = [
         "description": "적에게 80% 데미지를 입히고 피해량의 30%를 회복한다.",
         "config": {
             "components": [
-                {"tag": "attack", "damage": 0.8},
-                {"tag": "heal", "percent": 0.1}
+                {"tag": "lifesteal", "ad_ratio": 0.8, "lifesteal": 0.3}
             ]
         }
     },
     {
         "id": 2005,
         "name": "보호막",
-        "description": "HP의 20%에 해당하는 보호막을 얻는다.",
+        "description": "HP의 20%에 해당하는 보호막(회복)을 얻는다.",
         "config": {
             "components": [
                 {"tag": "heal", "percent": 0.2}
@@ -222,7 +221,7 @@ BUFF_SKILLS = [
         "description": "3턴간 치명타 확률 +15%.",
         "config": {
             "components": [
-                {"tag": "buff", "duration": 3, "type": "attack_buff"}
+                {"tag": "buff", "duration": 3, "crit_rate": 0.15}
             ]
         }
     },
@@ -273,8 +272,9 @@ ALL_SKILLS = NEUTRAL_ATTACK_SKILLS + HEAL_SKILLS + BUFF_SKILLS
 
 async def init_db():
     """데이터베이스 연결 초기화"""
+    db_url = f"postgres://{os.getenv('DATABASE_USER')}:{os.getenv('DATABASE_PASSWORD')}@{os.getenv('DATABASE_URL')}:{os.getenv('DATABASE_PORT')}/{os.getenv('DATABASE_TABLE')}"
     await Tortoise.init(
-        db_url=f"mysql://{os.getenv('DATABASE_USER')}:{os.getenv('DATABASE_PASSWORD')}@{os.getenv('DATABASE_URL')}:{os.getenv('DATABASE_PORT')}/{os.getenv('DATABASE_TABLE')}",
+        db_url=db_url,
         modules={"models": ["models"]}
     )
 

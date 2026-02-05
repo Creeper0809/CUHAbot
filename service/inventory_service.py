@@ -14,6 +14,7 @@ from exceptions import (
     InsufficientItemError,
     InventoryFullError,
 )
+from service.collection_service import CollectionService
 
 logger = logging.getLogger(__name__)
 
@@ -67,6 +68,8 @@ class InventoryService:
                 existing.quantity += quantity
                 await existing.save()
                 logger.debug(f"Stacked item {item_id} x{quantity} for user {user.id}")
+                # 도감에 등록 (이미 등록된 경우 무시됨)
+                await CollectionService.register_item(user, item_id)
                 return existing
 
         # 새 인벤토리 항목 생성
@@ -77,6 +80,10 @@ class InventoryService:
             enhancement_level=enhancement_level
         )
         logger.info(f"Added item {item_id} x{quantity} to user {user.id}")
+
+        # 도감에 등록
+        await CollectionService.register_item(user, item_id)
+
         return inv_item
 
     @staticmethod

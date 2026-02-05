@@ -12,6 +12,7 @@ from .item import *
 from .item_grade_probability import *
 from .monster import *
 from .skill import *
+from .user_collection import *
 from .user_deck_preset import *
 from .user_equipment import *
 from .user_inventory import *

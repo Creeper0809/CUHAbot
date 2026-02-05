@@ -134,7 +134,7 @@ class TreasureEncounter(Encounter):
 
         return EncounterResult(
             encounter_type=self.encounter_type,
-            message=f"{chest_emoji} 보물상자 발견! 골드 +{gold_gained}",
+            message=f"{chest_emoji} 보물상자 발견! 💰 **+{gold_gained}** 골드",
             gold_gained=gold_gained
         )
 
@@ -202,11 +202,11 @@ class TrapEncounter(Encounter):
 
         await show_encounter_result(msg, result_embed, delay=2.0)
 
-        escape_msg = " (회피!)" if view.escaped else ""
+        escape_msg = " *(회피!)*" if view.escaped else ""
 
         return EncounterResult(
             encounter_type=self.encounter_type,
-            message=f"⚠️ {trap_name}!{escape_msg} {actual_damage} 피해!",
+            message=f"⚠️ **{trap_name}**{escape_msg} → **-{actual_damage}** HP",
             damage_taken=actual_damage
         )
 
@@ -268,7 +268,7 @@ class RandomEventEncounter(Encounter):
 
                 return EncounterResult(
                     encounter_type=self.encounter_type,
-                    message=f"✨ 신비로운 샘물 발견! HP +{actual_heal}",
+                    message=f"✨ 신비로운 샘물 발견! **+{actual_heal}** HP",
                     healing_received=actual_heal
                 )
 
@@ -284,7 +284,7 @@ class RandomEventEncounter(Encounter):
 
                 return EncounterResult(
                     encounter_type=self.encounter_type,
-                    message="🔥 전투의 축복을 받았다! (공격력 증가)"
+                    message="🔥 **전투의 축복**을 받았다! *(공격력 증가)*"
                 )
 
             else:  # lucky
@@ -302,7 +302,7 @@ class RandomEventEncounter(Encounter):
 
                 return EncounterResult(
                     encounter_type=self.encounter_type,
-                    message=f"🍀 행운의 동전 발견! 골드 +{bonus_gold}",
+                    message=f"🍀 행운의 동전 발견! 💰 **+{bonus_gold}** 골드",
                     gold_gained=bonus_gold
                 )
 
@@ -327,7 +327,7 @@ class RandomEventEncounter(Encounter):
 
                 return EncounterResult(
                     encounter_type=self.encounter_type,
-                    message=f"👻 저주받은 장소... HP -{actual_damage}",
+                    message=f"👻 **저주받은 장소**... **-{actual_damage}** HP",
                     damage_taken=actual_damage
                 )
 
@@ -346,7 +346,7 @@ class RandomEventEncounter(Encounter):
 
                 return EncounterResult(
                     encounter_type=self.encounter_type,
-                    message=f"💸 도둑의 저주! 골드 -{gold_loss}",
+                    message=f"💸 **도둑의 저주!** 💰 **-{gold_loss}** 골드",
                     gold_gained=-gold_loss
                 )
 
@@ -402,7 +402,7 @@ class NPCEncounter(Encounter):
 
             return EncounterResult(
                 encounter_type=self.encounter_type,
-                message=f"🧙 떠돌이 상인을 만났다! 선물로 골드 +{bonus_gold}",
+                message=f"🧙 **떠돌이 상인**을 만났다! 💰 **+{bonus_gold}** 골드",
                 gold_gained=bonus_gold
             )
 
@@ -423,7 +423,7 @@ class NPCEncounter(Encounter):
 
             return EncounterResult(
                 encounter_type=self.encounter_type,
-                message=f"💚 방랑 치료사를 만났다! HP +{actual_heal}",
+                message=f"💚 **방랑 치료사**를 만났다! **+{actual_heal}** HP",
                 healing_received=actual_heal
             )
 
@@ -443,7 +443,7 @@ class NPCEncounter(Encounter):
 
             return EncounterResult(
                 encounter_type=self.encounter_type,
-                message=f"📚 현자의 가르침을 받았다! 경험치 +{bonus_exp}",
+                message=f"📚 **현자의 가르침**을 받았다! ⭐ **+{bonus_exp}** EXP",
                 exp_gained=bonus_exp
             )
 
@@ -504,9 +504,9 @@ class HiddenRoomEncounter(Encounter):
         return EncounterResult(
             encounter_type=self.encounter_type,
             message=(
-                f"🚪 숨겨진 방을 발견했다!\n"
-                f"   💰 골드 +{gold_gained}, 경험치 +{exp_gained}\n"
-                f"   💚 HP +{actual_heal} (휴식)"
+                f"🚪 **숨겨진 방**을 발견했다!\n"
+                f"   💰 **+{gold_gained}** 골드 | ⭐ **+{exp_gained}** EXP\n"
+                f"   💚 **+{actual_heal}** HP *(휴식)*"
             ),
             gold_gained=gold_gained,
             exp_gained=exp_gained,

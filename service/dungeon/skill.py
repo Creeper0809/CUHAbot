@@ -23,6 +23,11 @@ class Skill:
         """스킬 ID"""
         return self._skill_model.id
 
+    @property
+    def components(self) -> list:
+        """스킬 컴포넌트 목록"""
+        return self._components
+
     def on_turn(self, attacker, target):
         logs = []
         for component in self._components:

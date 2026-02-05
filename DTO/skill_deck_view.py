@@ -156,25 +156,78 @@ class CustomPresetDropdown(discord.ui.Select):
 
 
 # =============================================================================
+# 스킬 검색 Modal (필터링용)
+# =============================================================================
+
+class SkillFilterModal(discord.ui.Modal):
+    """스킬 필터링 Modal"""
+
+    search_input = discord.ui.TextInput(
+        label="스킬 이름 검색",
+        placeholder="검색어 입력 (예: 강타, 회복) - 비우면 전체 표시",
+        min_length=0,
+        max_length=50,
+        required=False
+    )
+
+    def __init__(self, view: "SkillDeckView"):
+        super().__init__(title="🔍 스킬 필터")
+        self.deck_view = view
+
+    async def on_submit(self, interaction: discord.Interaction):
+        search_term = self.search_input.value.strip().lower()
+
+        # 스킬 필터링 (부분 일치)
+        if search_term:
+            filtered = [
+                skill for skill in self.deck_view.available_skills
+                if search_term in skill.name.lower()
+            ]
+        else:
+            filtered = self.deck_view.available_skills
+
+        if not filtered:
+            await interaction.response.send_message(
+                f"❌ '{self.search_input.value}'와 일치하는 스킬이 없습니다.",
+                ephemeral=True
+            )
+            return
+
+        # 필터링된 스킬 저장 및 드롭다운 업데이트
+        self.deck_view.filtered_skills = filtered
+        self.deck_view._update_skill_dropdown()
+
+        embed = self.deck_view.create_embed()
+        filter_text = f"'{self.search_input.value}'" if search_term else "전체"
+        embed.add_field(
+            name="🔍 필터 적용",
+            value=f"{filter_text} 검색: {len(filtered)}개 스킬",
+            inline=False
+        )
+
+        await interaction.response.edit_message(embed=embed, view=self.deck_view)
+
+
+# =============================================================================
 # 스킬 선택 드롭다운
 # =============================================================================
 
 class SkillSelectDropdown(discord.ui.Select):
-    """스킬 선택 드롭다운"""
+    """스킬 선택 드롭다운 (필터링된 스킬 표시)"""
 
-    def __init__(self, available_skills: list):
+    def __init__(self, skills: list):
         options = []
 
-        if not available_skills:
+        if not skills:
             options.append(
                 discord.SelectOption(
                     label="스킬 없음",
-                    description="등록된 스킬이 없습니다",
+                    description="🔍 검색으로 필터링하세요",
                     value="0"
                 )
             )
         else:
-            for skill in available_skills[:25]:
+            for skill in skills[:25]:
                 options.append(
                     discord.SelectOption(
                         label=skill.name,
@@ -184,7 +237,7 @@ class SkillSelectDropdown(discord.ui.Select):
                 )
 
         super().__init__(
-            placeholder="🔧 스킬 선택 (선택한 슬롯에 적용)",
+            placeholder=f"📜 스킬 선택 ({len(skills)}개)",
             options=options,
             row=1
         )
@@ -192,6 +245,13 @@ class SkillSelectDropdown(discord.ui.Select):
     async def callback(self, interaction: discord.Interaction):
         view: SkillDeckView = self.view
         skill_id = int(self.values[0])
+
+        if skill_id == 0:
+            await interaction.response.send_message(
+                "💡 검색 버튼을 눌러 스킬을 필터링하세요!",
+                ephemeral=True
+            )
+            return
 
         if not view.selected_slots:
             await interaction.response.send_message(
@@ -335,12 +395,29 @@ class DeletePresetButton(discord.ui.Button):
         )
 
 
+class SearchSkillButton(discord.ui.Button):
+    """스킬 필터 버튼"""
+
+    def __init__(self):
+        super().__init__(
+            label="검색",
+            style=discord.ButtonStyle.secondary,
+            emoji="🔍",
+            row=4
+        )
+
+    async def callback(self, interaction: discord.Interaction):
+        view: SkillDeckView = self.view
+        modal = SkillFilterModal(view)
+        await interaction.response.send_modal(modal)
+
+
 class SelectAllButton(discord.ui.Button):
     """전체 선택/해제 토글"""
 
     def __init__(self):
         super().__init__(
-            label="전체 선택",
+            label="전체",
             style=discord.ButtonStyle.secondary,
             emoji="☑️",
             row=4
@@ -549,6 +626,7 @@ class SkillDeckView(discord.ui.View):
             self.current_deck.append(0)
 
         self.available_skills = available_skills
+        self.filtered_skills = available_skills[:25]  # 초기 필터링 (최대 25개)
         self.selected_slots: Set[int] = set()  # 멀티 선택 지원
         self.saved = False
         self.changes_made = False
@@ -562,14 +640,38 @@ class SkillDeckView(discord.ui.View):
 
         # 컴포넌트 추가
         self.add_item(CustomPresetDropdown(self.presets))
-        self.add_item(SkillSelectDropdown(self.available_skills))
+        self.add_item(SkillSelectDropdown(self.filtered_skills))  # 스킬 드롭다운
         self._add_slot_buttons()
         # Row 4: 5개 버튼
-        self.add_item(SelectAllButton())   # 전체 선택
-        self.add_item(FillAllButton())     # 전체 채우기
-        self.add_item(SavePresetButton())  # 프리셋 저장
-        self.add_item(SaveDeckButton())    # 확정
-        self.add_item(CancelButton())      # 취소
+        self.add_item(SearchSkillButton())  # 스킬 검색/필터
+        self.add_item(SelectAllButton())    # 전체 선택
+        self.add_item(SavePresetButton())   # 프리셋 저장
+        self.add_item(SaveDeckButton())     # 확정
+        self.add_item(CancelButton())       # 취소
+
+    def _update_skill_dropdown(self):
+        """스킬 드롭다운 업데이트 (필터링 적용)"""
+        # 기존 스킬 드롭다운 제거
+        to_remove = [item for item in self.children if isinstance(item, SkillSelectDropdown)]
+        for item in to_remove:
+            self.remove_item(item)
+
+        # 새 드롭다운 추가
+        new_dropdown = SkillSelectDropdown(self.filtered_skills[:25])
+
+        # 프리셋 드롭다운 다음에 삽입
+        preset_idx = 0
+        for i, child in enumerate(self.children):
+            if isinstance(child, CustomPresetDropdown):
+                preset_idx = i + 1
+                break
+
+        children_list = list(self.children)
+        children_list.insert(preset_idx, new_dropdown)
+
+        self.clear_items()
+        for child in children_list:
+            self.add_item(child)
 
     async def _refresh_preset_dropdown(self):
         """프리셋 드롭다운 새로고침"""
@@ -627,9 +729,9 @@ class SkillDeckView(discord.ui.View):
         embed = discord.Embed(
             title="⚔️ 스킬 덱 편집",
             description=(
-                "**프리셋**: 드롭다운에서 불러오기 / 💾버튼으로 저장\n"
-                "**개별 편집**: 슬롯 버튼 클릭 (여러 개 선택 가능) → 스킬 선택\n"
-                "**전체 채우기**: 슬롯 선택 후 📋버튼"
+                "**스킬 장착**: 슬롯 클릭 → 드롭다운에서 스킬 선택\n"
+                "**스킬 검색**: 🔍검색 버튼으로 드롭다운 필터링\n"
+                "**일괄 장착**: ☑️전체 선택 → 스킬 선택"
             ),
             color=EmbedColor.DEFAULT
         )
@@ -643,6 +745,13 @@ class SkillDeckView(discord.ui.View):
             inline=True
         )
 
+        # 필터링된 스킬 수
+        embed.add_field(
+            name="📜 스킬",
+            value=f"{len(self.filtered_skills)}/{len(self.available_skills)}개 표시",
+            inline=True
+        )
+
         # 선택된 슬롯 표시
         if self.selected_slots:
             slot_list = ", ".join(str(s + 1) for s in sorted(self.selected_slots))
@@ -653,8 +762,6 @@ class SkillDeckView(discord.ui.View):
             )
         else:
             embed.add_field(name="\u200b", value="\u200b", inline=True)
-
-        embed.add_field(name="\u200b", value="\u200b", inline=True)
 
         # 덱 시각화
         left_deck = []

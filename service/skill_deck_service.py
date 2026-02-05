@@ -15,6 +15,7 @@ from exceptions import (
     DeckEmptyError,
     CombatRestrictionError,
 )
+from service.collection_service import CollectionService
 from service.session import get_session
 
 logger = logging.getLogger(__name__)
@@ -65,6 +66,9 @@ class SkillDeckService:
             slot_index=slot_index,
             defaults={"skill": skill}
         )
+
+        # 도감에 스킬 등록
+        await CollectionService.register_skill(user, skill_id)
 
         action = "created" if created else "updated"
         logger.info(f"User {user.id} {action} skill in slot {slot_index}: {skill_id}")

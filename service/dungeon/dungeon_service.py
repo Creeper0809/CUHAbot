@@ -19,8 +19,10 @@ from exceptions import MonsterNotFoundError, MonsterSpawnNotFoundError
 from models import Monster, User
 from models.repos.dungeon_repo import find_all_dungeon_spawn_monster_by
 from models.repos.monster_repo import find_monster_by_id
+from service.collection_service import CollectionService
 from service.dungeon.encounter_service import EncounterFactory
 from service.dungeon.encounter_types import EncounterType
+from service.reward_service import RewardService
 from service.session import DungeonSession, SessionType, set_combat_state
 
 logger = logging.getLogger(__name__)
@@ -62,9 +64,12 @@ async def start_dungeon(
     logger.info(f"Dungeon started: user={session.user.discord_id}, dungeon={session.dungeon.id}")
 
     event_queue: deque[str] = deque(maxlen=COMBAT.EVENT_QUEUE_MAX_LENGTH)
+    event_queue.append(f"━━━ 🏰 **탐험 시작** ━━━")
     event_queue.append(f"🚪 {session.dungeon.name}에 입장했다...")
 
-    session.user.now_hp = session.user.hp
+    # HP가 0 이하면 최소 1로 보정 (버그 방지)
+    if session.user.now_hp <= 0:
+        session.user.now_hp = 1
 
     # 던전 레벨에 따른 max_steps 설정
     session.max_steps = _calculate_dungeon_steps(session.dungeon)
@@ -142,15 +147,23 @@ async def _handle_dungeon_clear(
     session.total_exp += bonus_exp
     session.total_gold += bonus_gold
 
+    event_queue.append("━━━ 🏆 **클리어!** ━━━")
     event_queue.append(
-        f"🎉 던전 클리어!\n"
-        f"   클리어 보너스: 경험치 +{bonus_exp}, 골드 +{bonus_gold}"
+        f"🎉 던전을 정복했다!\n"
+        f"⭐ 클리어 보너스: **+{bonus_exp}** EXP, **+{bonus_gold}** G"
     )
 
     await _update_dungeon_log(session, event_queue)
 
+    # 보상 적용 및 레벨업 처리
+    reward_result = await RewardService.apply_rewards(
+        session.user,
+        session.total_exp,
+        session.total_gold
+    )
+
     # 결과 요약 메시지
-    await _send_dungeon_summary(session, interaction, "클리어")
+    await _send_dungeon_summary(session, interaction, "클리어", reward_result)
 
     session.ended = True
     return True
@@ -178,18 +191,27 @@ async def _handle_player_death(
     gold_lost = int(session.total_gold * 0.1)
     session.total_gold = max(0, session.total_gold - gold_lost)
 
-    # HP 50%로 부활
-    session.user.now_hp = session.user.hp // 2
+    # 사망 시 HP 1로 설정 (치유 필요)
+    session.user.now_hp = 1
 
+    event_queue.append("━━━ 💀 **사망** ━━━")
     event_queue.append(
-        f"💀 사망...\n"
-        f"   골드 {gold_lost} 손실, 획득 보상 감소"
+        f"💀 쓰러졌다...\n"
+        f"💸 골드 **-{gold_lost}** 손실\n"
+        f"⚠️ HP가 1로 감소! 회복이 필요합니다."
     )
 
     await _update_dungeon_log(session, event_queue)
 
+    # 보상 적용 (사망해도 획득한 경험치/골드는 받음)
+    reward_result = await RewardService.apply_rewards(
+        session.user,
+        session.total_exp,
+        session.total_gold
+    )
+
     # 결과 요약 메시지
-    await _send_dungeon_summary(session, interaction, "사망")
+    await _send_dungeon_summary(session, interaction, "사망", reward_result)
 
     session.ended = True
     return False
@@ -213,12 +235,20 @@ async def _handle_dungeon_return(
     """
     logger.info(f"Dungeon return: user={session.user.discord_id}")
 
-    event_queue.append("🚶 던전에서 귀환했다...")
+    event_queue.append("━━━ 🚶 **귀환** ━━━")
+    event_queue.append("🚶 던전에서 안전하게 귀환했다...")
 
     await _update_dungeon_log(session, event_queue)
 
+    # 보상 적용 (귀환해도 획득한 경험치/골드는 받음)
+    reward_result = await RewardService.apply_rewards(
+        session.user,
+        session.total_exp,
+        session.total_gold
+    )
+
     # 결과 요약 메시지
-    await _send_dungeon_summary(session, interaction, "귀환")
+    await _send_dungeon_summary(session, interaction, "귀환", reward_result)
 
     return True
 
@@ -226,7 +256,8 @@ async def _handle_dungeon_return(
 async def _send_dungeon_summary(
     session: DungeonSession,
     interaction: discord.Interaction,
-    result_type: str
+    result_type: str,
+    reward_result=None
 ) -> None:
     """
     던전 결과 요약 메시지 전송
@@ -235,6 +266,7 @@ async def _send_dungeon_summary(
         session: 던전 세션
         interaction: Discord 인터랙션
         result_type: 결과 타입 (클리어/사망/귀환)
+        reward_result: 보상 적용 결과
     """
     result_emoji = {"클리어": "🏆", "사망": "💀", "귀환": "🚶"}.get(result_type, "📜")
 
@@ -255,15 +287,31 @@ async def _send_dungeon_summary(
     embed.add_field(
         name="획득 보상",
         value=(
-            f"💎 경험치: {session.total_exp}\n"
-            f"💰 골드: {session.total_gold}"
+            f"💎 경험치: +{session.total_exp}\n"
+            f"💰 골드: +{session.total_gold}"
         ),
         inline=True
     )
 
+    # 레벨업 정보
+    if reward_result and reward_result.level_up:
+        lu = reward_result.level_up
+        embed.add_field(
+            name="🎉 레벨 업!",
+            value=(
+                f"Lv.{lu.old_level} → Lv.{lu.new_level}\n"
+                f"📊 스탯 포인트 +{lu.stat_points_gained}\n"
+                f"💡 /스탯 명령어로 분배하세요!"
+            ),
+            inline=False
+        )
+
     embed.add_field(
         name="최종 상태",
-        value=f"❤️ HP: {session.user.now_hp}/{session.user.hp}",
+        value=(
+            f"❤️ HP: {session.user.now_hp}/{session.user.hp}\n"
+            f"📊 Lv.{session.user.level} | 💰 {session.user.cuha_point}"
+        ),
         inline=False
     )
 
@@ -305,9 +353,15 @@ async def _update_dungeon_log(
     update_embed = _create_dungeon_embed(session, event_queue)
 
     if session.dm_message:
-        session.dm_message = await session.dm_message.edit(embed=update_embed)
+        try:
+            session.dm_message = await session.dm_message.edit(embed=update_embed)
+        except discord.NotFound:
+            session.dm_message = None  # 메시지가 삭제된 경우
     if session.message:
-        session.message = await session.message.edit(embed=update_embed)
+        try:
+            session.message = await session.message.edit(embed=update_embed)
+        except discord.NotFound:
+            session.message = None
 
 
 # =============================================================================
@@ -414,7 +468,7 @@ async def _attempt_flee(session: DungeonSession, monster: Monster) -> str:
     # 도주 확률 판정
     if random.random() < COMBAT.FLEE_SUCCESS_RATE:
         logger.info(f"Flee success: user={session.user.discord_id}")
-        return f"🏃 {user_name}은(는) {monster.name}에게서 도망쳤다!"
+        return f"🏃 **{monster.name}**에게서 도망쳤다!"
 
     # 도주 실패 시 몬스터 공격
     damage = monster.attack
@@ -422,7 +476,7 @@ async def _attempt_flee(session: DungeonSession, monster: Monster) -> str:
     session.user.now_hp = max(session.user.now_hp, 0)
 
     logger.info(f"Flee failed: user={session.user.discord_id}, damage={damage}")
-    return f"💨 도망 실패! {monster.name}의 공격으로 {damage} 피해를 받았다!"
+    return f"💨 도망 실패! **{monster.name}**의 반격으로 **-{damage}** HP"
 
 
 def _spawn_random_monster(dungeon_id: int) -> Monster:
@@ -512,7 +566,12 @@ async def _execute_combat(
     Returns:
         전투 결과 메시지
     """
+    # 몬스터 복사본 생성 (캐시 원본 보호)
+    monster = monster.copy()
+
     logger.info(f"Combat started: user={session.user.discord_id}, monster={monster.name}")
+    logger.info(f"User equipped_skill: {session.user.equipped_skill}")
+    logger.info(f"User skill_queue: {session.user.skill_queue}")
 
     # 전투 상태 설정
     set_combat_state(session.user_id, True)
@@ -544,14 +603,14 @@ async def _execute_combat(
         await combat_message.delete()
 
         # 전투 결과 처리 및 보상
-        return _process_combat_result(session, monster, turn_count)
+        return await _process_combat_result(session, monster, turn_count)
 
     finally:
         # 전투 상태 해제 (항상 실행)
         set_combat_state(session.user_id, False)
 
 
-def _process_combat_result(
+async def _process_combat_result(
     session: DungeonSession,
     monster: Monster,
     turn_count: int
@@ -573,8 +632,8 @@ def _process_combat_result(
     if user.now_hp <= 0:
         logger.info(f"Combat defeat: user={user.discord_id}, monster={monster.name}")
         if monster.now_hp <= 0:
-            return f"⚔️ {user.get_name()}과 {monster.name}은 동시에 쓰러졌다!"
-        return f"💀 {user.get_name()}은(는) {monster.name}에게 패배했다..."
+            return f"⚔️ **{user.get_name()}**과 **{monster.name}** 동시에 쓰러졌다!"
+        return f"💀 **{monster.name}**에게 패배..."
 
     # 승리 시 - 보상 계산
     monster_level = session.dungeon.require_level if session.dungeon else 1
@@ -590,14 +649,17 @@ def _process_combat_result(
     session.total_gold += gold_gained
     session.monsters_defeated += 1
 
+    # 도감에 몬스터 등록
+    await CollectionService.register_monster(user, monster.id)
+
     logger.info(
         f"Combat victory: user={user.discord_id}, monster={monster.name}, "
         f"exp={exp_gained}, gold={gold_gained}, turns={turn_count}"
     )
 
     return (
-        f"🏆 {monster.name}에게 승리! ({turn_count}턴)\n"
-        f"💎 경험치 +{exp_gained}, 골드 +{gold_gained}"
+        f"🏆 **{monster.name}** 처치! ({turn_count}턴)\n"
+        f"   ⭐ +**{exp_gained}** EXP │ 💰 +**{gold_gained}** G"
     )
 
 
@@ -624,6 +686,13 @@ async def _process_turn(
     first, second = _determine_turn_order(user, monster)
     first_skill = first.next_skill()
     second_skill = second.next_skill()
+
+    logger.info(
+        f"Turn {turn_count}: first={first.get_name()}, "
+        f"first_skill={first_skill.name if first_skill else 'None'}, "
+        f"second={second.get_name()}, "
+        f"second_skill={second_skill.name if second_skill else 'None'}"
+    )
 
     # 턴 시작 페이즈
     await _process_turn_start_phase(
@@ -691,9 +760,27 @@ async def _process_turn_start_phase(
     if not start_logs:
         return
 
-    combat_log.append(f"[{turn_count}턴 시작 페이즈]\n" + "\n".join(start_logs))
+    # 턴 시작 효과는 공격 페이즈 전에 별도 표시
+    phase_header = f"🌅 **{turn_count}턴 시작**"
+    combat_log.append(phase_header + "\n" + "\n".join(start_logs))
     await combat_message.edit(embed=_create_battle_embed(user, monster, combat_log))
     await asyncio.sleep(COMBAT.TURN_PHASE_DELAY)
+
+
+def _format_attack_log(attacker_name: str, skill_name: str, target_name: str, damage: int, is_crit: bool = False) -> str:
+    """공격 로그 포맷"""
+    crit_mark = " 💥**치명타!**" if is_crit else ""
+    return f"⚔️ **{attacker_name}** 「{skill_name}」 → **{damage}**{crit_mark}"
+
+
+def _format_heal_log(healer_name: str, skill_name: str, amount: int) -> str:
+    """회복 로그 포맷"""
+    return f"💚 **{healer_name}** 「{skill_name}」 → **+{amount}** HP"
+
+
+def _format_buff_log(caster_name: str, skill_name: str, effect: str) -> str:
+    """버프 로그 포맷"""
+    return f"✨ **{caster_name}** 「{skill_name}」 → {effect}"
 
 
 async def _process_attack_phase(
@@ -712,22 +799,33 @@ async def _process_attack_phase(
     """
     attack_logs = []
 
+    # 턴 헤더
+    turn_header = f"━━━ ⚔️ **{turn_count}턴** ━━━"
+
     # 선공 공격
     if first_skill:
+        logger.info(f"First attacker ({first.get_name()}) using skill: {first_skill.name}")
         first_log = first_skill.on_turn(first, second)
+        logger.info(f"Skill result: '{first_log}', target HP: {second.now_hp}")
         if first_log and first_log.strip():
             attack_logs.append(first_log)
+        else:
+            logger.warning(f"Skill {first_skill.name} returned empty log, using basic attack")
+            damage = first.attack
+            second.now_hp -= damage
+            second.now_hp = max(second.now_hp, 0)
+            attack_logs.append(_format_attack_log(first.get_name(), "기본 공격", second.get_name(), damage))
     else:
-        # 스킬이 없으면 기본 공격
         damage = first.attack
         second.now_hp -= damage
         second.now_hp = max(second.now_hp, 0)
-        attack_logs.append(f"{first.get_name()}의 기본 공격! {second.get_name()}에게 {damage} 피해!")
+        logger.info(f"First attacker ({first.get_name()}) basic attack: {damage} damage, target HP: {second.now_hp}")
+        attack_logs.append(_format_attack_log(first.get_name(), "기본 공격", second.get_name(), damage))
 
     # 전투 종료 체크 (선공 후)
     if user.now_hp <= 0 or monster.now_hp <= 0:
         if attack_logs:
-            combat_log.append(f"[{turn_count}턴 공격 페이즈]\n" + "\n".join(attack_logs))
+            combat_log.append(turn_header + "\n" + "\n".join(attack_logs))
         return True
 
     # 후공 공격
@@ -735,15 +833,20 @@ async def _process_attack_phase(
         second_log = second_skill.on_turn(second, first)
         if second_log and second_log.strip():
             attack_logs.append(second_log)
+        else:
+            logger.warning(f"Skill {second_skill.name} returned empty log, using basic attack")
+            damage = second.attack
+            first.now_hp -= damage
+            first.now_hp = max(first.now_hp, 0)
+            attack_logs.append(_format_attack_log(second.get_name(), "기본 공격", first.get_name(), damage))
     else:
-        # 스킬이 없으면 기본 공격
         damage = second.attack
         first.now_hp -= damage
         first.now_hp = max(first.now_hp, 0)
-        attack_logs.append(f"{second.get_name()}의 기본 공격! {first.get_name()}에게 {damage} 피해!")
+        attack_logs.append(_format_attack_log(second.get_name(), "기본 공격", first.get_name(), damage))
 
     if attack_logs:
-        combat_log.append(f"[{turn_count}턴 공격 페이즈]\n" + "\n".join(attack_logs))
+        combat_log.append(turn_header + "\n" + "\n".join(attack_logs))
         await combat_message.edit(embed=_create_battle_embed(user, monster, combat_log))
         await asyncio.sleep(COMBAT.TURN_PHASE_DELAY)
 
@@ -772,7 +875,9 @@ async def _process_turn_end_phase(
     if not end_logs:
         return
 
-    combat_log.append(f"[{turn_count}턴 엔드 페이즈]\n" + "\n".join(end_logs))
+    # 턴 종료 효과 (DOT, 버프 만료 등)
+    phase_footer = "🌙 **턴 종료 효과**"
+    combat_log.append(phase_footer + "\n" + "\n".join(end_logs))
     await combat_message.edit(embed=_create_battle_embed(user, monster, combat_log))
     await asyncio.sleep(COMBAT.TURN_PHASE_DELAY)
 
@@ -782,6 +887,33 @@ async def _process_turn_end_phase(
 # =============================================================================
 
 
+def _create_hp_bar(current: int, maximum: int, length: int = 10) -> str:
+    """
+    HP 바 생성
+
+    Args:
+        current: 현재 HP
+        maximum: 최대 HP
+        length: 바 길이
+
+    Returns:
+        HP 바 문자열
+    """
+    ratio = max(0, min(current / maximum, 1.0)) if maximum > 0 else 0
+    filled = int(ratio * length)
+    empty = length - filled
+
+    # HP 비율에 따른 색상 (이모지로 표현)
+    if ratio > 0.6:
+        bar_char = "🟩"
+    elif ratio > 0.3:
+        bar_char = "🟨"
+    else:
+        bar_char = "🟥"
+
+    return bar_char * filled + "⬛" * empty
+
+
 def _create_battle_embed(
     player: User,
     monster: Monster,
@@ -789,27 +921,44 @@ def _create_battle_embed(
 ) -> Embed:
     """전투 임베드 생성"""
     embed = Embed(
-        title=f"{player.get_name()} vs {monster.get_name()}",
+        title=f"⚔️ {player.get_name()} vs {monster.get_name()}",
         color=EmbedColor.COMBAT
     )
 
-    player_buffs = "\n".join([s.get_description() for s in player.status]) or "없음"
+    # 플레이어 HP 바
+    player_hp_bar = _create_hp_bar(player.now_hp, player.hp, 10)
+    player_hp_pct = int((player.now_hp / player.hp) * 100) if player.hp > 0 else 0
+    player_buffs = " ".join([s.get_emoji() for s in player.status]) if player.status else ""
+
     embed.add_field(
         name=f"👤 {player.get_name()}",
-        value=f"체력: {player.now_hp}/{player.hp}\n**버프**\n{player_buffs}",
+        value=(
+            f"{player_hp_bar}\n"
+            f"**{player.now_hp}** / {player.hp} ({player_hp_pct}%)\n"
+            f"{player_buffs}" if player_buffs else f"{player_hp_bar}\n**{player.now_hp}** / {player.hp} ({player_hp_pct}%)"
+        ),
         inline=True
     )
 
-    monster_buffs = "\n".join([s.get_description() for s in monster.status]) or "없음"
+    # 몬스터 HP 바
+    monster_hp_bar = _create_hp_bar(monster.now_hp, monster.hp, 10)
+    monster_hp_pct = int((monster.now_hp / monster.hp) * 100) if monster.hp > 0 else 0
+    monster_buffs = " ".join([s.get_emoji() for s in monster.status]) if monster.status else ""
+
     embed.add_field(
         name=f"👹 {monster.get_name()}",
-        value=f"체력: {monster.now_hp}/{monster.hp}\n**버프**\n{monster_buffs}",
+        value=(
+            f"{monster_hp_bar}\n"
+            f"**{monster.now_hp}** / {monster.hp} ({monster_hp_pct}%)\n"
+            f"{monster_buffs}" if monster_buffs else f"{monster_hp_bar}\n**{monster.now_hp}** / {monster.hp} ({monster_hp_pct}%)"
+        ),
         inline=True
     )
 
-    log_text = "\n".join(combat_log) or "전투 시작 전입니다."
+    # 전투 로그
+    log_text = "\n".join(combat_log) if combat_log else "```전투 준비 중...```"
     embed.add_field(
-        name="⚔️ 전투 로그",
+        name="📜 전투 로그",
         value=log_text,
         inline=False
     )
@@ -823,39 +972,78 @@ def _create_dungeon_embed(
 ) -> discord.Embed:
     """던전 임베드 생성"""
     embed = discord.Embed(
-        title=f"🗺️ 던전: {session.dungeon.name}",
-        description=session.dungeon.description,
+        title=f"🏰 {session.dungeon.name}",
+        description=f"*{session.dungeon.description}*" if session.dungeon.description else None,
         color=EmbedColor.DUNGEON
     )
 
-    # 진행도 바 생성
+    # 진행도 바 생성 (개선된 버전)
     progress = min(session.exploration_step / session.max_steps, 1.0)
-    progress_bar = _create_progress_bar(progress)
+    progress_bar = _create_exploration_bar(progress, 12)
+    progress_pct = int(progress * 100)
 
     embed.add_field(
-        name="탐험 진행도",
-        value=f"{progress_bar} {session.exploration_step}/{session.max_steps}",
+        name="🗺️ 탐험 진행도",
+        value=f"{progress_bar}\n**{session.exploration_step}** / {session.max_steps} 구역 ({progress_pct}%)",
         inline=False
     )
 
+    # 플레이어 상태 (HP 바 포함)
+    hp_bar = _create_hp_bar(session.user.now_hp, session.user.hp, 8)
+    hp_pct = int((session.user.now_hp / session.user.hp) * 100) if session.user.hp > 0 else 0
+
     embed.add_field(
-        name="내 정보",
+        name="👤 상태",
         value=(
-            f"❤️ 체력: {session.user.now_hp}/{session.user.hp}\n"
-            f"💎 획득 경험치: {session.total_exp} | 골드: {session.total_gold}\n"
-            f"⚔️ 처치 몬스터: {session.monsters_defeated}"
+            f"{hp_bar}\n"
+            f"HP **{session.user.now_hp}** / {session.user.hp} ({hp_pct}%)"
         ),
-        inline=False
+        inline=True
     )
 
-    log_text = "\n".join(event_queue)
+    # 획득 보상
     embed.add_field(
-        name="진행 상황",
-        value=f"```{log_text}```",
+        name="💎 획득 보상",
+        value=(
+            f"⭐ 경험치: **{session.total_exp:,}**\n"
+            f"💰 골드: **{session.total_gold:,}**\n"
+            f"⚔️ 처치: **{session.monsters_defeated}**"
+        ),
+        inline=True
+    )
+
+    # 탐험 로그 (포맷팅 개선)
+    log_text = "\n".join(event_queue) if event_queue else "탐험을 시작합니다..."
+    embed.add_field(
+        name="📜 탐험 로그",
+        value=log_text,
         inline=False
     )
 
     return embed
+
+
+def _create_exploration_bar(progress: float, length: int = 12) -> str:
+    """
+    탐험 진행도 바 생성 (플레이어 아이콘 포함)
+
+    Args:
+        progress: 진행률 (0.0 ~ 1.0)
+        length: 바 길이
+
+    Returns:
+        진행도 바 문자열
+    """
+    filled = int(progress * length)
+    empty = length - filled - 1
+
+    if progress >= 1.0:
+        return "🚪" + "▓" * (length - 1) + "🏆"
+
+    if filled == 0:
+        return "🚪🧑" + "░" * (length - 1) + "🏁"
+
+    return "🚪" + "▓" * filled + "🧑" + "░" * max(0, empty) + "🏁"
 
 
 def _create_progress_bar(progress: float, length: int = 10) -> str:

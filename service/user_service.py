@@ -16,6 +16,7 @@ from exceptions import (
     UserAlreadyExistsError,
     AlreadyAttendedError,
 )
+from service.collection_service import CollectionService
 
 logger = logging.getLogger(__name__)
 
@@ -93,6 +94,12 @@ class UserService:
         Args:
             user: 대상 사용자
         """
+        # 기본 스킬 도감 등록 (중복 제거)
+        unique_skills = set(UserService.DEFAULT_SKILL_DECK)
+        for skill_id in unique_skills:
+            await CollectionService.register_skill(user, skill_id)
+
+        # 스킬 덱 초기화
         for slot, skill_id in enumerate(UserService.DEFAULT_SKILL_DECK):
             await UserSkillDeck.create(
                 user=user,

@@ -18,7 +18,10 @@ class UserStatEnum(str, Enum):
     """사용자 스탯 열거형"""
     HP = "HP"
     ATTACK = "ATTACK"
+    DEFENSE = "DEFENSE"
     SPEED = "SPEED"
+    AP_ATTACK = "AP_ATTACK"
+    AP_DEFENSE = "AP_DEFENSE"
 
 
 class User(models.Model):
@@ -39,15 +42,29 @@ class User(models.Model):
     created_at = fields.DatetimeField(auto_now_add=True)
     user_role = fields.CharField(max_length=255, default="user")
 
-    hp = fields.IntField(default=300)
+    # 기본 스탯 (분배 가능)
+    hp = fields.IntField(default=100)  # 기본 HP
+    attack = fields.IntField(default=10)  # 물리 공격력
+    defense = fields.IntField(default=5)  # 물리 방어력
+    speed = fields.IntField(default=10)  # 속도
+
+    # 마법 스탯
+    ap_attack = fields.IntField(default=5)  # 마법 공격력
+    ap_defense = fields.IntField(default=5)  # 마법 방어력
+
+    # 레벨 및 경험치
     level = fields.IntField(default=1)
-    now_hp = fields.IntField(default=300)
-    attack = fields.IntField(default=10)
+    exp = fields.BigIntField(default=0)  # 현재 경험치
+    stat_points = fields.IntField(default=0)  # 분배 가능한 스탯 포인트
+
+    # 상태
+    now_hp = fields.IntField(default=100)
+    hp_regen = fields.IntField(default=5)  # 분당 HP 회복량
+    last_regen_time = fields.DatetimeField(auto_now_add=True)  # 마지막 회복 시간
 
     # ==========================================================================
     # 런타임 필드 (DB 미저장) - __init__에서 초기화
     # ==========================================================================
-    speed: int
     status: list["Buff"]
     equipped_skill: list[int]
     skill_queue: list[int]
@@ -58,7 +75,6 @@ class User(models.Model):
 
     def _init_runtime_fields(self) -> None:
         """런타임 필드 초기화 (인스턴스별로 독립적인 리스트 생성)"""
-        self.speed = 10
         self.status = []
         self.equipped_skill = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
         self.skill_queue = []
@@ -103,8 +119,11 @@ class User(models.Model):
         """
         stat: dict[UserStatEnum, int] = {
             UserStatEnum.HP: self.hp,
-            UserStatEnum.SPEED: self.speed,
             UserStatEnum.ATTACK: self.attack,
+            UserStatEnum.DEFENSE: self.defense,
+            UserStatEnum.SPEED: self.speed,
+            UserStatEnum.AP_ATTACK: self.ap_attack,
+            UserStatEnum.AP_DEFENSE: self.ap_defense,
         }
 
         for buff in self.status:

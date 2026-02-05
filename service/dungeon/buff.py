@@ -17,12 +17,19 @@ class Buff(TurnConfig):
         self.amount = 0
         self.duration = 0
 
-    def apply_stat(self,stats):
+    def apply_stat(self, stats):
         pass
 
-    def apply_config(self,config):
+    def apply_config(self, config):
         self.amount = config["amount"]
         self.duration = config["duration"]
+
+    def get_description(self) -> str:
+        return "버프"
+
+    def get_emoji(self) -> str:
+        """버프 이모지 반환"""
+        return "✨"
 
 
 @register_buff_with_tag("attack")
@@ -30,9 +37,12 @@ class AttackBuff(Buff):
     def __init__(self):
         super().__init__()
 
-    def apply_stat(self,stats):
+    def apply_stat(self, stats):
         stats[UserStatEnum.ATTACK] += self.amount
 
     def get_description(self):
-        return f"공격력 버프 {self.amount}"
+        return f"⚔️ 공격력 +{self.amount} ({self.duration}턴)"
+
+    def get_emoji(self) -> str:
+        return "⚔️"
 

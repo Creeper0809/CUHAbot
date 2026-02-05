@@ -2,7 +2,7 @@ import logging
 
 from models import Dungeon, Monster, DungeonSpawn, Item, Skill_Model
 from service.dungeon.skill import Skill
-from service.dungeon.skill_component import get_component_by_tag
+from service.dungeon.skill_component import get_component_by_tag, skill_component_register
 
 logger = logging.getLogger(__name__)
 
@@ -40,11 +40,16 @@ async def load_static_data():
     logger.info(f"Loaded {len(item_cache)} items")
 
     # 스킬 로딩
+    logger.info(f"Registered skill component tags: {list(skill_component_register.keys())}")
     skills = await Skill_Model.all()
     for skill in skills:
         components = []
         # config 구조: {"components": [{"tag": "attack", ...}, ...]}
         component_configs = skill.config.get("components", [])
+
+        if not component_configs:
+            logger.warning(f"Skill {skill.id} ({skill.name}) has no components! Config: {skill.config}")
+
         for comp_config in component_configs:
             tag = comp_config.get("tag")
             if not tag:
@@ -54,10 +59,12 @@ async def load_static_data():
                 component = get_component_by_tag(tag)
                 component.apply_config(comp_config, skill.name)
                 components.append(component)
+                logger.info(f"Skill {skill.id} ({skill.name}): loaded component '{tag}'")
             except KeyError:
                 logger.warning(f"Unknown component tag '{tag}' in skill {skill.id}")
 
         skill_cache_by_id[skill.id] = Skill(skill, components)
+        logger.info(f"Skill {skill.id} ({skill.name}): {len(components)} components loaded")
 
     logger.info(f"Loaded {len(skill_cache_by_id)} skills")
 

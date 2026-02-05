@@ -11,6 +11,7 @@ from models.user_stats import UserStats
 from models.user_equipment import UserEquipment, EquipmentSlot
 from models.user_skill_deck import UserSkillDeck
 from models.repos.static_cache import skill_cache_by_id, item_cache
+from service.reward_service import RewardService
 
 
 class UserInfoView(discord.ui.View):
@@ -63,57 +64,81 @@ class UserInfoView(discord.ui.View):
             color=discord.Color.blue()
         )
 
-        # 기본 스탯
-        embed.add_field(
-            name="⚔️ 기본 스탯",
-            value=(
-                f"```\n"
-                f"레벨      : Lv.{self.user.level}\n"
-                f"체력      : {self.user.now_hp}/{self.user.hp} HP\n"
-                f"공격력    : {self.user.attack}\n"
-                f"```"
-            ),
-            inline=True
-        )
-
-        # 재화 정보
-        gold = self.stats.gold if self.stats else 0
-        exp = self.stats.experience if self.stats else 0
-        stat_points = self.stats.stat_points if self.stats else 0
-
-        embed.add_field(
-            name="💰 재화 및 경험치",
-            value=(
-                f"```\n"
-                f"골드      : {gold:,}G\n"
-                f"경험치    : {exp:,} EXP\n"
-                f"스탯 포인트: {stat_points}P\n"
-                f"```"
-            ),
-            inline=True
-        )
-
-        # 보조 스탯
-        if self.stats:
-            embed.add_field(
-                name="📈 보조 스탯",
-                value=(
-                    f"```\n"
-                    f"명중률    : {self.stats.accuracy}%\n"
-                    f"회피율    : {self.stats.evasion}%\n"
-                    f"치명타율  : {self.stats.critical_rate}%\n"
-                    f"치명타 배율: {self.stats.critical_damage}%\n"
-                    f"```"
-                ),
-                inline=False
-            )
-
         # HP 바
         hp_ratio = self.user.now_hp / self.user.hp if self.user.hp > 0 else 0
         hp_bar = self._create_bar(hp_ratio, 20)
+
+        # 기본 전투 스탯
         embed.add_field(
-            name="❤️ 체력 바",
-            value=f"{hp_bar} {int(hp_ratio * 100)}%",
+            name="⚔️ 물리 스탯",
+            value=(
+                f"```\n"
+                f"레벨     : Lv.{self.user.level}\n"
+                f"체력     : {self.user.now_hp}/{self.user.hp}\n"
+                f"공격력   : {self.user.attack}\n"
+                f"방어력   : {self.user.defense}\n"
+                f"속도     : {self.user.speed}\n"
+                f"```"
+            ),
+            inline=True
+        )
+
+        # 마법 스탯
+        embed.add_field(
+            name="✨ 마법 스탯",
+            value=(
+                f"```\n"
+                f"마법공격력: {self.user.ap_attack}\n"
+                f"마법방어력: {self.user.ap_defense}\n"
+                f"```"
+            ),
+            inline=True
+        )
+
+        # 보조 전투 스탯 (기본값 또는 UserStats에서)
+        # Balance.md 기준 기본값: 명중 90%, 회피 5%, 치명타율 5%, 치명타 배율 150%
+        accuracy = self.stats.accuracy if self.stats else 90
+        evasion = self.stats.evasion if self.stats else 5
+        crit_rate = self.stats.critical_rate if self.stats else 5
+        crit_damage = self.stats.critical_damage if self.stats else 150
+
+        embed.add_field(
+            name="🎯 전투 보조",
+            value=(
+                f"```\n"
+                f"명중률   : {accuracy}%\n"
+                f"회피율   : {evasion}%\n"
+                f"치명타율 : {crit_rate}%\n"
+                f"치명타배율: {crit_damage}%\n"
+                f"```"
+            ),
+            inline=True
+        )
+
+        # 회복 및 재화
+        embed.add_field(
+            name="💚 회복 / 💰 재화",
+            value=(
+                f"```\n"
+                f"자연회복 : {self.user.hp_regen} HP/분\n"
+                f"골드     : {self.user.cuha_point:,}G\n"
+                f"스탯 P   : {self.user.stat_points}P\n"
+                f"```"
+            ),
+            inline=True
+        )
+
+        # 경험치 바 계산
+        level_progress = RewardService.get_level_progress(self.user)
+        exp_bar = self._create_bar(level_progress["progress"], 20)
+
+        # HP 바 + 경험치 바 표시
+        embed.add_field(
+            name="❤️ 체력 / ⭐ 경험치",
+            value=(
+                f"HP: {hp_bar} {int(hp_ratio * 100)}%\n"
+                f"EXP: {exp_bar} {int(level_progress['progress'] * 100)}% ({level_progress['exp_in_level']:,}/{level_progress['exp_needed']:,})"
+            ),
             inline=False
         )
 
