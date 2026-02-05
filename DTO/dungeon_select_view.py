@@ -100,10 +100,10 @@ class DungeonSelectView(discord.ui.View):
         return interaction.user == self.user
 
     async def on_timeout(self):
+        self.selected_dungeon = None  # 타임아웃 시 항상 리셋
         if self.message:
             try:
                 await self.message.edit(view=None)
-                self.selected_dungeon = None
             except discord.NotFound:
                 pass
 

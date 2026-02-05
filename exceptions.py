@@ -313,3 +313,57 @@ class CacheKeyNotFoundError(CUHABotError):
         self.cache_name = cache_name
         self.key = key
         super().__init__(f"{cache_name}에서 '{key}'를 찾을 수 없습니다.")
+
+
+# =============================================================================
+# 인벤토리 관련 예외
+# =============================================================================
+
+
+class InventoryFullError(CUHABotError):
+    """인벤토리 가득 참"""
+
+    def __init__(self, max_slots: int = 100):
+        self.max_slots = max_slots
+        super().__init__(f"인벤토리가 가득 찼습니다. (최대 {max_slots}칸)")
+
+
+class EquipmentSlotMismatchError(CUHABotError):
+    """장비 슬롯 불일치"""
+
+    def __init__(self, item_name: str, expected_slot: str, target_slot: str):
+        self.item_name = item_name
+        self.expected_slot = expected_slot
+        self.target_slot = target_slot
+        super().__init__(
+            f"{item_name}은(는) {expected_slot} 슬롯 장비입니다. "
+            f"{target_slot}에 장착할 수 없습니다."
+        )
+
+
+# =============================================================================
+# 레벨/요구사항 관련 예외
+# =============================================================================
+
+
+class LevelRequirementError(CUHABotError):
+    """레벨 요구사항 미충족"""
+
+    def __init__(self, required_level: int, current_level: int):
+        self.required_level = required_level
+        self.current_level = current_level
+        super().__init__(
+            f"레벨이 부족합니다. (필요: {required_level}, 현재: {current_level})"
+        )
+
+
+# =============================================================================
+# 출석 관련 예외
+# =============================================================================
+
+
+class AlreadyAttendedError(CUHABotError):
+    """이미 출석함"""
+
+    def __init__(self):
+        super().__init__("오늘은 이미 출석했습니다.")

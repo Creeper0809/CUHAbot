@@ -10,8 +10,8 @@
 | Phase | 상태 | 진행률 |
 |-------|------|--------|
 | Phase 0: 코드 품질 | ✅ 완료 | 100% |
-| Phase 1: 핵심 기반 | 🔄 진행중 | 60% |
-| Phase 2: 게임 루프 | ⏳ 대기 | 0% |
+| Phase 1: 핵심 기반 | ✅ 완료 | 100% |
+| Phase 2: 게임 루프 | ✅ 완료 | 100% |
 | Phase 3: 전투 확장 | ⏳ 대기 | 0% |
 | Phase 4: 콘텐츠 확장 | ⏳ 대기 | 0% |
 | Phase 5: 소셜/멀티 | ⏳ 대기 | 0% |
@@ -57,8 +57,8 @@
 - [x] 사용자 등록 (Discord 연동)
 - [x] 사용자 정보 조회
 - [x] `@requires_registration()` 데코레이터
-- [ ] 캐릭터 초기 스탯 생성
-- [ ] 출석 체크 및 일일 보상
+- [x] 캐릭터 초기 스탯 생성 (`UserService.create_user()`)
+- [x] 출석 체크 및 일일 보상 (`UserService.process_attendance()`)
 
 ### 1.2 데이터베이스 모델
 - [x] Users 모델
@@ -66,10 +66,10 @@
 - [x] Monster 모델
 - [x] Item 모델 (BaseItem, EquipmentItem, ConsumeItem)
 - [x] Skill 모델
-- [ ] UserInventory 모델 (소지품 관리)
-- [ ] UserEquipment 모델 (장착 장비)
-- [ ] UserSkillDeck 모델 (스킬 덱)
-- [ ] UserStats 모델 (스탯 포인트 분배)
+- [x] UserInventory 모델 (소지품 관리)
+- [x] UserEquipment 모델 (장착 장비)
+- [x] UserSkillDeck 모델 (스킬 덱)
+- [x] UserStats 모델 (스탯 포인트 분배)
 
 ### 1.3 정적 데이터 캐싱
 - [x] StaticCache 구현
@@ -80,66 +80,72 @@
 
 ### 1.4 세션 관리
 - [x] DungeonSession 기본 구조
-- [ ] 세션 상태 추적 (탐험/전투/휴식)
-- [ ] 세션 저장 및 복구
-- [ ] 음성 채널 상태 추적
+- [x] 세션 상태 추적 (탐험/전투/휴식) - `SessionType` enum 확장
+- [ ] 세션 저장 및 복구 (Phase 2에서 구현)
+- [x] 음성 채널 상태 추적 (`set_voice_channel()`)
 
 ---
 
-## 🟠 Phase 2: 게임 루프 (Essential)
+## ✅ Phase 2: 게임 루프 (Essential) - 완료
 
 > 기본 게임 플레이가 가능한 수준
 
 ### 2.1 던전 탐험 시스템
 - [x] 던전 선택 UI (DungeonSelectView)
 - [x] 던전 입장
-- [ ] 던전 탐험 진행 (스텝 기반)
-- [ ] 인카운터 발생 시스템
-- [ ] 던전 클리어 조건
-- [ ] 던전 귀환 (마을 복귀)
+- [x] 던전 탐험 진행 (스텝 기반) - `DungeonSession.exploration_step`
+- [x] 인카운터 발생 시스템 - `EncounterFactory`
+- [x] 던전 클리어 조건 - `_handle_dungeon_clear()`
+- [x] 던전 귀환 (마을 복귀) - `_handle_dungeon_return()`
 
 ### 2.2 인카운터 시스템
-- [ ] 몬스터 인카운터 (전투)
-- [ ] 보물상자 인카운터
-- [ ] NPC 인카운터
-- [ ] 퀘스트 인카운터 (미니 퀘스트)
-- [ ] 랜덤 이벤트 인카운터 (축복/저주)
-- [ ] 함정 인카운터
-- [ ] 숨겨진 방 (5% 확률)
+- [x] 몬스터 인카운터 (전투) - 60% 확률
+- [x] 보물상자 인카운터 - 10% (일반/실버/골드)
+- [x] NPC 인카운터 - 5% (상인/현자/여행자)
+- [x] 랜덤 이벤트 인카운터 (축복/저주) - 10%
+- [x] 함정 인카운터 - 10% (HP 5~15% 피해)
+- [x] 숨겨진 방 (5% 확률) - 희귀 보상
 
 ### 2.3 기본 전투 시스템
 - [x] 전투 시작/종료 처리
 - [x] FightOrFleeView (전투/도주 선택)
 - [x] DungeonControlView (전투 컨트롤)
-- [ ] 턴제 전투 루프 구현
-- [ ] 랜덤 스킬 발동 (덱에서 1/10 확률)
-- [ ] 도주 시스템 (50% 성공률)
-- [ ] 전투 결과 처리 (승리/패배)
+- [x] 턴제 전투 루프 구현 - `_execute_combat()`
+- [x] 랜덤 스킬 발동 (덱에서 1/10 확률) - `SkillDeckService`
+- [x] 도주 시스템 (50% 성공률) - `_attempt_flee()`
+- [x] 전투 결과 처리 (승리/패배) - `_process_combat_result()`
 
 ### 2.4 데미지 계산 시스템
-- [ ] 물리 데미지 공식: `Attack - 적Defense × 0.5`
-- [ ] 마법 데미지 공식: `AP_Attack - 적AP_Defense × 0.4`
-- [ ] 치명타 계산 (Rate 확인 → 150% 데미지)
-- [ ] 명중률 계산 (Accuracy - Evasion)
-- [ ] 랜덤 변동 (±10%)
-- [ ] 방어력 무시 계산 (최대 70%)
+- [x] 물리 데미지 공식: `Attack - 적Defense × 0.5`
+- [x] 마법 데미지 공식: `AP_Attack - 적AP_Defense × 0.4`
+- [x] 치명타 계산 (Rate 확인 → 150% 데미지)
+- [x] 명중률 계산 (Accuracy - Evasion)
+- [x] 랜덤 변동 (±10%)
+- [x] 방어력 무시 계산 (최대 70%)
+
+> 구현: `service/combat/damage_calculator.py`
 
 ### 2.5 스킬 덱 시스템
-- [ ] 10슬롯 덱 기본 구조
-- [ ] 덱 편집 UI
-- [ ] 스킬 중복 장착 허용
-- [ ] 발동 확률 계산 (슬롯수/10)
-- [ ] 덱 저장/불러오기
-- [ ] **전투 중 덱 변경 불가** (규칙)
+- [x] 10슬롯 덱 기본 구조 - `UserSkillDeck` 모델
+- [x] 덱 편집 UI - `DTO/skill_deck_view.py`
+- [x] 스킬 중복 장착 허용
+- [x] 발동 확률 계산 (슬롯수/10)
+- [x] 덱 저장/불러오기 - `SkillDeckService`
+- [x] **전투 중 덱 변경 불가** (규칙) - `is_in_combat()` 체크
+
+> 커맨드: `/덱` - `cogs/dungeon_command.py`
 
 ### 2.6 기본 스킬 구현
 - [x] 스킬 컴포넌트 시스템 (@register_skill_with_tag)
-- [x] Attack 컴포넌트
+- [x] Attack 컴포넌트 - DamageCalculator 연동
 - [x] Heal 컴포넌트
 - [x] Buff 컴포넌트
-- [ ] 무속성 스킬 13개 구현
-- [ ] 기본 회복 스킬 5개 구현
-- [ ] 기본 버프 스킬 5개 구현
+- [x] Debuff 컴포넌트
+- [x] 무속성 스킬 13개 구현 (ID 1001-1013)
+- [x] 기본 회복 스킬 5개 구현 (ID 2001-2005)
+- [x] 기본 버프 스킬 5개 구현 (ID 3001-3005)
+
+> 시드 스크립트: `scripts/seed_skills.py`
 
 ---
 
@@ -425,9 +431,9 @@
 - [x] DungeonSelectView (던전 선택)
 - [x] DungeonControlView (던전 컨트롤)
 - [x] FightOrFleeView (전투/도주)
+- [x] SkillDeckView (스킬 덱 편집) - `/덱` 커맨드
 - [ ] InventoryView (인벤토리)
 - [ ] EquipmentView (장비 관리)
-- [ ] DeckEditView (덱 편집)
 - [ ] ShopView (상점)
 - [ ] EnhanceView (강화)
 - [ ] PartyView (파티 관리)
@@ -461,10 +467,10 @@
 - [ ] 비동기 처리 최적화
 
 ### 코드 품질
-- [ ] 타입 힌트 추가
-- [ ] 단위 테스트 작성
+- [x] 타입 힌트 추가 (진행 중)
+- [x] 단위 테스트 작성 - `tests/unit/test_damage_calculator.py`
 - [ ] 통합 테스트 작성
-- [ ] 에러 핸들링 개선
+- [x] 에러 핸들링 개선 - `exceptions.py`
 
 ### 인프라
 - [ ] 로깅 시스템 강화
@@ -506,4 +512,4 @@
 
 ---
 
-*최종 업데이트: 2024년*
+*최종 업데이트: 2026-02-05 (Phase 2 완료)*

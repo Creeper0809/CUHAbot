@@ -17,7 +17,10 @@ class FightOrFleeView(discord.ui.View):
         self.stop()
         await interaction.response.defer()
         if self.message:
-            await self.message.edit(view=None)
+            try:
+                await self.message.edit(view=None)
+            except discord.NotFound:
+                pass
 
     @discord.ui.button(label="🏃 도망간다", style=discord.ButtonStyle.secondary)
     async def flee(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -25,7 +28,10 @@ class FightOrFleeView(discord.ui.View):
         self.stop()
         await interaction.response.defer()
         if self.message:
-            await self.message.edit(view=None)
+            try:
+                await self.message.edit(view=None)
+            except discord.NotFound:
+                pass
 
     async def on_timeout(self):
         if self.message:

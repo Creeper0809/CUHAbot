@@ -4,7 +4,7 @@ class DungeonUserPos(models.Model):
     id = fields.IntField(pk=True)
     user = fields.ForeignKeyField('models.User', related_name='positions')
     equip = fields.ForeignKeyField('models.Item', related_name='equipped_positions', null=True)
-    skill = fields.ForeignKeyField('models.Skill', related_name='equipped_positions', null=True)
+    skill = fields.ForeignKeyField('models.Skill_Model', related_name='equipped_positions', null=True)
 
     class Meta:
         table = "dungeon_user_pos"

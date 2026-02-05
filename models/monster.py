@@ -82,6 +82,10 @@ class Monster(models.Model):
         Returns:
             독립적인 런타임 상태를 가진 몬스터 복사본
         """
+        # DB에서 로드 시 런타임 필드가 없을 수 있음
+        if not hasattr(self, 'speed'):
+            self._init_runtime_fields()
+
         new_monster = Monster(
             name=self.name,
             description=self.description,
@@ -89,9 +93,9 @@ class Monster(models.Model):
             attack=self.attack,
         )
         new_monster.now_hp = self.hp
-        new_monster.speed = self.speed
-        new_monster.status = deepcopy(self.status)
-        new_monster.use_skill = self.use_skill[:]
+        new_monster.speed = getattr(self, 'speed', 10)
+        new_monster.status = deepcopy(getattr(self, 'status', []))
+        new_monster.use_skill = getattr(self, 'use_skill', [0] * 10)[:]
         new_monster.skill_queue = []
         return new_monster
 
