@@ -5,11 +5,12 @@
 커스텀 프리셋 저장/불러오기 기능을 포함합니다.
 """
 import discord
-from typing import Optional, List, Set
+from typing import Optional, List, Set, Dict
 
 from config import SKILL_DECK_SIZE, EmbedColor
 from models.repos.static_cache import skill_cache_by_id
 from models.user_deck_preset import UserDeckPreset
+from models.user_owned_skill import UserOwnedSkill
 from service.session import get_session
 
 
@@ -213,10 +214,11 @@ class SkillFilterModal(discord.ui.Modal):
 # =============================================================================
 
 class SkillSelectDropdown(discord.ui.Select):
-    """스킬 선택 드롭다운 (필터링된 스킬 표시)"""
+    """스킬 선택 드롭다운 (필터링된 스킬 표시, 수량 포함)"""
 
-    def __init__(self, skills: list):
+    def __init__(self, skills: list, skill_quantities: Dict[int, UserOwnedSkill] = None):
         options = []
+        skill_quantities = skill_quantities or {}
 
         if not skills:
             options.append(
@@ -228,10 +230,17 @@ class SkillSelectDropdown(discord.ui.Select):
             )
         else:
             for skill in skills[:25]:
+                owned = skill_quantities.get(skill.id)
+                if owned:
+                    qty_info = f"[보유:{owned.quantity} 장착:{owned.equipped_count}] "
+                else:
+                    qty_info = "[미보유] "
+
+                desc = skill.description[:40] if skill.description else "설명 없음"
                 options.append(
                     discord.SelectOption(
                         label=skill.name,
-                        description=skill.description[:50] if skill.description else "설명 없음",
+                        description=f"{qty_info}{desc}"[:50],
                         value=str(skill.id)
                     )
                 )
@@ -256,6 +265,15 @@ class SkillSelectDropdown(discord.ui.Select):
         if not view.selected_slots:
             await interaction.response.send_message(
                 "💡 먼저 슬롯 버튼을 클릭하세요! (여러 개 선택 가능)",
+                ephemeral=True
+            )
+            return
+
+        # 스킬 수량 검증
+        can_equip, error_msg = view._check_skill_availability(skill_id, len(view.selected_slots))
+        if not can_equip:
+            await interaction.response.send_message(
+                f"⚠️ {error_msg}",
                 ephemeral=True
             )
             return
@@ -614,6 +632,7 @@ class SkillDeckView(discord.ui.View):
         current_deck: list[int],
         available_skills: list,
         db_user=None,
+        skill_quantities: Dict[int, UserOwnedSkill] = None,
         timeout: int = 180
     ):
         super().__init__(timeout=timeout)
@@ -621,12 +640,14 @@ class SkillDeckView(discord.ui.View):
         self.user = user
         self.db_user = db_user
         self.current_deck = current_deck.copy()
+        self.original_deck = current_deck.copy()  # 원본 덱 저장 (수량 검증용)
 
         while len(self.current_deck) < SKILL_DECK_SIZE:
             self.current_deck.append(0)
 
         self.available_skills = available_skills
         self.filtered_skills = available_skills[:25]  # 초기 필터링 (최대 25개)
+        self.skill_quantities = skill_quantities or {}  # 스킬별 소유 정보
         self.selected_slots: Set[int] = set()  # 멀티 선택 지원
         self.saved = False
         self.changes_made = False
@@ -640,7 +661,7 @@ class SkillDeckView(discord.ui.View):
 
         # 컴포넌트 추가
         self.add_item(CustomPresetDropdown(self.presets))
-        self.add_item(SkillSelectDropdown(self.filtered_skills))  # 스킬 드롭다운
+        self.add_item(SkillSelectDropdown(self.filtered_skills, self.skill_quantities))
         self._add_slot_buttons()
         # Row 4: 5개 버튼
         self.add_item(SearchSkillButton())  # 스킬 검색/필터
@@ -657,7 +678,7 @@ class SkillDeckView(discord.ui.View):
             self.remove_item(item)
 
         # 새 드롭다운 추가
-        new_dropdown = SkillSelectDropdown(self.filtered_skills[:25])
+        new_dropdown = SkillSelectDropdown(self.filtered_skills[:25], self.skill_quantities)
 
         # 프리셋 드롭다운 다음에 삽입
         preset_idx = 0
@@ -814,6 +835,57 @@ class SkillDeckView(discord.ui.View):
             return "❌ 비어있음"
         skill = skill_cache_by_id.get(skill_id)
         return skill.name if skill else f"?? (#{skill_id})"
+
+    def _check_skill_availability(self, skill_id: int, slots_needed: int) -> tuple[bool, str]:
+        """
+        스킬 장착 가능 여부 확인
+
+        Args:
+            skill_id: 장착하려는 스킬 ID
+            slots_needed: 장착할 슬롯 수
+
+        Returns:
+            (가능 여부, 에러 메시지)
+        """
+        owned = self.skill_quantities.get(skill_id)
+        if not owned:
+            skill_name = self._get_skill_name(skill_id)
+            return False, f"'{skill_name}' 스킬을 보유하고 있지 않습니다."
+
+        # 현재 덱에서 해당 스킬이 사용된 슬롯 수 계산
+        current_usage = sum(1 for sid in self.current_deck if sid == skill_id)
+
+        # 선택된 슬롯 중 이미 해당 스킬이 있는 슬롯 수
+        already_equipped_in_selected = sum(
+            1 for slot in self.selected_slots
+            if self.current_deck[slot] == skill_id
+        )
+
+        # 실제로 추가로 필요한 수량
+        # (선택된 슬롯 중 이미 같은 스킬이면 추가 소모 없음)
+        additional_needed = slots_needed - already_equipped_in_selected
+
+        # 원본 덱 기준으로 사용 가능한 수량 계산
+        original_usage = sum(1 for sid in self.original_deck if sid == skill_id)
+        total_quantity = owned.quantity
+
+        # 현재 덱에서 이미 사용 중인 수량 (선택된 슬롯 제외)
+        non_selected_usage = sum(
+            1 for i, sid in enumerate(self.current_deck)
+            if sid == skill_id and i not in self.selected_slots
+        )
+
+        # 사용 가능한 수량 = 총 보유 - 선택 안 된 슬롯에서 사용 중인 수량
+        available = total_quantity - non_selected_usage
+
+        if available < slots_needed:
+            skill_name = self._get_skill_name(skill_id)
+            return False, (
+                f"'{skill_name}' 스킬이 부족합니다.\n"
+                f"필요: {slots_needed}개, 사용 가능: {available}개"
+            )
+
+        return True, ""
 
     async def on_timeout(self):
         if self.message:

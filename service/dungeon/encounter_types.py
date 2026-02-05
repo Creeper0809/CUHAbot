@@ -20,6 +20,8 @@ from DTO.encounter_view import (
     HiddenRoomView,
     show_encounter_result
 )
+from DTO.shop_view import ShopView
+from service.shop_service import ShopService
 
 if TYPE_CHECKING:
     from service.session import DungeonSession
@@ -387,23 +389,37 @@ class NPCEncounter(Encounter):
         result_embed = view.create_embed(before=False)
 
         if npc_type == "merchant":
-            # 상인: 할인 또는 보너스
-            bonus_gold = random.randint(15, 30)
-            session.total_gold += bonus_gold
+            # 상인: 실제 상점 열기
+            user_gold = await ShopService.get_user_gold(user)
 
+            # 상점 View 표시
+            shop_view = ShopView(
+                user=interaction.user,
+                db_user=user,
+                user_gold=user_gold,
+                timeout=120
+            )
+
+            shop_embed = shop_view.create_embed()
+            shop_msg = await interaction.user.send(embed=shop_embed, view=shop_view)
+            shop_view.message = shop_msg
+
+            # 상점 이용 대기
+            await shop_view.wait()
+
+            # 상점 닫힌 후 결과 메시지
             result_embed.description = "*\"좋은 거래였네, 친구!\"*"
             result_embed.add_field(
-                name="🎁 선물",
-                value=f"상인이 골드 **{bonus_gold}**을 건네주었다!",
+                name="🏪 상점 이용",
+                value="상인과의 거래가 끝났습니다.",
                 inline=False
             )
 
-            await show_encounter_result(msg, result_embed, delay=2.5)
+            await show_encounter_result(msg, result_embed, delay=1.0)
 
             return EncounterResult(
                 encounter_type=self.encounter_type,
-                message=f"🧙 **떠돌이 상인**을 만났다! 💰 **+{bonus_gold}** 골드",
-                gold_gained=bonus_gold
+                message="🧙 **떠돌이 상인**을 만났다!"
             )
 
         elif npc_type == "healer":

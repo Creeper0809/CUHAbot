@@ -16,6 +16,7 @@ from .user_collection import *
 from .user_deck_preset import *
 from .user_equipment import *
 from .user_inventory import *
+from .user_owned_skill import *
 from .user_skill_deck import *
 from .user_stats import *
 from .users import *

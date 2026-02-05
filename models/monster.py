@@ -87,6 +87,7 @@ class Monster(models.Model):
             self._init_runtime_fields()
 
         new_monster = Monster(
+            id=self.id,
             name=self.name,
             description=self.description,
             hp=self.hp,

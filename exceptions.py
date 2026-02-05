@@ -153,6 +153,18 @@ class InvalidSkillConfigError(CUHABotError):
         super().__init__(f"스킬 '{skill_name}' 설정 오류: {reason}")
 
 
+class InsufficientSkillError(CUHABotError):
+    """스킬 수량 부족"""
+
+    def __init__(self, skill_name: str, required: int, available: int):
+        self.skill_name = skill_name
+        self.required = required
+        self.available = available
+        super().__init__(
+            f"'{skill_name}' 스킬이 부족합니다. (필요: {required}, 보유: {available})"
+        )
+
+
 # =============================================================================
 # 전투 관련 예외
 # =============================================================================

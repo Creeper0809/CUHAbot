@@ -17,6 +17,7 @@ from exceptions import (
     AlreadyAttendedError,
 )
 from service.collection_service import CollectionService
+from service.skill_ownership_service import SkillOwnershipService
 
 logger = logging.getLogger(__name__)
 
@@ -98,6 +99,11 @@ class UserService:
         unique_skills = set(UserService.DEFAULT_SKILL_DECK)
         for skill_id in unique_skills:
             await CollectionService.register_skill(user, skill_id)
+
+        # 스킬 소유권 초기화 (덱에 필요한 수량만큼 지급)
+        await SkillOwnershipService.initialize_for_new_user(
+            user, UserService.DEFAULT_SKILL_DECK
+        )
 
         # 스킬 덱 초기화
         for slot, skill_id in enumerate(UserService.DEFAULT_SKILL_DECK):

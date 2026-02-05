@@ -11,11 +11,7 @@ import discord
 from models import User, Item, Monster
 from models.user_collection import CollectionType
 from models.repos import collection_repo
-from models.repos.static_cache import (
-    item_cache,
-    monster_cache_by_id,
-    skill_cache_by_id
-)
+from models.repos import static_cache
 from service.dungeon.skill import Skill
 
 
@@ -144,11 +140,11 @@ class CollectionService:
 
         return CollectionStats(
             item_collected=item_collected,
-            item_total=len(item_cache),
+            item_total=len(static_cache.item_cache),
             skill_collected=skill_collected,
-            skill_total=len(skill_cache_by_id),
+            skill_total=len(static_cache.skill_cache_by_id),
             monster_collected=monster_collected,
-            monster_total=len(monster_cache_by_id),
+            monster_total=len(static_cache.monster_cache_by_id),
         )
 
     @staticmethod
@@ -159,7 +155,7 @@ class CollectionService:
         )
         entries = []
         for item_id in collected_ids:
-            item = item_cache.get(item_id)
+            item = static_cache.item_cache.get(item_id)
             if item:
                 entries.append(CollectionEntry(
                     id=item.id,
@@ -178,7 +174,7 @@ class CollectionService:
         )
         entries = []
         for skill_id in collected_ids:
-            skill = skill_cache_by_id.get(skill_id)
+            skill = static_cache.skill_cache_by_id.get(skill_id)
             if skill:
                 entries.append(CollectionEntry(
                     id=skill.id,
@@ -197,7 +193,7 @@ class CollectionService:
         )
         entries = []
         for monster_id in collected_ids:
-            monster = monster_cache_by_id.get(monster_id)
+            monster = static_cache.monster_cache_by_id.get(monster_id)
             if monster:
                 entries.append(CollectionEntry(
                     id=monster.id,
@@ -275,7 +271,7 @@ class CollectionService:
     @staticmethod
     def _find_skill_by_name(name: str):
         """이름으로 스킬 찾기"""
-        for skill in skill_cache_by_id.values():
+        for skill in static_cache.skill_cache_by_id.values():
             if skill.name == name:
                 return skill
         return None
@@ -283,7 +279,7 @@ class CollectionService:
     @staticmethod
     def _find_monster_by_name(name: str):
         """이름으로 몬스터 찾기"""
-        for monster in monster_cache_by_id.values():
+        for monster in static_cache.monster_cache_by_id.values():
             if monster.name == name:
                 return monster
         return None

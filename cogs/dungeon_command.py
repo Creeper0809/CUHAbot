@@ -4,6 +4,7 @@ from discord.ext import commands
 
 from DTO.collection_view import CollectionView
 from DTO.dungeon_select_view import DungeonSelectView
+from DTO.inventory_view import InventoryView
 from DTO.skill_deck_view import SkillDeckView
 from DTO.stat_distribution_view import StatDistributionView
 from DTO.user_info_view import UserInfoView
@@ -18,8 +19,10 @@ from service.dungeon.dungeon_service import start_dungeon
 from service.collection_service import CollectionService, EntryNotFoundError
 from service.dungeon.item_service import get_item_info, ItemNotFoundException
 from service.healing_service import HealingService
+from service.inventory_service import InventoryService
 from service.session import is_in_session, is_in_combat, create_session, end_session
 from service.skill_deck_service import SkillDeckService
+from service.skill_ownership_service import SkillOwnershipService
 from models import User
 
 
@@ -230,18 +233,27 @@ class DungeonCommand(commands.Cog):
         # 현재 덱 로드
         current_deck = await SkillDeckService.get_deck_as_list(user)
 
+        # 기존 유저 마이그레이션 (스킬 소유 데이터 생성)
+        await SkillOwnershipService.migrate_existing_user(user, current_deck)
+
         # 현재 덱에 있는 스킬을 도감에 자동 등록 (기존 유저 호환)
         for skill_id in set(current_deck):
             if skill_id != 0:
                 await CollectionService.register_skill(user, skill_id)
 
-        # 보유 스킬 목록 (도감에 등록된 스킬만)
-        collected_skills = await CollectionService.get_collected_skills(user)
+        # 보유 스킬 목록 (소유한 스킬만)
+        owned_skills = await SkillOwnershipService.get_all_owned_skills(user)
         available_skills = [
-            skill_cache_by_id[entry.id]
-            for entry in collected_skills
-            if entry.id in skill_cache_by_id
+            skill_cache_by_id[owned.skill_id]
+            for owned in owned_skills
+            if owned.skill_id in skill_cache_by_id
         ]
+
+        # 스킬별 보유 수량 정보
+        skill_quantities = {
+            owned.skill_id: owned
+            for owned in owned_skills
+        }
 
         if not available_skills:
             await interaction.response.send_message(
@@ -256,7 +268,8 @@ class DungeonCommand(commands.Cog):
             user=interaction.user,
             current_deck=current_deck,
             available_skills=available_skills,
-            db_user=user
+            db_user=user,
+            skill_quantities=skill_quantities
         )
         await view.initialize()
 
@@ -269,6 +282,23 @@ class DungeonCommand(commands.Cog):
 
         # 저장 처리
         if view.saved and view.changes_made:
+            # 스킬 소유 수량 검증
+            can_change, error_msg = await SkillOwnershipService.can_change_deck(
+                user, current_deck, view.current_deck
+            )
+            if not can_change:
+                await interaction.followup.send(
+                    f"⚠️ 덱 저장 실패: {error_msg}",
+                    ephemeral=True
+                )
+                return
+
+            # 소유 수량 업데이트
+            await SkillOwnershipService.apply_deck_change(
+                user, current_deck, view.current_deck
+            )
+
+            # 덱 슬롯 저장
             for slot_index, skill_id in enumerate(view.current_deck):
                 await SkillDeckService.set_skill(user, slot_index, skill_id)
 
@@ -368,6 +398,36 @@ class DungeonCommand(commands.Cog):
         view = StatDistributionView(
             discord_user=interaction.user,
             db_user=user
+        )
+
+        embed = view.create_embed()
+        await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
+        view.message = await interaction.original_response()
+
+    @requires_account()
+    @app_commands.command(
+        name="인벤토리",
+        description="보유한 아이템을 확인합니다"
+    )
+    @app_commands.guilds(GUILD_ID)
+    async def inventory(self, interaction: discord.Interaction):
+        """인벤토리 조회"""
+        user: User = await find_account_by_discordid(interaction.user.id)
+        if not user:
+            await interaction.response.send_message(
+                "등록된 계정이 없습니다. `/등록`을 먼저 해주세요.",
+                ephemeral=True
+            )
+            return
+
+        # 인벤토리 로드
+        inventory = await InventoryService.get_inventory(user)
+
+        # View 생성
+        view = InventoryView(
+            user=interaction.user,
+            db_user=user,
+            inventory=list(inventory)
         )
 
         embed = view.create_embed()
