@@ -6,7 +6,7 @@ from DTO.collection_view import CollectionView
 from DTO.dungeon_select_view import DungeonSelectView
 from DTO.inventory_view import InventoryView
 from DTO.skill_deck_view import SkillDeckView
-from DTO.stat_distribution_view import StatSelectView
+from DTO.stat_distribution_view import StatOverviewView
 from DTO.user_info_view import UserInfoView
 from bot import GUILD_ID
 from decorator.account import requires_account
@@ -24,7 +24,8 @@ from service.session import is_in_combat, create_session, end_session
 from service.skill_deck_service import SkillDeckService
 from service.equipment_service import EquipmentService
 from service.skill_ownership_service import SkillOwnershipService
-from models import User
+from models import User, UserStatEnum
+from service.equipment_service import EquipmentService
 
 
 class DungeonCommand(commands.Cog):
@@ -58,14 +59,15 @@ class DungeonCommand(commands.Cog):
             await HealingService.apply_natural_regen(user)
 
             # HP 체크 - 너무 낮으면 경고
-            hp_percent = (user.now_hp / user.hp) * 100
+            max_hp = user.get_stat()[UserStatEnum.HP]
+            hp_percent = (user.now_hp / max_hp) * 100 if max_hp > 0 else 0
             if hp_percent < 30:
                 # 완전 회복까지 예상 시간 계산
-                hp_needed = int(user.hp * 0.3) - user.now_hp
+                hp_needed = int(max_hp * 0.3) - user.now_hp
                 minutes_needed = (hp_needed + user.hp_regen - 1) // user.hp_regen if user.hp_regen > 0 else 999
 
                 await interaction.response.send_message(
-                    f"⚠️ HP가 너무 낮습니다! ({user.now_hp}/{user.hp}, {hp_percent:.0f}%)\n"
+                    f"⚠️ HP가 너무 낮습니다! ({user.now_hp}/{max_hp}, {hp_percent:.0f}%)\n"
                     f"HP 30% 이상이 되어야 입장 가능합니다.\n"
                     f"자연 회복으로 약 **{minutes_needed}분** 후 입장 가능합니다.",
                     ephemeral=True
@@ -196,7 +198,10 @@ class DungeonCommand(commands.Cog):
         stats = await UserStats.get_or_none(user=user)
 
         # 장비 정보 로드
-        equipment = await UserEquipment.filter(user=user).prefetch_related("inventory_item")
+        equipment = await UserEquipment.filter(user=user).prefetch_related(
+            "inventory_item__item"
+        )
+        await EquipmentService.apply_equipment_stats(user)
 
         # 스킬 덱 로드
         skill_deck = await SkillDeckService.get_deck_as_list(user)
@@ -283,6 +288,15 @@ class DungeonCommand(commands.Cog):
         embed = view.create_embed()
         await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
         view.message = await interaction.original_response()
+
+        select_view = StatSelectView(
+            discord_user=interaction.user,
+            db_user=user,
+            parent_view=view
+        )
+        select_embed = select_view.create_embed()
+        select_msg = await interaction.followup.send(embed=select_embed, view=select_view, ephemeral=True)
+        select_view.message = select_msg
 
         # 사용자 응답 대기
         await view.wait()
@@ -402,7 +416,7 @@ class DungeonCommand(commands.Cog):
             )
             return
 
-        view = StatSelectView(
+        view = StatOverviewView(
             discord_user=interaction.user,
             db_user=user
         )
@@ -410,6 +424,7 @@ class DungeonCommand(commands.Cog):
         embed = view.create_embed()
         await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
         view.message = await interaction.original_response()
+
 
     @requires_account()
     @app_commands.command(
@@ -440,6 +455,7 @@ class DungeonCommand(commands.Cog):
         embed = view.create_embed()
         await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
         view.message = await interaction.original_response()
+
 
 
 async def setup(bot):

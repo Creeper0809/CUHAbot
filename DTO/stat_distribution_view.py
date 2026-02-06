@@ -53,50 +53,45 @@ class StatSelect(ui.Select):
         await self.view._update_message(interaction)
 
 
-class StatSelectView(ui.View):
-    """스탯 선택 View"""
+class StatOverviewView(ui.View):
+    """스탯 분배 개요 View"""
 
     def __init__(self, discord_user: discord.User, db_user: User):
         super().__init__(timeout=120)
         self.discord_user = discord_user
         self.db_user = db_user
         self.message: discord.Message = None
-        self.selected_stat = "hp"
-        self.add_item(StatSelect())
+        self.preview_stat: str | None = None
+        self.preview_points: int = 0
 
     def create_embed(self) -> discord.Embed:
-        available = self.db_user.stat_points
         embed = discord.Embed(
-            title="📊 스탯 분배 - 선택",
-            description=f"사용 가능한 포인트: **{available}**",
+            title="📊 스탯 분배",
+            description=f"사용 가능한 포인트: **{self.db_user.stat_points}**",
             color=discord.Color.blue()
         )
-
         stat_lines = []
         for stat_key, display_name in STAT_NAMES.items():
-            marker = "▶ " if stat_key == self.selected_stat else "  "
             current = getattr(self.db_user, stat_key)
-            stat_lines.append(f"{marker}{display_name}: {current}")
+            marker = "▶ " if stat_key == self.preview_stat else "  "
+            if stat_key == self.preview_stat and self.preview_points > 0:
+                increment = STAT_INCREMENTS[stat_key]
+                delta = self.preview_points * increment
+                stat_lines.append(f"{marker}{display_name}: {current} (+{delta})")
+            else:
+                stat_lines.append(f"{marker}{display_name}: {current}")
 
         embed.add_field(
-            name="스탯 목록",
+            name="현재 스탯",
             value="\n".join(stat_lines),
             inline=False
         )
-
-        selected_name = STAT_NAMES[self.selected_stat]
         embed.add_field(
-            name=f"🎯 선택: {selected_name}",
-            value=f"포인트당 +{STAT_INCREMENTS[self.selected_stat]}",
+            name="안내",
+            value="스탯 선택 창에서 분배할 스탯을 고르세요.",
             inline=False
         )
-        embed.set_footer(text="스탯 선택 후 '조절' 버튼을 눌러주세요.")
         return embed
-
-    async def on_stat_selected(self, stat_key: str, interaction: discord.Interaction):
-        self.selected_stat = stat_key
-        embed = self.create_embed()
-        await interaction.response.edit_message(embed=embed, view=self)
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         if interaction.user.id != self.discord_user.id:
@@ -112,16 +107,10 @@ class StatSelectView(ui.View):
             embed = self.create_embed()
             await self.message.edit(embed=embed, view=self)
 
-    @ui.button(label="조절", style=discord.ButtonStyle.success)
-    async def open_adjust(self, interaction: discord.Interaction, button: ui.Button):
-        adjust_view = StatAdjustView(
-            discord_user=self.discord_user,
-            db_user=self.db_user,
-            selected_stat=self.selected_stat,
-            parent_view=self
-        )
-        embed = adjust_view.create_embed()
-        await interaction.response.send_message(embed=embed, view=adjust_view, ephemeral=True)
+    async def update_preview(self, stat_key: str | None, points: int) -> None:
+        self.preview_stat = stat_key
+        self.preview_points = max(points, 0)
+        await self.refresh_message()
 
     @ui.button(label="닫기", style=discord.ButtonStyle.danger)
     async def close(self, interaction: discord.Interaction, button: ui.Button):
@@ -129,34 +118,38 @@ class StatSelectView(ui.View):
         await interaction.response.edit_message(content="스탯 분배 창을 닫았습니다.", embed=None, view=None)
 
 
-class StatAdjustView(ui.View):
-    """스탯 조절 View"""
+class StatSelectView(ui.View):
+    """스탯 선택 View"""
 
-    def __init__(
-        self,
-        discord_user: discord.User,
-        db_user: User,
-        selected_stat: str,
-        parent_view: StatSelectView
-    ):
+    def __init__(self, discord_user: discord.User, db_user: User, parent_view: StatOverviewView):
         super().__init__(timeout=120)
         self.discord_user = discord_user
         self.db_user = db_user
-        self.selected_stat = selected_stat
         self.parent_view = parent_view
+        self.message: discord.Message = None
+        self.selected_stat = "hp"
         self.points_used = 0
+        self.add_item(StatSelect())
+        self.add_item(StatAdjustButton("+1", 1))
+        self.add_item(StatAdjustButton("+5", 5))
+        self.add_item(StatAdjustButton("+10", 10))
+        self.add_item(StatAdjustButton("-1", -1))
+        self.add_item(StatAdjustButton("-5", -5))
+        self.add_item(StatSaveButton())
+        self.add_item(StatSelectCloseButton())
 
     def create_embed(self) -> discord.Embed:
-        available = self.db_user.stat_points - self.points_used
+        available = self.db_user.stat_points
+        embed = discord.Embed(
+            title="📊 스탯 분배 - 선택",
+            description=f"사용 가능한 포인트: **{available}**",
+            color=discord.Color.blue()
+        )
+        selected_name = STAT_NAMES[self.selected_stat]
         current = getattr(self.db_user, self.selected_stat)
         increment = STAT_INCREMENTS[self.selected_stat]
-        embed = discord.Embed(
-            title="📊 스탯 분배 - 조절",
-            description=f"사용 가능한 포인트: **{available}**",
-            color=discord.Color.green()
-        )
         embed.add_field(
-            name=f"🎯 {STAT_NAMES[self.selected_stat]}",
+            name=f"🎯 선택: {selected_name}",
             value=(
                 f"현재: {current}\n"
                 f"증가 예정: +{self.points_used * increment}\n"
@@ -164,94 +157,112 @@ class StatAdjustView(ui.View):
             ),
             inline=False
         )
-        embed.set_footer(text="포인트를 조절한 뒤 저장하세요.")
+        embed.set_footer(text="선택 후 포인트를 조절하고 저장하세요.")
         return embed
 
-    async def interaction_check(self, interaction: discord.Interaction) -> bool:
-        return interaction.user.id == self.discord_user.id
-
-    def _add_points(self, amount: int) -> bool:
-        available = self.db_user.stat_points - self.points_used
-        if available < amount:
-            return False
-        self.points_used += amount
-        return True
-
-    def _remove_points(self, amount: int) -> bool:
-        if self.points_used < amount:
-            return False
-        self.points_used -= amount
-        return True
-
-    async def _update(self, interaction: discord.Interaction):
+    async def on_stat_selected(self, stat_key: str, interaction: discord.Interaction):
+        self.selected_stat = stat_key
+        self.points_used = 0
         embed = self.create_embed()
         await interaction.response.edit_message(embed=embed, view=self)
+        await self.parent_view.update_preview(self.selected_stat, self.points_used)
 
-    @ui.button(label="+1", style=discord.ButtonStyle.primary, row=0)
-    async def add_1(self, interaction: discord.Interaction, button: ui.Button):
-        if self._add_points(1):
-            await self._update(interaction)
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        if interaction.user.id != self.discord_user.id:
+            await interaction.response.send_message(
+                "다른 사람의 스탯 분배를 할 수 없습니다.",
+                ephemeral=True
+            )
+            return False
+        return True
+
+    async def refresh_message(self) -> None:
+        if self.message:
+            embed = self.create_embed()
+            await self.message.edit(embed=embed, view=self)
+
+
+class StatAdjustButton(ui.Button):
+    """스탯 조절 버튼"""
+
+    def __init__(self, label: str, delta: int):
+        style = discord.ButtonStyle.primary if delta > 0 else discord.ButtonStyle.secondary
+        super().__init__(label=label, style=style, row=1)
+        self.delta = delta
+
+    async def callback(self, interaction: discord.Interaction):
+        view: StatSelectView = self.view
+        if self.delta > 0:
+            available = view.db_user.stat_points - view.points_used
+            if available < self.delta:
+                await interaction.response.send_message("포인트가 부족합니다!", ephemeral=True)
+                return
+            view.points_used += self.delta
         else:
-            await interaction.response.send_message("포인트가 부족합니다!", ephemeral=True)
+            if view.points_used < abs(self.delta):
+                await interaction.response.send_message("제거할 포인트가 없습니다!", ephemeral=True)
+                return
+            view.points_used += self.delta
 
-    @ui.button(label="+5", style=discord.ButtonStyle.primary, row=0)
-    async def add_5(self, interaction: discord.Interaction, button: ui.Button):
-        if self._add_points(5):
-            await self._update(interaction)
-        else:
-            await interaction.response.send_message("포인트가 부족합니다!", ephemeral=True)
+        embed = view.create_embed()
+        await interaction.response.edit_message(embed=embed, view=view)
+        await view.parent_view.update_preview(view.selected_stat, view.points_used)
 
-    @ui.button(label="+10", style=discord.ButtonStyle.primary, row=0)
-    async def add_10(self, interaction: discord.Interaction, button: ui.Button):
-        if self._add_points(10):
-            await self._update(interaction)
-        else:
-            await interaction.response.send_message("포인트가 부족합니다!", ephemeral=True)
 
-    @ui.button(label="-1", style=discord.ButtonStyle.secondary, row=1)
-    async def remove_1(self, interaction: discord.Interaction, button: ui.Button):
-        if self._remove_points(1):
-            await self._update(interaction)
-        else:
-            await interaction.response.send_message("제거할 포인트가 없습니다!", ephemeral=True)
+class StatSaveButton(ui.Button):
+    """저장 버튼"""
 
-    @ui.button(label="-5", style=discord.ButtonStyle.secondary, row=1)
-    async def remove_5(self, interaction: discord.Interaction, button: ui.Button):
-        if self._remove_points(5):
-            await self._update(interaction)
-        else:
-            await interaction.response.send_message("제거할 포인트가 없습니다!", ephemeral=True)
+    def __init__(self):
+        super().__init__(label="💾 저장", style=discord.ButtonStyle.success, row=3)
 
-    @ui.button(label="💾 저장", style=discord.ButtonStyle.success, row=2)
-    async def save_button(self, interaction: discord.Interaction, button: ui.Button):
-        if self.points_used == 0:
+    async def callback(self, interaction: discord.Interaction):
+        view: StatSelectView = self.view
+        if view.points_used == 0:
             await interaction.response.send_message("분배할 포인트가 없습니다!", ephemeral=True)
             return
 
-        increment = STAT_INCREMENTS[self.selected_stat]
-        current = getattr(self.db_user, self.selected_stat)
-        setattr(self.db_user, self.selected_stat, current + self.points_used * increment)
+        increment = STAT_INCREMENTS[view.selected_stat]
+        current = getattr(view.db_user, view.selected_stat)
+        setattr(view.db_user, view.selected_stat, current + view.points_used * increment)
 
-        if self.selected_stat == "hp":
-            hp_increase = self.points_used * increment
-            self.db_user.now_hp = min(self.db_user.now_hp + hp_increase, self.db_user.hp)
+        if view.selected_stat == "hp":
+            hp_increase = view.points_used * increment
+            view.db_user.now_hp = min(view.db_user.now_hp + hp_increase, view.db_user.hp)
 
-        self.db_user.stat_points -= self.points_used
-        await self.db_user.save()
+        view.db_user.stat_points -= view.points_used
+        await view.db_user.save()
 
-        await self.parent_view.refresh_message()
+        await view.parent_view.refresh_message()
 
-        embed = self.create_embed()
+        view.points_used = 0
+        embed = view.create_embed()
         embed.add_field(
             name="✅ 저장 완료",
-            value=f"{STAT_NAMES[self.selected_stat]}에 {self.points_used}포인트 분배됨",
+            value=f"{STAT_NAMES[view.selected_stat]}에 포인트가 분배되었습니다.",
             inline=False
         )
-        await interaction.response.edit_message(embed=embed, view=None)
+        await interaction.response.edit_message(embed=embed, view=view)
+        await view.parent_view.update_preview(None, 0)
 
-    @ui.button(label="닫기", style=discord.ButtonStyle.danger, row=2)
-    async def close_button(self, interaction: discord.Interaction, button: ui.Button):
-        await interaction.response.edit_message(content="스탯 조절을 종료했습니다.", embed=None, view=None)
+
+class StatSelectCloseButton(ui.Button):
+    """선택 창 닫기"""
+
+    def __init__(self):
+        super().__init__(label="닫기", style=discord.ButtonStyle.danger, row=3)
+
+    async def callback(self, interaction: discord.Interaction):
+        view: StatSelectView = self.view
+        await interaction.response.edit_message(content="스탯 선택 창을 닫았습니다.", embed=None, view=None)
+        if view.parent_view and view.parent_view.message:
+            try:
+                await view.parent_view.message.edit(
+                    content="스탯 분배 창을 닫았습니다.",
+                    embed=None,
+                    view=None
+                )
+            except discord.NotFound:
+                pass
 
 
 class StatDistributionView(ui.View):

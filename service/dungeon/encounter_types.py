@@ -22,7 +22,7 @@ from DTO.encounter_view import (
 )
 from config import DROP
 from exceptions import InventoryFullError
-from models import Item
+from models import Item, UserStatEnum
 from service.inventory_service import InventoryService
 from DTO.shop_view import ShopView
 from service.shop_service import ShopService
@@ -174,7 +174,8 @@ class TrapEncounter(Encounter):
         user = session.user
 
         # 함정 피해 계산 (최대 HP 기준)
-        damage = int(user.hp * self.damage_percent)
+        max_hp = user.get_stat()[UserStatEnum.HP]
+        damage = int(max_hp * self.damage_percent)
         actual_damage = min(damage, user.now_hp - 1)
         actual_damage = max(actual_damage, 0)
 
@@ -263,8 +264,9 @@ class RandomEventEncounter(Encounter):
             blessing_type = random.choice(["heal", "attack_boost", "lucky"])
 
             if blessing_type == "heal":
-                heal_amount = int(user.hp * 0.2)
-                actual_heal = min(heal_amount, user.hp - user.now_hp)
+                max_hp = user.get_stat()[UserStatEnum.HP]
+                heal_amount = int(max_hp * 0.2)
+                actual_heal = min(heal_amount, max_hp - user.now_hp)
                 user.now_hp += actual_heal
 
                 result_embed.description = "신비로운 에너지가 몸을 감싼다..."
@@ -321,7 +323,8 @@ class RandomEventEncounter(Encounter):
             curse_type = random.choice(["damage", "gold_loss"])
 
             if curse_type == "damage":
-                damage = int(user.hp * 0.05)
+                max_hp = user.get_stat()[UserStatEnum.HP]
+                damage = int(max_hp * 0.05)
                 actual_damage = min(damage, user.now_hp - 1)
                 actual_damage = max(actual_damage, 0)
                 user.now_hp -= actual_damage
@@ -400,14 +403,12 @@ class NPCEncounter(Encounter):
             # 상인: 실제 상점 열기
             user_gold = await ShopService.get_user_gold(user)
 
-            shop_items = await ShopService.get_shop_items_for_display()
-
             # 상점 View 표시
             shop_view = ShopView(
                 user=interaction.user,
                 db_user=user,
                 user_gold=user_gold,
-                shop_items=shop_items,
+                shop_items=await ShopService.get_shop_items_for_display(),
                 timeout=120
             )
 
@@ -435,8 +436,9 @@ class NPCEncounter(Encounter):
 
         elif npc_type == "healer":
             # 치료사: HP 회복
-            heal_amount = int(user.hp * 0.3)
-            actual_heal = min(heal_amount, user.hp - user.now_hp)
+            max_hp = user.get_stat()[UserStatEnum.HP]
+            heal_amount = int(max_hp * 0.3)
+            actual_heal = min(heal_amount, max_hp - user.now_hp)
             user.now_hp += actual_heal
 
             result_embed.description = "*\"상처가 다 나았군요.\"*"
@@ -498,8 +500,9 @@ class HiddenRoomEncounter(Encounter):
         exp_gained = int(30 * (1 + dungeon_level / 10))
 
         # HP도 일부 회복
-        heal_amount = int(user.hp * 0.15)
-        actual_heal = min(heal_amount, user.hp - user.now_hp)
+        max_hp = user.get_stat()[UserStatEnum.HP]
+        heal_amount = int(max_hp * 0.15)
+        actual_heal = min(heal_amount, max_hp - user.now_hp)
 
         # View 표시
         view = HiddenRoomView(

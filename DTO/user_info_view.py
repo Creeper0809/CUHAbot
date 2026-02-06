@@ -6,7 +6,7 @@
 import discord
 from typing import Optional, List
 
-from models import User
+from models import User, UserStatEnum
 from models.user_stats import UserStats
 from models.user_equipment import UserEquipment, EquipmentSlot
 from models.user_skill_deck import UserSkillDeck
@@ -64,8 +64,16 @@ class UserInfoView(discord.ui.View):
             color=discord.Color.blue()
         )
 
+        stat = self.user.get_stat()
+        max_hp = stat[UserStatEnum.HP]
+        total_attack = stat[UserStatEnum.ATTACK]
+        total_defense = stat[UserStatEnum.DEFENSE]
+        total_speed = stat[UserStatEnum.SPEED]
+        total_ap_attack = stat[UserStatEnum.AP_ATTACK]
+        total_ap_defense = stat[UserStatEnum.AP_DEFENSE]
+
         # HP 바
-        hp_ratio = self.user.now_hp / self.user.hp if self.user.hp > 0 else 0
+        hp_ratio = self.user.now_hp / max_hp if max_hp > 0 else 0
         hp_bar = self._create_bar(hp_ratio, 20)
 
         # 기본 전투 스탯
@@ -74,10 +82,10 @@ class UserInfoView(discord.ui.View):
             value=(
                 f"```\n"
                 f"레벨     : Lv.{self.user.level}\n"
-                f"체력     : {self.user.now_hp}/{self.user.hp}\n"
-                f"공격력   : {self.user.attack}\n"
-                f"방어력   : {self.user.defense}\n"
-                f"속도     : {self.user.speed}\n"
+                f"체력     : {self.user.now_hp}/{max_hp}\n"
+                f"공격력   : {total_attack}\n"
+                f"방어력   : {total_defense}\n"
+                f"속도     : {total_speed}\n"
                 f"```"
             ),
             inline=True
@@ -88,8 +96,8 @@ class UserInfoView(discord.ui.View):
             name="✨ 마법 스탯",
             value=(
                 f"```\n"
-                f"마법공격력: {self.user.ap_attack}\n"
-                f"마법방어력: {self.user.ap_defense}\n"
+                f"마법공격력: {total_ap_attack}\n"
+                f"마법방어력: {total_ap_defense}\n"
                 f"```"
             ),
             inline=True
@@ -168,18 +176,6 @@ class UserInfoView(discord.ui.View):
             EquipmentSlot.SUB_WEAPON: "🗡️",
         }
 
-        equipment_lines = []
-        for slot in EquipmentSlot:
-            slot_name = EquipmentSlot.get_korean_name(slot)
-            emoji = slot_emojis.get(slot, "❓")
-
-            if slot in equipped_items:
-                # 아이템 정보 가져오기 (TODO: inventory_item에서 아이템 이름 조회)
-                item_name = "장착됨"  # 추후 아이템 이름 표시
-                equipment_lines.append(f"{emoji} **{slot_name}**: {item_name}")
-            else:
-                equipment_lines.append(f"{emoji} **{slot_name}**: `비어있음`")
-
         # 좌우로 나누어 표시
         left_slots = [EquipmentSlot.WEAPON, EquipmentSlot.HELMET, EquipmentSlot.ARMOR, EquipmentSlot.GLOVES, EquipmentSlot.BOOTS]
         right_slots = [EquipmentSlot.NECKLACE, EquipmentSlot.RING1, EquipmentSlot.RING2, EquipmentSlot.SUB_WEAPON]
@@ -189,7 +185,7 @@ class UserInfoView(discord.ui.View):
             slot_name = EquipmentSlot.get_korean_name(slot)
             emoji = slot_emojis.get(slot, "❓")
             if slot in equipped_items:
-                item_name = "장착됨"
+                item_name = self._format_equipped_item_name(equipped_items[slot])
                 left_text.append(f"{emoji} {slot_name}: {item_name}")
             else:
                 left_text.append(f"{emoji} {slot_name}: -")
@@ -199,7 +195,7 @@ class UserInfoView(discord.ui.View):
             slot_name = EquipmentSlot.get_korean_name(slot)
             emoji = slot_emojis.get(slot, "❓")
             if slot in equipped_items:
-                item_name = "장착됨"
+                item_name = self._format_equipped_item_name(equipped_items[slot])
                 right_text.append(f"{emoji} {slot_name}: {item_name}")
             else:
                 right_text.append(f"{emoji} {slot_name}: -")
@@ -218,6 +214,18 @@ class UserInfoView(discord.ui.View):
 
         embed.set_footer(text="⬇️ 아래 버튼으로 다른 정보를 확인하세요")
         return embed
+
+    @staticmethod
+    def _format_equipped_item_name(equipment: UserEquipment) -> str:
+        item = equipment.inventory_item.item if equipment.inventory_item else None
+        if not item:
+            return "장착됨"
+
+        enhance = ""
+        if equipment.inventory_item.enhancement_level > 0:
+            enhance = f" +{equipment.inventory_item.enhancement_level}"
+
+        return f"{item.name}{enhance}"
 
     def _create_skills_embed(self) -> discord.Embed:
         """스킬 덱 Embed 생성"""

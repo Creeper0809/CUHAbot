@@ -9,6 +9,7 @@ from models.repos.dungeon_repo import find_all_dungeon_spawn_monster_by
 from models.repos.monster_repo import find_monster_by_id
 from service.session import DungeonSession
 from models.repos.users_repo import *
+from models import UserStatEnum
 
 import random
 
@@ -16,7 +17,8 @@ async def start_dungeon(session: DungeonSession, interaction: discord.Interactio
     event_queue = deque(maxlen=5)
     event_queue.append("...")
 
-    session.user.now_hp = session.user.hp
+    max_hp = session.user.get_stat()[UserStatEnum.HP]
+    session.user.now_hp = max_hp
 
     public_embed = make_dungeon_embed(session, session.dungeon, event_queue)
     message = await interaction.followup.send(embed=public_embed, wait=True)
@@ -115,9 +117,10 @@ def make_dungeon_embed(session, dungeon, logs) -> discord.Embed:
         description=dungeon.description,
         color=discord.Color.green()
     )
+    max_hp = session.user.get_stat()[UserStatEnum.HP]
     embed.add_field(
         name="내 정보",
-        value=f":heart: 체력: {session.user.now_hp}/{session.user.hp}",
+        value=f":heart: 체력: {session.user.now_hp}/{max_hp}",
         inline=False
     )
     embed.add_field(

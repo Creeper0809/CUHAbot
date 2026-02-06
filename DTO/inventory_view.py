@@ -62,7 +62,7 @@ class ItemSelectDropdown(discord.ui.Select):
         return "📦"
 
     async def callback(self, interaction: discord.Interaction):
-        view: InventoryView = self.view
+        view: InventorySelectView = self.view
         item_id = int(self.values[0])
 
         if item_id == 0:
@@ -80,32 +80,9 @@ class ItemSelectDropdown(discord.ui.Select):
             None
         )
 
+        view.selected_inventory_item = selected_inv
         embed = view.create_embed()
-        if selected_inv:
-            item_type = "장비" if selected_inv.item.type == ItemType.EQUIP else "소모품"
-            action = "장착" if selected_inv.item.type == ItemType.EQUIP else "사용"
-
-            embed.add_field(
-                name=f"✅ 선택됨: {selected_inv.item.name}",
-                value=(
-                    f"**종류**: {item_type}\n"
-                    f"**설명**: {selected_inv.item.description or '없음'}\n"
-                    f"별도 {action} 창에서 {action}하세요."
-                ),
-                inline=False
-            )
-
         await interaction.response.edit_message(embed=embed, view=view)
-
-        if selected_inv:
-            action_view = InventoryActionView(
-                user=interaction.user,
-                db_user=view.db_user,
-                inventory_item=selected_inv,
-                list_view=view
-            )
-            action_embed = action_view.create_embed()
-            await interaction.followup.send(embed=action_embed, view=action_view, ephemeral=True)
 
 
 class InventoryView(discord.ui.View):
@@ -133,11 +110,7 @@ class InventoryView(discord.ui.View):
         self.message: Optional[discord.Message] = None
         self.selected_item_id: Optional[int] = None
 
-        # 아이템 선택 드롭다운 추가 (스킬 제외)
-        usable_items = [inv for inv in inventory if inv.item.type != ItemType.SKILL]
-        if usable_items:
-            self.add_item(ItemSelectDropdown(usable_items))
-
+        self.add_item(InventorySelectButton())
         self._remove_action_buttons()
 
     def _get_page_items(self) -> List[UserInventory]:
@@ -237,7 +210,7 @@ class InventoryView(discord.ui.View):
                     inline=True
                 )
 
-        embed.set_footer(text="드롭다운에서 아이템 선택 → 사용 창에서 처리")
+        embed.set_footer(text="아이템 사용 버튼 → 선택 창에서 사용")
 
         return embed
 
@@ -247,7 +220,6 @@ class InventoryView(discord.ui.View):
             user=self.db_user
         ).prefetch_related("item")
         self.total_pages = max(1, (len(self.inventory) + self.items_per_page - 1) // self.items_per_page)
-        self._update_dropdown()
         if self.message:
             embed = self.create_embed()
             await self.message.edit(embed=embed, view=self)
@@ -373,62 +345,93 @@ class InventoryView(discord.ui.View):
                 pass
 
 
-class InventoryActionView(discord.ui.View):
-    """아이템 사용 액션 View"""
+class InventorySelectView(discord.ui.View):
+    """아이템 선택 View"""
 
     def __init__(
         self,
         user: discord.User,
         db_user: User,
-        inventory_item: UserInventory,
         list_view: InventoryView,
         timeout: int = 60
     ):
         super().__init__(timeout=timeout)
         self.user = user
         self.db_user = db_user
-        self.inventory_item = inventory_item
         self.list_view = list_view
-        self.message: Optional[discord.Message] = None
+        self.inventory = list_view.inventory
+        self.selected_item_id: Optional[int] = None
+        self.selected_inventory_item: Optional[UserInventory] = None
+        usable_items = [inv for inv in self.inventory if inv.item.type != ItemType.SKILL]
+        if usable_items:
+            self.add_item(ItemSelectDropdown(usable_items))
+        self.add_item(InventoryUseButton())
+        self.add_item(InventorySelectCloseButton())
 
     def create_embed(self) -> discord.Embed:
-        item = self.inventory_item.item
-        item_type = "장비" if item.type == ItemType.EQUIP else "소모품"
-        action = "장착" if item.type == ItemType.EQUIP else "사용"
         embed = discord.Embed(
-            title="🎒 아이템 사용",
-            description=f"**{item.name}**",
+            title="🎒 아이템 선택",
+            description="사용할 아이템을 선택하세요.",
             color=EmbedColor.DEFAULT
         )
-        embed.add_field(
-            name="정보",
-            value=(
-                f"**종류**: {item_type}\n"
-                f"**설명**: {item.description or '없음'}\n"
-                f"**수량**: {self.inventory_item.quantity}"
-            ),
-            inline=False
-        )
-        embed.set_footer(text=f"'{action}' 버튼으로 사용하세요.")
+        if self.selected_inventory_item:
+            item = self.selected_inventory_item.item
+            item_type = "장비" if item.type == ItemType.EQUIP else "소모품"
+            action = "장착" if item.type == ItemType.EQUIP else "사용"
+            embed.add_field(
+                name=f"✅ 선택됨: {item.name}",
+                value=(
+                    f"**종류**: {item_type}\n"
+                    f"**설명**: {item.description or '없음'}\n"
+                    f"**수량**: {self.selected_inventory_item.quantity}\n"
+                    f"'{action}' 버튼을 눌러 {action}하세요."
+                ),
+                inline=False
+            )
         return embed
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         return interaction.user == self.user
 
-    @discord.ui.button(label="사용", style=discord.ButtonStyle.success, emoji="✅")
-    async def use_action(self, interaction: discord.Interaction, button: discord.ui.Button):
+    async def refresh_items(self) -> None:
+        self.inventory = await UserInventory.filter(
+            user=self.db_user
+        ).prefetch_related("item")
+        usable_items = [inv for inv in self.inventory if inv.item.type != ItemType.SKILL]
+        to_remove = [child for child in self.children if isinstance(child, ItemSelectDropdown)]
+        for child in to_remove:
+            self.remove_item(child)
+        if usable_items:
+            self.add_item(ItemSelectDropdown(usable_items))
+
+
+class InventoryUseButton(discord.ui.Button):
+    """아이템 사용 버튼"""
+
+    def __init__(self):
+        super().__init__(label="사용", style=discord.ButtonStyle.success, emoji="✅", row=2)
+
+    async def callback(self, interaction: discord.Interaction):
+        view: InventorySelectView = self.view
+        if not view.selected_inventory_item:
+            await interaction.response.send_message("먼저 아이템을 선택하세요!", ephemeral=True)
+            return
+
         try:
-            result = await ItemUseService.use_item(self.db_user, self.inventory_item.id)
+            result = await ItemUseService.use_item(view.db_user, view.selected_inventory_item.id)
             if result.success:
-                if self.list_view:
-                    await self.list_view.refresh_message()
-                embed = self.create_embed()
+                if view.list_view:
+                    await view.list_view.refresh_message()
+                await view.refresh_items()
+                view.selected_item_id = None
+                view.selected_inventory_item = None
+                embed = view.create_embed()
                 embed.add_field(
                     name="✅ 사용 완료!",
                     value=f"{result.item_name}\n{result.effect_description or ''}",
                     inline=False
                 )
-                await interaction.response.edit_message(embed=embed, view=None)
+                await interaction.response.edit_message(embed=embed, view=view)
             else:
                 await interaction.response.send_message(
                     f"⚠️ {result.message}",
@@ -450,6 +453,29 @@ class InventoryActionView(discord.ui.View):
                 ephemeral=True
             )
 
-    @discord.ui.button(label="닫기", style=discord.ButtonStyle.danger, emoji="❌")
-    async def close_action(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.edit_message(content="창을 닫았습니다.", embed=None, view=None)
+
+class InventorySelectCloseButton(discord.ui.Button):
+    """선택 창 닫기"""
+
+    def __init__(self):
+        super().__init__(label="닫기", style=discord.ButtonStyle.danger, emoji="❌", row=2)
+
+    async def callback(self, interaction: discord.Interaction):
+        await interaction.response.edit_message(content="선택 창을 닫았습니다.", embed=None, view=None)
+
+
+class InventorySelectButton(discord.ui.Button):
+    """아이템 사용 버튼 (선택 창 열기)"""
+
+    def __init__(self):
+        super().__init__(label="아이템 사용", style=discord.ButtonStyle.success, emoji="✅", row=0)
+
+    async def callback(self, interaction: discord.Interaction):
+        view: InventoryView = self.view
+        select_view = InventorySelectView(
+            user=interaction.user,
+            db_user=view.db_user,
+            list_view=view
+        )
+        embed = select_view.create_embed()
+        await interaction.response.send_message(embed=embed, view=select_view, ephemeral=True)

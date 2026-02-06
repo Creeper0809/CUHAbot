@@ -16,7 +16,7 @@ from config import COMBAT, DUNGEON, DROP, EmbedColor
 from DTO.dungeon_control import DungeonControlView
 from DTO.fight_or_flee import FightOrFleeView
 from exceptions import InventoryFullError, MonsterNotFoundError, MonsterSpawnNotFoundError
-from models import Droptable, Item, Monster, MonsterTypeEnum, User
+from models import Droptable, Item, Monster, MonsterTypeEnum, User, UserStatEnum
 from models.repos.dungeon_repo import find_all_dungeon_spawn_monster_by
 from models.repos.monster_repo import find_monster_by_id
 from service.collection_service import CollectionService
@@ -472,7 +472,7 @@ async def _attempt_flee(session: DungeonSession, monster: Monster) -> str:
         return f"🏃 **{monster.name}**에게서 도망쳤다!"
 
     # 도주 실패 시 몬스터 공격
-    damage = monster.attack
+    damage = _get_attack_stat(monster)
     session.user.now_hp -= damage
     session.user.now_hp = max(session.user.now_hp, 0)
 
@@ -555,12 +555,13 @@ async def _ask_fight_or_flee(
         description=monster.description or "무서운 기운이 느껴진다...",
         color=EmbedColor.ERROR
     )
-    embed.add_field(name="❤️ 체력", value=f"{monster.hp}", inline=True)
-    embed.add_field(name="⚔️ 공격력", value=f"{monster.attack}", inline=True)
-    embed.add_field(name="🔮 마공", value=f"{getattr(monster, 'ap_attack', 0)}", inline=True)
-    embed.add_field(name="🛡️ 방어력", value=f"{getattr(monster, 'defense', 0)}", inline=True)
-    embed.add_field(name="🌀 마방", value=f"{getattr(monster, 'ap_defense', 0)}", inline=True)
-    embed.add_field(name="💨 속도", value=f"{getattr(monster, 'speed', 10)}", inline=True)
+    monster_stat = monster.get_stat()
+    embed.add_field(name="❤️ 체력", value=f"{monster_stat[UserStatEnum.HP]}", inline=True)
+    embed.add_field(name="⚔️ 공격력", value=f"{monster_stat[UserStatEnum.ATTACK]}", inline=True)
+    embed.add_field(name="🔮 마공", value=f"{monster_stat[UserStatEnum.AP_ATTACK]}", inline=True)
+    embed.add_field(name="🛡️ 방어력", value=f"{monster_stat[UserStatEnum.DEFENSE]}", inline=True)
+    embed.add_field(name="🌀 마방", value=f"{monster_stat[UserStatEnum.AP_DEFENSE]}", inline=True)
+    embed.add_field(name="💨 속도", value=f"{monster_stat[UserStatEnum.SPEED]}", inline=True)
     embed.add_field(name="💫 회피", value=f"{getattr(monster, 'evasion', 0)}%", inline=True)
 
     if skill_names:
@@ -950,7 +951,9 @@ def _determine_turn_order(user: User, monster: Monster) -> tuple:
     Returns:
         (선공, 후공) 튜플
     """
-    speed_diff = user.speed - monster.speed
+    user_speed = _get_speed_stat(user)
+    monster_speed = _get_speed_stat(monster)
+    speed_diff = user_speed - monster_speed
     advantage = max(min(speed_diff, COMBAT.SPEED_ADVANTAGE_CAP), -COMBAT.SPEED_ADVANTAGE_CAP)
     user_prob = COMBAT.BASE_TURN_PROBABILITY + advantage
 
@@ -1032,12 +1035,12 @@ async def _process_attack_phase(
             attack_logs.append(first_log)
         else:
             logger.warning(f"Skill {first_skill.name} returned empty log, using basic attack")
-            damage = first.attack
+            damage = _get_attack_stat(first)
             second.now_hp -= damage
             second.now_hp = max(second.now_hp, 0)
             attack_logs.append(_format_attack_log(first.get_name(), "기본 공격", second.get_name(), damage))
     else:
-        damage = first.attack
+        damage = _get_attack_stat(first)
         second.now_hp -= damage
         second.now_hp = max(second.now_hp, 0)
         logger.info(f"First attacker ({first.get_name()}) basic attack: {damage} damage, target HP: {second.now_hp}")
@@ -1056,12 +1059,12 @@ async def _process_attack_phase(
             attack_logs.append(second_log)
         else:
             logger.warning(f"Skill {second_skill.name} returned empty log, using basic attack")
-            damage = second.attack
+            damage = _get_attack_stat(second)
             first.now_hp -= damage
             first.now_hp = max(first.now_hp, 0)
             attack_logs.append(_format_attack_log(second.get_name(), "기본 공격", first.get_name(), damage))
     else:
-        damage = second.attack
+        damage = _get_attack_stat(second)
         first.now_hp -= damage
         first.now_hp = max(first.now_hp, 0)
         attack_logs.append(_format_attack_log(second.get_name(), "기본 공격", first.get_name(), damage))
@@ -1101,6 +1104,20 @@ async def _process_turn_end_phase(
     combat_log.append(phase_footer + "\n" + "\n".join(end_logs))
     await combat_message.edit(embed=_create_battle_embed(user, monster, combat_log))
     await asyncio.sleep(COMBAT.TURN_PHASE_DELAY)
+
+
+def _get_attack_stat(entity) -> int:
+    if hasattr(entity, "get_stat"):
+        stat = entity.get_stat()
+        return int(stat.get(UserStatEnum.ATTACK, getattr(entity, "attack", 0)))
+    return getattr(entity, "attack", 0)
+
+
+def _get_speed_stat(entity) -> int:
+    if hasattr(entity, "get_stat"):
+        stat = entity.get_stat()
+        return int(stat.get(UserStatEnum.SPEED, getattr(entity, "speed", 0)))
+    return getattr(entity, "speed", 0)
 
 
 # =============================================================================
@@ -1147,16 +1164,18 @@ def _create_battle_embed(
     )
 
     # 플레이어 HP 바
-    player_hp_bar = _create_hp_bar(player.now_hp, player.hp, 10)
-    player_hp_pct = int((player.now_hp / player.hp) * 100) if player.hp > 0 else 0
+    player_stat = player.get_stat()
+    player_max_hp = player_stat[UserStatEnum.HP]
+    player_hp_bar = _create_hp_bar(player.now_hp, player_max_hp, 10)
+    player_hp_pct = int((player.now_hp / player_max_hp) * 100) if player_max_hp > 0 else 0
     player_buffs = " ".join([s.get_emoji() for s in player.status]) if player.status else ""
 
     embed.add_field(
         name=f"👤 {player.get_name()}",
         value=(
             f"{player_hp_bar}\n"
-            f"**{player.now_hp}** / {player.hp} ({player_hp_pct}%)\n"
-            f"{player_buffs}" if player_buffs else f"{player_hp_bar}\n**{player.now_hp}** / {player.hp} ({player_hp_pct}%)"
+            f"**{player.now_hp}** / {player_max_hp} ({player_hp_pct}%)\n"
+            f"{player_buffs}" if player_buffs else f"{player_hp_bar}\n**{player.now_hp}** / {player_max_hp} ({player_hp_pct}%)"
         ),
         inline=True
     )
@@ -1211,14 +1230,16 @@ def _create_dungeon_embed(
     )
 
     # 플레이어 상태 (HP 바 포함)
-    hp_bar = _create_hp_bar(session.user.now_hp, session.user.hp, 8)
-    hp_pct = int((session.user.now_hp / session.user.hp) * 100) if session.user.hp > 0 else 0
+    user_stat = session.user.get_stat()
+    max_hp = user_stat[UserStatEnum.HP]
+    hp_bar = _create_hp_bar(session.user.now_hp, max_hp, 8)
+    hp_pct = int((session.user.now_hp / max_hp) * 100) if max_hp > 0 else 0
 
     embed.add_field(
         name=f"👤 {user_name}",
         value=(
             f"{hp_bar}\n"
-            f"HP **{session.user.now_hp}** / {session.user.hp} ({hp_pct}%)"
+            f"HP **{session.user.now_hp}** / {max_hp} ({hp_pct}%)"
         ),
         inline=True
     )

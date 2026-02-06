@@ -52,25 +52,24 @@ class InventoryService:
         if not item:
             raise ItemNotFoundError(item_id)
 
-        # 인벤토리 슬롯 체크
+        # 동일 아이템/강화 레벨이 있으면 스택 처리
+        existing = await UserInventory.get_or_none(
+            user=user,
+            item=item,
+            enhancement_level=enhancement_level
+        )
+        if existing:
+            existing.quantity += quantity
+            await existing.save()
+            logger.debug(f"Stacked item {item_id} x{quantity} for user {user.id}")
+            # 도감에 등록 (이미 등록된 경우 무시됨)
+            await CollectionService.register_item(user, item_id)
+            return existing
+
+        # 인벤토리 슬롯 체크 (새 슬롯 생성 시만)
         current_slots = await UserInventory.filter(user=user).count()
         if current_slots >= MAX_INVENTORY_SLOTS:
             raise InventoryFullError(MAX_INVENTORY_SLOTS)
-
-        # 소비 아이템은 스택
-        if item.type == ItemType.CONSUME:
-            existing = await UserInventory.get_or_none(
-                user=user,
-                item=item,
-                enhancement_level=0
-            )
-            if existing:
-                existing.quantity += quantity
-                await existing.save()
-                logger.debug(f"Stacked item {item_id} x{quantity} for user {user.id}")
-                # 도감에 등록 (이미 등록된 경우 무시됨)
-                await CollectionService.register_item(user, item_id)
-                return existing
 
         # 새 인벤토리 항목 생성
         inv_item = await UserInventory.create(

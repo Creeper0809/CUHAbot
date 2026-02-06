@@ -231,8 +231,9 @@ class ShopService:
     async def get_shop_items_for_display() -> List[ShopItem]:
         """상점 드롭다운에 표시할 아이템 구성"""
         potions = await ShopService._build_potion_items()
-        random_items = await ShopService._build_random_equipment_and_skills(count=5)
-        return potions + random_items
+        random_equipment = await ShopService._build_random_equipment_items(count=5)
+        random_skills = await ShopService._build_random_skill_items(count=5)
+        return potions + random_equipment + random_skills
 
     @staticmethod
     async def _build_potion_items() -> List[ShopItem]:
@@ -243,6 +244,13 @@ class ShopService:
         ).all()
 
         shop_items = []
+        if not potion_items:
+            fallback = [
+                item for item in ShopService.DEFAULT_SHOP_ITEMS
+                if item.item_type == ShopItemType.CONSUMABLE
+            ]
+            return fallback
+
         for item in potion_items:
             shop_items.append(
                 ShopItem(
@@ -257,17 +265,91 @@ class ShopService:
         return shop_items
 
     @staticmethod
-    async def _build_random_equipment_and_skills(count: int = 5) -> List[ShopItem]:
-        """장비/스킬을 등급 확률에 따라 랜덤 선택"""
+    async def _build_random_equipment_items(count: int = 5) -> List[ShopItem]:
+        """장비를 등급 확률에 따라 랜덤 선택"""
         grade_map = {grade.id: grade.name for grade in await Grade.all()}
         equipment_items = await EquipmentItem.all().prefetch_related("item")
-        skills = await Skill_Model.all()
 
         equipment_by_grade: Dict[str, List[EquipmentItem]] = {}
         for equipment in equipment_items:
             grade_name = grade_map.get(equipment.grade, "D")
             equipment_by_grade.setdefault(grade_name, []).append(equipment)
 
+        grade_weights = [
+            ("D", DROP.DROP_RATE_D),
+            ("C", DROP.DROP_RATE_C),
+            ("B", DROP.DROP_RATE_B),
+            ("A", DROP.DROP_RATE_A),
+            ("S", DROP.DROP_RATE_S),
+            ("SS", DROP.DROP_RATE_SS),
+            ("SSS", DROP.DROP_RATE_SSS),
+            ("Mythic", DROP.DROP_RATE_MYTHIC),
+        ]
+
+        selected: List[ShopItem] = []
+        selected_targets = set()
+        attempts = 0
+        all_candidates = []
+        for grade_items in equipment_by_grade.values():
+            all_candidates.extend(grade_items)
+
+        while len(selected) < count and attempts < 100:
+            attempts += 1
+            grades, weights = zip(*grade_weights)
+            grade = random.choices(grades, weights=weights, k=1)[0]
+
+            candidates = equipment_by_grade.get(grade, [])
+
+            if not candidates:
+                continue
+
+            chosen = random.choice(candidates)
+            target_key = chosen.id
+            if target_key in selected_targets:
+                continue
+
+            selected_targets.add(target_key)
+            item = chosen.item
+            selected.append(
+                ShopItem(
+                    id=ShopService._build_shop_item_id("equipment", item.id),
+                    name=item.name,
+                    description=item.description or "장비",
+                    price=item.cost or 100,
+                    item_type=ShopItemType.EQUIPMENT,
+                    target_id=item.id
+                )
+            )
+
+        if len(selected) < count and all_candidates:
+            for chosen in all_candidates:
+                if len(selected) >= count:
+                    break
+                target_key = chosen.id
+                if target_key in selected_targets:
+                    continue
+                selected_targets.add(target_key)
+                item = chosen.item
+                selected.append(
+                    ShopItem(
+                        id=ShopService._build_shop_item_id("equipment", item.id),
+                        name=item.name,
+                        description=item.description or "장비",
+                        price=item.cost or 100,
+                        item_type=ShopItemType.EQUIPMENT,
+                        target_id=item.id
+                    )
+                )
+
+        if len(selected) < count:
+            selected.extend(ShopService.DEFAULT_SHOP_ITEMS[:count - len(selected)])
+
+        return selected
+
+    @staticmethod
+    async def _build_random_skill_items(count: int = 5) -> List[ShopItem]:
+        """스킬을 등급 확률에 따라 랜덤 선택"""
+        skills = await Skill_Model.all()
         skills_by_grade: Dict[str, List[Skill_Model]] = {}
         for skill in skills:
             grade_name = ShopService.SKILL_GRADE_MAP.get(skill.id, "D")
@@ -287,42 +369,43 @@ class ShopService:
         selected: List[ShopItem] = []
         selected_targets = set()
         attempts = 0
+        all_candidates = []
+        for grade_items in skills_by_grade.values():
+            all_candidates.extend(grade_items)
 
         while len(selected) < count and attempts < 100:
             attempts += 1
             grades, weights = zip(*grade_weights)
             grade = random.choices(grades, weights=weights, k=1)[0]
 
-            candidates = []
-            candidates.extend(
-                [("equipment", eq) for eq in equipment_by_grade.get(grade, [])]
-            )
-            candidates.extend(
-                [("skill", sk) for sk in skills_by_grade.get(grade, [])]
-            )
-
+            candidates = skills_by_grade.get(grade, [])
             if not candidates:
                 continue
 
-            item_type, chosen = random.choice(candidates)
-            target_key = (item_type, chosen.id)
-            if target_key in selected_targets:
+            chosen = random.choice(candidates)
+            if chosen.id in selected_targets:
                 continue
 
-            selected_targets.add(target_key)
-            if item_type == "equipment":
-                item = chosen.item
-                selected.append(
-                    ShopItem(
-                        id=ShopService._build_shop_item_id("equipment", item.id),
-                        name=item.name,
-                        description=item.description or "장비",
-                        price=item.cost or 100,
-                        item_type=ShopItemType.EQUIPMENT,
-                        target_id=item.id
-                    )
+            selected_targets.add(chosen.id)
+            grade_name = ShopService.SKILL_GRADE_MAP.get(chosen.id, "D")
+            selected.append(
+                ShopItem(
+                    id=ShopService._build_shop_item_id("skill", chosen.id),
+                    name=chosen.name,
+                    description=chosen.description or "스킬",
+                    price=ShopService.SKILL_GRADE_PRICE.get(grade_name, 500),
+                    item_type=ShopItemType.SKILL,
+                    target_id=chosen.id
                 )
-            else:
+            )
+
+        if len(selected) < count and all_candidates:
+            for chosen in all_candidates:
+                if len(selected) >= count:
+                    break
+                if chosen.id in selected_targets:
+                    continue
+                selected_targets.add(chosen.id)
                 grade_name = ShopService.SKILL_GRADE_MAP.get(chosen.id, "D")
                 selected.append(
                     ShopItem(
