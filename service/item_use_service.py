@@ -4,22 +4,26 @@ ItemUseService
 아이템 사용 (장비 장착 / 소모품 사용)을 담당합니다.
 """
 import logging
+import random
 from dataclasses import dataclass
 from typing import Optional
 
-from models import User
+from models import EquipmentItem, Grade, ItemGradeProbability, User
+from models.user_stats import UserStats
 from models.user_inventory import UserInventory
-from models.equipment_item import EquipmentItem
 from models.consume_item import ConsumeItem
 from models.user_equipment import EquipmentSlot
 from resources.item_emoji import ItemType
+from config import DROP
 from exceptions import (
     ItemNotFoundError,
     ItemNotEquippableError,
     CombatRestrictionError,
+    InventoryFullError,
 )
 from service.session import get_session
 from service.equipment_service import EquipmentService
+from service.inventory_service import InventoryService
 
 logger = logging.getLogger(__name__)
 
@@ -155,6 +159,10 @@ class ItemUseService:
                 item_name=item.name
             )
 
+        chest_grade = ItemUseService._get_chest_grade(item.id)
+        if chest_grade:
+            return await ItemUseService._use_chest_consumable(user, inv_item, chest_grade)
+
         # 효과 적용
         effect_desc = await ItemUseService._apply_consume_effect(user, consume)
 
@@ -193,3 +201,140 @@ class ItemUseService:
             effects.append("효과 없음")
 
         return ", ".join(effects)
+
+    @staticmethod
+    def _get_chest_grade(item_id: int) -> Optional[str]:
+        chest_map = {
+            DROP.CHEST_ITEM_NORMAL_ID: "normal",
+            DROP.CHEST_ITEM_SILVER_ID: "silver",
+            DROP.CHEST_ITEM_GOLD_ID: "gold",
+        }
+        return chest_map.get(item_id)
+
+    @staticmethod
+    def _calculate_chest_gold(user_level: int, chest_grade: str) -> int:
+        grade_multiplier = {
+            "normal": 1.0,
+            "silver": 2.0,
+            "gold": 5.0
+        }.get(chest_grade, 1.0)
+        base_gold = 20
+        gold = int(base_gold * grade_multiplier * (1 + user_level / 10))
+        return int(gold * random.uniform(0.8, 1.2))
+
+    @staticmethod
+    async def _roll_item_grade(chest_grade: str) -> Optional[str]:
+        chest_id_map = {"normal": 1, "silver": 2, "gold": 3}
+        chest_id = chest_id_map.get(chest_grade)
+
+        if chest_id is not None:
+            grade_probs = await ItemGradeProbability.filter(cheat_id=chest_id).all()
+            if grade_probs:
+                grades = []
+                weights = []
+                for entry in grade_probs:
+                    if entry.grade is None:
+                        continue
+                    grade_value = entry.grade.value if hasattr(entry.grade, "value") else str(entry.grade)
+                    grades.append(grade_value)
+                    weights.append(float(entry.probability or 0))
+                if grades and sum(weights) > 0:
+                    return random.choices(grades, weights=weights, k=1)[0]
+
+        grades = ["D", "C", "B", "A", "S", "SS", "SSS", "Mythic"]
+        weights = [
+            DROP.DROP_RATE_D,
+            DROP.DROP_RATE_C,
+            DROP.DROP_RATE_B,
+            DROP.DROP_RATE_A,
+            DROP.DROP_RATE_S,
+            DROP.DROP_RATE_SS,
+            DROP.DROP_RATE_SSS,
+            DROP.DROP_RATE_MYTHIC,
+        ]
+        return random.choices(grades, weights=weights, k=1)[0]
+
+    @staticmethod
+    async def _pick_equipment_by_grade(grade_name: str) -> Optional[EquipmentItem]:
+        grade = await Grade.get_or_none(name=grade_name)
+        if not grade:
+            return None
+        candidates = await EquipmentItem.filter(grade=grade.id).prefetch_related("item")
+        if not candidates:
+            return None
+        return random.choice(candidates)
+
+    @staticmethod
+    async def _use_chest_consumable(
+        user: User,
+        inv_item: UserInventory,
+        chest_grade: str
+    ) -> ItemUseResult:
+        item = inv_item.item
+        stats = await UserStats.get_or_none(user=user)
+        if not stats:
+            stats = await UserStats.create(user=user)
+
+        if random.random() < DROP.CHEST_GOLD_RATE:
+            gold_gained = ItemUseService._calculate_chest_gold(user.level, chest_grade)
+            stats.gold += gold_gained
+            await stats.save()
+
+            inv_item.quantity -= 1
+            if inv_item.quantity <= 0:
+                await inv_item.delete()
+            else:
+                await inv_item.save()
+
+            logger.info(
+                f"User {user.id} opened chest {item.id} ({item.name}): gold={gold_gained}"
+            )
+
+            return ItemUseResult(
+                success=True,
+                message=f"'{item.name}'을(를) 열었습니다!",
+                item_name=item.name,
+                effect_description=f"골드 +{gold_gained}"
+            )
+
+        grade_name = await ItemUseService._roll_item_grade(chest_grade)
+        if not grade_name:
+            return ItemUseResult(
+                success=False,
+                message="상자 등급 판정에 실패했습니다.",
+                item_name=item.name
+            )
+
+        equipment = await ItemUseService._pick_equipment_by_grade(grade_name)
+        if not equipment or not equipment.item:
+            return ItemUseResult(
+                success=False,
+                message="상자에서 나올 장비를 찾을 수 없습니다.",
+                item_name=item.name
+            )
+
+        try:
+            await InventoryService.add_item(user, equipment.item.id, 1)
+        except InventoryFullError:
+            return ItemUseResult(
+                success=False,
+                message="인벤토리가 가득 차서 상자를 열 수 없습니다.",
+                item_name=item.name
+            )
+
+        inv_item.quantity -= 1
+        if inv_item.quantity <= 0:
+            await inv_item.delete()
+        else:
+            await inv_item.save()
+
+        logger.info(
+            f"User {user.id} opened chest {item.id} ({item.name}): item={equipment.item.id}"
+        )
+
+        return ItemUseResult(
+            success=True,
+            message=f"'{item.name}'을(를) 열었습니다!",
+            item_name=item.name,
+            effect_description=f"장비 '{equipment.item.name}' 획득"
+        )

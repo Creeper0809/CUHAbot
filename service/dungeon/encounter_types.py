@@ -20,6 +20,10 @@ from DTO.encounter_view import (
     HiddenRoomView,
     show_encounter_result
 )
+from config import DROP
+from exceptions import InventoryFullError
+from models import Item
+from service.inventory_service import InventoryService
 from DTO.shop_view import ShopView
 from service.shop_service import ShopService
 
@@ -95,11 +99,6 @@ class TreasureEncounter(Encounter):
             chest_grade: 상자 등급 (normal, silver, gold)
         """
         self.chest_grade = chest_grade
-        self.grade_multiplier = {
-            "normal": 1.0,
-            "silver": 2.0,
-            "gold": 5.0
-        }.get(chest_grade, 1.0)
 
     async def execute(
         self,
@@ -107,11 +106,23 @@ class TreasureEncounter(Encounter):
         interaction: discord.Interaction
     ) -> EncounterResult:
         """보물상자 열기"""
-        # 보상 계산
-        base_gold = 20
-        dungeon_level = session.dungeon.require_level if session.dungeon else 1
-        gold_gained = int(base_gold * self.grade_multiplier * (1 + dungeon_level / 10))
-        gold_gained = int(gold_gained * random.uniform(0.8, 1.2))
+        chest_item_map = {
+            "normal": DROP.CHEST_ITEM_NORMAL_ID,
+            "silver": DROP.CHEST_ITEM_SILVER_ID,
+            "gold": DROP.CHEST_ITEM_GOLD_ID,
+        }
+        chest_item_id = chest_item_map.get(self.chest_grade)
+        item_name = "상자"
+
+        if chest_item_id:
+            item = await Item.get_or_none(id=chest_item_id)
+            if item:
+                item_name = item.name
+
+            try:
+                await InventoryService.add_item(session.user, chest_item_id, 1)
+            except InventoryFullError:
+                item_name = "상자 (인벤토리 가득 참)"
 
         # View 표시
         view = TreasureView(
@@ -127,17 +138,14 @@ class TreasureEncounter(Encounter):
         await view.wait()
 
         # 상자 열기 결과
-        session.total_gold += gold_gained
-
-        result_embed = view.create_embed(opened=True, gold=gold_gained)
+        result_embed = view.create_embed(opened=True, item_name=item_name)
         await show_encounter_result(msg, result_embed, delay=2.5)
 
         chest_emoji = {"normal": "📦", "silver": "🎁", "gold": "💎"}.get(self.chest_grade, "📦")
 
         return EncounterResult(
             encounter_type=self.encounter_type,
-            message=f"{chest_emoji} 보물상자 발견! 💰 **+{gold_gained}** 골드",
-            gold_gained=gold_gained
+            message=f"{chest_emoji} 보물상자 발견! 🎁 **{item_name}** 획득"
         )
 
 
@@ -392,11 +400,14 @@ class NPCEncounter(Encounter):
             # 상인: 실제 상점 열기
             user_gold = await ShopService.get_user_gold(user)
 
+            shop_items = await ShopService.get_shop_items_for_display()
+
             # 상점 View 표시
             shop_view = ShopView(
                 user=interaction.user,
                 db_user=user,
                 user_gold=user_gold,
+                shop_items=shop_items,
                 timeout=120
             )
 

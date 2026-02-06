@@ -96,11 +96,14 @@ class DungeonSelectView(discord.ui.View):
     def __init__(self, user, dungeons,session, timeout=20):
         super().__init__(timeout=timeout)
         self.user = user
-        self.dungeons = dungeons
+        self.dungeons = sorted(
+            dungeons,
+            key=lambda dungeon: (dungeon.require_level, dungeon.id)
+        )
         self.session = session
         self.selected_dungeon = None
         self.message = None
-        self.add_item(DungeonDropdown(dungeons))
+        self.add_item(DungeonDropdown(self.dungeons))
         self.add_item(EnterButton())
         self.add_item(CancelButton())
 

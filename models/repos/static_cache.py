@@ -45,7 +45,7 @@ async def load_static_data():
     for skill in skills:
         components = []
         # config 구조: {"components": [{"tag": "attack", ...}, ...]}
-        component_configs = skill.config.get("components", [])
+        component_configs = _resolve_skill_components(skill.config)
 
         if not component_configs:
             logger.warning(f"Skill {skill.id} ({skill.name}) has no components! Config: {skill.config}")
@@ -67,6 +67,27 @@ async def load_static_data():
         logger.info(f"Skill {skill.id} ({skill.name}): {len(components)} components loaded")
 
     logger.info(f"Loaded {len(skill_cache_by_id)} skills")
+
+
+def _resolve_skill_components(skill_config):
+    """레거시 스킬 설정을 컴포넌트 구조로 정규화"""
+    if not isinstance(skill_config, dict):
+        return []
+
+    components = skill_config.get("components")
+    if isinstance(components, list) and components:
+        return components
+
+    if "type" in skill_config and skill_config["type"] in skill_component_register:
+        legacy_config = {k: v for k, v in skill_config.items() if k != "type"}
+        return [{"tag": skill_config["type"], **legacy_config}]
+
+    legacy_components = []
+    for tag, config in skill_config.items():
+        if tag in skill_component_register and isinstance(config, dict):
+            legacy_components.append({"tag": tag, **config})
+
+    return legacy_components
 
 
 def get_dungeons():

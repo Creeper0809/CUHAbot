@@ -2,6 +2,7 @@
 
 from .base_item import *
 from .consume_item import *
+from .droptable import *
 from .dungeon import *
 from .dungeon_spawn import *
 from .dungeon_user_pos import *

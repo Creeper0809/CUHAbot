@@ -244,6 +244,9 @@ class DungeonConfig:
     BOSS_GOLD_MULTIPLIER: float = 10.0
     """보스 몬스터 골드 배율"""
 
+    BOSS_SPAWN_RATE: float = 0.05
+    """보스 몬스터 기본 등장 확률 (스폰 테이블 내 존재 시)"""
+
 
 DUNGEON = DungeonConfig()
 
@@ -272,6 +275,25 @@ class DropConfig:
 
     BOSS_DROP_MULTIPLIER: float = 10.0
     """보스 몬스터 드롭률 배율"""
+
+    # 상자 드롭
+    CHEST_DROP_RATE: float = 0.2
+    """몬스터 처치 시 상자 드롭 확률"""
+
+    CHEST_GOLD_RATE: float = 0.85
+    """상자에서 골드가 나올 확률"""
+
+    CHEST_GRADE_WEIGHTS: tuple[int, int, int] = (70, 25, 5)
+    """상자 등급 가중치 (normal, silver, gold)"""
+
+    CHEST_ITEM_NORMAL_ID: int = 5901
+    """일반 상자 아이템 ID"""
+
+    CHEST_ITEM_SILVER_ID: int = 5902
+    """실버 상자 아이템 ID"""
+
+    CHEST_ITEM_GOLD_ID: int = 5903
+    """골드 상자 아이템 ID"""
 
     # 스킬 드롭
     SKILL_DROP_RATE: float = 0.001

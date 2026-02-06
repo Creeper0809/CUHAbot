@@ -24,7 +24,13 @@ async def init_db():
                f"{os.getenv('DATABASE_URL')}:{os.getenv('DATABASE_PORT')}/{os.getenv('DATABASE_TABLE')}",
         modules={"models": ["models"]}
     )
-    await Tortoise.generate_schemas()
+    # 기존 DB와 모델 차이 보정 (스키마 마이그레이션 최소화)
+    conn = Tortoise.get_connection("default")
+    await conn.execute_script(
+        'ALTER TABLE "monster" ADD COLUMN IF NOT EXISTS "type" VARCHAR(20);'
+    )
+
+    await Tortoise.generate_schemas(safe=True)
 
 
 async def seed_grades():
@@ -170,6 +176,13 @@ async def seed_monsters():
     ]
 
     for monster in monsters:
+        if "type" not in monster:
+            if monster["id"] >= 101:
+                monster["type"] = "BossMob"
+            elif monster["id"] >= 38:
+                monster["type"] = "EliteMob"
+            else:
+                monster["type"] = "CommonMob"
         await Monster.update_or_create(id=monster["id"], defaults=monster)
 
     print(f"✓ Monster 데이터 {len(monsters)}개 삽입 완료")
@@ -347,6 +360,9 @@ async def seed_items():
         {"item": {"id": 5301, "name": "화염병", "description": "100 화염 데미지 + 화상", "cost": 150, "type": ItemType.CONSUME}, "amount": 100},
         {"item": {"id": 5302, "name": "냉기 구슬", "description": "80 냉기 데미지 + 둔화", "cost": 150, "type": ItemType.CONSUME}, "amount": 80},
         {"item": {"id": 5303, "name": "번개 부적", "description": "120 번개 데미지 + 마비", "cost": 200, "type": ItemType.CONSUME}, "amount": 120},
+        {"item": {"id": 5901, "name": "낡은 상자", "description": "열면 보상이 나오는 상자", "cost": 0, "type": ItemType.CONSUME}, "amount": 0},
+        {"item": {"id": 5902, "name": "은빛 상자", "description": "열면 보상이 나오는 상자", "cost": 0, "type": ItemType.CONSUME}, "amount": 0},
+        {"item": {"id": 5903, "name": "황금 상자", "description": "열면 보상이 나오는 상자", "cost": 0, "type": ItemType.CONSUME}, "amount": 0},
     ]
 
     for consume_data in consume_items:
@@ -360,6 +376,93 @@ async def seed_items():
         )
 
     print(f"✓ 소비 아이템 {len(consume_items)}개 삽입 완료")
+
+
+async def seed_item_grade_probability():
+    """상자 등급 확률 데이터 삽입"""
+    from models.item_grade_probability import ItemGradeProbability
+
+    grade_probs = [
+        # normal chest (cheat_id=1)
+        {"cheat_id": 1, "grade": "D", "probability": 55, "grade_idx": 1},
+        {"cheat_id": 1, "grade": "C", "probability": 25, "grade_idx": 2},
+        {"cheat_id": 1, "grade": "B", "probability": 13, "grade_idx": 3},
+        {"cheat_id": 1, "grade": "A", "probability": 6, "grade_idx": 4},
+        {"cheat_id": 1, "grade": "S", "probability": 1, "grade_idx": 5},
+
+        # silver chest (cheat_id=2)
+        {"cheat_id": 2, "grade": "D", "probability": 35, "grade_idx": 1},
+        {"cheat_id": 2, "grade": "C", "probability": 30, "grade_idx": 2},
+        {"cheat_id": 2, "grade": "B", "probability": 20, "grade_idx": 3},
+        {"cheat_id": 2, "grade": "A", "probability": 10, "grade_idx": 4},
+        {"cheat_id": 2, "grade": "S", "probability": 5, "grade_idx": 5},
+
+        # gold chest (cheat_id=3)
+        {"cheat_id": 3, "grade": "D", "probability": 10, "grade_idx": 1},
+        {"cheat_id": 3, "grade": "C", "probability": 20, "grade_idx": 2},
+        {"cheat_id": 3, "grade": "B", "probability": 30, "grade_idx": 3},
+        {"cheat_id": 3, "grade": "A", "probability": 25, "grade_idx": 4},
+        {"cheat_id": 3, "grade": "S", "probability": 15, "grade_idx": 5},
+    ]
+
+    await ItemGradeProbability.all().delete()
+    for entry in grade_probs:
+        await ItemGradeProbability.create(**entry)
+
+    print(f"✓ ItemGradeProbability 데이터 {len(grade_probs)}개 삽입 완료")
+
+
+async def seed_droptable():
+    """보스 드랍 테이블 데이터 삽입"""
+    from models.droptable import Droptable
+
+    drops = [
+        # 고블린 족장 (101)
+        {"drop_monster": 101, "item_id": 1002, "probability": 0.6},
+        {"drop_monster": 101, "item_id": 2003, "probability": 0.3},
+        {"drop_monster": 101, "item_id": 4002, "probability": 0.1},
+
+        # 화염의 군주 (102)
+        {"drop_monster": 102, "item_id": 1004, "probability": 0.6},
+        {"drop_monster": 102, "item_id": 2104, "probability": 0.3},
+        {"drop_monster": 102, "item_id": 2004, "probability": 0.1},
+
+        # 서리 마녀 (103)
+        {"drop_monster": 103, "item_id": 1005, "probability": 0.6},
+        {"drop_monster": 103, "item_id": 2104, "probability": 0.3},
+        {"drop_monster": 103, "item_id": 2304, "probability": 0.1},
+
+        # 천둥의 왕 (104)
+        {"drop_monster": 104, "item_id": 1006, "probability": 0.6},
+        {"drop_monster": 104, "item_id": 2304, "probability": 0.25},
+        {"drop_monster": 104, "item_id": 4003, "probability": 0.15},
+
+        # 심해의 사제 (105)
+        {"drop_monster": 105, "item_id": 2103, "probability": 0.5},
+        {"drop_monster": 105, "item_id": 2303, "probability": 0.3},
+        {"drop_monster": 105, "item_id": 4003, "probability": 0.2},
+
+        # 타락한 대주교 (106)
+        {"drop_monster": 106, "item_id": 1007, "probability": 0.5},
+        {"drop_monster": 106, "item_id": 2005, "probability": 0.3},
+        {"drop_monster": 106, "item_id": 2105, "probability": 0.2},
+
+        # 리치 킹 (107)
+        {"drop_monster": 107, "item_id": 1008, "probability": 0.5},
+        {"drop_monster": 107, "item_id": 2005, "probability": 0.3},
+        {"drop_monster": 107, "item_id": 4004, "probability": 0.2},
+
+        # 고대 드래곤 (108)
+        {"drop_monster": 108, "item_id": 1008, "probability": 0.4},
+        {"drop_monster": 108, "item_id": 2105, "probability": 0.35},
+        {"drop_monster": 108, "item_id": 4004, "probability": 0.25},
+    ]
+
+    await Droptable.all().delete()
+    for drop in drops:
+        await Droptable.create(**drop)
+
+    print(f"✓ Droptable 데이터 {len(drops)}개 삽입 완료")
 
 
 async def seed_dungeon_spawns():
@@ -458,6 +561,8 @@ async def main():
     await seed_monsters()
     await seed_skills()
     await seed_items()
+    await seed_item_grade_probability()
+    await seed_droptable()
     await seed_dungeon_spawns()
 
     await Tortoise.close_connections()

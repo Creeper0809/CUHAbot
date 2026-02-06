@@ -30,7 +30,12 @@ class TreasureView(discord.ui.View):
         self.opened = False
         self.message: Optional[discord.Message] = None
 
-    def create_embed(self, opened: bool = False, gold: int = 0) -> discord.Embed:
+    def create_embed(
+        self,
+        opened: bool = False,
+        gold: int = 0,
+        item_name: Optional[str] = None
+    ) -> discord.Embed:
         """임베드 생성"""
         grade_info = {
             "normal": ("📦", "낡은 상자", discord.Color.from_rgb(139, 90, 43)),
@@ -60,17 +65,24 @@ class TreasureView(discord.ui.View):
                 description=(
                     "```\n"
                     "  ╔══════════════╗\n"
-                    f"  ║  💰 {gold:,}G   ║\n"
+                    f"  ║  🎁 {item_name or f'{gold:,}G'}   ║\n"
                     "  ╚══════════════╝\n"
                     "```"
                 ),
                 color=color
             )
-            embed.add_field(
-                name="획득 보상",
-                value=f"💰 **{gold:,}** 골드",
-                inline=False
-            )
+            if item_name:
+                embed.add_field(
+                    name="획득 보상",
+                    value=f"🎁 **{item_name}**",
+                    inline=False
+                )
+            else:
+                embed.add_field(
+                    name="획득 보상",
+                    value=f"💰 **{gold:,}** 골드",
+                    inline=False
+                )
 
         return embed
 

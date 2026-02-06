@@ -4,6 +4,7 @@ Monster 모델 정의
 몬스터 정보 및 전투 관련 런타임 상태를 관리합니다.
 """
 import random
+from enum import Enum
 from copy import deepcopy
 from typing import TYPE_CHECKING, Any, Optional
 
@@ -12,6 +13,13 @@ from tortoise import models, fields
 if TYPE_CHECKING:
     from service.dungeon.buff import Buff
     from service.dungeon.skill import Skill
+
+
+class MonsterTypeEnum(str, Enum):
+    COMMON = "CommonMob"
+    ELITE = "EliteMob"
+    BOSS = "BossMob"
+    RAID = "RadeMob"
 
 
 class Monster(models.Model):
@@ -28,6 +36,7 @@ class Monster(models.Model):
     id = fields.IntField(pk=True)
     name = fields.CharField(max_length=255)
     description = fields.TextField()
+    type = fields.CharEnumField(MonsterTypeEnum, null=True)
     hp = fields.IntField()
     attack = fields.IntField()
     """물리 공격력"""
@@ -109,6 +118,7 @@ class Monster(models.Model):
             id=self.id,
             name=self.name,
             description=self.description,
+            type=getattr(self, 'type', None),
             hp=self.hp,
             attack=self.attack,
             defense=getattr(self, 'defense', 0),

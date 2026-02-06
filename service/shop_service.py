@@ -5,12 +5,15 @@ NPC 상점 거래를 담당합니다.
 장비, 포션, 스킬 구매/판매 기능을 제공합니다.
 """
 import logging
+import random
 from dataclasses import dataclass
 from enum import Enum
-from typing import List, Optional
+from typing import Dict, List, Optional
 
-from models import User, Item, Skill_Model
+from config import DROP
+from models import EquipmentItem, Grade, Item, Skill_Model, User
 from models.user_inventory import UserInventory
+from resources.item_emoji import ItemType
 from exceptions import (
     InsufficientGoldError,
     ItemNotFoundError,
@@ -54,6 +57,55 @@ class PurchaseResult:
 
 class ShopService:
     """상점 서비스"""
+    SKILL_GRADE_MAP: Dict[int, str] = {
+        1: "D",
+        2: "D",
+        3: "C",
+        4: "C",
+        5: "B",
+        101: "C",
+        102: "C",
+        103: "B",
+        104: "B",
+        201: "C",
+        202: "C",
+        203: "B",
+        301: "B",
+        302: "B",
+        303: "A",
+        401: "C",
+        402: "C",
+        403: "B",
+        501: "B",
+        502: "B",
+        503: "A",
+        504: "A",
+        601: "B",
+        602: "B",
+        603: "A",
+        1001: "D",
+        1002: "C",
+        1003: "B",
+        1004: "A",
+        2001: "D",
+        2002: "C",
+        2003: "B",
+        2004: "A",
+        3001: "C",
+        3002: "C",
+        3003: "B",
+    }
+
+    SKILL_GRADE_PRICE: Dict[str, int] = {
+        "D": 500,
+        "C": 800,
+        "B": 1200,
+        "A": 1800,
+        "S": 3000,
+        "SS": 5000,
+        "SSS": 8000,
+        "Mythic": 12000,
+    }
 
     # 기본 상점 아이템 정의
     DEFAULT_SHOP_ITEMS: List[ShopItem] = [
@@ -105,6 +157,17 @@ class ShopService:
         return None
 
     @staticmethod
+    def get_shop_item_from_list(
+        shop_items: List[ShopItem],
+        shop_item_id: int
+    ) -> Optional[ShopItem]:
+        """상점 아이템 조회 (목록 기반)"""
+        for item in shop_items:
+            if item.id == shop_item_id:
+                return item
+        return None
+
+    @staticmethod
     async def get_user_gold(user: User) -> int:
         """유저 골드 조회"""
         return user.cuha_point
@@ -135,6 +198,15 @@ class ShopService:
         if not shop_item:
             raise ItemNotFoundError(shop_item_id)
 
+        return await ShopService.purchase_shop_item(user, shop_item, quantity)
+
+    @staticmethod
+    async def purchase_shop_item(
+        user: User,
+        shop_item: ShopItem,
+        quantity: int = 1
+    ) -> PurchaseResult:
+        """상점 아이템 구매 처리 (ShopItem 직접 전달)"""
         total_cost = shop_item.price * quantity
 
         # 골드 확인
@@ -151,9 +223,131 @@ class ShopService:
                 user, shop_item, quantity
             )
         else:
-            raise ItemNotFoundError(shop_item_id)
+            raise ItemNotFoundError(shop_item.id)
 
         return result
+
+    @staticmethod
+    async def get_shop_items_for_display() -> List[ShopItem]:
+        """상점 드롭다운에 표시할 아이템 구성"""
+        potions = await ShopService._build_potion_items()
+        random_items = await ShopService._build_random_equipment_and_skills(count=5)
+        return potions + random_items
+
+    @staticmethod
+    async def _build_potion_items() -> List[ShopItem]:
+        """포션 아이템 고정 표시"""
+        potion_items = await Item.filter(
+            type=ItemType.CONSUME,
+            name__contains="포션"
+        ).all()
+
+        shop_items = []
+        for item in potion_items:
+            shop_items.append(
+                ShopItem(
+                    id=ShopService._build_shop_item_id("potion", item.id),
+                    name=item.name,
+                    description=item.description or "포션",
+                    price=item.cost or 50,
+                    item_type=ShopItemType.CONSUMABLE,
+                    target_id=item.id
+                )
+            )
+        return shop_items
+
+    @staticmethod
+    async def _build_random_equipment_and_skills(count: int = 5) -> List[ShopItem]:
+        """장비/스킬을 등급 확률에 따라 랜덤 선택"""
+        grade_map = {grade.id: grade.name for grade in await Grade.all()}
+        equipment_items = await EquipmentItem.all().prefetch_related("item")
+        skills = await Skill_Model.all()
+
+        equipment_by_grade: Dict[str, List[EquipmentItem]] = {}
+        for equipment in equipment_items:
+            grade_name = grade_map.get(equipment.grade, "D")
+            equipment_by_grade.setdefault(grade_name, []).append(equipment)
+
+        skills_by_grade: Dict[str, List[Skill_Model]] = {}
+        for skill in skills:
+            grade_name = ShopService.SKILL_GRADE_MAP.get(skill.id, "D")
+            skills_by_grade.setdefault(grade_name, []).append(skill)
+
+        grade_weights = [
+            ("D", DROP.DROP_RATE_D),
+            ("C", DROP.DROP_RATE_C),
+            ("B", DROP.DROP_RATE_B),
+            ("A", DROP.DROP_RATE_A),
+            ("S", DROP.DROP_RATE_S),
+            ("SS", DROP.DROP_RATE_SS),
+            ("SSS", DROP.DROP_RATE_SSS),
+            ("Mythic", DROP.DROP_RATE_MYTHIC),
+        ]
+
+        selected: List[ShopItem] = []
+        selected_targets = set()
+        attempts = 0
+
+        while len(selected) < count and attempts < 100:
+            attempts += 1
+            grades, weights = zip(*grade_weights)
+            grade = random.choices(grades, weights=weights, k=1)[0]
+
+            candidates = []
+            candidates.extend(
+                [("equipment", eq) for eq in equipment_by_grade.get(grade, [])]
+            )
+            candidates.extend(
+                [("skill", sk) for sk in skills_by_grade.get(grade, [])]
+            )
+
+            if not candidates:
+                continue
+
+            item_type, chosen = random.choice(candidates)
+            target_key = (item_type, chosen.id)
+            if target_key in selected_targets:
+                continue
+
+            selected_targets.add(target_key)
+            if item_type == "equipment":
+                item = chosen.item
+                selected.append(
+                    ShopItem(
+                        id=ShopService._build_shop_item_id("equipment", item.id),
+                        name=item.name,
+                        description=item.description or "장비",
+                        price=item.cost or 100,
+                        item_type=ShopItemType.EQUIPMENT,
+                        target_id=item.id
+                    )
+                )
+            else:
+                grade_name = ShopService.SKILL_GRADE_MAP.get(chosen.id, "D")
+                selected.append(
+                    ShopItem(
+                        id=ShopService._build_shop_item_id("skill", chosen.id),
+                        name=chosen.name,
+                        description=chosen.description or "스킬",
+                        price=ShopService.SKILL_GRADE_PRICE.get(grade_name, 500),
+                        item_type=ShopItemType.SKILL,
+                        target_id=chosen.id
+                    )
+                )
+
+        if len(selected) < count:
+            selected.extend(ShopService.DEFAULT_SHOP_ITEMS[:count - len(selected)])
+
+        return selected
+
+    @staticmethod
+    def _build_shop_item_id(prefix: str, target_id: int) -> int:
+        prefix_map = {
+            "potion": 100000,
+            "equipment": 200000,
+            "skill": 300000,
+        }
+        return prefix_map.get(prefix, 900000) + target_id
 
     @staticmethod
     async def _purchase_skill(

@@ -12,16 +12,17 @@ from typing import Optional
 import discord
 from discord import Embed
 
-from config import COMBAT, DUNGEON, EmbedColor
+from config import COMBAT, DUNGEON, DROP, EmbedColor
 from DTO.dungeon_control import DungeonControlView
 from DTO.fight_or_flee import FightOrFleeView
-from exceptions import MonsterNotFoundError, MonsterSpawnNotFoundError
-from models import Monster, User
+from exceptions import InventoryFullError, MonsterNotFoundError, MonsterSpawnNotFoundError
+from models import Droptable, Item, Monster, MonsterTypeEnum, User
 from models.repos.dungeon_repo import find_all_dungeon_spawn_monster_by
 from models.repos.monster_repo import find_monster_by_id
 from service.collection_service import CollectionService
 from service.dungeon.encounter_service import EncounterFactory
 from service.dungeon.encounter_types import EncounterType
+from service.inventory_service import InventoryService
 from service.reward_service import RewardService
 from service.session import DungeonSession, SessionType, set_combat_state
 
@@ -497,9 +498,24 @@ def _spawn_random_monster(dungeon_id: int) -> Monster:
     if not monsters_spawn:
         raise MonsterSpawnNotFoundError(dungeon_id)
 
+    boss_spawns = []
+    normal_spawns = []
+
+    for spawn in monsters_spawn:
+        monster = find_monster_by_id(spawn.monster_id)
+        if _is_boss_monster(monster):
+            boss_spawns.append(spawn)
+        else:
+            normal_spawns.append(spawn)
+
+    if boss_spawns and random.random() < DUNGEON.BOSS_SPAWN_RATE:
+        spawn_pool = boss_spawns
+    else:
+        spawn_pool = normal_spawns or monsters_spawn
+
     random_spawn = random.choices(
-        population=monsters_spawn,
-        weights=[spawn.prob for spawn in monsters_spawn],
+        population=spawn_pool,
+        weights=[spawn.prob for spawn in spawn_pool],
         k=1
     )[0]
 
@@ -660,11 +676,14 @@ async def _process_combat_result(
     # 승리 시 - 보상 계산
     monster_level = session.dungeon.require_level if session.dungeon else 1
 
-    # 경험치 계산: 기본 * (1 + 몬스터레벨/10)
-    exp_gained = int(BASE_EXP_PER_MONSTER * (1 + monster_level / 10))
+    exp_multiplier = _get_monster_exp_multiplier(monster)
+    gold_multiplier = _get_monster_gold_multiplier(monster)
 
-    # 골드 계산: 기본 * (1 + 몬스터레벨/10)
-    gold_gained = int(BASE_GOLD_PER_MONSTER * (1 + monster_level / 10))
+    # 경험치 계산: 기본 * (1 + 몬스터레벨/10) * 타입 배율
+    exp_gained = int(BASE_EXP_PER_MONSTER * (1 + monster_level / 10) * exp_multiplier)
+
+    # 골드 계산: 기본 * (1 + 몬스터레벨/10) * 타입 배율
+    gold_gained = int(BASE_GOLD_PER_MONSTER * (1 + monster_level / 10) * gold_multiplier)
 
     # 세션에 누적
     session.total_exp += exp_gained
@@ -679,6 +698,12 @@ async def _process_combat_result(
         f"exp={exp_gained}, gold={gold_gained}, turns={turn_count}"
     )
 
+    # 보스 전용 드롭 테이블 확인
+    dropped_boss_item_msg = await _try_drop_boss_special_item(user, monster)
+
+    # 상자 드롭 확인
+    dropped_chest_msg = await _try_drop_monster_chest(session, monster)
+
     # 스킬 드롭 확인
     dropped_skill_msg = await _try_drop_monster_skill(user, monster)
 
@@ -688,10 +713,124 @@ async def _process_combat_result(
         f"   ⭐ +**{exp_gained}** EXP │ 💰 +**{gold_gained}** G"
     )
 
+    if dropped_boss_item_msg:
+        result_msg += f"\n   {dropped_boss_item_msg}"
+
+    if dropped_chest_msg:
+        result_msg += f"\n   {dropped_chest_msg}"
+
     if dropped_skill_msg:
         result_msg += f"\n   {dropped_skill_msg}"
 
     return result_msg
+
+
+def _normalize_monster_type(monster: Monster) -> Optional[str]:
+    monster_type = getattr(monster, "type", None)
+    if isinstance(monster_type, MonsterTypeEnum):
+        return monster_type.value
+    return monster_type
+
+
+def _is_boss_monster(monster: Monster) -> bool:
+    return _normalize_monster_type(monster) == MonsterTypeEnum.BOSS.value
+
+
+def _get_monster_exp_multiplier(monster: Monster) -> float:
+    monster_type = _normalize_monster_type(monster)
+    if monster_type == MonsterTypeEnum.ELITE.value:
+        return DUNGEON.ELITE_EXP_MULTIPLIER
+    if monster_type == MonsterTypeEnum.BOSS.value:
+        return DUNGEON.BOSS_EXP_MULTIPLIER
+    return 1.0
+
+
+def _get_monster_gold_multiplier(monster: Monster) -> float:
+    monster_type = _normalize_monster_type(monster)
+    if monster_type == MonsterTypeEnum.ELITE.value:
+        return DUNGEON.ELITE_GOLD_MULTIPLIER
+    if monster_type == MonsterTypeEnum.BOSS.value:
+        return DUNGEON.BOSS_GOLD_MULTIPLIER
+    return 1.0
+
+
+def _get_monster_drop_multiplier(monster: Monster) -> float:
+    monster_type = _normalize_monster_type(monster)
+    if monster_type == MonsterTypeEnum.ELITE.value:
+        return DROP.ELITE_DROP_MULTIPLIER
+    if monster_type == MonsterTypeEnum.BOSS.value:
+        return DROP.BOSS_DROP_MULTIPLIER
+    return 1.0
+
+
+def _roll_chest_grade() -> str:
+    return random.choices(
+        ["normal", "silver", "gold"],
+        weights=DROP.CHEST_GRADE_WEIGHTS,
+        k=1
+    )[0]
+
+
+def _get_chest_item_id(chest_grade: str) -> Optional[int]:
+    chest_item_map = {
+        "normal": DROP.CHEST_ITEM_NORMAL_ID,
+        "silver": DROP.CHEST_ITEM_SILVER_ID,
+        "gold": DROP.CHEST_ITEM_GOLD_ID,
+    }
+    return chest_item_map.get(chest_grade)
+
+
+async def _try_drop_monster_chest(
+    session: DungeonSession,
+    monster: Monster
+) -> Optional[str]:
+    drop_rate = DROP.CHEST_DROP_RATE * _get_monster_drop_multiplier(monster)
+    if random.random() > min(drop_rate, 1.0):
+        return None
+
+    chest_grade = _roll_chest_grade()
+    chest_item_id = _get_chest_item_id(chest_grade)
+    if not chest_item_id:
+        return None
+
+    try:
+        await InventoryService.add_item(session.user, chest_item_id, 1)
+    except InventoryFullError:
+        return "📦 상자를 얻었지만 인벤토리가 가득 찼다..."
+
+    item = await Item.get_or_none(id=chest_item_id)
+    item_name = item.name if item else "상자"
+    chest_emoji = {"normal": "📦", "silver": "🎁", "gold": "💎"}.get(chest_grade, "📦")
+    return f"{chest_emoji} 「{item_name}」 획득!"
+
+
+async def _try_drop_boss_special_item(user: User, monster: Monster) -> Optional[str]:
+    if not _is_boss_monster(monster):
+        return None
+
+    drop_rows = await Droptable.filter(drop_monster=monster.id).all()
+    if not drop_rows:
+        return None
+
+    valid_rows = [row for row in drop_rows if row.item_id]
+    if not valid_rows:
+        return None
+
+    weights = [float(row.probability or 0) for row in valid_rows]
+    if sum(weights) <= 0:
+        return None
+
+    chosen = random.choices(valid_rows, weights=weights, k=1)[0]
+    item = await Item.get_or_none(id=chosen.item_id)
+    if not item:
+        return None
+
+    try:
+        await InventoryService.add_item(user, item.id, 1)
+    except InventoryFullError:
+        return "🎖️ 보스 전리품을 얻었지만 인벤토리가 가득 찼다..."
+
+    return f"🎖️ **보스 전리품!** 「{item.name}」 획득!"
 
 
 async def _try_drop_monster_skill(user: User, monster: Monster) -> Optional[str]:

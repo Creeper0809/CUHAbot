@@ -69,7 +69,8 @@ class ShopItemDropdown(discord.ui.Select):
             return
 
         view.selected_item_id = item_id
-        shop_item = ShopService.get_shop_item(item_id)
+        shop_item = ShopService.get_shop_item_from_list(view.shop_items, item_id)
+        view.selected_item = shop_item
 
         embed = view.create_embed()
         if shop_item:
@@ -125,7 +126,7 @@ class BuyButton(discord.ui.Button):
     async def callback(self, interaction: discord.Interaction):
         view: ShopView = self.view
 
-        if not view.selected_item_id:
+        if not view.selected_item_id or not view.selected_item:
             await interaction.response.send_message(
                 "먼저 구매할 아이템을 선택하세요!",
                 ephemeral=True
@@ -133,9 +134,9 @@ class BuyButton(discord.ui.Button):
             return
 
         try:
-            result = await ShopService.purchase_item(
+            result = await ShopService.purchase_shop_item(
                 view.db_user,
-                view.selected_item_id,
+                view.selected_item,
                 view.quantity
             )
 
@@ -211,6 +212,7 @@ class ShopView(discord.ui.View):
         user: discord.User,
         db_user: User,
         user_gold: int,
+        shop_items: Optional[List[ShopItem]] = None,
         timeout: int = 120
     ):
         super().__init__(timeout=timeout)
@@ -219,8 +221,9 @@ class ShopView(discord.ui.View):
         self.db_user = db_user
         self.user_gold = user_gold
         self.selected_item_id: Optional[int] = None
+        self.selected_item: Optional[ShopItem] = None
         self.quantity = 1
-        self.shop_items = ShopService.get_shop_items()
+        self.shop_items = shop_items or ShopService.get_shop_items()
         self.message: Optional[discord.Message] = None
 
         # 컴포넌트 추가
@@ -279,16 +282,14 @@ class ShopView(discord.ui.View):
         )
 
         # 선택된 아이템 총 가격
-        if self.selected_item_id:
-            shop_item = ShopService.get_shop_item(self.selected_item_id)
-            if shop_item:
-                total = shop_item.price * self.quantity
-                affordable = "✅" if self.user_gold >= total else "❌"
-                embed.add_field(
-                    name="💰 총 가격",
-                    value=f"{affordable} **{total:,}G**",
-                    inline=True
-                )
+        if self.selected_item:
+            total = self.selected_item.price * self.quantity
+            affordable = "✅" if self.user_gold >= total else "❌"
+            embed.add_field(
+                name="💰 총 가격",
+                value=f"{affordable} **{total:,}G**",
+                inline=True
+            )
 
         # 판매 목록
         skill_items = [i for i in self.shop_items if i.item_type == ShopItemType.SKILL]
