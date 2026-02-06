@@ -87,6 +87,7 @@ class EquipmentService:
         )
 
         logger.info(f"User {user.id} equipped item {inv_item.item.id} in slot {slot.name}")
+        await EquipmentService.apply_equipment_stats(user)
         return equipped
 
     @staticmethod
@@ -123,6 +124,7 @@ class EquipmentService:
         deleted = await UserEquipment.filter(user=user, slot=slot).delete()
         if deleted:
             logger.info(f"User {user.id} unequipped slot {slot.name}")
+            await EquipmentService.apply_equipment_stats(user)
         return deleted > 0
 
     @staticmethod
@@ -209,3 +211,9 @@ class EquipmentService:
                         total_stats["speed"] += int(equipment.speed * (bonus_mult - 1))
 
         return total_stats
+
+    @staticmethod
+    async def apply_equipment_stats(user: User) -> None:
+        """장비 스탯을 런타임 필드에 반영"""
+        stats = await EquipmentService.calculate_equipment_stats(user)
+        user.equipment_stats = stats

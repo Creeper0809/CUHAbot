@@ -6,7 +6,7 @@ from DTO.collection_view import CollectionView
 from DTO.dungeon_select_view import DungeonSelectView
 from DTO.inventory_view import InventoryView
 from DTO.skill_deck_view import SkillDeckView
-from DTO.stat_distribution_view import StatDistributionView
+from DTO.stat_distribution_view import StatSelectView
 from DTO.user_info_view import UserInfoView
 from bot import GUILD_ID
 from decorator.account import requires_account
@@ -22,6 +22,7 @@ from service.healing_service import HealingService
 from service.inventory_service import InventoryService
 from service.session import is_in_combat, create_session, end_session
 from service.skill_deck_service import SkillDeckService
+from service.equipment_service import EquipmentService
 from service.skill_ownership_service import SkillOwnershipService
 from models import User
 
@@ -49,6 +50,9 @@ class DungeonCommand(commands.Cog):
 
             # 스킬 덱 로드 (전투에서 사용)
             await SkillDeckService.load_deck_to_user(user)
+
+            # 장비 스탯 로드 (전투에서 사용)
+            await EquipmentService.apply_equipment_stats(user)
 
             # 자연 회복 적용
             await HealingService.apply_natural_regen(user)
@@ -398,7 +402,7 @@ class DungeonCommand(commands.Cog):
             )
             return
 
-        view = StatDistributionView(
+        view = StatSelectView(
             discord_user=interaction.user,
             db_user=user
         )

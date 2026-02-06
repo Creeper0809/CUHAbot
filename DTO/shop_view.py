@@ -92,8 +92,18 @@ class ShopItemDropdown(discord.ui.Select):
 
         await interaction.response.edit_message(embed=embed, view=view)
 
+        if shop_item:
+            purchase_view = ShopPurchaseView(
+                user=interaction.user,
+                db_user=view.db_user,
+                shop_item=shop_item,
+                parent_view=view
+            )
+            purchase_embed = purchase_view.create_embed()
+            await interaction.followup.send(embed=purchase_embed, view=purchase_view, ephemeral=True)
 
-class QuantityButton(discord.ui.Button):
+
+class PurchaseQuantityButton(discord.ui.Button):
     """수량 조절 버튼"""
 
     def __init__(self, label: str, delta: int, row: int = 1):
@@ -105,14 +115,13 @@ class QuantityButton(discord.ui.Button):
         )
 
     async def callback(self, interaction: discord.Interaction):
-        view: ShopView = self.view
+        view: ShopPurchaseView = self.view
         view.quantity = max(1, view.quantity + self.delta)
-
         embed = view.create_embed()
         await interaction.response.edit_message(embed=embed, view=view)
 
 
-class BuyButton(discord.ui.Button):
+class PurchaseBuyButton(discord.ui.Button):
     """구매 버튼"""
 
     def __init__(self):
@@ -124,24 +133,16 @@ class BuyButton(discord.ui.Button):
         )
 
     async def callback(self, interaction: discord.Interaction):
-        view: ShopView = self.view
-
-        if not view.selected_item_id or not view.selected_item:
-            await interaction.response.send_message(
-                "먼저 구매할 아이템을 선택하세요!",
-                ephemeral=True
-            )
-            return
-
+        view: ShopPurchaseView = self.view
         try:
             result = await ShopService.purchase_shop_item(
                 view.db_user,
-                view.selected_item,
+                view.shop_item,
                 view.quantity
             )
 
-            # 골드 업데이트
-            view.user_gold = result.remaining_gold
+            view.parent_view.user_gold = result.remaining_gold
+            await view.parent_view.refresh_message()
 
             embed = view.create_embed()
             embed.add_field(
@@ -153,11 +154,7 @@ class BuyButton(discord.ui.Button):
                 ),
                 inline=False
             )
-
-            # 드롭다운 업데이트 (가격 체크용)
-            view._update_dropdown()
-
-            await interaction.response.edit_message(embed=embed, view=view)
+            await interaction.response.edit_message(embed=embed, view=None)
 
         except InsufficientGoldError as e:
             await interaction.response.send_message(
@@ -228,11 +225,6 @@ class ShopView(discord.ui.View):
 
         # 컴포넌트 추가
         self.add_item(ShopItemDropdown(self.shop_items, user_gold))
-        self.add_item(QuantityButton("-5", -5))
-        self.add_item(QuantityButton("-1", -1))
-        self.add_item(QuantityButton("+1", +1))
-        self.add_item(QuantityButton("+5", +5))
-        self.add_item(BuyButton())
         self.add_item(CloseButton())
 
     def _update_dropdown(self):
@@ -276,20 +268,10 @@ class ShopView(discord.ui.View):
         )
 
         embed.add_field(
-            name="📦 구매 수량",
-            value=f"**{self.quantity}개**",
+            name="📌 안내",
+            value="아이템 선택 후 구매 창이 열립니다.",
             inline=True
         )
-
-        # 선택된 아이템 총 가격
-        if self.selected_item:
-            total = self.selected_item.price * self.quantity
-            affordable = "✅" if self.user_gold >= total else "❌"
-            embed.add_field(
-                name="💰 총 가격",
-                value=f"{affordable} **{total:,}G**",
-                inline=True
-            )
 
         # 판매 목록
         skill_items = [i for i in self.shop_items if i.item_type == ShopItemType.SKILL]
@@ -329,9 +311,71 @@ class ShopView(discord.ui.View):
                 inline=True
             )
 
-        embed.set_footer(text="드롭다운에서 아이템 선택 → 수량 조절 → 구매")
+        embed.set_footer(text="드롭다운에서 아이템 선택 → 구매 창에서 수량/구매")
 
         return embed
+
+    async def refresh_message(self) -> None:
+        """상점 메시지 갱신"""
+        if self.message:
+            self._update_dropdown()
+            embed = self.create_embed()
+            await self.message.edit(embed=embed, view=self)
+
+
+class ShopPurchaseView(discord.ui.View):
+    """구매 액션 View"""
+
+    def __init__(
+        self,
+        user: discord.User,
+        db_user: User,
+        shop_item: ShopItem,
+        parent_view: ShopView,
+        timeout: int = 60
+    ):
+        super().__init__(timeout=timeout)
+        self.user = user
+        self.db_user = db_user
+        self.shop_item = shop_item
+        self.parent_view = parent_view
+        self.quantity = 1
+        self.message: Optional[discord.Message] = None
+
+        self.add_item(PurchaseQuantityButton("-5", -5))
+        self.add_item(PurchaseQuantityButton("-1", -1))
+        self.add_item(PurchaseQuantityButton("+1", +1))
+        self.add_item(PurchaseQuantityButton("+5", +5))
+        self.add_item(PurchaseBuyButton())
+        self.add_item(CloseButton())
+
+    def create_embed(self) -> discord.Embed:
+        embed = discord.Embed(
+            title="🧾 구매 확인",
+            description=f"**{self.shop_item.name}**",
+            color=EmbedColor.DEFAULT
+        )
+        embed.add_field(
+            name="수량",
+            value=f"{self.quantity}개",
+            inline=True
+        )
+        total = self.shop_item.price * self.quantity
+        affordable = "✅" if self.parent_view.user_gold >= total else "❌"
+        embed.add_field(
+            name="총 가격",
+            value=f"{affordable} **{total:,}G**",
+            inline=True
+        )
+        embed.add_field(
+            name="보유 골드",
+            value=f"{self.parent_view.user_gold:,}G",
+            inline=True
+        )
+        return embed
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        return interaction.user == self.user
 
     async def on_timeout(self):
         if self.message:

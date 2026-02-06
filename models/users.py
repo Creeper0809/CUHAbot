@@ -78,6 +78,14 @@ class User(models.Model):
         self.status = []
         self.equipped_skill = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
         self.skill_queue = []
+        self.equipment_stats = {
+            "hp": 0,
+            "attack": 0,
+            "ad_defense": 0,
+            "ap_attack": 0,
+            "ap_defense": 0,
+            "speed": 0,
+        }
 
     def next_skill(self) -> Optional["Skill"]:
         """
@@ -117,13 +125,14 @@ class User(models.Model):
         Returns:
             스탯 열거형을 키로 하는 스탯 딕셔너리
         """
+        equipment_stats = getattr(self, "equipment_stats", {})
         stat: dict[UserStatEnum, int] = {
-            UserStatEnum.HP: self.hp,
-            UserStatEnum.ATTACK: self.attack,
-            UserStatEnum.DEFENSE: self.defense,
-            UserStatEnum.SPEED: self.speed,
-            UserStatEnum.AP_ATTACK: self.ap_attack,
-            UserStatEnum.AP_DEFENSE: self.ap_defense,
+            UserStatEnum.HP: self.hp + equipment_stats.get("hp", 0),
+            UserStatEnum.ATTACK: self.attack + equipment_stats.get("attack", 0),
+            UserStatEnum.DEFENSE: self.defense + equipment_stats.get("ad_defense", 0),
+            UserStatEnum.SPEED: self.speed + equipment_stats.get("speed", 0),
+            UserStatEnum.AP_ATTACK: self.ap_attack + equipment_stats.get("ap_attack", 0),
+            UserStatEnum.AP_DEFENSE: self.ap_defense + equipment_stats.get("ap_defense", 0),
         }
 
         for buff in self.status:
@@ -159,7 +168,9 @@ class User(models.Model):
         Returns:
             실제로 회복된 HP량
         """
-        actual_heal = min(amount, self.hp - self.now_hp)
+        equipment_stats = getattr(self, "equipment_stats", {})
+        max_hp = self.hp + equipment_stats.get("hp", 0)
+        actual_heal = min(amount, max_hp - self.now_hp)
         self.now_hp += actual_heal
         return actual_heal
 
