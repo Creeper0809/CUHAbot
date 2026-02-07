@@ -58,7 +58,7 @@ class User(models.Model):
     stat_points = fields.IntField(default=0)  # 분배 가능한 스탯 포인트
 
     # 상태
-    now_hp = fields.IntField(default=100)
+    now_hp = fields.IntField(default=300)
     hp_regen = fields.IntField(default=5)  # 분당 HP 회복량
     last_regen_time = fields.DatetimeField(auto_now_add=True)  # 마지막 회복 시간
 

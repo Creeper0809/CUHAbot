@@ -8,6 +8,7 @@ from typing import List
 
 from models import User
 from service.collection_service import CollectionService, CollectionEntry, CollectionStats
+from utility.grade_display import format_item_name, format_skill_name
 
 
 class CollectionView(discord.ui.View):
@@ -133,7 +134,25 @@ class CollectionView(discord.ui.View):
             lines = []
             for i, entry in enumerate(page_entries):
                 idx = start_idx + i + 1
-                lines.append(f"`{idx:3d}` │ **{entry.name}**")
+                # 등급별 색상 적용 및 아이콘
+                if title == "아이템":
+                    display_name = format_item_name(entry.name, entry.grade_id)
+                    icon = "📦"
+                elif title == "스킬":
+                    display_name = format_skill_name(entry.name, entry.grade_id)
+                    icon = "✨"
+                else:
+                    display_name = entry.name
+                    icon = "👹"
+
+                # 짧은 설명 추가 (최대 45자, 줄바꿈으로 깔끔하게)
+                if entry.description:
+                    desc = entry.description.strip()
+                    if len(desc) > 45:
+                        desc = desc[:42] + "..."
+                    lines.append(f"`{idx:2d}` {icon} **{display_name}**\n      └ `{desc}`")
+                else:
+                    lines.append(f"`{idx:2d}` {icon} **{display_name}**")
 
             embed.description = "\n".join(lines)
 

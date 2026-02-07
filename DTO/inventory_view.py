@@ -12,6 +12,7 @@ from models.user_inventory import UserInventory
 from resources.item_emoji import ItemType
 from service.item_use_service import ItemUseService
 from exceptions import CombatRestrictionError, ItemNotFoundError, ItemNotEquippableError
+from utility.grade_display import format_item_name
 
 
 class ItemSelectDropdown(discord.ui.Select):
@@ -29,9 +30,13 @@ class ItemSelectDropdown(discord.ui.Select):
             enhance = f" +{inv.enhancement_level}" if inv.enhancement_level > 0 else ""
             qty = f" x{inv.quantity}" if inv.quantity > 1 else ""
 
+            # 등급별 색상 적용
+            grade_id = getattr(inv.item, 'grade_id', None)
+            formatted_name = format_item_name(inv.item.name, grade_id)
+
             options.append(
                 discord.SelectOption(
-                    label=f"{inv.item.name}{enhance}{qty}",
+                    label=f"{formatted_name}{enhance}{qty}",
                     description=inv.item.description[:50] if inv.item.description else "설명 없음",
                     value=str(inv.id),
                     emoji=emoji
@@ -49,7 +54,7 @@ class ItemSelectDropdown(discord.ui.Select):
         super().__init__(
             placeholder="🎒 아이템 선택",
             options=options,
-            row=1
+            row=0
         )
 
     @staticmethod
@@ -74,13 +79,38 @@ class ItemSelectDropdown(discord.ui.Select):
 
         view.selected_item_id = item_id
 
-        # 선택된 아이템 정보 표시
-        selected_inv = next(
-            (inv for inv in view.inventory if inv.id == item_id),
-            None
-        )
+        # 선택된 아이템 정보 표시 (DB에서 직접 가져와서 item 관계 로드)
+        selected_inv = await UserInventory.get_or_none(id=item_id).prefetch_related("item")
 
         view.selected_inventory_item = selected_inv
+        embed = view.create_embed()
+        await interaction.response.edit_message(embed=embed, view=view)
+
+
+class TabButton(discord.ui.Button):
+    """탭 전환 버튼"""
+
+    def __init__(self, label: str, tab_type: ItemType, is_active: bool = False):
+        style = discord.ButtonStyle.primary if is_active else discord.ButtonStyle.secondary
+        super().__init__(
+            label=label,
+            style=style,
+            row=0
+        )
+        self.tab_type = tab_type
+
+    async def callback(self, interaction: discord.Interaction):
+        view: InventoryView = self.view
+
+        # 탭 변경
+        view.current_tab = self.tab_type
+        view.inventory = view._filter_by_tab()
+        view.page = 0  # 페이지 초기화
+        view.total_pages = max(1, (len(view.inventory) + view.items_per_page - 1) // view.items_per_page)
+
+        # 버튼 스타일 업데이트
+        view._update_tab_buttons()
+
         embed = view.create_embed()
         await interaction.response.edit_message(embed=embed, view=view)
 
@@ -97,19 +127,24 @@ class InventoryView(discord.ui.View):
         user: discord.User,
         db_user: User,
         inventory: List[UserInventory],
+        owned_skills: List = None,
         timeout: int = 120
     ):
         super().__init__(timeout=timeout)
 
         self.user = user
         self.db_user = db_user
-        self.inventory = inventory
+        self.all_inventory = inventory  # 전체 인벤토리
+        self.owned_skills = owned_skills or []  # 보유 스킬
+        self.current_tab = ItemType.CONSUME  # 기본 탭: 소모품
+        self.inventory = self._filter_by_tab()  # 탭별 필터링된 인벤토리
         self.page = 0
         self.items_per_page = UI.ITEMS_PER_PAGE
-        self.total_pages = max(1, (len(inventory) + self.items_per_page - 1) // self.items_per_page)
+        self.total_pages = max(1, (len(self.inventory) + self.items_per_page - 1) // self.items_per_page)
         self.message: Optional[discord.Message] = None
         self.selected_item_id: Optional[int] = None
 
+        self._add_tab_buttons()
         self.add_item(InventorySelectButton())
         self._remove_action_buttons()
 
@@ -128,6 +163,30 @@ class InventoryView(discord.ui.View):
         for child in to_remove:
             self.remove_item(child)
 
+    def _filter_by_tab(self) -> List:
+        """현재 탭에 맞는 아이템만 필터링"""
+        if self.current_tab == ItemType.CONSUME:
+            return [inv for inv in self.all_inventory if inv.item.type == ItemType.CONSUME]
+        elif self.current_tab == ItemType.EQUIP:
+            return [inv for inv in self.all_inventory if inv.item.type == ItemType.EQUIP]
+        elif self.current_tab == ItemType.SKILL:
+            return self.owned_skills  # 스킬은 UserOwnedSkill에서 가져옴
+        else:
+            return self.all_inventory
+
+    def _add_tab_buttons(self) -> None:
+        """탭 버튼 추가"""
+        self.add_item(TabButton("🧪 소모품", ItemType.CONSUME, is_active=(self.current_tab == ItemType.CONSUME)))
+        self.add_item(TabButton("⚔️ 장비", ItemType.EQUIP, is_active=(self.current_tab == ItemType.EQUIP)))
+        self.add_item(TabButton("📜 스킬", ItemType.SKILL, is_active=(self.current_tab == ItemType.SKILL)))
+
+    def _update_tab_buttons(self) -> None:
+        """탭 버튼 업데이트 (선택된 탭 강조)"""
+        to_remove = [item for item in self.children if isinstance(item, TabButton)]
+        for item in to_remove:
+            self.remove_item(item)
+        self._add_tab_buttons()
+
     def _get_item_type_emoji(self, item_type: str) -> str:
         """아이템 타입별 이모지"""
         type_map = {
@@ -142,17 +201,32 @@ class InventoryView(discord.ui.View):
 
     def create_embed(self) -> discord.Embed:
         """인벤토리 임베드 생성"""
+        # 탭별 타이틀
+        tab_titles = {
+            ItemType.CONSUME: "🧪 소모품",
+            ItemType.EQUIP: "⚔️ 장비",
+            ItemType.SKILL: "📜 스킬"
+        }
+        tab_title = tab_titles.get(self.current_tab, "전체")
+
         embed = discord.Embed(
-            title="🎒 인벤토리",
+            title=f"🎒 인벤토리 - {tab_title}",
             description=f"보유 아이템 목록입니다.",
             color=EmbedColor.DEFAULT
         )
 
         # 슬롯 정보
         total_items = len(self.inventory)
+        all_items = len(self.all_inventory) + len(self.owned_skills)  # 전체 아이템 + 스킬
         embed.add_field(
-            name="📦 슬롯",
-            value=f"{total_items}/100",
+            name="📦 카테고리",
+            value=f"{total_items}개",
+            inline=True
+        )
+
+        embed.add_field(
+            name="📦 전체",
+            value=f"{all_items}/100",
             inline=True
         )
 
@@ -162,53 +236,58 @@ class InventoryView(discord.ui.View):
             inline=True
         )
 
-        embed.add_field(name="\u200b", value="\u200b", inline=True)
-
         # 아이템 목록
         page_items = self._get_page_items()
 
         if not page_items:
+            empty_msg = {
+                ItemType.CONSUME: "보유한 소모품이 없습니다.",
+                ItemType.EQUIP: "보유한 장비가 없습니다.",
+                ItemType.SKILL: "보유한 스킬이 없습니다."
+            }
             embed.add_field(
                 name="아이템 없음",
-                value="인벤토리가 비어있습니다.\n던전에서 아이템을 획득하거나 상점에서 구매하세요!",
+                value=empty_msg.get(self.current_tab, "인벤토리가 비어있습니다."),
                 inline=False
             )
         else:
-            # 장비류
-            equipment = [inv for inv in page_items if inv.item.type == ItemType.EQUIP]
-            consumables = [inv for inv in page_items if inv.item.type == ItemType.CONSUME]
-            others = [inv for inv in page_items if inv.item.type not in (ItemType.EQUIP, ItemType.CONSUME, ItemType.SKILL)]
+            # 탭에 따라 다른 표시 방식
+            item_list = []
+            for inv in page_items:
+                if self.current_tab == ItemType.SKILL:
+                    # UserOwnedSkill 객체 처리
+                    from models.repos.static_cache import skill_cache_by_id
+                    skill = skill_cache_by_id.get(inv.skill_id)
+                    if skill:
+                        grade_id = getattr(skill.skill_model, 'grade', None)
+                        from utility.grade_display import format_skill_name
+                        formatted_name = format_skill_name(skill.name, grade_id)
+                        # 장착 수량 정보 표시
+                        equipped_info = f" (장착: {inv.equipped_count})" if inv.equipped_count > 0 else ""
+                        item_list.append(f"📜 **{formatted_name}** x{inv.quantity}{equipped_info}")
+                else:
+                    # UserInventory 객체 처리
+                    grade_id = getattr(inv.item, 'grade_id', None)
+                    formatted_name = format_item_name(inv.item.name, grade_id)
 
-            if equipment:
-                equip_text = []
-                for inv in equipment:
-                    enhance = f" +{inv.enhancement_level}" if inv.enhancement_level > 0 else ""
-                    equip_text.append(f"⚔️ **{inv.item.name}**{enhance}")
-                embed.add_field(
-                    name="🗡️ 장비",
-                    value="\n".join(equip_text),
-                    inline=True
-                )
+                    if self.current_tab == ItemType.EQUIP:
+                        enhance = f" +{inv.enhancement_level}" if inv.enhancement_level > 0 else ""
+                        item_list.append(f"⚔️ **{formatted_name}**{enhance}")
+                    elif self.current_tab == ItemType.CONSUME:
+                        item_list.append(f"🧪 **{formatted_name}** x{inv.quantity}")
 
-            if consumables:
-                consume_text = []
-                for inv in consumables:
-                    consume_text.append(f"🧪 **{inv.item.name}** x{inv.quantity}")
-                embed.add_field(
-                    name="🧪 소비",
-                    value="\n".join(consume_text),
-                    inline=True
-                )
-
-            if others:
-                other_text = []
-                for inv in others:
-                    other_text.append(f"📦 **{inv.item.name}** x{inv.quantity}")
-                embed.add_field(
-                    name="📦 기타",
-                    value="\n".join(other_text),
-                    inline=True
-                )
+            # 3열로 분할 표시
+            chunk_size = (len(item_list) + 2) // 3  # 3등분
+            for i in range(3):
+                start = i * chunk_size
+                end = start + chunk_size
+                chunk = item_list[start:end]
+                if chunk:
+                    embed.add_field(
+                        name=f"목록 ({start+1}-{min(end, len(item_list))})",
+                        value="\n".join(chunk),
+                        inline=True
+                    )
 
         embed.set_footer(text="아이템 사용 버튼 → 선택 창에서 사용")
 
@@ -216,9 +295,15 @@ class InventoryView(discord.ui.View):
 
     async def refresh_message(self) -> None:
         """인벤토리 새로고침"""
-        self.inventory = await UserInventory.filter(
+        self.all_inventory = await UserInventory.filter(
             user=self.db_user
         ).prefetch_related("item")
+
+        # 스킬도 새로고침
+        from service.skill_ownership_service import SkillOwnershipService
+        self.owned_skills = await SkillOwnershipService.get_all_owned_skills(self.db_user)
+
+        self.inventory = self._filter_by_tab()
         self.total_pages = max(1, (len(self.inventory) + self.items_per_page - 1) // self.items_per_page)
         if self.message:
             embed = self.create_embed()
@@ -241,7 +326,7 @@ class InventoryView(discord.ui.View):
             for child in children_list:
                 self.add_item(child)
 
-    @discord.ui.button(label="◀", style=discord.ButtonStyle.secondary, row=0)
+    @discord.ui.button(label="◀", style=discord.ButtonStyle.secondary, row=1)
     async def prev_page(self, interaction: discord.Interaction, button: discord.ui.Button):
         """이전 페이지"""
         if self.page > 0:
@@ -252,7 +337,7 @@ class InventoryView(discord.ui.View):
         embed = self.create_embed()
         await interaction.response.edit_message(embed=embed, view=self)
 
-    @discord.ui.button(label="▶", style=discord.ButtonStyle.secondary, row=0)
+    @discord.ui.button(label="▶", style=discord.ButtonStyle.secondary, row=1)
     async def next_page(self, interaction: discord.Interaction, button: discord.ui.Button):
         """다음 페이지"""
         if self.page < self.total_pages - 1:
@@ -263,7 +348,7 @@ class InventoryView(discord.ui.View):
         embed = self.create_embed()
         await interaction.response.edit_message(embed=embed, view=self)
 
-    @discord.ui.button(label="사용", style=discord.ButtonStyle.success, emoji="✅", row=0)
+    @discord.ui.button(label="사용", style=discord.ButtonStyle.success, emoji="✅", row=1)
     async def use_item(self, interaction: discord.Interaction, button: discord.ui.Button):
         """아이템 사용"""
         if not self.selected_item_id:
@@ -318,7 +403,7 @@ class InventoryView(discord.ui.View):
                 ephemeral=True
             )
 
-    @discord.ui.button(label="닫기", style=discord.ButtonStyle.danger, emoji="❌", row=0)
+    @discord.ui.button(label="닫기", style=discord.ButtonStyle.danger, emoji="❌", row=1)
     async def close(self, interaction: discord.Interaction, button: discord.ui.Button):
         """닫기"""
         self.stop()
@@ -362,9 +447,16 @@ class InventorySelectView(discord.ui.View):
         self.inventory = list_view.inventory
         self.selected_item_id: Optional[int] = None
         self.selected_inventory_item: Optional[UserInventory] = None
+        self.use_quantity: int = 1  # 사용 개수
         usable_items = [inv for inv in self.inventory if inv.item.type != ItemType.SKILL]
         if usable_items:
             self.add_item(ItemSelectDropdown(usable_items))
+        # 개수 조절 버튼 추가 (row 1에 모두 배치)
+        self.add_item(QuantityButton("+1", 1, row=1))
+        self.add_item(QuantityButton("+5", 5, row=1))
+        self.add_item(QuantityButton("+10", 10, row=1))
+        self.add_item(QuantityButton("-1", -1, row=1))
+        self.add_item(QuantityButton("-5", -5, row=1))
         self.add_item(InventoryUseButton())
         self.add_item(InventorySelectCloseButton())
 
@@ -378,12 +470,18 @@ class InventorySelectView(discord.ui.View):
             item = self.selected_inventory_item.item
             item_type = "장비" if item.type == ItemType.EQUIP else "소모품"
             action = "장착" if item.type == ItemType.EQUIP else "사용"
+
+            # 사용 가능 수량 제한
+            max_quantity = self.selected_inventory_item.quantity if item.type == ItemType.CONSUME else 1
+            self.use_quantity = max(1, min(self.use_quantity, max_quantity))
+
             embed.add_field(
                 name=f"✅ 선택됨: {item.name}",
                 value=(
                     f"**종류**: {item_type}\n"
                     f"**설명**: {item.description or '없음'}\n"
-                    f"**수량**: {self.selected_inventory_item.quantity}\n"
+                    f"**보유 수량**: {self.selected_inventory_item.quantity}\n"
+                    f"**사용 수량**: {self.use_quantity}\n"
                     f"'{action}' 버튼을 눌러 {action}하세요."
                 ),
                 inline=False
@@ -405,11 +503,38 @@ class InventorySelectView(discord.ui.View):
             self.add_item(ItemSelectDropdown(usable_items))
 
 
+class QuantityButton(discord.ui.Button):
+    """수량 조절 버튼"""
+
+    def __init__(self, label: str, delta: int, row: int = 1):
+        style = discord.ButtonStyle.primary if delta > 0 else discord.ButtonStyle.secondary
+        super().__init__(label=label, style=style, row=row)
+        self.delta = delta
+
+    async def callback(self, interaction: discord.Interaction):
+        view: InventorySelectView = self.view
+        if not view.selected_inventory_item:
+            await interaction.response.send_message("먼저 아이템을 선택하세요!", ephemeral=True)
+            return
+
+        # 장비는 개수 조절 불가
+        if view.selected_inventory_item.item.type == ItemType.EQUIP:
+            await interaction.response.send_message("장비는 개수 조절이 불가능합니다!", ephemeral=True)
+            return
+
+        # 개수 조절
+        max_quantity = view.selected_inventory_item.quantity
+        view.use_quantity = max(1, min(view.use_quantity + self.delta, max_quantity))
+
+        embed = view.create_embed()
+        await interaction.response.edit_message(embed=embed, view=view)
+
+
 class InventoryUseButton(discord.ui.Button):
     """아이템 사용 버튼"""
 
     def __init__(self):
-        super().__init__(label="사용", style=discord.ButtonStyle.success, emoji="✅", row=2)
+        super().__init__(label="사용", style=discord.ButtonStyle.success, emoji="✅", row=3)
 
     async def callback(self, interaction: discord.Interaction):
         view: InventorySelectView = self.view
@@ -418,25 +543,53 @@ class InventoryUseButton(discord.ui.Button):
             return
 
         try:
-            result = await ItemUseService.use_item(view.db_user, view.selected_inventory_item.id)
-            if result.success:
+            # 여러 개 사용
+            success_count = 0
+            last_result = None
+
+            for _ in range(view.use_quantity):
+                # 인벤토리 새로고침 (매번 최신 정보 확인)
+                current_inv = await UserInventory.get_or_none(id=view.selected_inventory_item.id)
+                if not current_inv or current_inv.quantity <= 0:
+                    break
+
+                result = await ItemUseService.use_item(view.db_user, current_inv.id)
+                if result.success:
+                    success_count += 1
+                    last_result = result
+                else:
+                    break
+
+            if success_count > 0:
+                # 인벤토리 갱신
                 if view.list_view:
                     await view.list_view.refresh_message()
                 await view.refresh_items()
-                view.selected_item_id = None
-                view.selected_inventory_item = None
+
+                # 선택 유지 (아이템이 남아있는 경우)
+                updated_inv = await UserInventory.get_or_none(id=view.selected_inventory_item.id).prefetch_related("item")
+                if updated_inv and updated_inv.quantity > 0:
+                    view.selected_inventory_item = updated_inv
+                    view.use_quantity = 1  # 사용 개수 초기화
+                else:
+                    # 아이템 소진됨
+                    view.selected_item_id = None
+                    view.selected_inventory_item = None
+                    view.use_quantity = 1
+
                 embed = view.create_embed()
                 embed.add_field(
-                    name="✅ 사용 완료!",
-                    value=f"{result.item_name}\n{result.effect_description or ''}",
+                    name=f"✅ 사용 완료! (x{success_count})",
+                    value=f"{last_result.item_name}\n{last_result.effect_description or ''}",
                     inline=False
                 )
                 await interaction.response.edit_message(embed=embed, view=view)
             else:
                 await interaction.response.send_message(
-                    f"⚠️ {result.message}",
+                    f"⚠️ 아이템을 사용할 수 없습니다.",
                     ephemeral=True
                 )
+
         except CombatRestrictionError:
             await interaction.response.send_message(
                 "⚠️ 전투 중에는 아이템을 사용할 수 없습니다!",
@@ -458,7 +611,7 @@ class InventorySelectCloseButton(discord.ui.Button):
     """선택 창 닫기"""
 
     def __init__(self):
-        super().__init__(label="닫기", style=discord.ButtonStyle.danger, emoji="❌", row=2)
+        super().__init__(label="닫기", style=discord.ButtonStyle.danger, emoji="❌", row=3)
 
     async def callback(self, interaction: discord.Interaction):
         await interaction.response.edit_message(content="선택 창을 닫았습니다.", embed=None, view=None)
@@ -468,7 +621,7 @@ class InventorySelectButton(discord.ui.Button):
     """아이템 사용 버튼 (선택 창 열기)"""
 
     def __init__(self):
-        super().__init__(label="아이템 사용", style=discord.ButtonStyle.success, emoji="✅", row=0)
+        super().__init__(label="아이템 사용", style=discord.ButtonStyle.success, emoji="✅", row=1)
 
     async def callback(self, interaction: discord.Interaction):
         view: InventoryView = self.view

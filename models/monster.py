@@ -53,6 +53,12 @@ class Monster(models.Model):
     skill_ids = fields.JSONField(default=[])
     """몬스터가 사용하는 스킬 ID 목록 (최대 10개)"""
 
+    attribute = fields.CharField(max_length=20, default="무속성")
+    """몬스터 속성 (화염/냉기/번개/수속성/신성/암흑/무속성)"""
+
+    group_ids = fields.JSONField(default=[])
+    """그룹 스폰 가능한 몬스터 ID 목록 (빈 리스트면 솔로 전용)"""
+
     # ==========================================================================
     # 런타임 필드 (DB 미저장) - __init__에서 초기화
     # ==========================================================================
@@ -127,6 +133,8 @@ class Monster(models.Model):
             speed=getattr(self, 'speed', 10),
             evasion=getattr(self, 'evasion', 0),
             skill_ids=getattr(self, 'skill_ids', []),
+            attribute=getattr(self, 'attribute', '무속성'),
+            group_ids=getattr(self, 'group_ids', []),
         )
         new_monster.now_hp = self.hp
         new_monster.status = deepcopy(getattr(self, 'status', []))

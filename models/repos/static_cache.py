@@ -12,11 +12,12 @@ monster_cache_by_id = {}
 item_cache = {}
 spawn_info = {}
 skill_cache_by_id = {}
+box_drop_table = {}  # {"normal": [(box_id, weight), ...], ...}
 
 
 async def load_static_data():
     """정적 데이터 로드 (봇 시작 시 호출)"""
-    global dungeon_cache, monster_cache_by_id, item_cache, spawn_info, skill_cache_by_id
+    global dungeon_cache, monster_cache_by_id, item_cache, spawn_info, skill_cache_by_id, box_drop_table
     logger.info("Loading static data...")
 
     # 던전 로딩
@@ -59,6 +60,7 @@ async def load_static_data():
             try:
                 component = get_component_by_tag(tag)
                 component.apply_config(comp_config, skill.name)
+                component.skill_attribute = getattr(skill, 'attribute', '무속성')
                 components.append(component)
                 logger.info(f"Skill {skill.id} ({skill.name}): loaded component '{tag}'")
             except KeyError:
@@ -71,6 +73,38 @@ async def load_static_data():
 
     # Grade 캐시 로딩 (상점 가격 등)
     await ShopService.load_grade_cache()
+
+    # 상자 드랍 테이블 로딩
+    await load_box_drop_table()
+
+
+async def load_box_drop_table():
+    """상자 드랍 테이블 CSV 로드"""
+    import csv
+    global box_drop_table
+
+    csv_path = "data/box_drop_table.csv"
+    try:
+        with open(csv_path, 'r', encoding='utf-8') as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                monster_type = row['monster_type']
+                box_id = int(row['box_id'])
+                weight = float(row['weight'])
+
+                if monster_type not in box_drop_table:
+                    box_drop_table[monster_type] = []
+                box_drop_table[monster_type].append((box_id, weight))
+
+        logger.info(f"Loaded box drop table: {len(box_drop_table)} monster types")
+    except FileNotFoundError:
+        logger.warning(f"Box drop table not found: {csv_path}")
+        box_drop_table = {}
+
+
+def get_box_pool_by_monster_type(monster_type: str) -> list[tuple[int, float]]:
+    """몬스터 타입별 상자 풀 조회"""
+    return box_drop_table.get(monster_type, [])
 
 
 def _resolve_skill_components(skill_config):

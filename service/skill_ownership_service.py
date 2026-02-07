@@ -258,6 +258,10 @@ class SkillOwnershipService:
 
         # 추가로 필요한 스킬 확인
         for skill_id, new_count in new_counts.items():
+            # 강타(1001)는 항상 사용 가능
+            if skill_id == 1001:
+                continue
+
             current_count = current_counts.get(skill_id, 0)
             additional_needed = new_count - current_count
 
@@ -305,6 +309,10 @@ class SkillOwnershipService:
         all_skill_ids = set(current_counts.keys()) | set(new_counts.keys())
 
         for skill_id in all_skill_ids:
+            # 강타(1001)는 장착 수량 관리 제외
+            if skill_id == 1001:
+                continue
+
             current_count = current_counts.get(skill_id, 0)
             new_count = new_counts.get(skill_id, 0)
             diff = new_count - current_count

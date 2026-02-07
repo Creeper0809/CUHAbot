@@ -8,11 +8,12 @@ from dataclasses import dataclass
 from typing import Optional
 
 from models import User
+from config import USER_STATS
 
 logger = logging.getLogger(__name__)
 
-# 레벨당 스탯 포인트
-STAT_POINTS_PER_LEVEL = 5
+# 레벨당 스탯 포인트 (config에서 가져옴)
+STAT_POINTS_PER_LEVEL = USER_STATS.STAT_POINTS_PER_LEVEL
 
 
 @dataclass

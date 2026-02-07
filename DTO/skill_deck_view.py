@@ -12,6 +12,7 @@ from models.repos.static_cache import skill_cache_by_id
 from models.user_deck_preset import UserDeckPreset
 from models.user_owned_skill import UserOwnedSkill
 from service.session import get_session
+from utility.grade_display import format_skill_name
 
 
 # =============================================================================
@@ -367,14 +368,10 @@ class SavePresetButton(discord.ui.Button):
     async def callback(self, interaction: discord.Interaction):
         view: SkillDeckView = self.view
 
-        # 빈 슬롯 체크
-        empty_slots = sum(1 for s in view.current_deck if s == 0)
-        if empty_slots > 0:
-            await interaction.response.send_message(
-                f"⚠️ 모든 슬롯을 채운 후 저장하세요! (빈 슬롯: {empty_slots}개)",
-                ephemeral=True
-            )
-            return
+        # 빈 슬롯을 기본 스킬(강타)로 채우기
+        for i in range(len(view.current_deck)):
+            if view.current_deck[i] == 0:
+                view.current_deck[i] = 1001  # 강타 (기본 공격 스킬)
 
         modal = PresetNameModal(view)
         await interaction.response.send_modal(modal)
@@ -522,19 +519,22 @@ class SaveDeckButton(discord.ui.Button):
             )
             return
 
-        empty_slots = sum(1 for s in view.current_deck if s == 0)
-        if empty_slots > 0:
-            await interaction.response.send_message(
-                f"⚠️ 모든 슬롯을 채워야 합니다! (빈 슬롯: {empty_slots}개)",
-                ephemeral=True
-            )
-            return
+        # 빈 슬롯을 기본 스킬(강타)로 채우기
+        filled_count = 0
+        for i in range(len(view.current_deck)):
+            if view.current_deck[i] == 0:
+                view.current_deck[i] = 1001  # 강타 (기본 공격 스킬)
+                filled_count += 1
 
         view.saved = True
         view.stop()
 
+        message = "✅ 스킬 덱이 저장되었습니다!"
+        if filled_count > 0:
+            message += f"\n💡 빈 슬롯 {filled_count}개를 기본 스킬(강타)로 채웠습니다."
+
         await interaction.response.edit_message(
-            content="✅ 스킬 덱이 저장되었습니다!",
+            content=message,
             embed=None,
             view=None
         )
@@ -828,13 +828,29 @@ class SkillDeckView(discord.ui.View):
                 inline=False
             )
 
+        # 시너지 요약
+        from service.synergy_service import SynergyService
+        active_synergies = SynergyService.get_active_synergies(self.current_deck)
+
+        if active_synergies:
+            synergy_names = [s.name for s in active_synergies[:5]]
+            embed.add_field(
+                name=f"🔮 시너지 ({len(active_synergies)}개)",
+                value=", ".join(synergy_names) + ("..." if len(active_synergies) > 5 else ""),
+                inline=False
+            )
+
         return embed
 
     def _get_skill_name(self, skill_id: int) -> str:
         if skill_id == 0:
             return "❌ 비어있음"
         skill = skill_cache_by_id.get(skill_id)
-        return skill.name if skill else f"?? (#{skill_id})"
+        if skill:
+            # 등급별 색상 적용
+            grade_id = skill.skill_model.grade
+            return format_skill_name(skill.name, grade_id)
+        return f"?? (#{skill_id})"
 
     def _check_skill_availability(self, skill_id: int, slots_needed: int) -> tuple[bool, str]:
         """
@@ -847,6 +863,10 @@ class SkillDeckView(discord.ui.View):
         Returns:
             (가능 여부, 에러 메시지)
         """
+        # 강타(1001)는 항상 장착 가능
+        if skill_id == 1001:
+            return True, ""
+
         owned = self.skill_quantities.get(skill_id)
         if not owned:
             skill_name = self._get_skill_name(skill_id)

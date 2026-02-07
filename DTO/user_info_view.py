@@ -12,6 +12,7 @@ from models.user_equipment import UserEquipment, EquipmentSlot
 from models.user_skill_deck import UserSkillDeck
 from models.repos.static_cache import skill_cache_by_id, item_cache
 from service.reward_service import RewardService
+from utility.grade_display import format_item_name, format_skill_name
 
 
 class UserInfoView(discord.ui.View):
@@ -225,7 +226,10 @@ class UserInfoView(discord.ui.View):
         if equipment.inventory_item.enhancement_level > 0:
             enhance = f" +{equipment.inventory_item.enhancement_level}"
 
-        return f"{item.name}{enhance}"
+        # 등급별 색상 적용
+        grade_id = getattr(item, 'grade_id', None)
+        formatted_name = format_item_name(item.name, grade_id)
+        return f"{formatted_name}{enhance}"
 
     def _create_skills_embed(self) -> discord.Embed:
         """스킬 덱 Embed 생성"""
@@ -240,7 +244,10 @@ class UserInfoView(discord.ui.View):
             slot_num = i + 1
             if skill_id and skill_id in skill_cache_by_id:
                 skill = skill_cache_by_id[skill_id]
-                skill_lines.append(f"`{slot_num:2d}` │ **{skill.name}**")
+                # 등급별 색상 적용
+                grade_id = skill.skill_model.grade
+                formatted_name = format_skill_name(skill.name, grade_id)
+                skill_lines.append(f"`{slot_num:2d}` │ **{formatted_name}**")
             elif skill_id:
                 skill_lines.append(f"`{slot_num:2d}` │ 스킬 #{skill_id}")
             else:
@@ -272,9 +279,12 @@ class UserInfoView(discord.ui.View):
             prob_lines = []
             for skill_id, count in sorted(skill_counts.items(), key=lambda x: -x[1]):
                 if skill_id in skill_cache_by_id:
-                    skill_name = skill_cache_by_id[skill_id].name
+                    skill = skill_cache_by_id[skill_id]
+                    # 등급별 색상 적용
+                    grade_id = skill.skill_model.grade
+                    formatted_name = format_skill_name(skill.name, grade_id)
                     prob = count * 10  # 슬롯당 10%
-                    prob_lines.append(f"• {skill_name}: {prob}%")
+                    prob_lines.append(f"• {formatted_name}: {prob}%")
 
             embed.add_field(
                 name="🎲 발동 확률",
@@ -282,7 +292,19 @@ class UserInfoView(discord.ui.View):
                 inline=False
             )
 
-        embed.set_footer(text="💡 /덱 명령어로 스킬을 변경할 수 있습니다")
+        # 활성화된 시너지 (이름만 간단히)
+        from service.synergy_service import SynergyService
+        active_synergies = SynergyService.get_active_synergies(self.skill_deck)
+
+        if active_synergies:
+            synergy_names = [s.name for s in active_synergies]
+            embed.add_field(
+                name=f"🔮 시너지 ({len(synergy_names)}개)",
+                value=", ".join(synergy_names),
+                inline=False
+            )
+
+        embed.set_footer(text="💡 /덱 명령어로 스킬을 변경할 수 있고, /설명 명령어로 시너지 상세 정보를 확인하세요")
         return embed
 
     def _create_bar(self, ratio: float, length: int = 10) -> str:

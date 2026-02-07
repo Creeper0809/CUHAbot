@@ -112,11 +112,6 @@ class StatOverviewView(ui.View):
         self.preview_points = max(points, 0)
         await self.refresh_message()
 
-    @ui.button(label="닫기", style=discord.ButtonStyle.danger)
-    async def close(self, interaction: discord.Interaction, button: ui.Button):
-        self.stop()
-        await interaction.response.edit_message(content="스탯 분배 창을 닫았습니다.", embed=None, view=None)
-
 
 class StatSelectView(ui.View):
     """스탯 선택 View"""

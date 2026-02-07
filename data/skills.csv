@@ -1,342 +1,494 @@
-﻿ID,이름,타입,속성,등급,효과,획득처
-1001,강타,attack,무속성,D,적에게 100% 물리 데미지,기본 지급
-1002,연속 베기,attack,무속성,D,적에게 60% 데미지 2회,잊혀진 숲
-1101,화염구,attack,화염,D,"100% 화염 데미지, 30% 확률 화상(2턴)",불타는 광산
-1201,얼음 화살,attack,냉기,D,"90% 냉기 데미지, 30% 둔화(2턴)",얼어붙은 호수
-1301,전격,attack,번개,D,"100% 번개 데미지, 20% 마비(1턴)",폭풍의 봉우리
-1401,물의 창,attack,수속성,D,90% 수속성 데미지,수몰된 신전
-1501,빛의 화살,attack,신성,D,"90% 신성 데미지, 언데드 +50%",성스러운 대성당
-1601,암흑 화살,attack,암흑,D,"90% 암흑 데미지, 20% 저주(2턴)",어둠의 묘지
-2001,응급 처치,heal,없음,D,HP 15% 즉시 회복,기본 지급
-3001,집중,buff,없음,D,3턴간 치명타 확률 +15%,상점
-4001,약점 노출,debuff,없음,D,3턴간 적 방어력 -15%,상점
-6001,날카로움,passive_combat,공격,D,Attack +8%,상점
-6002,마력 증폭,passive_combat,공격,D,AP_Attack +8%,상점
-6011,강인함,passive_combat,방어,D,HP +10%,상점
-6012,철벽,passive_combat,방어,D,Defense +10%,상점
-6021,신속,passive_combat,속도,D,Speed +15%,상점
-6101,행운,passive_farming,파밍,D,드롭률 +5%,상점
-6201,함정 감지,passive_exploration,탐험,D,함정 발견 확률 +30%,도적 캠프
-6301,흥정,passive_social,상점,D,상점 구매가 -5%,상인 길드
-6305,수리 할인,passive_social,상점,D,장비 수리비 -30%,대장장이 친밀도
-8804,연타,combo,물리,D,"30% × 5회, 콤보 +5",권투 도장
-7201,정확한 일격,unknown,없음,D,"100% 데미지, 명중률 100% (회피 무시)",검술 도장
-7202,연속 자상,unknown,없음,D,"40% × 4회, 출혈 스택 +1/히트",암살자 훈련장
-7203,방패 밀치기,unknown,없음,D,"80% 데미지, 100% 기절 1턴",기사단 훈련장
-7205,도발,unknown,없음,D,"50% 데미지, 3턴간 적 공격 집중",탱커 훈련장
-7208,꾸준한 타격,unknown,없음,D,"80% 데미지, 같은 대상 연속 시 +20%/스택",수련의 전당
-7301,기본 응급처치,unknown,없음,D,"HP 20% 회복, 쿨타임 없음",의무병 훈련
-7302,간이 해독,unknown,없음,D,"독/화상 해제, HP 10% 회복",약초상
-7305,위기 회피,unknown,없음,D,1회 치명타 피해 무효화,생존 훈련
-7307,정신 집중,unknown,없음,D,다음 스킬 데미지 +50%,집중력 훈련
-7506,고독한 전사,passive_conditional,조건부,D,조건: 솔로 플레이 | 100% 물리,고독한 봉우리
-7507,수호자의 일격,passive_conditional,조건부,D,조건: 아군 HP 30% 이하 존재 | 80% 물리,수호자의 신전
-7508,분노의 폭발,passive_conditional,조건부,D,조건: HP 20% 이하 | 100% 물리,광전사의 무덤
-7509,평화주의자의 반격,passive_conditional,조건부,D,조건: 5턴간 공격 안 함 | 60% 물리,평화의 성지
-7601,슬라임 용해,unknown,없음,D,"50%, 슬라임에게 즉사 80%",슬라임 동굴
-7602,고블린 섬멸,unknown,없음,D,"60%, 고블린에게 300%",고블린 동굴
-7703,수중 전투,unknown,없음,D,80% 수속성,해저 도시
-7704,화염 속 전투,unknown,없음,D,80% 화염,화산 내부
-7801,진화하는 강타,unknown,없음,D,"조건: 500회 사용 | 100%→250%, 치명타 +25%",수련의 전당
-7802,성장하는 치유,unknown,없음,D,조건: 300회 사용 | 15%→50% HP 회복,치유사 길드
-7803,발전하는 방벽,unknown,없음,D,조건: 1000회 피격 흡수 | 피해 -10%→-35%,수호자 길드
-7805,깨어나는 분노,unknown,없음,D,조건: HP 10% 이하 100회 생존 | 위기 시 +50%→+200%,광전사의 무덤
-7806,경험의 일격,unknown,없음,D,"조건: 10000회 처치 | 100%→200%, 처치 시 HP 5% 회복",베테랑 길드
-1003,급소 찌르기,attack,무속성,C,"120% 데미지, 치명타 확률 +30%",고블린 동굴
-1004,회전 참격,attack,무속성,C,전체 적에게 70% 데미지,상점
-1102,화염 폭발,attack,화염,C,"120% 화염 데미지, 화상 100% (3턴)",불타는 광산
-1103,불기둥,attack,화염,C,130% 데미지 + 주변 60%,화염의 군주
-1202,빙결,attack,냉기,C,"80% 데미지, 50% 확률 동결(1턴)",얼어붙은 호수
-1203,눈보라,attack,냉기,C,"전체 80% 냉기 데미지, 둔화 100%",서리 마녀
-1302,번개 연쇄,attack,번개,C,"90% 데미지, 추가 1체에게 50% 연쇄",폭풍의 봉우리
-1303,천둥의 일격,attack,번개,C,"140% 번개 데미지, 마비 2턴",천둥의 왕
-1402,수류탄,attack,수속성,C,"100% 데미지, 자신 HP 10% 회복",수몰된 신전
-1403,치유의 비,attack,수속성,C,3턴간 매 턴 HP 8% 회복,심해의 사제
-1502,치유의 빛,attack,신성,C,HP 25% 회복,성스러운 대성당
-1503,정화,attack,신성,C,"모든 디버프 해제, HP 10% 회복",타락한 대주교
-1602,생명력 흡수,attack,암흑,C,"110% 암흑 데미지, 데미지의 30% 흡혈",어둠의 묘지
-1603,저주,attack,암흑,C,"3턴간 방어력 -25%, 회복량 -50%",리치 킹
-2002,재생,heal,없음,C,3턴간 매 턴 HP 6% 회복,상점
-3002,분노,buff,없음,C,"3턴간 공격력 +25%, 방어력 -10%",상점
-3003,수비 태세,buff,없음,C,3턴간 방어력 +30%,상점
-4002,둔화,debuff,없음,C,3턴간 적 속도 -30%,얼어붙은 호수
-4003,공포,debuff,없음,C,2턴간 적 공격력/방어력 -20%,어둠의 묘지
-6022,민첩한 몸놀림,passive_combat,속도,C,회피율 +10%,도적 캠프
-6031,예리한 눈,passive_combat,치명타,C,치명타 +10%,사냥꾼 길드
-6041,맹독 체질,passive_combat,상태이상,C,"독 공격 확률 +15%, 독 피해 +20%",독의 늪
-6042,동상 체질,passive_combat,상태이상,C,냉기 공격 시 둔화 확률 +20%,얼어붙은 호수
-6043,감전 체질,passive_combat,상태이상,C,번개 공격 시 마비 확률 +15%,폭풍의 봉우리
-6102,대박 기원,passive_farming,파밍,C,"드롭률 +10%, 레어 드롭 +5%",행운의 신전
-6103,황금 손,passive_farming,파밍,C,골드 획득 +15%,상인 길드
-6104,경험의 서,passive_farming,파밍,C,경험치 획득 +10%,학자 길드
-6202,함정 회피,passive_exploration,탐험,C,함정 피해 -50%,도적 마스터
-6203,비밀 탐지,passive_exploration,탐험,C,숨겨진 방 발견 확률 +25%,탐험가 길드
-6302,능숙한 흥정,passive_social,상점,C,"상점 구매가 -10%, 판매가 +5%",상인 마스터
-6304,호감도 증가,passive_social,상점,C,NPC 호감도 획득 +20%,사교 클럽
-8001,불씨 키우기,combo,화염,C,"화상 중인 적의 화상 스택 +2, 지속 +2턴",화염의 제단
-8005,연소 가속,combo,화염,C,화상 중인 적은 턴당 화상 데미지 2회 적용,연금술사 길드
-8101,동결 준비,combo,냉기,C,"둔화 중인 적에게 동결 확률 +50%, 60% 냉기",서리 마녀
-8201,전도체,combo,번개,C,"마비 중인 적에게 연쇄 피해 +100%, 연쇄 우선 타겟",번개의 제단
-8204,정전기 축적,combo,번개,C,"번개 스킬 사용 시 ""정전기"" 스택 +1, 5스택 시 다음 번개 2배",전기 연구소
-8301,저주 심화,combo,암흑,C,"저주 중인 적 받는 피해 +30%, 저주 지속 +1턴",저주술사
-8401,신성 충전,combo,신성,C,"축복 상태일 때 신성 데미지 +50%, 회복량 +30%",대성당
-8501,깊은 상처,combo,출혈,C,"60% 물리, 출혈 3스택 부여, 지속 +2턴",암살자 길드
-8505,상처 벌리기,combo,출혈,C,"출혈 중인 적에게 150%, 출혈 스택 +2",고문 기술자
-8601,반격 준비,combo,방어,C,3턴간 피격 시 80% 물리 반격,검투사
-8701,회복 증폭,combo,회복,C,3턴간 모든 회복량 +50%,치유사 길드
-8801,콤보 유지,combo,물리,C,"콤보 지속시간 +2턴, 현재 콤보 +3",무술 도장
-8901,약점 분석,unknown,없음,C,"3턴간 치명타 확률 +30%, 첫 공격 치명타 확정",암살자 훈련소
-7204,견제 사격,unknown,없음,C,"90% 데미지, 대상 다음 공격력 -30%",궁수 길드
-7206,급소 가격,unknown,없음,C,"120% 데미지, 적 방어력 무시 20%",무술 도장
-7207,관통 사격,unknown,없음,C,"110% 데미지, 방어력 40% 무시",명사수 길드
-7303,전투 태세,unknown,없음,C,3턴간 받는 피해 -20%,전술 학교
-7304,집중력 강화,unknown,없음,C,"3턴간 치명타 +10%, 명중 +15%",명상의 전당
-7306,전투 회복,unknown,없음,C,3턴간 턴당 HP 5% 회복,회복술 기초
-7401,주사위 굴리기,unknown,없음,C,"1~6 랜덤: 1=자해 20%, 6=300% 데미지",도박의 신전
-7405,미래 점술,unknown,없음,C,다음 3턴간 발동 스킬 미리 확인,점술사의 탑
-7501,신앙의 빛,passive_conditional,조건부,C,조건: 신성 스킬 5개+ | 80% 신성,성스러운 대성당
-7502,어둠의 포옹,passive_conditional,조건부,C,조건: 암흑 스킬 5개+ | 80% 암흑,어둠의 묘지
-7503,화염의 정수,passive_conditional,조건부,C,조건: 적이 화상 상태 | 90% 화염,화염의 제단
-7504,빙하의 심장,passive_conditional,조건부,C,조건: 적이 둔화 상태 | 90% 냉기,빙하의 핵심
-7505,번개의 심판,passive_conditional,조건부,C,조건: 적이 마비 상태 | 90% 번개,번개의 제단
-7510,첫 일격,passive_conditional,조건부,C,조건: 전투 첫 턴 | 120% 물리,선제공격 훈련장
-7603,언데드 정화,unknown,없음,C,"100%, 언데드에게 250% + 부활 봉인",묘지 던전
-7604,악마 퇴치,unknown,없음,C,"100%, 악마에게 250% + 버프 해제",지옥 입구
-7606,정령 봉인,unknown,없음,C,"90%, 정령에게 280% + 속성 봉인",정령의 숲
-7607,기계 해체,unknown,없음,C,"100%, 기계에게 350% + 방어 무시",고대 공장
-7701,야간 습격,unknown,없음,C,100% 물리,암살자 길드
-7702,태양의 축복,unknown,없음,C,100% 신성,태양의 신전
-7804,학습하는 마법,unknown,없음,C,조건: 100번 각 속성 사용 | 모든 속성 +10%→+50%,마법 아카데미
-7903,화력 집중,unknown,없음,C,조건: 공격 스킬 7개+ | 80% 물리,공격대 본부
-7904,철벽 수호,unknown,없음,C,조건: 방어/힐 7개+ | 피해 -10%,수호대 본부
-7905,버프 마스터,unknown,없음,C,조건: 버프 스킬 4개+ | 버프 지속 +1턴,마법 연구소
-7906,디버프 마스터,unknown,없음,C,조건: 디버프 4개+ | 디버프 확률 +10%,저주 연구소
-1005,파워 스트라이크,attack,무속성,B,"150% 데미지, 방어 20% 무시",Lv.15+ 던전
-1104,화염 방벽,attack,화염,B,3턴간 피격 시 공격자에게 40% 반사,화염의 군주
-1204,얼음 갑옷,attack,냉기,B,"3턴간 물리 방어 +30%, 피격 시 둔화 부여",서리 마녀
-1304,전기장,attack,번개,B,3턴간 공격 시 30% 확률 추가 번개 피해,천둥의 왕
-1404,물의 방패,attack,수속성,B,"3턴간 마법 방어 +35%, 화염 면역",심해의 사제
-1504,축복,attack,신성,B,3턴간 공격력/방어력 +20%,타락한 대주교
-1604,어둠의 갑옷,attack,암흑,B,"3턴간 피해 -20%, 피격 시 10% 흡혈",리치 킹
-2003,치유,heal,없음,B,HP 30% 즉시 회복,Lv.15+ 던전
-3004,가속,buff,없음,B,2턴간 같은 스킬 2회 발동,Lv.20+ 던전
-4004,침묵,debuff,없음,B,2턴간 적 스킬 위력 -30%,Lv.25+ 던전
-6003,처형자,passive_combat,공격,B,HP 30% 이하 적에게 +40% 데미지,Lv.25+ 던전
-6005,연속 공격,passive_combat,공격,B,15% 확률로 같은 스킬 재발동,암살자 길드
-6013,재생력,passive_combat,방어,B,매 턴 HP 3% 회복,Lv.20+ 던전
-6016,생명력 착취,passive_combat,방어,B,흡혈 +8%,어둠의 묘지
-6023,선제 공격,passive_combat,속도,B,선공 확률 +30%,암살자 길드
-6032,급소 공격,passive_combat,치명타,B,치명타 데미지 +30%,암살자 길드
-6044,상태이상 저항,passive_combat,상태이상,B,모든 상태이상 저항 +25%,정화의 성소
-6105,보물 사냥꾼,passive_farming,파밍,B,보물상자 발견 확률 +20%,탐험가 길드
-6106,수집가,passive_farming,파밍,B,재료 아이템 드롭 2배,연금술사 길드
-6204,지도 제작자,passive_exploration,탐험,B,던전 맵 자동 공개,지도 제작사
-6205,안전한 발걸음,passive_exploration,탐험,B,기습 당할 확률 -50%,정찰병
-6303,VIP 고객,passive_social,상점,B,상점에서 희귀 아이템 등장,상인 길드 명성
-6306,강화 행운,passive_social,상점,B,강화 성공률 +5%,대장장이 마스터
-6307,연금술 보너스,passive_social,상점,B,"조합 성공률 +10%, 재료 소모 -10%",연금술사 길드
-6501,새벽의 전사,passive_conditional,조건부,B,조건: HP 100% | 첫 공격 데미지 +50%,기사단
-6502,황혼의 전사,passive_conditional,조건부,B,조건: HP 30% 이하 | 모든 스탯 +25%,기사단
-6507,속성 변환,passive_conditional,조건부,B,조건: 약점 속성 공격 시 | 해당 속성 데미지 +40%,원소 마스터
-6509,언데드 슬레이어,passive_conditional,조건부,B,"조건: 언데드 상대 | 데미지 +50%, 신성 속성 추가",성기사단
-8002,화상 폭발,combo,화염,B,"80% + 화상 스택당 50% 추가, 화상 초기화",화염의 군주
-8004,영원한 불꽃,combo,화염,B,"3턴간 적의 화상이 자연 해제 안 됨, 화상 데미지 2배",영원의 화로
-8102,빙결 분쇄,combo,냉기,B,"동결된 적에게만 400%, 동결 해제",빙하의 심장
-8104,서리 감옥,combo,냉기,B,둔화 3스택 이상인 적 즉시 동결 2턴,냉기의 군주
-8202,낙뢰 집중,combo,번개,B,100% + 이번 전투 연쇄 횟수당 10% 추가,천둥의 왕
-8205,뇌운 소환,combo,번개,B,3턴간 모든 적에게 턴 시작 시 20% 확률 마비,폭풍의 봉우리
-8302,영혼 착취,combo,암흑,B,"120% 암흑, 저주 중인 적에게 흡혈 효과 2배",영혼 수확자
-8304,연쇄 저주,combo,암흑,B,저주 중인 적 처치 시 주변 적에게 저주 전이,역병의 군주
-8402,심판의 빛,combo,신성,B,100% 신성 + 이번 전투 정화한 디버프 수 × 20%,심판자
-8404,축복 전이,combo,신성,B,"자신의 축복을 적에게 ""심판의 낙인""으로 전환 (피해 +30%)",성기사단
-8502,피의 향연,combo,출혈,B,3턴간 적의 출혈 스택당 흡혈 +3%,흡혈귀 성
-8504,출혈 폭발,combo,출혈,B,"출혈 스택 × 40% 데미지, 출혈 초기화",피의 제단
-8602,축적된 분노,combo,방어,B,이번 전투 받은 피해의 50%를 데미지로 (최대 500%),광전사
-8604,피해 전환,combo,방어,B,3턴간 받는 피해의 30%를 공격력으로 전환,고통의 성자
-8702,과회복,combo,회복,B,5턴간 최대 HP 초과 회복량을 보호막으로 전환,생명의 신전
-8704,치유의 연쇄,combo,회복,B,회복 시 30% 확률로 즉시 한 번 더 회복,연쇄 치유사
-8802,콤보 피니시,combo,물리,B,"콤보 수 × 25% 데미지, 콤보 초기화",격투가
-8902,급소 노출,unknown,없음,B,적에게 3턴간 치명타 피해 +50% 디버프,해부학자
-8904,치명적 일격,unknown,없음,B,치명타 발생 시 30% 확률로 출혈 5스택,잔혹한 전사
-7402,운명의 룰렛,unknown,없음,B,5가지 중 랜덤: 공격/방어/회복/버프/디버프,운명의 사원
-7404,올인,unknown,없음,B,50% 확률 400% 또는 자해 200%,카지노 던전
-7407,양날의 검,unknown,없음,B,"250% 데미지, 자신도 동일 피해",광전사의 무덤
-7605,드래곤 슬레이,unknown,없음,B,"120%, 드래곤에게 300% + 브레스 반사",드래곤 사냥 길드
-7608,인간 사냥,unknown,없음,B,"130%, 인간형에게 200% + 공포",암살자 길드
-7705,보스 킬러,unknown,없음,B,150% 물리,보스 사냥단
-7706,다수 처리,unknown,없음,B,80% 전체,전술 학교
-7707,1:1 결투,unknown,없음,B,150% 물리,결투장
-7901,원소 조화,unknown,없음,B,조건: 4속성 각 1개 이상 | 100% 무속성,원소의 제단
-7902,극과 극,unknown,없음,B,조건: 신성+암흑 각 3개 | 100% 무속성,균형의 신전
-7908,올인 공격,unknown,없음,B,조건: 공격 스킬 10개 | 150% 물리,광전사 극의
-7909,올인 방어,unknown,없음,B,조건: 방어 스킬 10개 | 피해 -20%,철벽 극의
-1006,일섬,attack,무속성,A,"200% 데미지, 100% 치명타",용의 둥지
-1105,메테오,attack,화염,A,"전체 180% 화염 데미지, 화상 4턴",고대 드래곤
-1205,빙하,attack,냉기,A,"180% 냉기 데미지, 동결 3턴",고대 드래곤
-1305,낙뢰,attack,번개,A,"220% 번개 데미지, 방어 무시",고대 드래곤
-1405,해일,attack,수속성,A,"전체 160% 수속성, 자신 HP 15% 회복",레이드 보상
-1505,신성한 심판,attack,신성,A,"200% 신성 데미지, 언데드 +100%",레이드 보상
-1605,영혼 수확,attack,암흑,A,"180% 암흑, 처치 시 영구 공격력 +3%",심연의 군주
-2004,대치유,heal,없음,A,"HP 50% 즉시 회복, 디버프 1개 해제",Lv.30+ 던전
-3005,광폭화,buff,없음,A,"5턴간 공격력 +50%, 방어력 -25%, 흡혈 +15%",혼돈의 화신
-4005,파멸의 낙인,debuff,없음,A,5턴간 받는 모든 데미지 +30%,혼돈의 화신
-5001,오버드라이브,ultimate,없음,A,"3턴간 모든 데미지 2배, 슬롯 소모",Lv.35+ 던전
-5002,최후의 일격,ultimate,없음,A,"500% 데미지 (HP 낮을수록 강화), 슬롯 소모",용의 둥지
-6004,최후의 발악,passive_combat,공격,A,HP 20% 이하 시 데미지 +50%,Lv.35+ 던전
-6006,약점 간파,passive_combat,공격,A,적 약점 속성 피해 +30% 추가,사냥꾼 길드
-6014,불굴의 의지,passive_combat,방어,A,HP 10% 이하 시 1회 즉사 무효,레이드 보상
-6015,역경의 힘,passive_combat,방어,A,HP 50% 이하 시 방어력 +30%,시련의 탑
-6024,그림자 걸음,passive_combat,속도,A,회피 성공 시 다음 공격 +30%,그림자 길드
-6033,연속 치명타,passive_combat,치명타,A,치명타 성공 시 다음 치명타 +20%,Lv.40+ 던전
-6046,고통 전이,passive_combat,상태이상,A,받은 상태이상을 50% 확률로 적에게 전이,저주술사
-6107,대박,passive_farming,파밍,A,5% 확률로 드롭 아이템 등급 +1,도박장 VIP
-6109,학습 촉진,passive_farming,파밍,A,경험치 획득 +25%,현자의 탑
-6206,위험 감지,passive_exploration,탐험,A,다음 방 인카운터 미리 확인,예언자
-6207,지름길 발견,passive_exploration,탐험,A,10% 확률로 던전 층 스킵,탐험 마스터
-6308,퀘스트 보상 증가,passive_social,상점,A,퀘스트 보상 +20%,모험가 길드 명성
-6503,고독한 늑대,passive_conditional,조건부,A,"조건: 파티원 없음 | 데미지 +20%, 받는 피해 -10%",방랑자
-6504,단체 전투,passive_conditional,조건부,A,조건: 파티원 3명 이상 | 파티원 수 ×5% 데미지 증가,용병단
-6506,다수 처리반,passive_conditional,조건부,A,조건: 적 3마리 이상 | 전체 공격 데미지 +25%,던전 클리어
-6510,드래곤 슬레이어,passive_conditional,조건부,A,"조건: 드래곤 상대 | 데미지 +40%, 브레스 피해 -50%",드래곤 사냥꾼
-8003,재로 만들기,combo,화염,A,"화상 중인 적에게만 300%, 화상 해제, 방어 -30% 3턴",불사조의 둥지
-8103,영구 동토,combo,냉기,A,5턴간 적이 동결 해제될 때마다 즉시 둔화 부여,영원의 빙하
-8105,절대 영하,combo,냉기,A,동결 중인 적의 방어력 0으로 고정 (동결 동안),절대 영도의 방
-8203,과부하,combo,번개,A,"마비 중인 모든 적에게 250%, 마비 해제",뇌신의 영역
-8303,저주 수확,combo,암흑,A,"저주 남은 턴수 × 60% 데미지, 저주 해제",죽음의 사제
-8305,영혼 고리,combo,암흑,A,5턴간 적에게 가한 피해의 20%를 HP로 회복 (저주 중 40%),생명력 착취자
-8403,성스러운 폭발,combo,신성,A,"자신의 모든 버프 소모, 버프당 100% 신성 데미지",천상의 탑
-8405,연쇄 정화,combo,신성,A,"아군 디버프 해제, 해제된 디버프를 적에게 전이",대주교
-8503,과다출혈,combo,출혈,A,"출혈 10스택 이상 적에게 즉사 30%, 실패 시 200%",사형 집행자
-8603,철벽 붕괴,combo,방어,A,"모든 방어 버프 소모, 버프당 150% 데미지",수호자의 끝
-8605,불굴의 반격,combo,방어,A,HP 20% 이하로 떨어질 때 즉시 300% 반격 (1회),최후의 수호자
-8703,생명력 폭발,combo,회복,A,"보호막 전체 소모, 보호막량 × 2 물리 데미지",생사의 경계
-8705,고통의 전환,combo,회복,A,3턴간 받는 피해의 50%를 즉시 회복,고행 수도사
-8805,콤보 브레이크,combo,물리,A,적의 콤보를 끊고 콤보 수 × 30% 데미지 (PvP용),카운터 마스터
-8903,연속 치명타,unknown,없음,A,100% + 연속 치명타 횟수 × 40% 추가,치명의 달인
-7001,고대의 불꽃,unknown,없음,A,"200% 화염, 고대 몬스터 +100%, 화상 5턴",고대 유적 (히든)
-7002,잊혀진 빙결,unknown,없음,A,"180% 냉기, 동결 3턴 (해제 불가)",얼어붙은 고대 호수
-7101,고대의 축복,unknown,없음,A,"5턴간 모든 스탯 +25%, 상태이상 저항 +50%",고대 사원
-7103,잊혀진 방벽,unknown,없음,A,"5턴간 피해 -40%, CC 면역",수호자의 유적
-7403,혼돈의 마법,unknown,없음,A,"랜덤 속성 200% 데미지, 랜덤 상태이상",혼돈의 균열
-7406,행운의 별,unknown,없음,A,"10% 확률 즉사, 90% 확률 50% 데미지",별의 관측소
-7708,역경 극복,unknown,없음,A,100% 물리,도전자의 탑
-7907,균형의 힘,unknown,없음,A,조건: 공격/방어 5:5 | 100% + HP 10% 회복,균형의 정점
-1007,천공검,attack,무속성,S,"350% 데미지, 방어력 완전 무시",천상의 탑
-1106,지옥불,attack,화염,S,"전체 250% 화염, 5턴간 HP 5%/턴 감소",마왕 발더스
-1206,절대 영도,attack,냉기,S,"전체 220% 냉기, 100% 동결 2턴",창세의 관찰자
-1306,천둥의 심판,attack,번개,S,"전체 280% 번개, 마비 3턴",창세의 관찰자
-1406,생명의 물결,attack,수속성,S,"HP 50% 회복, 모든 디버프 해제",창세의 관찰자
-1506,천사의 강림,attack,신성,S,"5턴간 모든 스탯 +30%, 1회 즉사 무효",심판자
-1606,죽음의 손길,attack,암흑,S,현재 HP 30% 고정 데미지 + 180%,심연의 군주
-2005,기적의 치유,heal,없음,S,"HP 80% 회복, 모든 디버프 해제",레이드 보상
-3006,무적,buff,없음,S,다음 피격 1회 완전 무효화,심판자
-4006,존재 말소,debuff,없음,S,3턴간 적 모든 스탯 -30%,창세의 관찰자
-5003,시간 정지,ultimate,없음,S,"3턴간 적 행동 불가, 슬롯 소모",창세의 관찰자
-5004,세계의 종말,ultimate,없음,S,"전체 400% 모든 속성 데미지, 슬롯 소모",마왕 발더스
-5005,불사,ultimate,없음,S,"이번 전투 중 HP 1 이하로 안 떨어짐, 슬롯 소모",심판자
-6007,전쟁 광기,passive_combat,공격,S,피격 시 Attack +5% 스택 (최대 50%),광전사 훈련장
-6008,원소 마스터,passive_combat,공격,S,모든 속성 데미지 +20%,창세의 관찰자
-6017,철갑 피부,passive_combat,방어,S,물리 피해 -15%,골렘 코어
-6018,마력 장벽,passive_combat,방어,S,마법 피해 -15%,마법사 탑
-6025,번개 반사신경,passive_combat,속도,S,"회피율 +20%, 회피 시 반격",번개 정령
-6034,확정 치명타,passive_combat,치명타,S,HP 20% 이하 적에게 확정 치명타,처형인 길드
-6045,상태이상 면역,passive_combat,상태이상,S,1종류 상태이상 완전 면역 (선택),레이드 보상
-6108,잭팟,passive_farming,파밍,S,1% 확률로 드롭 아이템 등급 +2,행운의 신 축복
-6110,탐욕,passive_farming,파밍,S,"골드 획득 +30%, 단 HP -10%",탐욕의 악마
-6208,던전 마스터,passive_exploration,탐험,S,보스 방 위치 항상 표시,전설의 탐험가
-6209,차원 인식,passive_exploration,탐험,S,"숨겨진 방 발견 확률 +50%, 비밀 던전 입장 가능",차원술사
-6309,비밀 상인 접근,passive_social,상점,S,비밀 상인 출현 확률 +30%,암시장 VIP
-6505,보스 사냥꾼,passive_conditional,조건부,S,"조건: 보스 몬스터 상대 | 데미지 +30%, 받는 피해 -20%",보스 레이드
-8803,무한 콤보,combo,물리,S,10콤보 이상 유지 시 이번 턴 스킬 1회 추가 발동,무신
-8905,처형자의 눈,unknown,없음,S,"HP 30% 이하 적에게 100% 치명타, 치명타 데미지 +100%",처형인
-7003,원시의 뇌격,unknown,없음,S,"250% 번개, 전체 연쇄, 마비 2턴",천둥의 고대 신전
-7004,고대 드래곤의 숨결,unknown,없음,S,"280% 5속성 랜덤, 드래곤 면역 부여 3턴",용의 묘지 (비밀)
-7006,태초의 어둠,unknown,없음,S,"220% 암흑, 흡혈 40%, 저주 영구",심연의 틈 (저레벨)
-7102,원시 재생,unknown,없음,S,"HP 60% 회복, 3턴간 턴당 10% 추가 회복",생명의 나무
-7104,태초의 시간,unknown,없음,S,3턴간 모든 스킬 2회 발동,시간의 잔해
-7408,역전의 한방,unknown,없음,S,"HP 10% 이하 시에만 발동, 1000% 데미지",역전의 전당
-1008,시간 베기,attack,무속성,SS,"400% 데미지, 30% 확률 추가 턴",시간의 수호자
-1009,공허의 일격,attack,무속성,SS,"450% 데미지, 적 버프 2개 흡수",공허의 지배자
-1107,시간의 불꽃,attack,화염,SS,"320% 화염, 화상 지속시간 2배, 시간 정지 중에도 데미지",시간의 수호자
-1108,태양 폭발,attack,화염,SS,"전체 350% 화염, 화상 해제 불가 5턴",깨어난 고대신
-1207,시간 동결,attack,냉기,SS,"300% 냉기, 대상 2턴간 시간 정지 (행동/버프/디버프 정지)",시간의 수호자
-1208,심해 빙결,attack,냉기,SS,"전체 350% 냉기, 동결 3턴, 냉기 저항 무시",심해의 크라켄
-1307,시간 번개,attack,번개,SS,"350% 번개, 연쇄 5체, 마비 시 시간 정지",시간의 수호자
-1308,용신의 뇌격,attack,번개,SS,"400% 번개, 전체 연쇄, 마비 100%",용신 티아마트
-1407,시간의 샘,attack,수속성,SS,"HP 40% 회복, 3턴간 매 턴 15% 추가 회복",시간의 수호자
-1408,심해의 축복,attack,수속성,SS,"HP 60% 회복, 5턴간 물리 피해 면역",심해의 크라켄
-1507,시간의 축복,attack,신성,SS,"5턴간 디버프 면역, 버프 지속시간 2배",시간의 수호자
-1508,용신의 가호,attack,신성,SS,"350% 신성, 5턴간 드래곤 실드 (피해 -40%)",용신 티아마트
-1607,시간의 저주,attack,암흑,SS,"3턴간 회복 완전 봉인, 300% 암흑",시간의 수호자
-1608,공허의 침식,attack,암흑,SS,"350% 암흑, 5턴간 매 턴 HP 8% 흡수",공허의 지배자
-2006,시간 역행,heal,없음,SS,HP를 5턴 전 상태로 복구,시간의 수호자
-2007,심해의 치유,heal,없음,SS,"HP 70% 회복, 5턴간 수속성 피해 면역",심해의 크라켄
-3007,시간 가속,buff,없음,SS,"5턴간 같은 스킬 3회 발동, 속도 +100%",시간의 수호자
-3008,심연의 힘,buff,없음,SS,"5턴간 암흑 데미지 +50%, 흡혈 +30%",공허의 지배자
-4007,시간 정지 (디버프),debuff,없음,SS,3턴간 적 행동/버프/디버프 틱 정지,시간의 수호자
-4008,공허의 침식,debuff,없음,SS,"5턴간 적 회복 완전 봉인, 모든 스탯 -20%",공허의 지배자
-5006,시간 역전,ultimate,없음,SS,"전투를 5턴 전 상태로 되돌림 (1회), 슬롯 소모",시간의 수호자
-5007,차원 붕괴,ultimate,없음,SS,"전체 현재 HP 50% 고정 데미지, 슬롯 소모",공허의 지배자
-6035,파멸의 일격,passive_combat,치명타,SS,치명타 시 10% 확률로 3배 데미지,전설의 암살자
-6111,완벽한 파밍,passive_farming,파밍,SS,드롭률/골드/경험치 모두 +15%,레이드 보상
-6112,무한 수집,passive_farming,파밍,SS,인벤토리 무게 제한 무시,차원 가방
-6210,무해 통과,passive_exploration,탐험,SS,원하는 전투 50% 확률로 회피 가능,은신 마스터
-6310,전설의 고객,passive_social,상점,SS,"모든 상점 효과 +15%, 전용 아이템 해금",만렙 상인 명성
-6401,시간 지배자,passive_special,특수,SS,"버프 지속 +100%, 디버프 지속 -50%",시간의 수호자
-6402,공허의 자식,passive_special,특수,SS,"흡혈 +20%, 공격 시 회복 봉인",공허의 지배자
-6403,심연의 가호,passive_special,특수,SS,"암흑 면역, 암흑 데미지 +30%",심해의 크라켄
-6404,각성자,passive_special,특수,SS,"모든 스킬 +15%, HP 50% 이하 시 +30%",깨어난 고대신
-6508,역전의 용사,passive_conditional,조건부,SS,"조건: HP 10% 이하 | 모든 데미지 2배, 받는 피해 0 (3턴)",전설의 영웅
-7005,잃어버린 신의 심판,unknown,없음,SS,"350% 신성, 언데드/악마 즉사 30%",봉인된 신전
-7105,고대 영혼 소환,unknown,없음,SS,"고대 전사 소환 (5턴, 공격력의 150% 데미지)",영혼의 제단
-1010,차원 절단,attack,무속성,SSS,"550% 데미지, 모든 내성 무시",차원의 파괴자
-1011,초월 참격,attack,무속성,SSS,"650% 데미지, HP 비례 추가 피해",초월한 자
-1109,연옥의 불길,attack,화염,SSS,"전체 450% 화염, 화상 10스택 즉시 부여",초월한 자
-1110,항성 붕괴,attack,화염,SSS,"전체 600% 화염, 3턴 후 추가 400% 폭발",태양신 라
-1209,영겁의 얼음,attack,냉기,SSS,"500% 냉기, 동결 해제 불가 3턴",차원의 파괴자
-1210,우주의 정적,attack,냉기,SSS,"전체 600% 냉기, 5턴간 속도 0 고정",초월한 자
-1309,차원 방전,attack,번개,SSS,"전체 550% 번개, 버프 전체 해제, 마비 3턴",차원의 파괴자
-1310,초월 낙뢰,attack,번개,SSS,"700% 번개, 연쇄 무한, 방어 완전 무시",초월한 자
-1409,생명의 원천,attack,수속성,SSS,"HP 80% 회복, 부활 1회 부여 (HP 50%)",깨어난 고대신
-1410,영원의 물,attack,수속성,SSS,"HP 100% 회복, 모든 상태이상 면역 3턴",초월한 자
-1509,신의 심판,attack,신성,SSS,"500% 신성, 언데드/악마 즉사, 다른 적 +100%",깨어난 고대신
-1510,초월의 빛,attack,신성,SSS,"600% 신성, 암흑 면역 부여, 암흑 적 +200%",초월한 자
-1609,영혼 파괴,attack,암흑,SSS,"500% 암흑, 처치 시 영구 모든 스탯 +5%",차원의 파괴자
-1610,죽음의 선고,attack,암흑,SSS,현재 HP 50% 고정 데미지 + 300%,죽음의 지배자
-2008,완전 재생,heal,없음,SSS,"HP 100% 회복, 3턴간 매 턴 HP 10% 추가 회복",초월한 자
-2009,생명의 샘,heal,없음,SSS,"HP 완전 회복, 부활 1회 부여, 모든 상태이상 해제",태양신 라
-3009,용신의 분노,buff,없음,SSS,"5턴간 모든 데미지 2배, 모든 저항 +50%",용신 티아마트
-3010,초월 상태,buff,없음,SSS,"5턴간 모든 스탯 +50%, CC 면역",초월한 자
-4009,존재의 붕괴,debuff,없음,SSS,"5턴간 적 모든 스탯 -40%, 회복 -80%",차원의 파괴자
-4010,죽음의 선언,debuff,없음,SSS,"5턴 후 대상 즉사 (해제 불가, 보스 제외)",죽음의 지배자
-5008,용신의 심판,ultimate,없음,SSS,"전체 800% 5속성 데미지, 슬롯 소모",용신 티아마트
-5009,죽음의 영역,ultimate,없음,SSS,"5턴간 적 즉사 확률 20%/턴, 슬롯 소모",죽음의 지배자
-5010,초월의 경지,ultimate,없음,SSS,"10턴간 모든 스킬 3배, 무적, 슬롯 소모",초월한 자
-6405,고대의 지혜,passive_special,특수,SSS,"상태이상 저항 +50%, 쿨타임 -30%",고대 문명 수호자
-6406,시련의 극복자,passive_special,특수,SSS,"처치 시 영구 스탯 +2%, HP 25% 이하 무적 1턴",탑의 최종 수호자
-6407,차원의 눈,passive_special,특수,SSS,"회피 +30%, 치명타 +25%, 모든 내성 +20%",차원의 파괴자
-6408,초월자의 자격,passive_special,특수,SSS,"모든 스탯 +20%, CC 면역, 즉사 무효",초월한 자
-1012,신살,attack,무속성,신화,"800% 데미지, 확정 치명타, 신 특효 +200%",전쟁의 신 아레스
-1013,창세의 검격,attack,무속성,신화,"1000% 데미지, 처치 시 HP 완전 회복",창조신의 그림자
-1111,태양신의 분노,attack,화염,신화,"전체 800% 화염, 전체 화상 영구 (전투 끝까지)",태양신 라
-1112,창세의 화염,attack,화염,신화,"전체 1000% 화염, 화염 면역 무시, 불사 해제",창조신의 그림자
-1211,빙하기,attack,냉기,신화,"전체 800% 냉기, 전체 동결 5턴, 냉기 면역 무시",태양신 라
-1212,창세의 얼음,attack,냉기,신화,"전체 1000% 냉기, 영구 둔화, 행동 시 추가 피해",창조신의 그림자
-1311,라의 심판,attack,번개,신화,"전체 900% 번개, 5초간 실시간 마비, 저항 무시",태양신 라
-1312,창세의 천둥,attack,번개,신화,"전체 1200% 번개, 마비 면역 무시, 즉사 10%",창조신의 그림자
-1411,태양신의 치유,attack,수속성,신화,"HP 100% 회복, 부활 2회 부여, 디버프 영구 면역",태양신 라
-1412,창세의 생명,attack,수속성,신화,"HP 완전 회복, 부활 무제한 (전투당), 모든 스탯 +30%",창조신의 그림자
-1511,라의 강림,attack,신성,신화,"900% 신성, 전체 HP 50% 회복, 부활 부여",태양신 라
-1512,창세의 빛,attack,신성,신화,"1200% 신성, 신성 면역 무시, 암흑 존재 소멸",창조신의 그림자
-1611,완전한 어둠,attack,암흑,신화,"800% 암흑, 흡혈 100%, 5턴간 불사",죽음의 지배자
-1612,창세의 어둠,attack,암흑,신화,"1000% 암흑, 처치 시 적 능력 완전 흡수, 영구 스탯화",창조신의 그림자
-2010,창조의 손길,heal,없음,신화,"HP 완전 회복, 부활 무제한, 영구 HP +20%",창조신의 그림자
-3011,신의 가호,buff,없음,신화,"10턴간 무적, 모든 스탯 +30%, 스킬 2개 동시 발동",태양신 라
-3012,창조의 축복,buff,없음,신화,"전투 끝까지 모든 스탯 +50%, 피해 면역 30%, 궁극기 슬롯 소모 무시",창조신의 그림자
-4011,신의 저주,debuff,없음,신화,"10턴간 모든 스탯 -50%, 회복 불가, 버프 불가",태양신 라
-4012,창세의 봉인,debuff,없음,신화,"전투 끝까지 모든 스탯 -60%, 스킬 위력 -50%",창조신의 그림자
-5011,태양의 심판,ultimate,없음,신화,"전체 HP 80% 고정 데미지, 자신 HP 완전 회복, 슬롯 소모",태양신 라
-5012,창세,ultimate,없음,신화,"전투 재시작 (자신 HP/버프 유지, 적 HP 리셋), 1회, 슬롯 미소모",창조신의 그림자
-6409,전쟁의 화신,passive_special,특수,신화,"피격 시 공격력 +3% 스택, 처치 시 HP 15% 회복",전쟁의 신 아레스
-6410,태양의 축복,passive_special,특수,신화,"매 턴 HP 5% 회복, 신성 +40%, 부활 1회",태양신 라
-6411,창조신의 은총,passive_special,특수,신화,"모든 스킬 +30%, 피해 -20%, 부활 무제한",창조신의 그림자
+﻿ID,이름,타입,카테고리,속성,등급,효과,획득처,키워드,config,플레이어_획득가능
+1001,강타,active,attack,무속성,D,물리(1.0AD) 공격,기본 지급,물리,"{""components"":[{""tag"":""attack"",""ad_ratio"":1.0}]}",Y
+1002,연속 베기,active,attack,무속성,D,물리(0.6AD) 2회 공격,잊혀진 숲,물리/콤보,"{""components"":[{""tag"":""attack"",""ad_ratio"":0.6,""hit_count"":2}]}",Y
+1003,급소 찌르기,active,attack,무속성,C,물리(1.2AD) 치명타+30%,고블린 동굴,물리,"{""components"":[{""tag"":""attack"",""ad_ratio"":1.2,""crit_bonus"":0.3}]}",Y
+1004,회전 참격,active,attack,무속성,C,물리(0.7AD) 전체 공격,상점,물리/범위,"{""components"":[{""tag"":""attack"",""ad_ratio"":0.7}]}",Y
+1005,연타,active,attack,무속성,C,물리(0.3AD) 5회 콤보+5,상점,물리/콤보/셋업,"{""components"":[{""tag"":""attack"",""ad_ratio"":0.3,""hit_count"":5},{""tag"":""status"",""type"":""combo"",""stacks"":5}]}",Y
+1006,파워 스트라이크,active,attack,무속성,B,물리(1.5AD) 방무20%,상점,물리,"{""components"":[{""tag"":""attack"",""ad_ratio"":1.5,""armor_pen"":0.2}]}",Y
+1007,방패 밀치기,active,attack,무속성,B,물리(0.8AD) 기절(100% 1턴),상점,물리/기절/셋업,"{""components"":[{""tag"":""attack"",""ad_ratio"":0.8},{""tag"":""status"",""type"":""stun"",""duration"":1}]}",Y
+1008,연속 자상,active,attack,무속성,B,물리(0.4AD) 4회 출혈+1/히트,암살자 훈련장,물리/출혈/셋업,"{""components"":[{""tag"":""attack"",""ad_ratio"":0.4,""hit_count"":4},{""tag"":""status"",""type"":""bleed"",""chance"":0.8,""duration"":3,""stacks"":1}]}",Y
+1009,일섬,active,attack,무속성,A,물리(2.0AD) 확정 치명타,용의 둥지,물리/피니셔,"{""components"":[{""tag"":""attack"",""ad_ratio"":2.0,""crit_bonus"":1.0}]}",Y
+1010,천공검,active,attack,무속성,S,물리(3.5AD) 방무100%,천상의 탑,물리/피니셔,"{""components"":[{""tag"":""attack"",""ad_ratio"":3.5,""armor_pen"":1.0}]}",Y
+1011,시간 베기,active,attack,무속성,SS,물리(4.0AD) 추가턴 30%,시간의 수호자,물리,"{""components"":[{""tag"":""attack"",""ad_ratio"":4.0}]}",Y
+1012,차원 절단,active,attack,무속성,SSS,물리(5.5AD) 전체 내성 무시,차원의 파괴자,물리/피니셔,"{""components"":[{""tag"":""attack"",""ad_ratio"":5.5,""armor_pen"":1.0}]}",Y
+1013,신살,active,attack,무속성,신화,물리(8.0AD) 확정 치명타 신특효+200%,전쟁의 신 아레스,물리/피니셔,"{""components"":[{""tag"":""attack"",""ad_ratio"":8.0,""crit_bonus"":1.0}]}",Y
+1101,화염구,active,attack,화염,D,마법(1.0AP) 화상(30% 2턴),불타는 광산,화염/화상/셋업,"{""components"":[{""tag"":""attack"",""ap_ratio"":1.0,""is_physical"":false},{""tag"":""status"",""type"":""burn"",""chance"":0.3,""duration"":2}]}",Y
+1102,화염 폭발,active,attack,화염,C,마법(1.2AP) 화상(100% 3턴),불타는 광산,화염/화상/셋업,"{""components"":[{""tag"":""attack"",""ap_ratio"":1.2,""is_physical"":false},{""tag"":""status"",""type"":""burn"",""duration"":3}]}",Y
+1103,불기둥,active,attack,화염,C,마법(1.3AP) 주변 마법(0.6AP),상점,화염/범위,"{""components"":[{""tag"":""attack"",""ap_ratio"":1.3,""is_physical"":false}]}",Y
+1104,화염 방벽,active,attack,화염,B,피격 시 마법(0.4AP) 반사(3턴),화염의 군주,화염/반격,"{""components"":[{""tag"":""buff"",""duration"":3},{""tag"":""attack"",""ap_ratio"":0.4,""is_physical"":false}]}",Y
+1105,메테오,active,attack,화염,A,마법(1.8AP) 전체 화상(100% 4턴),레이드 보상,화염/화상/셋업/범위,"{""components"":[{""tag"":""attack"",""ap_ratio"":1.8,""is_physical"":false},{""tag"":""status"",""type"":""burn"",""duration"":4}]}",Y
+1106,지옥불,active,attack,화염,S,마법(2.5AP) 전체 화상(3스택 5턴),마왕 발더스,화염/화상/범위,"{""components"":[{""tag"":""attack"",""ap_ratio"":2.5,""is_physical"":false},{""tag"":""status"",""type"":""burn"",""duration"":5,""stacks"":3}]}",Y
+1107,태양 폭발,active,attack,화염,SS,마법(3.5AP) 전체 화상해제불가(5턴),깨어난 고대신,화염/화상/셋업/범위,"{""components"":[{""tag"":""attack"",""ap_ratio"":3.5,""is_physical"":false},{""tag"":""status"",""type"":""burn"",""duration"":5}]}",Y
+1108,연옥의 불길,active,attack,화염,SSS,마법(4.5AP) 전체 화상10스택,초월한 자,화염/화상/셋업/범위,"{""components"":[{""tag"":""attack"",""ap_ratio"":4.5,""is_physical"":false},{""tag"":""status"",""type"":""burn"",""duration"":5,""stacks"":10}]}",Y
+1109,태양신의 분노,active,attack,화염,신화,마법(8.0AP) 전체 영구 화상,태양신 라,화염/화상/셋업/범위,"{""components"":[{""tag"":""attack"",""ap_ratio"":8.0,""is_physical"":false},{""tag"":""status"",""type"":""burn"",""duration"":99}]}",Y
+1201,얼음 화살,active,attack,냉기,D,마법(0.9AP) 둔화(30% 2턴),얼어붙은 호수,냉기/둔화/셋업,"{""components"":[{""tag"":""attack"",""ap_ratio"":0.9,""is_physical"":false},{""tag"":""status"",""type"":""slow"",""chance"":0.3,""duration"":2}]}",Y
+1202,빙결,active,attack,냉기,C,마법(0.8AP) 동결(50% 1턴),얼어붙은 호수,냉기/동결/셋업,"{""components"":[{""tag"":""attack"",""ap_ratio"":0.8,""is_physical"":false},{""tag"":""status"",""type"":""freeze"",""chance"":0.5,""duration"":1}]}",Y
+1203,눈보라,active,attack,냉기,C,마법(0.8AP) 전체 둔화(100% 2턴),상점,냉기/둔화/셋업/범위,"{""components"":[{""tag"":""attack"",""ap_ratio"":0.8,""is_physical"":false},{""tag"":""status"",""type"":""slow"",""duration"":2}]}",Y
+1204,얼음 갑옷,active,attack,냉기,B,방어+30%(3턴) 피격 시 둔화,서리 마녀,냉기/둔화/반격,"{""components"":[{""tag"":""buff"",""duration"":3,""defense"":0.3},{""tag"":""status"",""type"":""slow"",""chance"":0.5,""duration"":2}]}",Y
+1205,빙하,active,attack,냉기,A,마법(1.8AP) 동결(100% 3턴),레이드 보상,냉기/동결/셋업,"{""components"":[{""tag"":""attack"",""ap_ratio"":1.8,""is_physical"":false},{""tag"":""status"",""type"":""freeze"",""duration"":3}]}",Y
+1206,절대 영도,active,attack,냉기,S,마법(2.2AP) 전체 동결(100% 2턴),창세의 관찰자,냉기/동결/셋업/범위,"{""components"":[{""tag"":""attack"",""ap_ratio"":2.2,""is_physical"":false},{""tag"":""status"",""type"":""freeze"",""duration"":2}]}",Y
+1207,심해 빙결,active,attack,냉기,SS,마법(3.5AP) 전체 동결(100% 3턴),심해의 크라켄,냉기/동결/셋업/범위,"{""components"":[{""tag"":""attack"",""ap_ratio"":3.5,""is_physical"":false},{""tag"":""status"",""type"":""freeze"",""duration"":3}]}",Y
+1208,우주의 정적,active,attack,냉기,SSS,마법(6.0AP) 전체 속도0(5턴),초월한 자,냉기/둔화/셋업/범위,"{""components"":[{""tag"":""attack"",""ap_ratio"":6.0,""is_physical"":false},{""tag"":""status"",""type"":""slow"",""duration"":5}]}",Y
+1209,빙하기,active,attack,냉기,신화,마법(8.0AP) 전체 동결(100% 5턴),태양신 라,냉기/동결/셋업/범위,"{""components"":[{""tag"":""attack"",""ap_ratio"":8.0,""is_physical"":false},{""tag"":""status"",""type"":""freeze"",""duration"":5}]}",Y
+1301,전격,active,attack,번개,D,마법(1.0AP) 감전(20% 2턴),폭풍의 봉우리,번개/감전/셋업,"{""components"":[{""tag"":""attack"",""ap_ratio"":1.0,""is_physical"":false},{""tag"":""status"",""type"":""shock"",""chance"":0.2,""duration"":2}]}",Y
+1302,번개 연쇄,active,attack,번개,C,마법(0.9AP) 연쇄(0.5AP) 1체,폭풍의 봉우리,번개/감전/범위,"{""components"":[{""tag"":""attack"",""ap_ratio"":0.9,""is_physical"":false},{""tag"":""status"",""type"":""shock"",""chance"":0.5,""duration"":2}]}",Y
+1303,천둥의 일격,active,attack,번개,C,마법(1.4AP) 마비(100% 2턴),상점,번개/마비/셋업,"{""components"":[{""tag"":""attack"",""ap_ratio"":1.4,""is_physical"":false},{""tag"":""status"",""type"":""paralyze"",""duration"":2}]}",Y
+1304,전기장,active,attack,번개,B,공격 시 30% 추가 번개(3턴),천둥의 왕,번개/감전/셋업,"{""components"":[{""tag"":""buff"",""duration"":3},{""tag"":""attack"",""ap_ratio"":0.5,""is_physical"":false},{""tag"":""status"",""type"":""shock"",""chance"":0.3,""duration"":2}]}",Y
+1305,낙뢰,active,attack,번개,A,마법(2.2AP) 방무100%,레이드 보상,번개/피니셔,"{""components"":[{""tag"":""attack"",""ap_ratio"":2.2,""is_physical"":false,""armor_pen"":1.0}]}",Y
+1306,천둥의 심판,active,attack,번개,S,마법(2.8AP) 전체 마비(100% 3턴),창세의 관찰자,번개/마비/셋업/범위,"{""components"":[{""tag"":""attack"",""ap_ratio"":2.8,""is_physical"":false},{""tag"":""status"",""type"":""paralyze"",""duration"":3}]}",Y
+1307,용신의 뇌격,active,attack,번개,SS,마법(4.0AP) 전체 마비(100%),용신 티아마트,번개/마비/셋업/범위,"{""components"":[{""tag"":""attack"",""ap_ratio"":4.0,""is_physical"":false},{""tag"":""status"",""type"":""paralyze"",""duration"":2}]}",Y
+1308,초월 낙뢰,active,attack,번개,SSS,마법(7.0AP) 전체 연쇄무한 방무100%,초월한 자,번개/피니셔/범위,"{""components"":[{""tag"":""attack"",""ap_ratio"":7.0,""is_physical"":false,""armor_pen"":1.0}]}",Y
+1309,라의 심판,active,attack,번개,신화,마법(9.0AP) 전체 마비(100%) 저항무시,태양신 라,번개/마비/셋업/범위,"{""components"":[{""tag"":""attack"",""ap_ratio"":9.0,""is_physical"":false},{""tag"":""status"",""type"":""paralyze"",""duration"":3}]}",Y
+1401,물의 창,active,attack,수속성,D,마법(0.9AP) 수속성 공격,수몰된 신전,수속성,"{""components"":[{""tag"":""attack"",""ap_ratio"":0.9,""is_physical"":false}]}",Y
+1402,잠식의 물결,active,attack,수속성,C,마법(0.8AP) 잠식(2스택 3턴),수몰된 신전,수속성/잠식/셋업,"{""components"":[{""tag"":""attack"",""ap_ratio"":0.8,""is_physical"":false},{""tag"":""status"",""type"":""erode"",""duration"":3,""stacks"":2}]}",Y
+1403,수류탄,active,attack,수속성,C,마법(1.0AP) 자힐(10%HP),상점,수속성,"{""components"":[{""tag"":""attack"",""ap_ratio"":1.0,""is_physical"":false},{""tag"":""heal"",""percent"":0.1}]}",Y
+1404,침수,active,attack,수속성,B,마법(0.8AP) 침수(3턴),심해의 사제,수속성/침수/셋업,"{""components"":[{""tag"":""attack"",""ap_ratio"":0.8,""is_physical"":false},{""tag"":""status"",""type"":""submerge"",""duration"":3}]}",Y
+1405,물의 방패,active,attack,수속성,B,마법방어+35%(3턴) 화염면역,상점,수속성/보호막,"{""components"":[{""tag"":""buff"",""duration"":3,""defense"":0.35}]}",Y
+1406,해일,active,attack,수속성,A,마법(1.6AP) 전체 자힐(15%HP),레이드 보상,수속성/범위,"{""components"":[{""tag"":""attack"",""ap_ratio"":1.6,""is_physical"":false},{""tag"":""heal"",""percent"":0.15}]}",Y
+1407,생명의 물결,active,attack,수속성,S,회복(50%HP) 전체 디버프 해제,창세의 관찰자,수속성/정화,"{""components"":[{""tag"":""heal"",""percent"":0.5},{""tag"":""cleanse"",""count"":99}]}",Y
+1408,심해의 축복,active,attack,수속성,SS,회복(60%HP) 물리면역(5턴),심해의 크라켄,수속성/보호막,"{""components"":[{""tag"":""heal"",""percent"":0.6},{""tag"":""shield"",""percent"":1.0,""duration"":5}]}",Y
+1409,생명의 원천,active,attack,수속성,SSS,회복(80%HP) 부활1회 부여,깨어난 고대신,수속성,"{""components"":[{""tag"":""heal"",""percent"":0.8}]}",Y
+1410,창세의 생명,active,attack,수속성,신화,회복(100%HP) 전체스탯+30%,창조신의 그림자,수속성/축복,"{""components"":[{""tag"":""heal"",""percent"":1.0},{""tag"":""buff"",""duration"":99,""attack"":0.3,""defense"":0.3,""speed"":0.3}]}",Y
+1501,빛의 화살,active,attack,신성,D,마법(0.9AP) 언데드+50%,성스러운 대성당,신성,"{""components"":[{""tag"":""attack"",""ap_ratio"":0.9,""is_physical"":false}]}",Y
+1502,치유의 빛,active,attack,신성,C,회복(25%HP),성스러운 대성당,신성,"{""components"":[{""tag"":""heal"",""percent"":0.25}]}",Y
+1503,정화,active,attack,신성,C,전체 디버프 해제 회복(10%HP),상점,신성/정화,"{""components"":[{""tag"":""heal"",""percent"":0.1},{""tag"":""cleanse"",""count"":99}]}",Y
+1504,축복,active,attack,신성,B,공방+20%(3턴),타락한 대주교,신성/축복/셋업,"{""components"":[{""tag"":""buff"",""duration"":3,""attack"":0.2,""defense"":0.2}]}",Y
+1505,심판의 빛,active,attack,신성,B,마법(1.0AP) 정화 디버프수×20%,심판자,신성/정화/피니셔,"{""components"":[{""tag"":""attack"",""ap_ratio"":1.0,""is_physical"":false},{""tag"":""cleanse"",""count"":99}]}",Y
+1506,신성한 심판,active,attack,신성,A,마법(2.0AP) 언데드+100%,레이드 보상,신성/피니셔,"{""components"":[{""tag"":""attack"",""ap_ratio"":2.0,""is_physical"":false}]}",Y
+1507,천사의 강림,active,attack,신성,S,전체 스탯+30%(5턴) 즉사무효1회,심판자,신성/축복,"{""components"":[{""tag"":""buff"",""duration"":5,""attack"":0.3,""defense"":0.3,""speed"":0.3}]}",Y
+1508,용신의 가호,active,attack,신성,SS,마법(3.5AP) 피해-40%(5턴),용신 티아마트,신성/축복/보호막,"{""components"":[{""tag"":""attack"",""ap_ratio"":3.5,""is_physical"":false},{""tag"":""buff"",""duration"":5,""defense"":0.4}]}",Y
+1509,신의 심판,active,attack,신성,SSS,마법(5.0AP) 언데드/악마 즉사,깨어난 고대신,신성/피니셔,"{""components"":[{""tag"":""attack"",""ap_ratio"":5.0,""is_physical"":false}]}",Y
+1510,라의 강림,active,attack,신성,신화,마법(9.0AP) 전체 회복(50%HP),태양신 라,신성/범위,"{""components"":[{""tag"":""attack"",""ap_ratio"":9.0,""is_physical"":false},{""tag"":""heal"",""percent"":0.5}]}",Y
+1601,암흑 화살,active,attack,암흑,D,마법(0.9AP) 저주(20% 2턴),어둠의 묘지,암흑/저주/셋업,"{""components"":[{""tag"":""attack"",""ap_ratio"":0.9,""is_physical"":false},{""tag"":""status"",""type"":""curse"",""chance"":0.2,""duration"":2}]}",Y
+1602,생명력 흡수,active,attack,암흑,C,마법(1.1AP) 흡혈30%,어둠의 묘지,암흑/흡혈,"{""components"":[{""tag"":""lifesteal"",""lifesteal"":0.3,""ap_ratio"":1.1,""is_physical"":false}]}",Y
+1603,저주,active,attack,암흑,C,적 방어-25% 회복-50%(3턴),상점,암흑/저주/셋업,"{""components"":[{""tag"":""debuff"",""duration"":3,""defense"":-0.25}]}",Y
+1604,어둠의 갑옷,active,attack,암흑,B,피해-20%(3턴) 피격시 흡혈10%,리치 킹,암흑/흡혈/반격,"{""components"":[{""tag"":""buff"",""duration"":3,""defense"":0.2}]}",Y
+1605,영혼 착취,active,attack,암흑,B,마법(1.2AP) 저주 적 흡혈2배,영혼 수확자,암흑/저주/흡혈/피니셔,"{""components"":[{""tag"":""lifesteal"",""lifesteal"":0.6,""ap_ratio"":1.2,""is_physical"":false}]}",Y
+1606,영혼 수확,active,attack,암흑,A,마법(1.8AP) 처치 시 영구 공격+3%,심연의 군주,암흑/피니셔,"{""components"":[{""tag"":""attack"",""ap_ratio"":1.8,""is_physical"":false}]}",Y
+1607,죽음의 손길,active,attack,암흑,S,고정(0.3HP)+마법(1.8AP),심연의 군주,암흑/피니셔,"{""components"":[{""tag"":""attack"",""ap_ratio"":1.8,""is_physical"":false}]}",Y
+1608,공허의 침식,active,attack,암흑,SS,마법(3.5AP) HP흡수8%/턴(5턴),공허의 지배자,암흑/흡혈/저주,"{""components"":[{""tag"":""attack"",""ap_ratio"":3.5,""is_physical"":false},{""tag"":""status"",""type"":""curse"",""duration"":5}]}",Y
+1609,영혼 파괴,active,attack,암흑,SSS,마법(5.0AP) 처치 시 전체스탯+5%,차원의 파괴자,암흑/피니셔,"{""components"":[{""tag"":""attack"",""ap_ratio"":5.0,""is_physical"":false}]}",Y
+1610,완전한 어둠,active,attack,암흑,신화,마법(8.0AP) 흡혈100% 불사(5턴),죽음의 지배자,암흑/흡혈/피니셔,"{""components"":[{""tag"":""lifesteal"",""lifesteal"":1.0,""ap_ratio"":8.0,""is_physical"":false}]}",Y
+2001,응급 처치,active,heal,없음,D,회복(15%HP),기본 지급,,"{""components"":[{""tag"":""heal"",""percent"":0.15}]}",Y
+2002,재생,active,heal,없음,C,회복(6%HP/턴 3턴),상점,재생,"{""components"":[{""tag"":""heal"",""percent"":0.06}]}",Y
+2003,간이 해독,active,heal,없음,C,독/화상 해제 회복(10%HP),상점,정화,"{""components"":[{""tag"":""heal"",""percent"":0.1},{""tag"":""cleanse"",""count"":2}]}",Y
+2004,치유,active,heal,없음,B,회복(30%HP),상점,,"{""components"":[{""tag"":""heal"",""percent"":0.3}]}",Y
+2005,대치유,active,heal,없음,A,회복(50%HP) 디버프1개 해제,용의 둥지,정화,"{""components"":[{""tag"":""heal"",""percent"":0.5},{""tag"":""cleanse"",""count"":1}]}",Y
+2006,기적의 치유,active,heal,없음,S,회복(80%HP) 전체 디버프 해제,레이드 보상,정화,"{""components"":[{""tag"":""heal"",""percent"":0.8},{""tag"":""cleanse"",""count"":99}]}",Y
+2007,시간 역행,active,heal,없음,SS,HP 5턴 전 상태 복구,시간의 수호자,,"{""components"":[{""tag"":""heal"",""percent"":0.8}]}",Y
+2008,완전 재생,active,heal,없음,SSS,회복(100%HP) 재생(10%HP/턴),초월한 자,재생,"{""components"":[{""tag"":""heal"",""percent"":1.0}]}",Y
+2009,창조의 손길,active,heal,없음,신화,회복(100%HP) 부활 영구HP+20%,창조신의 그림자,축복,"{""components"":[{""tag"":""heal"",""percent"":1.0}]}",Y
+3001,집중,active,buff,없음,D,치명타+15%(3턴),상점,셋업,"{""components"":[{""tag"":""buff"",""duration"":3,""crit_rate"":0.15}]}",Y
+3002,분노,active,buff,없음,C,공격+25% 방어-10%(3턴),상점,축복/셋업,"{""components"":[{""tag"":""buff"",""duration"":3,""attack"":0.25,""defense"":-0.1}]}",Y
+3003,수비 태세,active,buff,없음,C,방어+30%(3턴),상점,축복/셋업,"{""components"":[{""tag"":""buff"",""duration"":3,""defense"":0.3}]}",Y
+3004,가속,active,buff,없음,B,속도+50%(3턴),상점,축복,"{""components"":[{""tag"":""buff"",""duration"":3,""speed"":0.5}]}",Y
+3005,광폭화,active,buff,없음,A,공격+50% 방어-25%(5턴),혼돈의 화신,축복/셋업,"{""components"":[{""tag"":""buff"",""duration"":5,""attack"":0.5,""defense"":-0.25}]}",Y
+3006,무적,active,buff,없음,S,피격 1회 완전 무효화,심판자,보호막,"{""components"":[{""tag"":""shield"",""percent"":1.0,""duration"":1}]}",Y
+3007,시간 가속,active,buff,없음,SS,속도+100%(5턴),시간의 수호자,축복,"{""components"":[{""tag"":""buff"",""duration"":5,""speed"":1.0}]}",Y
+3008,초월 상태,active,buff,없음,SSS,전체 스탯+50%(5턴),초월한 자,축복,"{""components"":[{""tag"":""buff"",""duration"":5,""attack"":0.5,""defense"":0.5,""speed"":0.5}]}",Y
+3009,신의 가호,active,buff,없음,신화,무적 전체스탯+30%(10턴),태양신 라,축복/보호막,"{""components"":[{""tag"":""buff"",""duration"":10,""attack"":0.3,""defense"":0.3,""speed"":0.3},{""tag"":""shield"",""percent"":1.0,""duration"":10}]}",Y
+4001,약점 노출,active,debuff,없음,D,적 방어-15%(3턴),상점,셋업,"{""components"":[{""tag"":""debuff"",""duration"":3,""defense"":-0.15}]}",Y
+4002,둔화,active,debuff,없음,C,적 속도-30%(3턴),상점,둔화/셋업,"{""components"":[{""tag"":""debuff"",""duration"":3,""speed"":-0.3},{""tag"":""status"",""type"":""slow"",""duration"":3}]}",Y
+4003,공포,active,debuff,없음,C,적 공방-20%(2턴),어둠의 묘지,셋업,"{""components"":[{""tag"":""debuff"",""duration"":2,""attack"":-0.2,""defense"":-0.2}]}",Y
+4004,침묵,active,debuff,없음,B,적 스킬 위력-30%(2턴),상점,셋업,"{""components"":[{""tag"":""debuff"",""duration"":2,""attack"":-0.3}]}",Y
+4005,파멸의 낙인,active,debuff,없음,A,적 받는 피해+30%(5턴),혼돈의 화신,표식/셋업,"{""components"":[{""tag"":""debuff"",""duration"":5,""defense"":-0.3},{""tag"":""status"",""type"":""mark"",""duration"":5}]}",Y
+4006,존재 말소,active,debuff,없음,S,적 전체 스탯-30%(3턴),창세의 관찰자,셋업,"{""components"":[{""tag"":""debuff"",""duration"":3,""attack"":-0.3,""defense"":-0.3,""speed"":-0.3}]}",Y
+4007,시간 정지,active,debuff,없음,SS,적 행동 정지(3턴),시간의 수호자,셋업,"{""components"":[{""tag"":""debuff"",""duration"":3,""speed"":-1.0}]}",Y
+4008,존재의 붕괴,active,debuff,없음,SSS,적 전체 스탯-40%(5턴),차원의 파괴자,셋업,"{""components"":[{""tag"":""debuff"",""duration"":5,""attack"":-0.4,""defense"":-0.4,""speed"":-0.4}]}",Y
+4009,신의 저주,active,debuff,없음,신화,적 전체 스탯-50% 버프불가(10턴),태양신 라,저주/셋업,"{""components"":[{""tag"":""debuff"",""duration"":10,""attack"":-0.5,""defense"":-0.5,""speed"":-0.5}]}",Y
+5001,오버드라이브,active,ultimate,없음,A,전체 데미지2배(3턴) 슬롯소모,시련의 탑,피니셔,"{""components"":[{""tag"":""buff"",""duration"":3,""attack"":1.0}]}",Y
+5002,최후의 일격,active,ultimate,없음,A,물리(5.0AD)(HP비례강화) 슬롯소모,용의 둥지,물리/피니셔,"{""components"":[{""tag"":""attack"",""ad_ratio"":5.0}]}",Y
+5003,시간 정지 (궁),active,ultimate,없음,S,적 행동불가(3턴) 슬롯소모,창세의 관찰자,피니셔,"{""components"":[{""tag"":""debuff"",""duration"":3,""speed"":-1.0}]}",Y
+5004,세계의 종말,active,ultimate,없음,S,마법(4.0AP) 전체 전속성 슬롯소모,마왕 발더스,범위/피니셔,"{""components"":[{""tag"":""attack"",""ap_ratio"":4.0,""is_physical"":false}]}",Y
+5005,불사,active,ultimate,없음,S,HP1 이하 불가(전투) 슬롯소모,심판자,보호막/피니셔,"{""components"":[{""tag"":""shield"",""percent"":1.0,""duration"":99}]}",Y
+5006,시간 역전,active,ultimate,없음,SS,전투5턴전 복원(1회) 슬롯소모,시간의 수호자,피니셔,"{""components"":[{""tag"":""heal"",""percent"":1.0}]}",Y
+5007,차원 붕괴,active,ultimate,없음,SS,고정(0.5HP) 전체 슬롯소모,공허의 지배자,범위/피니셔,"{""components"":[{""tag"":""attack"",""ap_ratio"":5.0,""is_physical"":false}]}",Y
+5008,용신의 심판,active,ultimate,없음,SSS,마법(8.0AP) 전체 5속성 슬롯소모,용신 티아마트,범위/피니셔,"{""components"":[{""tag"":""attack"",""ap_ratio"":8.0,""is_physical"":false}]}",Y
+5009,태양의 심판,active,ultimate,없음,신화,고정(0.8HP) 전체 자힐(100%) 슬롯소모,태양신 라,범위/피니셔,"{""components"":[{""tag"":""attack"",""ap_ratio"":10.0,""is_physical"":false},{""tag"":""heal"",""percent"":1.0}]}",Y
+5010,창세,active,ultimate,없음,신화,전투 재시작(자신유지 적리셋) 슬롯미소모,창조신의 그림자,피니셔,"{""components"":[{""tag"":""heal"",""percent"":1.0}]}",Y
+6001,날카로움,passive,combat,없음,D,공격력 +8%,상점,물리,"{""components"":[{""tag"":""passive_buff"",""attack_percent"":0.08}]}",Y
+6002,마력 증폭,passive,combat,없음,D,마법력 +8%,상점,,"{""components"":[{""tag"":""passive_buff"",""ap_attack_percent"":0.08}]}",Y
+6003,강인함,passive,combat,없음,D,HP +10%,상점,,"{""components"":[{""tag"":""passive_buff"",""hp_percent"":0.1}]}",Y
+6004,철벽,passive,combat,없음,D,방어력 +10%,상점,물리,"{""components"":[{""tag"":""passive_buff"",""defense_percent"":0.1}]}",Y
+6005,신속,passive,combat,없음,D,속도 +15%,상점,,"{""components"":[{""tag"":""passive_buff"",""speed_percent"":0.15}]}",Y
+6006,예리한 눈,passive,combat,없음,C,치명타 +10%,사냥꾼 길드,,"{""components"":[{""tag"":""passive_buff"",""crit_rate"":0.1}]}",Y
+6007,민첩한 몸놀림,passive,combat,없음,C,회피율 +10%,도적 캠프,,"{""components"":[{""tag"":""passive_buff"",""evasion"":0.1}]}",Y
+6008,맹독 체질,passive,combat,없음,C,독 확률+15% 독피해+20%,독의 늪,중독,"{""components"":[{""tag"":""passive_buff"",""poison_chance"":0.15,""poison_damage"":0.2}]}",Y
+6009,동상 체질,passive,combat,없음,C,냉기 공격 둔화+20%,얼어붙은 호수,냉기/둔화,"{""components"":[{""tag"":""passive_buff"",""slow_chance"":0.2}]}",Y
+6010,감전 체질,passive,combat,없음,C,번개 공격 마비+15%,폭풍의 봉우리,번개/마비,"{""components"":[{""tag"":""passive_buff"",""paralyze_chance"":0.15}]}",Y
+6011,처형자,passive,combat,없음,B,HP≤30% 적 데미지+40%,암살자 길드,물리,"{""components"":[{""tag"":""passive_buff"",""execute_bonus"":0.4,""execute_threshold"":0.3}]}",Y
+6012,연속 공격,passive,combat,없음,B,15% 확률 스킬 재발동,Lv.20+ 던전,,"{""components"":[{""tag"":""passive_buff"",""double_cast"":0.15}]}",Y
+6013,재생력,passive,combat,없음,B,매 턴 HP 3% 회복,Lv.20+ 던전,재생,"{""components"":[{""tag"":""passive_buff"",""regen_percent"":0.03}]}",Y
+6014,생명력 착취,passive,combat,없음,B,흡혈 +8%,어둠의 묘지,흡혈,"{""components"":[{""tag"":""passive_buff"",""lifesteal"":0.08}]}",Y
+6015,급소 공격,passive,combat,없음,B,치명타 데미지 +30%,암살자 길드,,"{""components"":[{""tag"":""passive_buff"",""crit_damage"":0.3}]}",Y
+6016,상태이상 저항,passive,combat,없음,B,전체 상태이상 저항+25%,정화의 성소,,"{""components"":[{""tag"":""passive_buff"",""status_resist"":0.25}]}",Y
+6017,최후의 발악,passive,combat,없음,A,HP≤20% 데미지+50%,시련의 탑,물리,"{""components"":[{""tag"":""passive_buff"",""low_hp_bonus"":0.5,""low_hp_threshold"":0.2}]}",Y
+6018,약점 간파,passive,combat,없음,A,적 약점 속성+30%,사냥꾼 길드,,"{""components"":[{""tag"":""passive_buff"",""weakness_bonus"":0.3}]}",Y
+6019,불굴의 의지,passive,combat,없음,A,HP≤10% 즉사무효 1회,레이드 보상,,"{""components"":[{""tag"":""passive_buff"",""death_resist"":1}]}",Y
+6020,전쟁 광기,passive,combat,없음,S,피격 시 공격+5%(최대50%),광전사 훈련장,,"{""components"":[{""tag"":""passive_buff"",""hit_stack_attack"":0.05,""hit_stack_max"":0.5}]}",Y
+6021,원소 마스터,passive,combat,없음,S,전체 속성+20%,창세의 관찰자,,"{""components"":[{""tag"":""passive_buff"",""all_element"":0.2}]}",Y
+6022,확정 치명타,passive,combat,없음,S,HP≤20% 적 확정 치명타,처형인 길드,,"{""components"":[{""tag"":""passive_buff"",""execute_crit_threshold"":0.2}]}",Y
+6101,행운,passive,farming,없음,D,드롭률 +5%,상점,,"{""components"":[{""tag"":""passive_buff"",""drop_rate"":0.05}]}",Y
+6102,대박 기원,passive,farming,없음,C,드롭률+10% 레어+5%,행운의 신전,,"{""components"":[{""tag"":""passive_buff"",""drop_rate"":0.1,""rare_drop"":0.05}]}",Y
+6103,황금 손,passive,farming,없음,C,골드 획득 +15%,상인 길드,,"{""components"":[{""tag"":""passive_buff"",""gold_bonus"":0.15}]}",Y
+6104,경험의 서,passive,farming,없음,C,경험치 획득 +10%,학자 길드,,"{""components"":[{""tag"":""passive_buff"",""exp_bonus"":0.1}]}",Y
+6105,보물 사냥꾼,passive,farming,없음,B,보물상자 발견+20%,탐험가 길드,,"{""components"":[{""tag"":""passive_buff"",""chest_find"":0.2}]}",Y
+6106,수집가,passive,farming,없음,B,재료 드롭 2배,연금술사 길드,,"{""components"":[{""tag"":""passive_buff"",""material_double"":1.0}]}",Y
+6107,대박,passive,farming,없음,A,5% 확률 드롭등급+1,도박장 VIP,,"{""components"":[{""tag"":""passive_buff"",""grade_up_chance"":0.05}]}",Y
+6108,잭팟,passive,farming,없음,S,1% 확률 드롭등급+2,행운의 신 축복,,"{""components"":[{""tag"":""passive_buff"",""grade_up2_chance"":0.01}]}",Y
+6201,함정 감지,passive,exploration,없음,D,함정 발견+30%,도적 캠프,,"{""components"":[{""tag"":""passive_buff"",""trap_detect"":0.3}]}",Y
+6202,함정 회피,passive,exploration,없음,C,함정 피해-50%,도적 마스터,,"{""components"":[{""tag"":""passive_buff"",""trap_damage_reduce"":0.5}]}",Y
+6203,비밀 탐지,passive,exploration,없음,C,숨겨진 방 발견+25%,탐험가 길드,,"{""components"":[{""tag"":""passive_buff"",""secret_find"":0.25}]}",Y
+6204,안전한 발걸음,passive,exploration,없음,B,기습 확률-50%,정찰병,,"{""components"":[{""tag"":""passive_buff"",""ambush_reduce"":0.5}]}",Y
+6205,위험 감지,passive,exploration,없음,A,다음 방 인카운터 미리 확인,예언자,,"{""components"":[{""tag"":""passive_buff"",""foresight"":1}]}",Y
+6301,흥정,passive,social,없음,D,상점 구매가 -5%,상인 길드,,"{""components"":[{""tag"":""passive_buff"",""shop_discount"":0.05}]}",Y
+6302,능숙한 흥정,passive,social,없음,C,구매가-10% 판매가+5%,상인 마스터,,"{""components"":[{""tag"":""passive_buff"",""shop_discount"":0.1,""sell_bonus"":0.05}]}",Y
+6303,VIP 고객,passive,social,없음,B,상점 희귀 아이템 등장,상인 길드 명성,,"{""components"":[{""tag"":""passive_buff"",""shop_rare"":1}]}",Y
+6304,강화 행운,passive,social,없음,B,강화 성공률 +5%,대장장이 마스터,,"{""components"":[{""tag"":""passive_buff"",""enhance_luck"":0.05}]}",Y
+6501,새벽의 전사,passive,conditional,없음,B,HP100%: 첫 공격+50%,기사단,물리,"{""components"":[{""tag"":""passive_buff"",""condition"":""hp_full"",""attack_bonus"":0.5}]}",Y
+6502,황혼의 전사,passive,conditional,없음,B,HP≤30%: 전체 스탯+25%,기사단,,"{""components"":[{""tag"":""passive_buff"",""condition"":""hp_below_30"",""all_stats"":0.25}]}",Y
+6503,고독한 늑대,passive,conditional,없음,A,솔로: 데미지+20% 피해-10%,방랑자,,"{""components"":[{""tag"":""passive_buff"",""condition"":""solo"",""damage_bonus"":0.2,""damage_reduce"":0.1}]}",Y
+6504,보스 사냥꾼,passive,conditional,없음,S,보스: 데미지+30% 피해-20%,보스 레이드,,"{""components"":[{""tag"":""passive_buff"",""condition"":""vs_boss"",""damage_bonus"":0.3,""damage_reduce"":0.2}]}",Y
+6505,역전의 용사,passive,conditional,없음,SS,HP≤10%: 데미지2배 피해0(3턴),전설의 영웅,,"{""components"":[{""tag"":""passive_buff"",""condition"":""hp_below_10"",""damage_bonus"":1.0,""invincible_turns"":3}]}",Y
+6401,시간 지배자,passive,special,없음,SS,버프+100% 디버프-50%,시간의 수호자,축복,"{""components"":[{""tag"":""passive_buff"",""buff_duration"":1.0,""debuff_duration"":-0.5}]}",Y
+6402,공허의 자식,passive,special,없음,SS,흡혈+20% 공격시 회복봉인,공허의 지배자,흡혈,"{""components"":[{""tag"":""passive_buff"",""lifesteal"":0.2,""heal_seal"":1}]}",Y
+6403,각성자,passive,special,없음,SS,전체 스킬+15% HP≤50% +30%,깨어난 고대신,,"{""components"":[{""tag"":""passive_buff"",""skill_bonus"":0.15,""low_hp_skill_bonus"":0.3}]}",Y
+6404,차원의 눈,passive,special,없음,SSS,회피+30% 치명타+25% 내성+20%,차원의 파괴자,,"{""components"":[{""tag"":""passive_buff"",""evasion"":0.3,""crit_rate"":0.25,""all_resist"":0.2}]}",Y
+6405,초월자의 자격,passive,special,없음,SSS,전체 스탯+20% CC면역 즉사무효,초월한 자,,"{""components"":[{""tag"":""passive_buff"",""all_stats"":0.2,""cc_immune"":1,""death_resist"":1}]}",Y
+6406,전쟁의 화신,passive,special,없음,신화,피격시 공격+3% 처치시 HP15%,전쟁의 신 아레스,물리/반격,"{""components"":[{""tag"":""passive_buff"",""hit_stack_attack"":0.03,""kill_heal"":0.15}]}",Y
+6407,태양의 축복,passive,special,없음,신화,매턴 HP5% 신성+40% 부활1회,태양신 라,신성,"{""components"":[{""tag"":""passive_buff"",""regen_percent"":0.05,""holy_bonus"":0.4,""revive"":1}]}",Y
+6408,창조신의 은총,passive,special,없음,신화,전체스킬+30% 피해-20% 부활무제한,창조신의 그림자,축복,"{""components"":[{""tag"":""passive_buff"",""skill_bonus"":0.3,""damage_reduce"":0.2,""revive"":99}]}",Y
+8001,불씨 키우기,active,combo,화염,C,화상 적 화상스택+2 지속+2턴,화염의 제단,화염/화상/증폭,"{""components"":[{""tag"":""status"",""type"":""burn"",""duration"":2,""stacks"":2}]}",Y
+8002,연소 가속,active,combo,화염,C,화상 적 턴당 화상데미지 2회,연금술사 길드,화염/화상/증폭,"{""components"":[{""tag"":""status"",""type"":""burn"",""stacks"":1}]}",Y
+8003,화상 폭발,active,combo,화염,B,마법(0.8AP)+화상스택당50%AP 화상초기화,화염의 군주,화염/연소/피니셔,"{""components"":[{""tag"":""attack"",""ap_ratio"":0.8,""is_physical"":false},{""tag"":""consume"",""consume_type"":""burn"",""ap_ratio"":0.5,""is_physical"":false}]}",Y
+8004,영원한 불꽃,active,combo,화염,B,화상 해제불가(3턴) 데미지2배,영원의 화로,화염/화상/지속,"{""components"":[{""tag"":""status"",""type"":""burn"",""duration"":3}]}",Y
+8005,재로 만들기,active,combo,화염,A,화상적 마법(3.0AP+스택당0.5AP) 방어-30% 화상해제,불사조의 둥지,화염/소각/피니셔,"{""components"":[{""tag"":""attack"",""ap_ratio"":3.0,""is_physical"":false},{""tag"":""consume"",""consume_type"":""burn"",""ap_ratio"":0.5,""is_physical"":false},{""tag"":""debuff"",""duration"":3,""defense"":-0.3}]}",Y
+8101,동결 준비,active,combo,냉기,C,둔화 적 동결+50% 마법(0.6AP),서리 마녀,냉기/동결/증폭,"{""components"":[{""tag"":""attack"",""ap_ratio"":0.6,""is_physical"":false},{""tag"":""status"",""type"":""freeze"",""chance"":0.5,""duration"":1}]}",Y
+8102,빙결 분쇄,active,combo,냉기,B,동결적 마법(4.0AP+스택당2.0AP) 동결해제,빙하의 심장,냉기/파쇄/피니셔,"{""components"":[{""tag"":""attack"",""ap_ratio"":4.0,""is_physical"":false},{""tag"":""consume"",""consume_type"":""freeze"",""ap_ratio"":2.0,""is_physical"":false}]}",Y
+8103,서리 감옥,active,combo,냉기,B,둔화3+적 즉시 동결(2턴),냉기의 군주,냉기/동결/셋업,"{""components"":[{""tag"":""consume"",""consume_type"":""slow""},{""tag"":""status"",""type"":""freeze"",""duration"":2}]}",Y
+8104,영구 동토,active,combo,냉기,A,동결해제 시 둔화(5턴),영원의 빙하,냉기/동결/둔화/지속,"{""components"":[{""tag"":""status"",""type"":""slow"",""duration"":5}]}",Y
+8105,절대 영하,active,combo,냉기,A,동결 적 방어0 고정,절대 영도의 방,냉기/동결/증폭,"{""components"":[{""tag"":""debuff"",""duration"":3,""defense"":-1.0}]}",Y
+8201,전도체,active,combo,번개,C,마비적 연쇄+100% 우선타겟,번개의 제단,번개/마비/증폭,"{""components"":[{""tag"":""attack"",""ap_ratio"":0.5,""is_physical"":false},{""tag"":""status"",""type"":""shock"",""duration"":2}]}",Y
+8202,정전기 축적,active,combo,번개,C,번개 사용 시 스택+1 5스택시 2배,전기 연구소,번개/증폭,"{""components"":[{""tag"":""status"",""type"":""shock"",""stacks"":1}]}",Y
+8203,낙뢰 집중,active,combo,번개,B,마법(1.0AP) 연쇄횟수당+10%,천둥의 왕,번개/감전/피니셔,"{""components"":[{""tag"":""attack"",""ap_ratio"":1.0,""is_physical"":false}]}",Y
+8204,과부하,active,combo,번개,A,마비적 전체 마법(2.5AP+스택당0.8AP) 마비해제,뇌신의 영역,번개/과부하/피니셔/범위,"{""components"":[{""tag"":""attack"",""ap_ratio"":2.5,""is_physical"":false},{""tag"":""consume"",""consume_type"":""paralyze"",""ap_ratio"":0.8,""is_physical"":false}]}",Y
+8205,뇌운 소환,active,combo,번개,B,전체 적 턴시작 마비20%(3턴),폭풍의 봉우리,번개/마비/셋업/범위,"{""components"":[{""tag"":""status"",""type"":""paralyze"",""chance"":0.2,""duration"":3}]}",Y
+8301,저주 심화,active,combo,암흑,C,저주적 피해+30% 저주+1턴,저주술사,암흑/저주/증폭,"{""components"":[{""tag"":""debuff"",""duration"":1,""defense"":-0.3},{""tag"":""status"",""type"":""curse"",""duration"":1}]}",Y
+8302,영혼 착취,active,combo,암흑,B,마법(1.2AP) 저주적 흡혈2배,영혼 수확자,암흑/저주/흡혈/피니셔,"{""components"":[{""tag"":""lifesteal"",""lifesteal"":0.6,""ap_ratio"":1.2,""is_physical"":false}]}",Y
+8303,저주 수확,active,combo,암흑,A,저주스택당 마법(0.6AP+스택당0.6AP) 저주해제,죽음의 사제,암흑/저주/피니셔,"{""components"":[{""tag"":""attack"",""ap_ratio"":0.6,""is_physical"":false},{""tag"":""consume"",""consume_type"":""curse"",""ap_ratio"":0.6,""is_physical"":false}]}",Y
+8304,연쇄 저주,active,combo,암흑,B,저주적 처치 시 주변 저주 전이,역병의 군주,암흑/저주/감염/범위,"{""components"":[{""tag"":""status"",""type"":""curse"",""duration"":3},{""tag"":""status"",""type"":""infection"",""chance"":0.5,""duration"":3}]}",Y
+8305,영혼 고리,active,combo,암흑,A,적 피해의 20% HP회복(저주시40%)(5턴),생명력 착취자,암흑/흡혈/증폭,"{""components"":[{""tag"":""lifesteal"",""lifesteal"":0.4,""ap_ratio"":0.5,""is_physical"":false}]}",Y
+8401,신성 충전,active,combo,신성,C,축복 시 신성+50% 회복+30%,대성당,신성/축복/증폭,"{""components"":[{""tag"":""buff"",""duration"":3,""attack"":0.5},{""tag"":""heal"",""percent"":0.1}]}",Y
+8402,심판의 빛,active,combo,신성,B,마법(1.0AP) 정화 디버프수×20%,심판자,신성/정화/피니셔,"{""components"":[{""tag"":""attack"",""ap_ratio"":1.0,""is_physical"":false},{""tag"":""cleanse"",""count"":99}]}",Y
+8403,축복 전이,active,combo,신성,B,자신 축복→적 심판낙인(피해+30%),성기사단,신성/축복/피니셔,"{""components"":[{""tag"":""debuff"",""duration"":3,""defense"":-0.3}]}",Y
+8404,연쇄 정화,active,combo,신성,A,아군 디버프해제→적 전이,대주교,신성/정화/증폭/범위,"{""components"":[{""tag"":""cleanse"",""count"":99}]}",Y
+8405,성스러운 폭발,active,combo,신성,A,전체 버프소모 버프당 마법(1.0AP+스택당1.0AP),천상의 탑,신성/축복/피니셔,"{""components"":[{""tag"":""attack"",""ap_ratio"":1.0,""is_physical"":false},{""tag"":""consume"",""consume_type"":""blessing"",""ap_ratio"":1.0,""is_physical"":false}]}",Y
+8501,깊은 상처,active,combo,무속성,C,물리(0.6AD) 출혈3스택 지속+2턴,암살자 길드,물리/출혈/셋업,"{""components"":[{""tag"":""attack"",""ad_ratio"":0.6},{""tag"":""status"",""type"":""bleed"",""duration"":4,""stacks"":3}]}",Y
+8502,상처 벌리기,active,combo,무속성,C,출혈적 물리(1.5AD) 출혈+2스택,고문 기술자,물리/출혈/증폭,"{""components"":[{""tag"":""attack"",""ad_ratio"":1.5},{""tag"":""status"",""type"":""bleed"",""stacks"":2}]}",Y
+8503,피의 향연,active,combo,무속성,B,출혈스택당 흡혈+3%(3턴),흡혈귀 성,물리/출혈/흡혈/증폭,"{""components"":[{""tag"":""lifesteal"",""lifesteal"":0.15,""ad_ratio"":0.8}]}",Y
+8504,출혈 폭발,active,combo,무속성,B,출혈스택×물리(0.4AD+스택당0.4AD) 출혈초기화,피의 제단,물리/출혈/피니셔,"{""components"":[{""tag"":""attack"",""ad_ratio"":0.4},{""tag"":""consume"",""consume_type"":""bleed"",""ad_ratio"":0.4,""is_physical"":true}]}",Y
+8505,콤보 피니시,active,combo,무속성,B,콤보수×물리(0.25AD+스택당0.25AD) 콤보초기화,격투가,물리/콤보/피니셔,"{""components"":[{""tag"":""attack"",""ad_ratio"":0.25},{""tag"":""consume"",""consume_type"":""combo"",""ad_ratio"":0.25,""is_physical"":true}]}",Y
+8506,콤보 유지,active,combo,무속성,C,콤보+3 지속+2턴,무술 도장,물리/콤보/지속,"{""components"":[{""tag"":""status"",""type"":""combo"",""stacks"":3}]}",Y
+8507,과다출혈,active,combo,무속성,A,출혈10+적 즉사30% 실패시 물리(2.0AD+스택당1.0AD),사형 집행자,물리/출혈/피니셔,"{""components"":[{""tag"":""attack"",""ad_ratio"":2.0},{""tag"":""consume"",""consume_type"":""bleed"",""ad_ratio"":1.0,""is_physical"":true}]}",Y
+8601,잠식 강화,active,combo,수속성,C,잠식적 잠식+2스택 방어 추가감소,수몰된 신전,수속성/잠식/증폭,"{""components"":[{""tag"":""status"",""type"":""erode"",""stacks"":2},{""tag"":""debuff"",""duration"":3,""defense"":-0.1}]}",Y
+8602,범람,active,combo,수속성,B,잠식적 침수 즉시부여 잠식유지,심해의 사제,수속성/잠식/침수/증폭,"{""components"":[{""tag"":""status"",""type"":""submerge"",""duration"":3}]}",Y
+8603,침수 감전,active,combo,번개,B,침수적 마법(1.5AP) 감전데미지3배,번개의 제단,번개/감전/침수/피니셔,"{""components"":[{""tag"":""attack"",""ap_ratio"":1.5,""is_physical"":false},{""tag"":""status"",""type"":""shock"",""duration"":2}]}",Y
+8701,회복 증폭,active,combo,없음,C,회복량+50%(3턴),치유사 길드,증폭,"{""components"":[{""tag"":""buff"",""duration"":3},{""tag"":""heal"",""percent"":0.05}]}",Y
+8702,과회복,active,combo,없음,B,초과 회복→보호막 전환(5턴),생명의 신전,보호막/셋업,"{""components"":[{""tag"":""heal"",""percent"":0.3},{""tag"":""shield"",""percent"":0.2,""duration"":5}]}",Y
+8703,생명력 폭발,active,combo,없음,A,보호막 소모 보호막량×물리(2.0AD+스택당2.0AD),생사의 경계,보호막/피니셔,"{""components"":[{""tag"":""attack"",""ad_ratio"":2.0},{""tag"":""consume"",""consume_type"":""shield"",""ad_ratio"":2.0,""is_physical"":true}]}",Y
+8704,고통의 전환,active,combo,없음,A,받는 피해50% 즉시 회복(3턴),고행 수도사,흡혈/증폭,"{""components"":[{""tag"":""lifesteal"",""lifesteal"":0.5,""ad_ratio"":0.5}]}",Y
+9001,점액 공격,active,monster,수속성,D,마법(0.8AP) 잠식(30% 2턴),슬라임,수속성/잠식,"{""components"":[{""tag"":""attack"",""ap_ratio"":0.8,""is_physical"":false},{""tag"":""status"",""type"":""erode"",""chance"":0.3,""duration"":2,""stacks"":1}]}",N
+9002,고블린 찌르기,active,monster,무속성,D,물리(0.9AD) 공격,고블린,물리,"{""components"":[{""tag"":""attack"",""ad_ratio"":0.9}]}",N
+9003,물어뜯기,active,monster,무속성,D,물리(1.0AD) 출혈(40% 2턴),늑대,물리/출혈,"{""components"":[{""tag"":""attack"",""ad_ratio"":1.0},{""tag"":""status"",""type"":""bleed"",""chance"":0.4,""duration"":2,""stacks"":1}]}",N
+9004,독 포자,active,monster,암흑,D,마법(0.7AP) 중독(50% 3턴),독버섯,암흑/중독/셋업,"{""components"":[{""tag"":""attack"",""ap_ratio"":0.7,""is_physical"":false},{""tag"":""status"",""type"":""poison"",""chance"":0.5,""duration"":3,""stacks"":1}]}",N
+9005,몸통 박치기,active,monster,무속성,D,물리(1.5AD) 기절(30% 1턴),킹 슬라임,물리/기절,"{""components"":[{""tag"":""attack"",""ad_ratio"":1.5},{""tag"":""status"",""type"":""stun"",""chance"":0.3,""duration"":1}]}",N
+9006,초음파,active,monster,없음,D,적 공격-15%(2턴),동굴 박쥐,셋업,"{""components"":[{""tag"":""debuff"",""duration"":2,""attack"":-0.15}]}",N
+9007,독화살,active,monster,암흑,D,물리(0.8AD) 중독(40% 3턴),고블린 궁수,물리/중독/셋업,"{""components"":[{""tag"":""attack"",""ad_ratio"":0.8},{""tag"":""status"",""type"":""poison"",""chance"":0.4,""duration"":3,""stacks"":1}]}",N
+9008,저주 주문,active,monster,암흑,D,적 방어-20%(3턴) 저주(50%),고블린 주술사,암흑/저주/셋업,"{""components"":[{""tag"":""debuff"",""duration"":3,""defense"":-0.2},{""tag"":""status"",""type"":""curse"",""chance"":0.5,""duration"":3}]}",N
+9009,지휘관의 함성,active,monster,없음,C,공격+20% 속도+15%(3턴),고블린 대장,축복,"{""components"":[{""tag"":""buff"",""duration"":3,""attack"":0.2,""speed"":0.15}]}",N
+9010,대장 난타,active,monster,무속성,C,물리(1.3AD) 2회 공격,고블린 대장,물리/콤보,"{""components"":[{""tag"":""attack"",""ad_ratio"":1.3,""hit_count"":2}]}",N
+9011,화염 분출,active,monster,화염,C,마법(1.1AP) 화상(60% 3턴),불 정령,화염/화상/셋업,"{""components"":[{""tag"":""attack"",""ap_ratio"":1.1,""is_physical"":false},{""tag"":""status"",""type"":""burn"",""chance"":0.6,""duration"":3}]}",N
+9012,용암 강타,active,monster,화염,C,물리(1.2AD) 화상(40% 2턴),마그마 골렘,물리/화상/셋업,"{""components"":[{""tag"":""attack"",""ad_ratio"":1.2},{""tag"":""status"",""type"":""burn"",""chance"":0.4,""duration"":2}]}",N
+9013,화염 폭풍,active,monster,화염,B,마법(1.5AP) 전체 화상(80% 3턴),화염의 군주,화염/화상/셋업/범위,"{""components"":[{""tag"":""attack"",""ap_ratio"":1.5,""is_physical"":false},{""tag"":""status"",""type"":""burn"",""chance"":0.8,""duration"":3}]}",N
+9014,용암 분화,active,monster,화염,B,마법(2.0AP) 화상5스택 즉시,화염의 군주,화염/화상/피니셔,"{""components"":[{""tag"":""attack"",""ap_ratio"":2.0,""is_physical"":false},{""tag"":""status"",""type"":""burn"",""duration"":3,""stacks"":5}]}",N
+9015,냉기파,active,monster,냉기,C,마법(1.0AP) 둔화(60% 3턴),얼음 정령,냉기/둔화/셋업,"{""components"":[{""tag"":""attack"",""ap_ratio"":1.0,""is_physical"":false},{""tag"":""status"",""type"":""slow"",""chance"":0.6,""duration"":3}]}",N
+9016,서리 송곳니,active,monster,냉기,C,물리(1.1AD) 둔화(50% 2턴),서리 늑대,물리/둔화/셋업,"{""components"":[{""tag"":""attack"",""ad_ratio"":1.1},{""tag"":""status"",""type"":""slow"",""chance"":0.5,""duration"":2}]}",N
+9017,눈보라 (보스),active,monster,냉기,B,마법(1.3AP) 전체 둔화(100% 3턴),서리 마녀,냉기/둔화/셋업/범위,"{""components"":[{""tag"":""attack"",""ap_ratio"":1.3,""is_physical"":false},{""tag"":""status"",""type"":""slow"",""duration"":3}]}",N
+9018,빙결의 눈,active,monster,냉기,B,마법(1.8AP) 동결(80% 2턴),서리 마녀,냉기/동결/셋업,"{""components"":[{""tag"":""attack"",""ap_ratio"":1.8,""is_physical"":false},{""tag"":""status"",""type"":""freeze"",""chance"":0.8,""duration"":2}]}",N
+9019,방전,active,monster,번개,C,마법(1.0AP) 감전(50% 2턴),스파크 정령,번개/감전/셋업,"{""components"":[{""tag"":""attack"",""ap_ratio"":1.0,""is_physical"":false},{""tag"":""status"",""type"":""shock"",""chance"":0.5,""duration"":2}]}",N
+9020,뇌격,active,monster,번개,C,마법(1.3AP) 마비(40% 1턴),천둥 정령,번개/마비/셋업,"{""components"":[{""tag"":""attack"",""ap_ratio"":1.3,""is_physical"":false},{""tag"":""status"",""type"":""paralyze"",""chance"":0.4,""duration"":1}]}",N
+9021,천둥 강타,active,monster,번개,B,마법(2.0AP) 마비(80% 2턴),천둥의 왕,번개/마비/셋업,"{""components"":[{""tag"":""attack"",""ap_ratio"":2.0,""is_physical"":false},{""tag"":""status"",""type"":""paralyze"",""chance"":0.8,""duration"":2}]}",N
+9022,뇌신 소환,active,monster,번개,B,마법(1.5AP) 전체 마비(50% 1턴),천둥의 왕,번개/마비/범위,"{""components"":[{""tag"":""attack"",""ap_ratio"":1.5,""is_physical"":false},{""tag"":""status"",""type"":""paralyze"",""chance"":0.5,""duration"":1}]}",N
+9023,물줄기,active,monster,수속성,C,마법(1.0AP) 잠식(2스택),물 정령,수속성/잠식/셋업,"{""components"":[{""tag"":""attack"",""ap_ratio"":1.0,""is_physical"":false},{""tag"":""status"",""type"":""erode"",""duration"":3,""stacks"":2}]}",N
+9024,잠식의 촉수,active,monster,수속성,B,물리(1.3AD) 잠식(3스택) 침수,심해 괴물,수속성/잠식/침수,"{""components"":[{""tag"":""attack"",""ad_ratio"":1.3},{""tag"":""status"",""type"":""erode"",""duration"":3,""stacks"":3},{""tag"":""status"",""type"":""submerge"",""chance"":0.5,""duration"":3}]}",N
+9025,신성 강타,active,monster,신성,C,마법(1.2AP) 신성 공격,성스러운 수호자,신성,"{""components"":[{""tag"":""attack"",""ap_ratio"":1.2,""is_physical"":false}]}",N
+9026,심판의 망치,active,monster,신성,B,마법(1.8AP) 기절(60% 1턴),심판자 골렘,신성/기절/셋업,"{""components"":[{""tag"":""attack"",""ap_ratio"":1.8,""is_physical"":false},{""tag"":""status"",""type"":""stun"",""chance"":0.6,""duration"":1}]}",N
+9027,부패의 손길,active,monster,암흑,C,마법(1.0AP) 중독(60% 3턴),좀비,암흑/중독/셋업,"{""components"":[{""tag"":""attack"",""ap_ratio"":1.0,""is_physical"":false},{""tag"":""status"",""type"":""poison"",""chance"":0.6,""duration"":3,""stacks"":1}]}",N
+9028,흡혈,active,monster,암흑,C,마법(1.1AP) 흡혈40%,뱀파이어,암흑/흡혈,"{""components"":[{""tag"":""lifesteal"",""lifesteal"":0.4,""ap_ratio"":1.1,""is_physical"":false}]}",N
+9029,저주의 사슬,active,monster,암흑,B,마법(1.5AP) 저주(100% 3턴),리치,암흑/저주/셋업,"{""components"":[{""tag"":""attack"",""ap_ratio"":1.5,""is_physical"":false},{""tag"":""status"",""type"":""curse"",""duration"":3}]}",N
+9030,역병의 안개,active,monster,암흑,B,마법(1.2AP) 전체 중독(80%)+감염,리치 킹,암흑/중독/감염/범위,"{""components"":[{""tag"":""attack"",""ap_ratio"":1.2,""is_physical"":false},{""tag"":""status"",""type"":""poison"",""chance"":0.8,""duration"":3,""stacks"":2},{""tag"":""status"",""type"":""infection"",""chance"":0.5,""duration"":3}]}",N
+9031,용의 발톱,active,monster,무속성,B,물리(1.8AD) 출혈(60% 3턴),용의 새끼,물리/출혈,"{""components"":[{""tag"":""attack"",""ad_ratio"":1.8},{""tag"":""status"",""type"":""bleed"",""chance"":0.6,""duration"":3,""stacks"":2}]}",N
+9032,화염 브레스,active,monster,화염,A,마법(2.0AP) 전체 화상(100% 4턴),화염 드레이크,화염/화상/범위,"{""components"":[{""tag"":""attack"",""ap_ratio"":2.0,""is_physical"":false},{""tag"":""status"",""type"":""burn"",""duration"":4,""stacks"":2}]}",N
+9033,번개 브레스,active,monster,번개,A,마법(2.0AP) 전체 마비(60% 2턴),번개 드레이크,번개/마비/범위,"{""components"":[{""tag"":""attack"",""ap_ratio"":2.0,""is_physical"":false},{""tag"":""status"",""type"":""paralyze"",""chance"":0.6,""duration"":2}]}",N
+9034,고대의 브레스,active,monster,화염,A,마법(2.5AP) 전체 화상(100%)+둔화,고대 드래곤,화염/화상/둔화/범위,"{""components"":[{""tag"":""attack"",""ap_ratio"":2.5,""is_physical"":false},{""tag"":""status"",""type"":""burn"",""duration"":4,""stacks"":3},{""tag"":""status"",""type"":""slow"",""chance"":0.8,""duration"":3}]}",N
+9035,용의 분노,active,monster,무속성,A,물리(3.0AD) 확정 치명타,고대 드래곤,물리/피니셔,"{""components"":[{""tag"":""attack"",""ad_ratio"":3.0,""crit_bonus"":1.0}]}",N
+9036,혼돈의 파동,active,monster,없음,A,마법(2.0AP) 랜덤 상태이상,혼돈의 씨앗,범위,"{""components"":[{""tag"":""attack"",""ap_ratio"":2.0,""is_physical"":false},{""tag"":""status"",""type"":""curse"",""chance"":0.5,""duration"":3}]}",N
+9037,차원 찢기,active,monster,무속성,A,물리(2.5AD) 방무50%,차원 방랑자,물리/피니셔,"{""components"":[{""tag"":""attack"",""ad_ratio"":2.5,""armor_pen"":0.5}]}",N
+9038,혼돈 분열,active,monster,없음,S,마법(3.0AP) 전체 전스탯-20%,혼돈의 화신,범위/셋업,"{""components"":[{""tag"":""attack"",""ap_ratio"":3.0,""is_physical"":false},{""tag"":""debuff"",""duration"":3,""attack"":-0.2,""defense"":-0.2,""speed"":-0.2}]}",N
+9039,심연의 일격,active,monster,암흑,S,마법(3.5AP) 저주(100%) 흡혈30%,심연의 군주,암흑/저주/흡혈,"{""components"":[{""tag"":""lifesteal"",""lifesteal"":0.3,""ap_ratio"":3.5,""is_physical"":false},{""tag"":""status"",""type"":""curse"",""duration"":5}]}",N
+9040,절대 심판,active,monster,신성,S,마법(4.0AP) 고정피해 방무100%,심판자,신성/피니셔,"{""components"":[{""tag"":""attack"",""ap_ratio"":4.0,""is_physical"":false,""armor_pen"":1.0}]}",N
+9041,시간 왜곡,active,monster,없음,S,적 속도-50% 자신 속도+50%(3턴),시간의 수호자,셋업,"{""components"":[{""tag"":""debuff"",""duration"":3,""speed"":-0.5},{""tag"":""buff"",""duration"":3,""speed"":0.5}]}",N
+9042,공허 침식,active,monster,암흑,SS,마법(4.0AP) 잠식5스택+저주,공허의 지배자,암흑/잠식/저주,"{""components"":[{""tag"":""attack"",""ap_ratio"":4.0,""is_physical"":false},{""tag"":""status"",""type"":""erode"",""duration"":5,""stacks"":5},{""tag"":""status"",""type"":""curse"",""duration"":5}]}",N
+9043,대해일,active,monster,수속성,SS,마법(3.5AP) 전체 침수(3턴),심해의 크라켄,수속성/침수/범위,"{""components"":[{""tag"":""attack"",""ap_ratio"":3.5,""is_physical"":false},{""tag"":""status"",""type"":""submerge"",""duration"":3}]}",N
+9044,촉수 난타,active,monster,무속성,SS,물리(0.8AD) 8회 공격,심해의 크라켄,물리/콤보,"{""components"":[{""tag"":""attack"",""ad_ratio"":0.8,""hit_count"":8}]}",N
+9045,원소 폭발,active,monster,없음,SS,마법(5.0AP) 전체 랜덤속성,깨어난 고대신,범위/피니셔,"{""components"":[{""tag"":""attack"",""ap_ratio"":5.0,""is_physical"":false}]}",N
+9046,전쟁의 함성,active,monster,무속성,SSS,물리(6.0AD) 공격+30%(5턴),전쟁의 신 아레스,물리/축복,"{""components"":[{""tag"":""attack"",""ad_ratio"":6.0},{""tag"":""buff"",""duration"":5,""attack"":0.3}]}",N
+9047,창세의 모방,active,monster,없음,SSS,마법(5.0AP) 플레이어 스킬 복제,창조신의 그림자,피니셔,"{""components"":[{""tag"":""attack"",""ap_ratio"":5.0,""is_physical"":false}]}",N
+9048,죽음의 선고,active,monster,암흑,SSS,3턴 후 즉사(보스 전용),죽음의 지배자,암흑/셋업,"{""components"":[{""tag"":""status"",""type"":""curse"",""duration"":3},{""tag"":""debuff"",""duration"":3,""attack"":-0.5,""defense"":-0.5}]}",N
+8705,소각,active,combo,화염,B,화상적 마법(1.5AP) 치명타강제 화상유지,화염의 제단,화염/소각/피니셔,"{""components"":[{""tag"":""combo"",""combo_type"":""incinerate"",""prerequisite"":""burn"",""min_stacks"":1,""damage_multiplier"":1.5,""ap_ratio"":1.5,""is_physical"":false,""force_critical"":true,""consume_stacks"":false}]}",Y
+8706,연소,active,combo,화염,A,화상5+적 마법(3.0AP) 치명타확정,불사조의 둥지,화염/연소/피니셔,"{""components"":[{""tag"":""combo"",""combo_type"":""combust"",""prerequisite"":""burn"",""min_stacks"":5,""damage_multiplier"":3.0,""ap_ratio"":3.0,""is_physical"":false,""force_critical"":true,""consume_stacks"":true}]}",Y
+8707,완전 빙결,active,combo,냉기,B,둔화3+적 즉시 동결(3턴) 둔화유지,빙하의 심장,냉기/동결/증폭,"{""components"":[{""tag"":""combo"",""combo_type"":""frozen_solid"",""prerequisite"":""slow"",""min_stacks"":3,""damage_multiplier"":0.0,""consume_stacks"":false,""apply_status"":{""type"":""freeze"",""duration"":3}}]}",Y
+8708,빙하 폭발,active,combo,냉기,A,동결적 마법(2.5AP) 둔화5부여 동결유지,절대 영도의 방,냉기/파쇄/피니셔,"{""components"":[{""tag"":""combo"",""combo_type"":""glacier_burst"",""prerequisite"":""freeze"",""min_stacks"":1,""damage_multiplier"":2.5,""ap_ratio"":2.5,""is_physical"":false,""consume_stacks"":false,""apply_status"":{""type"":""slow"",""duration"":5,""stacks"":5}}]}",Y
+8709,연쇄 방전,active,combo,번개,B,감전적 마법(1.2AP) 연쇄2회 감전유지,번개의 제단,번개/감전/증폭,"{""components"":[{""tag"":""combo"",""combo_type"":""chain_discharge"",""prerequisite"":""shock"",""min_stacks"":1,""damage_multiplier"":1.2,""ap_ratio"":1.2,""is_physical"":false,""consume_stacks"":false}]}",Y
+8710,뇌전 폭주,active,combo,번개,A,마비적 마법(2.8AP) 전체 감전3 마비유지,뇌신의 영역,번개/과부하/증폭/범위,"{""components"":[{""tag"":""combo"",""combo_type"":""lightning_rampage"",""prerequisite"":""paralyze"",""min_stacks"":1,""damage_multiplier"":2.8,""ap_ratio"":2.8,""is_physical"":false,""consume_stacks"":false,""apply_status"":{""type"":""shock"",""duration"":3,""stacks"":3}}]}",Y
+8711,독성 확산,active,combo,암흑,B,중독적 감염부여 중독+2스택,역병의 군주,암흑/중독/감염/증폭,"{""components"":[{""tag"":""combo"",""combo_type"":""toxic_spread"",""prerequisite"":""poison"",""min_stacks"":2,""damage_multiplier"":0.0,""consume_stacks"":false,""apply_status"":{""type"":""infection"",""duration"":3,""stacks"":1}}]}",Y
+8712,저주 증폭,active,combo,암흑,B,저주적 마법(1.3AP) 저주+2턴 흡혈20%,저주술사,암흑/저주/흡혈/증폭,"{""components"":[{""tag"":""combo"",""combo_type"":""curse_amplify"",""prerequisite"":""curse"",""min_stacks"":1,""damage_multiplier"":1.3,""ap_ratio"":1.3,""is_physical"":false,""lifesteal"":0.2,""consume_stacks"":false}]}",Y
+8713,어둠의 수확,active,combo,암흑,A,감염적 마법(2.0AP) 전체 저주3,죽음의 사제,암흑/감염/저주/피니셔/범위,"{""components"":[{""tag"":""combo"",""combo_type"":""dark_harvest"",""prerequisite"":""infection"",""min_stacks"":1,""damage_multiplier"":2.0,""ap_ratio"":2.0,""is_physical"":false,""consume_stacks"":true,""apply_status"":{""type"":""curse"",""duration"":3,""stacks"":3}}]}",Y
+8714,해류 전환,active,combo,수속성,B,잠식3+적 침수즉시 잠식유지,심해의 사제,수속성/잠식/침수/증폭,"{""components"":[{""tag"":""combo"",""combo_type"":""current_shift"",""prerequisite"":""erode"",""min_stacks"":3,""damage_multiplier"":0.0,""consume_stacks"":false,""apply_status"":{""type"":""submerge"",""duration"":3}}]}",Y
+8715,침수 동결,active,combo,냉기,B,침수적 마법(1.5AP) 동결즉시 침수유지,빙하의 심장,냉기/침수/동결/피니셔,"{""components"":[{""tag"":""combo"",""combo_type"":""submerge_freeze"",""prerequisite"":""submerge"",""min_stacks"":1,""damage_multiplier"":1.5,""ap_ratio"":1.5,""is_physical"":false,""consume_stacks"":false,""apply_status"":{""type"":""freeze"",""duration"":2}}]}",Y
+8716,콤보 폭발,active,combo,무속성,B,콤보5+적 물리(2.5AD) 기절2턴,격투가,물리/콤보/기절/피니셔,"{""components"":[{""tag"":""combo"",""combo_type"":""combo_burst"",""prerequisite"":""combo"",""min_stacks"":5,""damage_multiplier"":2.5,""ad_ratio"":2.5,""force_critical"":true,""consume_stacks"":true,""apply_status"":{""type"":""stun"",""duration"":2}}]}",Y
+8717,출혈 심화,active,combo,무속성,B,출혈적 물리(1.0AD) 출혈+3스택,고문 기술자,물리/출혈/증폭,"{""components"":[{""tag"":""combo"",""combo_type"":""bleed_deepen"",""prerequisite"":""bleed"",""min_stacks"":2,""damage_multiplier"":1.0,""ad_ratio"":1.0,""consume_stacks"":false,""apply_status"":{""type"":""bleed"",""duration"":3,""stacks"":3}}]}",Y
+8718,기절 추타,active,combo,무속성,A,기절적 물리(3.0AD) 치명타확정,암살자 길드,물리/기절/피니셔,"{""components"":[{""tag"":""combo"",""combo_type"":""stun_followup"",""prerequisite"":""stun"",""min_stacks"":1,""damage_multiplier"":3.0,""ad_ratio"":3.0,""force_critical"":true,""consume_stacks"":false}]}",Y
+8719,표식 처형,active,combo,무속성,A,표식적 물리(2.8AD) 치명타확정 표식소모,처형인 길드,물리/표식/피니셔,"{""components"":[{""tag"":""combo"",""combo_type"":""marked_execute"",""prerequisite"":""mark"",""min_stacks"":1,""damage_multiplier"":2.8,""ad_ratio"":2.8,""force_critical"":true,""consume_stacks"":true}]}",Y
+8720,축복 강화,active,combo,신성,B,자신 버프3+이상 공방+30%(5턴),대성당,신성/축복/증폭,"{""components"":[{""tag"":""combo"",""combo_type"":""blessing_enhance"",""prerequisite"":""buff"",""min_stacks"":3,""damage_multiplier"":0.0,""consume_stacks"":false,""apply_status"":{""type"":""buff"",""duration"":5,""attack"":0.3,""defense"":0.3}}]}",Y
+9049,100층의 시련,active,monster,무속성,일반,전체 10회 연속 50% 데미지,몬스터 전용,전체/광역,"{""components"": [{""tag"": ""attack"", ""target"": ""all"", ""multiplier"": 0.5}]}",N
+9050,각성의 일격,active,monster,신성,일반,"250% 데미지, 치명타 확률 +50%",몬스터 전용,,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 2.5}]}",N
+9051,고대 레이저,active,monster,무속성,일반,"단일 500% 데미지, 방어력 무시",몬스터 전용,관통,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 5.0}]}",N
+9052,고대의 심판,active,monster,신성,일반,"전체 350% 데미지, 디버프 전부 부여",몬스터 전용,전체/광역,"{""components"": [{""tag"": ""attack"", ""target"": ""all"", ""multiplier"": 3.5}]}",N
+9053,공허 이동,active,monster,화염,일반,"대상 뒤로 텔레포트, 150% 데미지, 회피 불가",몬스터 전용,화상,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 1.5}]}",N
+9054,공허의 균열,active,monster,암흑,일반,"200% 데미지, 3턴간 회복량 -70%",몬스터 전용,회복,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 2.0}, {""tag"": ""heal"", ""target"": ""ally"", ""base_amount"": 0}]}",N
+9055,공허의 삼킴,active,monster,암흑,일반,"단일 400% 데미지, 피해량의 50% 회복",몬스터 전용,회복,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 4.0}, {""tag"": ""heal"", ""target"": ""ally"", ""base_amount"": 0}]}",N
+9056,공허의 손길,active,monster,암흑,일반,전체 현재 HP의 20% 고정 데미지,몬스터 전용,회복/전체/광역,"{""components"": [{""tag"": ""attack"", ""target"": ""all"", ""multiplier"": 0.2}]}",N
+9057,공허의 지배자의 존재 소거,active,monster,암흑,일반,"단일 5턴 충전, 발동 시 즉사 (충전 중 스턴 필요)",몬스터 전용,즉사,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 1.0}]}",N
+9058,과부하,active,monster,무속성,일반,"전체 400% 데미지, 자신 HP 20% 소모",몬스터 전용,회복/전체/광역,"{""components"": [{""tag"": ""attack"", ""target"": ""all"", ""multiplier"": 4.0}]}",N
+9059,군대 소환,active,monster,무속성,일반,스켈레톤 전사 2마리 소환,몬스터 전용,소환,"{""components"": [{""tag"": ""summon"", ""monster_ids"": [30], ""count"": 2}]}",N
+9060,낙뢰,active,monster,화염,일반,"150% 데미지, 20% 확률 마비 (행동 불가 1턴)",몬스터 전용,화상/마비,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 1.5}]}",N
+9061,난타,active,monster,무속성,일반,2회 연속 공격 (각 50% 데미지),몬스터 전용,,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 0.5}]}",N
+9062,냉기 송곳니,active,monster,냉기,일반,"140% 데미지, 둔화 2턴",몬스터 전용,둔화,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 1.4}]}",N
+9063,뇌격 브레스,active,monster,번개,일반,"전체 200% 번개 데미지, 마비 40%",몬스터 전용,마비/전체/광역,"{""components"": [{""tag"": ""attack"", ""target"": ""all"", ""multiplier"": 2.0}]}",N
+9064,눈보라,active,monster,냉기,일반,"4턴간 매 턴 전체 40% 데미지, 둔화",몬스터 전용,둔화/전체/광역,"{""components"": [{""tag"": ""attack"", ""target"": ""all"", ""multiplier"": 0.4}]}",N
+9065,다차원 공격,active,monster,신성,일반,"전체 300% 데미지, 랜덤 속성",몬스터 전용,전체/광역,"{""components"": [{""tag"": ""attack"", ""target"": ""all"", ""multiplier"": 3.0}]}",N
+9066,대해일,active,monster,수속성,일반,전체 300% 수속성 데미지,몬스터 전용,전체/광역,"{""components"": [{""tag"": ""attack"", ""target"": ""all"", ""multiplier"": 3.0}]}",N
+9067,되돌리기,active,monster,무속성,일반,자신 HP를 3턴 전 상태로 복구,몬스터 전용,회복,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 1.0}]}",N
+9068,드래곤 클로,active,monster,무속성,일반,"단일 300% 데미지, 방어력 무시",몬스터 전용,관통,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 3.0}]}",N
+9069,마왕 발더스의 지옥불,active,monster,화염,일반,"전체 200% 화염 데미지, 화상 4턴",몬스터 전용,화상/전체/광역,"{""components"": [{""tag"": ""attack"", ""target"": ""all"", ""multiplier"": 2.0}]}",N
+9070,마왕의 결계,active,monster,무속성,일반,5턴간 받는 데미지 -50%,몬스터 전용,,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 0.5}]}",N
+9071,마왕의 분노,active,monster,무속성,일반,전체 250% 데미지,몬스터 전용,전체/광역,"{""components"": [{""tag"": ""attack"", ""target"": ""all"", ""multiplier"": 2.5}]}",N
+9072,마족 소환,active,monster,무속성,일반,마족 전사 3마리 소환,몬스터 전용,소환,"{""components"": [{""tag"": ""summon"", ""monster_ids"": [30, 31, 32, 33], ""count"": 3}]}",N
+9073,먹물 분사,active,monster,수속성,일반,"전체 실명 3턴, 200% 데미지",몬스터 전용,실명/전체/광역,"{""components"": [{""tag"": ""attack"", ""target"": ""all"", ""multiplier"": 2.0}]}",N
+9074,무작위 변이,active,monster,무속성,일반,모든 대상 스탯 ±30% 변동,몬스터 전용,광역,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 0.3}]}",N
+9075,무한 창조,active,monster,무속성,일반,플레이어 그림자 5체 소환 (동일 스탯),몬스터 전용,소환,"{""components"": [{""tag"": ""attack"", ""multiplier"": 0.0, ""note"": ""player_shadow""}]}",N
+9076,무한의 독,active,monster,화염,일반,"550% 데미지, 해제 불가 독 (매 턴 최대 HP 5%, 전투 종료까지)",몬스터 전용,화상/중독/회복,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 5.5}]}",N
+9077,물어뜯기,active,monster,수속성,일반,"150% 데미지, 출혈 부여",몬스터 전용,출혈,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 1.5}]}",N
+9078,번개 연쇄,active,monster,번개,일반,"대상 180% 데미지, 인접 대상에게 50% 전이",몬스터 전용,,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 1.8}]}",N
+9079,부활의 기적,active,monster,무속성,일반,쓰러진 아군 1체 부활 (HP 50%),몬스터 전용,회복,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 0.5}]}",N
+9080,부활의 빛,active,monster,신성,일반,모든 처치된 아군 부활 (HP 100%),몬스터 전용,회복/광역,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 1.0}]}",N
+9081,부활의 저주,active,monster,암흑,일반,처치된 아군 1체 부활 (HP 100%),몬스터 전용,저주/회복,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 1.0}]}",N
+9082,분노의 일격,active,monster,무속성,일반,"200% 데미지, 기절 1턴",몬스터 전용,기절,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 2.0}]}",N
+9083,불꽃 연쇄,active,monster,화염,일반,"3회 공격 (각 50% 데미지, 화상 스택)",몬스터 전용,화상,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 0.5}]}",N
+9084,불멸의 불꽃,active,monster,화염,일반,"전체 350% 화염 데미지, 영구 화상",몬스터 전용,화상/전체/광역,"{""components"": [{""tag"": ""attack"", ""target"": ""all"", ""multiplier"": 3.5}]}",N
+9085,불멸의 전사,active,monster,화염,일반,"3턴간 무적, 공격력 2배",몬스터 전용,화상/무적,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 1.0}]}",N
+9086,불의 비,active,monster,화염,일반,5턴간 매 턴 시작 시 전체 50% 데미지,몬스터 전용,화상/전체/광역,"{""components"": [{""tag"": ""attack"", ""target"": ""all"", ""multiplier"": 0.5}]}",N
+9087,브레스,active,monster,화염,일반,130% 화염 또는 번개 데미지 (랜덤),몬스터 전용,화상,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 1.3}]}",N
+9088,빙결,active,monster,냉기,일반,"120% 데미지, 30% 확률 동결 1턴",몬스터 전용,동결,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 1.2}]}",N
+9089,빙의,active,monster,냉기,일반,1턴간 대상 조종 (아군 공격),몬스터 전용,,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 1.0}]}",N
+9090,뼈 가르기,active,monster,무속성,일반,"160% 데미지, 방어력 -15% (3턴)",몬스터 전용,디버프,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 1.6}, {""tag"": ""debuff"", ""target"": ""enemy""}]}",N
+9091,뿌리 감옥,active,monster,화염,일반,단일 3턴 속박 (행동 불가),몬스터 전용,화상/마비,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 1.0}]}",N
+9092,뿌리 얽기,active,monster,냉기,일반,"단일 150% 데미지, 둔화 2턴",몬스터 전용,둔화,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 1.5}]}",N
+9093,생명 착취,active,monster,무속성,일반,"단일 250% 데미지, 피해량의 100% 회복",몬스터 전용,회복,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 2.5}, {""tag"": ""heal"", ""target"": ""ally"", ""base_amount"": 0}]}",N
+9094,생명력 약탈,active,monster,무속성,일반,"단일 300% 데미지, 피해량 100% 회복",몬스터 전용,회복,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 3.0}, {""tag"": ""heal"", ""target"": ""ally"", ""base_amount"": 0}]}",N
+9095,생명력 흡수,active,monster,무속성,일반,"120% 데미지, 피해량만큼 HP 회복",몬스터 전용,회복,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 1.2}, {""tag"": ""heal"", ""target"": ""ally"", ""base_amount"": 0}]}",N
+9096,생명의 샘,active,monster,무속성,일반,"자신 HP 20% 회복, 디버프 제거",몬스터 전용,회복,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 0.2}, {""tag"": ""heal"", ""target"": ""self"", ""base_amount"": 0}]}",N
+9097,세계수 현현,active,monster,무속성,일반,모든 아군 HP 30% 회복,몬스터 전용,회복/광역,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 0.3}, {""tag"": ""heal"", ""target"": ""all_ally"", ""base_amount"": 0}]}",N
+9098,세계수의 가지,active,monster,무속성,일반,전체 200% 데미지,몬스터 전용,전체/광역,"{""components"": [{""tag"": ""attack"", ""target"": ""all"", ""multiplier"": 2.0}]}",N
+9099,세계의 재편,active,monster,무속성,일반,모든 대상 스탯 랜덤 재배분,몬스터 전용,광역,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 1.0}]}",N
+9100,세계의 종말,active,monster,무속성,일반,전체 800% 데미지,몬스터 전용,전체/광역,"{""components"": [{""tag"": ""attack"", ""target"": ""all"", ""multiplier"": 8.0}]}",N
+9101,수류탄,active,monster,수속성,일반,"120% 데미지, 자신 HP 10% 회복",몬스터 전용,회복,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 1.2}, {""tag"": ""heal"", ""target"": ""self"", ""base_amount"": 0}]}",N
+9102,수호자의 맹세,active,monster,무속성,일반,"자신 HP 30% 소모, 다음 공격 3배",몬스터 전용,회복,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 0.3}]}",N
+9103,수호자의 일격,active,monster,무속성,일반,"170% 데미지, 도발 2턴",몬스터 전용,,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 1.7}]}",N
+9104,숲의 가호,active,monster,무속성,일반,자신 HP 15% 회복,몬스터 전용,회복,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 0.15}, {""tag"": ""heal"", ""target"": ""self"", ""base_amount"": 0}]}",N
+9105,시간 역류,active,monster,무속성,일반,"150% 데미지, 대상 다음 턴 버프 효과 역전 (버프→디버프)",몬스터 전용,,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 1.5}]}",N
+9106,시간 정지,active,monster,화염,일반,2턴간 대상 행동 불가,몬스터 전용,화상/마비,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 1.0}]}",N
+9107,시간 폭발,active,monster,무속성,일반,"단일 350% 데미지, 버프 지속시간 전부 소모하여 추가 데미지",몬스터 전용,,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 3.5}]}",N
+9108,시간 흡수,active,monster,무속성,일반,"180% 데미지, 대상 버프 지속시간 -2턴",몬스터 전용,,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 1.8}]}",N
+9109,시간의 수호자의 시간 정지,active,monster,무속성,일반,전체 2턴간 속도 0 (행동 순서 최후방),몬스터 전용,전체/광역,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 1.0}]}",N
+9110,시련의 검,active,monster,화염,일반,"단일 600% 데미지, 회피 불가",몬스터 전용,화상,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 6.0}]}",N
+9111,시련의 일격,active,monster,무속성,일반,"300% 데미지, 디버프 1개당 +50% 추가 데미지",몬스터 전용,,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 3.0}]}",N
+9112,신격의 강림,active,monster,무속성,일반,5턴간 모든 스탯 +50%,몬스터 전용,버프/광역,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 0.5}, {""tag"": ""buff"", ""target"": ""self""}]}",N
+9113,신성 결계,active,monster,신성,일반,3턴간 받는 데미지 -50%,몬스터 전용,,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 0.5}]}",N
+9114,신성한 결계,active,monster,신성,일반,3턴간 받는 데미지 -40%,몬스터 전용,,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 0.4}]}",N
+9115,신성한 비늘,active,monster,신성,일반,5턴간 받는 데미지 -60%,몬스터 전용,,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 0.6}]}",N
+9116,신성한 일격,active,monster,신성,일반,"180% 데미지, 방어력 무시 30%",몬스터 전용,관통,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 1.8}]}",N
+9117,신의 경지,active,monster,화염,일반,"5턴간 무적, 회복 불가",몬스터 전용,화상/회복/무적,"{""components"": [{""tag"": ""heal"", ""target"": ""ally"", ""base_amount"": 0}]}",N
+9118,신의 권능,active,monster,무속성,일반,5턴간 모든 스탯 +100%,몬스터 전용,버프/광역,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 1.0}, {""tag"": ""buff"", ""target"": ""self""}]}",N
+9119,신의 분노,active,monster,무속성,일반,"단일 1000% 데미지, 확정 치명타",몬스터 전용,,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 10.0}]}",N
+9120,신의 심판,active,monster,화염,일반,단일 최대 HP 50% 고정 데미지 (회피/방어 불가),몬스터 전용,화상/회복,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 0.5}]}",N
+9121,신의 영역,active,monster,무속성,일반,10턴간 받는 데미지 -70%,몬스터 전용,,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 0.7}]}",N
+9122,신의 일격,active,monster,무속성,일반,"500% 데미지, 확정 치명타",몬스터 전용,,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 5.0}]}",N
+9123,신의 축복,active,monster,신성,일반,"자신 HP 20% 회복, 모든 디버프 해제",몬스터 전용,회복/버프/광역,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 0.2}, {""tag"": ""heal"", ""target"": ""self"", ""base_amount"": 0}]}",N
+9124,심연으로의 초대,active,monster,암흑,일반,단일 5턴간 매 턴 최대 HP 10% 고정 데미지,몬스터 전용,회복,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 0.1}]}",N
+9125,심연의 나락,active,monster,암흑,일반,"전체 200% 암흑 데미지, 공포 3턴",몬스터 전용,공포/전체/광역,"{""components"": [{""tag"": ""attack"", ""target"": ""all"", ""multiplier"": 2.0}]}",N
+9126,심연의 부름,active,monster,암흑,일반,심연의 하수인 3체 소환,몬스터 전용,소환,"{""components"": [{""tag"": ""summon"", ""monster_ids"": [32, 33], ""count"": 3}]}",N
+9127,심판의 빛,active,monster,신성,일반,"150% 신성 데미지, 암흑 속성에 +100%",몬스터 전용,,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 1.5}]}",N
+9128,심해의 축복,active,monster,수속성,일반,"자신 HP 25% 회복, 방어력 +20% (3턴)",몬스터 전용,회복/버프,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 0.25}, {""tag"": ""heal"", ""target"": ""self"", ""base_amount"": 0}, {""tag"": ""buff"", ""target"": ""self""}]}",N
+9129,암흑 폭발,active,monster,암흑,일반,단일 400% 암흑 데미지,몬스터 전용,,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 4.0}]}",N
+9130,어둠의 지배,active,monster,암흑,일반,1체 조종 2턴,몬스터 전용,,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 1.0}]}",N
+9131,어둠의 칙령,active,monster,암흑,일반,단일 250% 암흑 데미지,몬스터 전용,,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 2.5}]}",N
+9132,언데드 군단,active,monster,암흑,일반,스켈레톤 3마리 소환,몬스터 전용,소환,"{""components"": [{""tag"": ""summon"", ""monster_ids"": [30], ""count"": 3}]}",N
+9133,얼음 창,active,monster,냉기,일반,"단일 220% 데미지, 관통",몬스터 전용,동결/관통,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 2.2}]}",N
+9134,에너지 장벽,active,monster,무속성,일반,5턴간 받는 데미지 -60%,몬스터 전용,,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 0.6}]}",N
+9135,에너지 포화,active,monster,무속성,일반,"280% 데미지, 3턴 충전 후 자폭 (전체 400%)",몬스터 전용,전체/광역,"{""components"": [{""tag"": ""attack"", ""target"": ""all"", ""multiplier"": 2.8}]}",N
+9136,역행의 파동,active,monster,무속성,일반,"전체 200% 데미지, 최근 사용 스킬 봉인 3턴",몬스터 전용,전체/광역,"{""components"": [{""tag"": ""attack"", ""target"": ""all"", ""multiplier"": 2.0}]}",N
+9137,연사,active,monster,무속성,일반,3회 연속 공격 (각 40% 데미지),몬스터 전용,,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 0.4}]}",N
+9138,영원한 낮,active,monster,무속성,일반,10턴간 매 턴 전체 200% 데미지,몬스터 전용,전체/광역,"{""components"": [{""tag"": ""attack"", ""target"": ""all"", ""multiplier"": 2.0}]}",N
+9139,영원한 죽음,active,monster,화염,일반,"전체 500% 데미지, 회복 불가 5턴",몬스터 전용,화상/회복/전체/광역,"{""components"": [{""tag"": ""attack"", ""target"": ""all"", ""multiplier"": 5.0}, {""tag"": ""heal"", ""target"": ""ally"", ""base_amount"": 0}]}",N
+9140,영혼 수확,active,monster,무속성,일반,"전체 150% 데미지, 처치 시 영구 공격력 +5%",몬스터 전용,버프/전체/광역,"{""components"": [{""tag"": ""attack"", ""target"": ""all"", ""multiplier"": 1.5}, {""tag"": ""buff"", ""target"": ""self""}]}",N
+9141,오색 브레스,active,monster,신성,일반,전체 5속성 각 120% 데미지 (총 600%),몬스터 전용,전체/광역,"{""components"": [{""tag"": ""attack"", ""target"": ""all"", ""multiplier"": 1.2}]}",N
+9142,왕의 권능,active,monster,무속성,일반,"전체 180% 데미지, 디버프 1개",몬스터 전용,전체/광역,"{""components"": [{""tag"": ""attack"", ""target"": ""all"", ""multiplier"": 1.8}]}",N
+9143,용신의 심판,active,monster,화염,일반,"단일 800% 데미지, 회피 불가",몬스터 전용,화상,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 8.0}]}",N
+9144,용신의 포효,active,monster,암흑,일반,"전체 공포, 공격력/방어력 -40% (3턴)",몬스터 전용,공포/디버프/전체/광역,"{""components"": [{""tag"": ""attack"", ""target"": ""all"", ""multiplier"": 0.4}, {""tag"": ""debuff"", ""target"": ""enemy""}]}",N
+9145,용암 내뿜기,active,monster,화염,일반,전체 100% 데미지,몬스터 전용,전체/광역,"{""components"": [{""tag"": ""attack"", ""target"": ""all"", ""multiplier"": 1.0}]}",N
+9146,용의 날개,active,monster,무속성,일반,5회 랜덤 200% 데미지,몬스터 전용,,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 2.0}]}",N
+9147,용의 포효,active,monster,암흑,일반,"전체 공포 (공격력/방어력 -30%, 2턴)",몬스터 전용,공포/디버프/전체/광역,"{""components"": [{""tag"": ""attack"", ""target"": ""all"", ""multiplier"": 0.3}, {""tag"": ""debuff"", ""target"": ""enemy""}]}",N
+9148,원소 융합,active,monster,신성,일반,"220% 데미지, 랜덤 속성 (속성에 따른 추가 효과)",몬스터 전용,,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 2.2}]}",N
+9149,원소 폭풍,active,monster,신성,일반,6속성 각 100% 데미지 (총 600%),몬스터 전용,,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 1.0}]}",N
+9150,원초의 권능,active,monster,무속성,일반,전체 500% 데미지,몬스터 전용,전체/광역,"{""components"": [{""tag"": ""attack"", ""target"": ""all"", ""multiplier"": 5.0}]}",N
+9151,원초의 빛,active,monster,신성,일반,"전체 600% 데미지, 모든 버프/디버프 제거",몬스터 전용,전체/광역,"{""components"": [{""tag"": ""attack"", ""target"": ""all"", ""multiplier"": 6.0}]}",N
+9152,원초의 신의 세계의 재편,active,monster,무속성,일반,모든 대상 스탯 재배분,몬스터 전용,광역,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 1.0}]}",N
+9153,원초의 신의 창조와 파괴,active,monster,무속성,일반,"전체 400% 데미지, 자신 HP 30% 회복",몬스터 전용,회복/전체/광역,"{""components"": [{""tag"": ""attack"", ""target"": ""all"", ""multiplier"": 4.0}, {""tag"": ""heal"", ""target"": ""self"", ""base_amount"": 0}]}",N
+9154,익사의 저주,active,monster,암흑,일반,단일 대상 5턴간 매 턴 10% HP 감소,몬스터 전용,저주/회복,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 0.1}]}",N
+9155,자동인형 소환,active,monster,무속성,일반,고대 자동인형 3체 소환,몬스터 전용,소환,"{""components"": [{""tag"": ""summon"", ""monster_ids"": [66], ""count"": 3}]}",N
+9156,자연의 분노,active,monster,무속성,일반,전체 120% 데미지,몬스터 전용,전체/광역,"{""components"": [{""tag"": ""attack"", ""target"": ""all"", ""multiplier"": 1.2}]}",N
+9157,자연의 심판,active,monster,신성,일반,"전체 250% 데미지, 회복 봉인 3턴",몬스터 전용,회복/전체/광역,"{""components"": [{""tag"": ""attack"", ""target"": ""all"", ""multiplier"": 2.5}, {""tag"": ""heal"", ""target"": ""ally"", ""base_amount"": 0}]}",N
+9158,재생의 힘,active,monster,무속성,일반,자신 HP 25% 회복,몬스터 전용,회복,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 0.25}, {""tag"": ""heal"", ""target"": ""self"", ""base_amount"": 0}]}",N
+9159,저주,active,monster,암흑,일반,3턴간 방어력 -20%,몬스터 전용,저주/디버프,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 0.2}, {""tag"": ""debuff"", ""target"": ""enemy""}]}",N
+9160,전장의 축복,active,monster,신성,일반,5턴간 피해를 입을수록 공격력 +10% (최대 +100%),몬스터 전용,버프,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 0.1}, {""tag"": ""buff"", ""target"": ""self""}]}",N
+9161,전쟁의 광기,active,monster,무속성,일반,전체 700% 데미지,몬스터 전용,전체/광역,"{""components"": [{""tag"": ""attack"", ""target"": ""all"", ""multiplier"": 7.0}]}",N
+9162,절대 소멸,active,monster,무속성,일반,단일 현재 HP 90% 고정 데미지,몬스터 전용,회복,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 0.9}]}",N
+9163,절대 암흑,active,monster,암흑,일반,"전체 300% 데미지, 실명 (명중률 -50%, 3턴)",몬스터 전용,실명/전체/광역,"{""components"": [{""tag"": ""attack"", ""target"": ""all"", ""multiplier"": 3.0}]}",N
+9164,절대 영도,active,monster,냉기,일반,"전체 130% 냉기 데미지, 50% 확률 동결",몬스터 전용,동결/전체/광역,"{""components"": [{""tag"": ""attack"", ""target"": ""all"", ""multiplier"": 1.3}]}",N
+9165,절대 영역,active,monster,무속성,일반,전체 현재 HP 30% 고정 데미지,몬스터 전용,회복/전체/광역,"{""components"": [{""tag"": ""attack"", ""target"": ""all"", ""multiplier"": 0.3}]}",N
+9166,정화의 광선,active,monster,신성,일반,"전체 250% 신성 데미지, 모든 버프 제거",몬스터 전용,전체/광역,"{""components"": [{""tag"": ""attack"", ""target"": ""all"", ""multiplier"": 2.5}]}",N
+9167,정화의 불꽃,active,monster,화염,일반,"단일 250% 데미지, 버프 제거",몬스터 전용,화상,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 2.5}]}",N
+9168,족장의 명령,active,monster,무속성,일반,고블린 2마리 소환 (전투당 1회),몬스터 전용,소환,"{""components"": [{""tag"": ""summon"", ""monster_ids"": [2], ""count"": 2, ""use_limit"": 1}]}",N
+9169,존재 말소,active,monster,무속성,일반,"220% 데미지, 버프/디버프 모두 제거",몬스터 전용,,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 2.2}]}",N
+9170,존재 소거,active,monster,무속성,일반,단일 현재 HP 40% 고정 데미지,몬스터 전용,회복,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 0.4}]}",N
+9171,존재 소멸,active,monster,무속성,일반,단일 최대 HP 60% 고정 데미지,몬스터 전용,회복,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 0.6}]}",N
+9172,존재의 붕괴,active,monster,무속성,일반,단일 현재 HP 50% 고정 데미지,몬스터 전용,회복,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 0.5}]}",N
+9173,존재의 소멸,active,monster,무속성,일반,단일 현재 HP 70% 고정 데미지,몬스터 전용,회복,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 0.7}]}",N
+9174,존재의 창조,active,monster,무속성,일반,플레이어의 그림자 소환 (동일 스탯/스킬),몬스터 전용,소환,"{""components"": [{""tag"": ""attack"", ""multiplier"": 0.0, ""note"": ""player_shadow""}]}",N
+9175,존재의 파편,active,monster,무속성,일반,차원 분신 3체 소환,몬스터 전용,소환,"{""components"": [{""tag"": ""summon"", ""monster_ids"": [38], ""count"": 3}]}",N
+9176,종말의 선언,active,monster,무속성,일반,전체 HP 40% 고정 데미지 (10턴 충전),몬스터 전용,회복/전체/광역,"{""components"": [{""tag"": ""attack"", ""target"": ""all"", ""multiplier"": 0.4}]}",N
+9177,종말의 시작,active,monster,무속성,일반,"HP 10% 이하, 전체 1200% 데미지",몬스터 전용,회복/전체/광역,"{""components"": [{""tag"": ""attack"", ""target"": ""all"", ""multiplier"": 0.1}]}",N
+9178,죽음의 선고,active,monster,암흑,일반,단일 5턴 후 즉사 (해제 필요),몬스터 전용,즉사,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 1.0}]}",N
+9179,죽음의 손길,active,monster,화염,일반,"단일 200% 암흑 데미지, 회복 불가 3턴",몬스터 전용,화상/회복,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 2.0}, {""tag"": ""heal"", ""target"": ""ally"", ""base_amount"": 0}]}",N
+9180,죽음의 안개,active,monster,암흑,일반,4턴간 매 턴 전체 5% HP 감소,몬스터 전용,회복/전체/광역,"{""components"": [{""tag"": ""attack"", ""target"": ""all"", ""multiplier"": 0.05}]}",N
+9181,죽음의 지배자의 언데드 군단,active,monster,암흑,일반,리치 3마리 소환,몬스터 전용,소환,"{""components"": [{""tag"": ""summon"", ""monster_ids"": [30, 31], ""count"": 3}]}",N
+9182,죽음의 지배자의 영혼 수확,active,monster,암흑,일반,"전체 350% 데미지, 처치 시 영구 공격력 +10%",몬스터 전용,버프/전체/광역,"{""components"": [{""tag"": ""attack"", ""target"": ""all"", ""multiplier"": 3.5}, {""tag"": ""buff"", ""target"": ""self""}]}",N
+9183,죽음의 지배자의 죽음의 안개,active,monster,암흑,일반,5턴간 매 턴 전체 최대 HP 8% 감소,몬스터 전용,회복/전체/광역,"{""components"": [{""tag"": ""attack"", ""target"": ""all"", ""multiplier"": 0.08}]}",N
+9184,지옥불,active,monster,화염,일반,"전체 150% 화염 데미지, 화상 3턴",몬스터 전용,화상/전체/광역,"{""components"": [{""tag"": ""attack"", ""target"": ""all"", ""multiplier"": 1.5}]}",N
+9185,차원 분열,active,monster,무속성,일반,"단일 300% 데미지, 현재 HP 비례 추가 데미지",몬스터 전용,회복,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 3.0}]}",N
+9186,차원 붕괴,active,monster,무속성,일반,"전체 250% 데미지, 랜덤 스탯 -30% (3턴)",몬스터 전용,디버프/전체/광역,"{""components"": [{""tag"": ""attack"", ""target"": ""all"", ""multiplier"": 2.5}, {""tag"": ""debuff"", ""target"": ""enemy""}]}",N
+9187,차원 이동,active,monster,무속성,일반,3턴간 회피율 +80%,몬스터 전용,,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 0.8}, {""tag"": ""buff"", ""target"": ""self""}]}",N
+9188,차원 절단,active,monster,무속성,일반,"단일 500% 데미지, 방어력 무시",몬스터 전용,관통,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 5.0}]}",N
+9189,차원 폭발,active,monster,무속성,일반,"전체 500% 데미지, 랜덤 디버프 3개",몬스터 전용,전체/광역,"{""components"": [{""tag"": ""attack"", ""target"": ""all"", ""multiplier"": 5.0}]}",N
+9190,차원의 구현체의 차원 붕괴,active,monster,무속성,일반,전체 350% 데미지,몬스터 전용,전체/광역,"{""components"": [{""tag"": ""attack"", ""target"": ""all"", ""multiplier"": 3.5}]}",N
+9191,차원의 파괴자의 차원 절단,active,monster,무속성,일반,"단일 800% 데미지, 현재 방어력 무시",몬스터 전용,관통,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 8.0}]}",N
+9192,창세의 빛,active,monster,신성,일반,"전체 350% 데미지, 버프 제거",몬스터 전용,전체/광역,"{""components"": [{""tag"": ""attack"", ""target"": ""all"", ""multiplier"": 3.5}]}",N
+9193,창세의 시선,active,monster,무속성,일반,전체 280% 데미지,몬스터 전용,전체/광역,"{""components"": [{""tag"": ""attack"", ""target"": ""all"", ""multiplier"": 2.8}]}",N
+9194,창세의 일격,active,monster,무속성,일반,"600% 데미지, 3턴간 방어력 -50%",몬스터 전용,디버프,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 6.0}, {""tag"": ""debuff"", ""target"": ""enemy""}]}",N
+9195,창조신의 그림자의 신의 경지,active,monster,무속성,일반,10턴간 모든 피해 무효 (파괴 조건 존재),몬스터 전용,광역/무적,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 1.0}]}",N
+9196,창조신의 그림자의 창세의 빛,active,monster,신성,일반,"전체 800% 데미지, 모든 버프 제거",몬스터 전용,전체/광역,"{""components"": [{""tag"": ""attack"", ""target"": ""all"", ""multiplier"": 8.0}]}",N
+9197,창조신의 신의 경지,active,monster,무속성,일반,10턴간 무적 (특수 조건으로 해제),몬스터 전용,무적,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 1.0}]}",N
+9198,창조신의 창세의 빛,active,monster,신성,일반,"전체 1000% 데미지, 자신 HP 완전 회복",몬스터 전용,회복/전체/광역,"{""components"": [{""tag"": ""attack"", ""target"": ""all"", ""multiplier"": 10.0}, {""tag"": ""heal"", ""target"": ""self"", ""base_amount"": 0}]}",N
+9199,창조신의 최종 창세,active,monster,무속성,일반,"HP 1% 이하, 전체 즉사 (충전 20턴, 중단 필수)",몬스터 전용,회복/전체/광역/즉사,"{""components"": [{""tag"": ""attack"", ""target"": ""all"", ""multiplier"": 0.01}]}",N
+9200,창조와 파괴,active,monster,무속성,일반,"전체 1000% 데미지, 자신 HP 50% 회복",몬스터 전용,회복/전체/광역,"{""components"": [{""tag"": ""attack"", ""target"": ""all"", ""multiplier"": 10.0}, {""tag"": ""heal"", ""target"": ""self"", ""base_amount"": 0}]}",N
+9201,창조의 빛,active,monster,신성,일반,전체 700% 데미지,몬스터 전용,전체/광역,"{""components"": [{""tag"": ""attack"", ""target"": ""all"", ""multiplier"": 7.0}]}",N
+9202,천둥의 심판,active,monster,번개,일반,"전체 160% 번개 데미지, 마비 50%",몬스터 전용,마비/전체/광역,"{""components"": [{""tag"": ""attack"", ""target"": ""all"", ""multiplier"": 1.6}]}",N
+9203,천벌,active,monster,신성,일반,전체 180% 신성 데미지,몬스터 전용,전체/광역,"{""components"": [{""tag"": ""attack"", ""target"": ""all"", ""multiplier"": 1.8}]}",N
+9204,천상의 보호,active,monster,신성,일반,5턴간 받는 데미지 -70%,몬스터 전용,,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 0.7}]}",N
+9205,초월의 끝,active,monster,무속성,일반,"HP 10% 이하, 전체 999% 데미지 (1회 사용)",몬스터 전용,회복/전체/광역,"{""components"": [{""tag"": ""attack"", ""target"": ""all"", ""multiplier"": 0.1}]}",N
+9206,초월의 심판,active,monster,신성,일반,전체 600% 데미지,몬스터 전용,전체/광역,"{""components"": [{""tag"": ""attack"", ""target"": ""all"", ""multiplier"": 6.0}]}",N
+9207,초월의 일격,active,monster,신성,일반,"400% 데미지, 모든 내성 무시",몬스터 전용,관통/광역,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 4.0}]}",N
+9208,초월한 자의 한계 돌파,active,monster,무속성,일반,자신 모든 스탯 +100% (5턴),몬스터 전용,버프/광역,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 1.0}, {""tag"": ""buff"", ""target"": ""self""}]}",N
+9209,촉수 난무,active,monster,무속성,일반,"8회 각 100% 데미지, 랜덤 대상",몬스터 전용,,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 1.0}]}",N
+9210,최종 붕괴,active,monster,무속성,일반,"HP 5% 이하, 전체 즉사 (충전 10턴, 중단 필요)",몬스터 전용,회복/전체/광역/즉사,"{""components"": [{""tag"": ""attack"", ""target"": ""all"", ""multiplier"": 0.05}]}",N
+9211,최종 시련,active,monster,무속성,일반,"HP 20% 이하, 5턴간 매 턴 전체 300% 데미지",몬스터 전용,회복/전체/광역,"{""components"": [{""tag"": ""attack"", ""target"": ""all"", ""multiplier"": 0.2}]}",N
+9212,최종 전쟁,active,monster,화염,일반,"HP 10% 이하, 전체 1200% 데미지 (회피 불가)",몬스터 전용,화상/회복/전체/광역,"{""components"": [{""tag"": ""attack"", ""target"": ""all"", ""multiplier"": 0.1}]}",N
+9213,최종 창세,active,monster,무속성,일반,"HP 1% 이하, 전체 즉사 (단, 충전 15턴, 중단 필수)",몬스터 전용,회복/전체/광역/즉사,"{""components"": [{""tag"": ""attack"", ""target"": ""all"", ""multiplier"": 0.01}]}",N
+9214,최종 프로토콜,active,monster,무속성,일반,HP 10% 이하 시 10턴 후 전체 즉사 (파괴 필요),몬스터 전용,회복/전체/광역/즉사,"{""components"": [{""tag"": ""attack"", ""target"": ""all"", ""multiplier"": 0.1}]}",N
+9215,최후의 심판,active,monster,신성,일반,전체 400% 데미지 (HP 10% 이하 시 사용),몬스터 전용,회복/전체/광역,"{""components"": [{""tag"": ""attack"", ""target"": ""all"", ""multiplier"": 4.0}]}",N
+9216,치유의 파도,active,monster,무속성,일반,아군 전체 HP 20% 회복,몬스터 전용,회복/전체/광역,"{""components"": [{""tag"": ""attack"", ""target"": ""all"", ""multiplier"": 0.2}, {""tag"": ""heal"", ""target"": ""all_ally"", ""base_amount"": 0}]}",N
+9217,탑의 심판,active,monster,신성,일반,전체 현재 HP 비례 데미지 (HP 높을수록 큰 피해),몬스터 전용,회복/전체/광역,"{""components"": [{""tag"": ""attack"", ""target"": ""all"", ""multiplier"": 1.0}]}",N
+9218,태양 폭발,active,monster,화염,일반,"단일 800% 데미지, 범위 피해",몬스터 전용,,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 8.0}]}",N
+9219,태양신 라의 최후의 심판,active,monster,화염,일반,"HP 5% 이하, 전체 현재 HP 80% 고정 데미지",몬스터 전용,회복/전체/광역,"{""components"": [{""tag"": ""attack"", ""target"": ""all"", ""multiplier"": 0.05}]}",N
+9220,태양의 심판,active,monster,화염,일반,전체 400% 신성 데미지,몬스터 전용,전체/광역,"{""components"": [{""tag"": ""attack"", ""target"": ""all"", ""multiplier"": 4.0}]}",N
+9221,포식,active,monster,무속성,일반,"단일 500% 데미지, 피해량만큼 HP 회복",몬스터 전용,회복,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 5.0}, {""tag"": ""heal"", ""target"": ""ally"", ""base_amount"": 0}]}",N
+9222,폭풍 날개,active,monster,무속성,일반,"전체 100% 데미지, 명중률 -20%",몬스터 전용,전체/광역,"{""components"": [{""tag"": ""attack"", ""target"": ""all"", ""multiplier"": 1.0}]}",N
+9223,폭풍 소환,active,monster,무속성,일반,5턴간 매 턴 랜덤 대상 100% 데미지,몬스터 전용,소환,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 1.0}]}",N
+9224,피의 제단,active,monster,무속성,일반,"처치 시 영구 공격력 +20%, HP 10% 회복",몬스터 전용,회복/버프,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 0.2}, {""tag"": ""heal"", ""target"": ""ally"", ""base_amount"": 0}, {""tag"": ""buff"", ""target"": ""self""}]}",N
+9225,한계 돌파,active,monster,무속성,일반,"450% 데미지, 자신 HP 15% 소모, 다음 턴 공격력 2배",몬스터 전용,회복,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 4.5}]}",N
+9226,해연의 포효,active,monster,암흑,일반,"전체 200% 데미지, 공포 2턴",몬스터 전용,공포/전체/광역,"{""components"": [{""tag"": ""attack"", ""target"": ""all"", ""multiplier"": 2.0}]}",N
+9227,해일,active,monster,수속성,일반,전체 140% 수속성 데미지,몬스터 전용,전체/광역,"{""components"": [{""tag"": ""attack"", ""target"": ""all"", ""multiplier"": 1.4}]}",N
+9228,허무의 영역,active,monster,무속성,일반,5턴간 모든 회복 효과 무효화,몬스터 전용,회복/광역,"{""components"": [{""tag"": ""heal"", ""target"": ""ally"", ""base_amount"": 0}]}",N
+9229,현실 붕괴,active,monster,무속성,일반,"350% 데미지, 대상 스탯 랜덤 ±40% 변동",몬스터 전용,,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 3.5}]}",N
+9230,현실 왜곡,active,monster,무속성,일반,전체 모든 스탯 ±50% 랜덤 변동,몬스터 전용,전체/광역,"{""components"": [{""tag"": ""attack"", ""target"": ""all"", ""multiplier"": 0.5}]}",N
+9231,현실 재편,active,monster,무속성,일반,전체 스탯 랜덤 ±30% 변동,몬스터 전용,전체/광역,"{""components"": [{""tag"": ""attack"", ""target"": ""all"", ""multiplier"": 0.3}]}",N
+9232,혼돈 폭발,active,monster,무속성,일반,"전체 250% 데미지 (5턴 충전, 충전 중 피격 시 충전 해제)",몬스터 전용,전체/광역,"{""components"": [{""tag"": ""attack"", ""target"": ""all"", ""multiplier"": 2.5}]}",N
+9233,혼돈의 물결,active,monster,수속성,일반,"전체 180% 데미지, 랜덤 디버프",몬스터 전용,전체/광역,"{""components"": [{""tag"": ""attack"", ""target"": ""all"", ""multiplier"": 1.8}]}",N
+9234,혼돈의 일격,active,monster,무속성,일반,100~250% 랜덤 데미지,몬스터 전용,,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 2.5}]}",N
+9235,화염 브레스,active,monster,화염,일반,"전체 200% 화염 데미지, 화상 4턴",몬스터 전용,화상/전체/광역,"{""components"": [{""tag"": ""attack"", ""target"": ""all"", ""multiplier"": 2.0}]}",N
+9236,화염 폭발,active,monster,화염,일반,단일 250% 데미지,몬스터 전용,화상,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 2.5}]}",N
+9237,화염구,active,monster,화염,일반,"130% 마법 데미지, 화상 2턴",몬스터 전용,화상,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 1.3}]}",N
+9238,독 포자,active,monster,무속성,일반,"100% 데미지, 중독 3턴 (매 턴 5% HP 감소)",몬스터 전용,중독,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 1.0}]}",N
+9239,슬라임 분열,active,monster,무속성,일반,"120% 데미지, 처치 시 미니 슬라임 2마리 소환",몬스터 전용,소환,"{""components"": [{""tag"": ""summon"", ""monster_ids"": [1], ""count"": 2}]}",N
+9240,흡혈,active,monster,무속성,일반,"90% 데미지, 피해량의 50% 회복",몬스터 전용,회복,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 1.0}]}",N
+9241,불꽃 돌진,active,monster,화염,일반,"130% 화염 데미지, 20% 확률 화상 2턴",몬스터 전용,화상,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 1.0}]}",N
+9242,냉기 물어뜯기,active,monster,냉기,일반,"110% 데미지, 둔화 2턴",몬스터 전용,둔화,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 1.0}]}",N
+9243,얼음 비명,active,monster,냉기,일반,"전체 90% 냉기 데미지, 30% 확률 동결 1턴",몬스터 전용,동결/전체/광역,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 1.0}]}",N
+9244,번개 장난,active,monster,번개,일반,"3회 각 50% 번개 데미지, 랜덤 대상",몬스터 전용,,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 1.0}]}",N
+9245,집게 가위,active,monster,수속성,일반,"150% 데미지, 방어력 -20% (2턴)",몬스터 전용,디버프,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 1.0}]}",N
+9246,전격 물기,active,monster,번개,일반,"140% 번개 데미지, 15% 확률 마비 1턴",몬스터 전용,마비,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 1.0}]}",N
+9247,물의 독니,active,monster,수속성,일반,"120% 수속성 데미지, 중독 2턴",몬스터 전용,중독,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 1.0}]}",N
+9248,빛의 폭발,active,monster,신성,일반,전체 110% 신성 데미지,몬스터 전용,전체/광역,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 1.0}]}",N
+9249,감염된 발톱,active,monster,암흑,일반,"100% 데미지, 질병 3턴 (치유 효과 -50%)",몬스터 전용,,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 1.0}]}",N
+9250,석화 응시,active,monster,신성,일반,"130% 데미지, 둔화 2턴",몬스터 전용,둔화,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 1.0}]}",N
+9251,화염 꼬리,active,monster,화염,일반,"전체 140% 화염 데미지, 화상 2턴",몬스터 전용,화상/전체/광역,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 1.0}]}",N
+9252,천둥 날개,active,monster,번개,일반,"전체 130% 번개 데미지, 감전 2턴",몬스터 전용,전체/광역,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 1.0}]}",N
+9253,혼돈 파동,active,monster,무속성,일반,"120% 데미지, 랜덤 디버프 1개",몬스터 전용,디버프,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 1.0}]}",N
+9254,공포의 외침,active,monster,무속성,일반,"전체 100% 데미지, 공포 1턴 (행동 불가)",몬스터 전용,공포/전체/광역,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 1.0}]}",N
+9255,시간 왜곡 펀치,active,monster,무속성,일반,"180% 데미지, 다음 턴 속도 -50%",몬스터 전용,디버프,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 1.0}]}",N
+9256,역설의 역전,active,monster,무속성,일반,"150% 데미지, 대상의 버프/디버프 효과 반전",몬스터 전용,,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 1.0}]}",N
+9257,무질서의 발톱,active,monster,무속성,일반,"220% 데미지, 대상 스탯 -10% (3턴)",몬스터 전용,디버프,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 1.0}]}",N
+9258,존재 부정,active,monster,무속성,일반,"180% 데미지, 버프 1개 제거",몬스터 전용,,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 1.0}]}",N
+9259,눈부신 섬광,active,monster,수속성,일반,"전체 150% 데미지, 실명 2턴 (명중률 -30%)",몬스터 전용,실명/전체/광역,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 1.0}]}",N
+9260,촉수 휩쓸기,active,monster,수속성,일반,"3회 각 70% 데미지, 랜덤 대상",몬스터 전용,,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 1.0}]}",N
+9261,심해압,active,monster,수속성,일반,"200% 데미지, 둔화 3턴",몬스터 전용,둔화,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 1.0}]}",N
+9262,정수 흡수,active,monster,무속성,일반,"250% 데미지, 피해량의 30% 회복",몬스터 전용,회복,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 1.0}]}",N
+9263,원시의 일격,active,monster,무속성,일반,"220% 데미지, 기절 1턴 (20% 확률)",몬스터 전용,기절,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 1.0}]}",N
+9264,마법 미사일,active,monster,무속성,일반,"5회 각 50% 마법 데미지, 랜덤 대상",몬스터 전용,,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 1.0}]}",N
+9265,레이저 스캔,active,monster,무속성,일반,"전체 150% 데미지, 회피 불가",몬스터 전용,전체/광역,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 1.0}]}",N
+9266,망각의 저주,active,monster,암흑,일반,"180% 암흑 데미지, 스킬 봉인 2턴",몬스터 전용,저주,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 1.0}]}",N
+9267,감시의 시선,active,monster,무속성,일반,"170% 데미지, 회피율 -30% (3턴)",몬스터 전용,디버프,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 1.0}]}",N
+9268,수호의 방벽,active,monster,무속성,일반,"150% 데미지, 자신 방어력 +20% (2턴)",몬스터 전용,버프,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 1.0}]}",N
+9269,시련의 불꽃,active,monster,무속성,일반,"전체 160% 데미지, 랜덤 속성",몬스터 전용,전체/광역,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 1.0}]}",N
+9270,불안정 폭발,active,monster,무속성,일반,"150~300% 랜덤 데미지, 자신도 피해",몬스터 전용,,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 1.0}]}",N
+9271,붕괴의 파동,active,monster,무속성,일반,"전체 200% 데미지, 모든 스탯 -15% (2턴)",몬스터 전용,디버프/전체/광역,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 1.0}]}",N
+9272,혼돈의 화신,active,monster,무속성,일반,"220% 데미지, 스탯 랜덤 ±20% 변동",몬스터 전용,,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 1.0}]}",N
+9273,초월의 광선,active,monster,무속성,일반,"전체 250% 데미지, 모든 디버프 제거 (자신)",몬스터 전용,전체/광역,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 1.0}]}",N
+9274,한계 파쇄,active,monster,무속성,일반,"300% 데미지, 자신 HP 20% 소모, 다음 턴 공격력 +50%",몬스터 전용,버프,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 1.0}]}",N
+9275,천상의 일격,active,monster,신성,일반,"280% 신성 데미지, 암흑 속성에 2배",몬스터 전용,,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 1.0}]}",N
+9276,성스러운 검격,active,monster,신성,일반,"300% 신성 데미지, 치명타 확률 +30%",몬스터 전용,,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 1.0}]}",N
+9277,신성 파괴,active,monster,암흑,일반,"320% 암흑 데미지, 신성 속성에 2배, 버프 1개 제거",몬스터 전용,,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 1.0}]}",N
+9278,창조의 섬광,active,monster,무속성,일반,"전체 350% 데미지, 자신 HP 10% 회복",몬스터 전용,전체/광역/회복,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 1.0}]}",N
+9279,기원의 폭발,active,monster,무속성,일반,"전체 380% 데미지, 버프 모두 제거",몬스터 전용,전체/광역,"{""components"": [{""tag"": ""attack"", ""target"": ""single"", ""multiplier"": 1.0}]}",N

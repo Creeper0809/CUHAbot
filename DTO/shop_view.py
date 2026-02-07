@@ -12,6 +12,7 @@ from config import EmbedColor
 from models import User
 from service.shop_service import ShopService, ShopItem, ShopItemType
 from exceptions import InsufficientGoldError, ItemNotFoundError, SkillNotFoundError
+from utility.grade_display import format_item_name, format_skill_name
 
 
 class ShopItemDropdown(discord.ui.Select):
@@ -24,9 +25,15 @@ class ShopItemDropdown(discord.ui.Select):
             affordable = "✅" if user_gold >= item.price else "❌"
             type_emoji = self._get_type_emoji(item.item_type)
 
+            # 등급별 색상 적용
+            if item.item_type == ShopItemType.SKILL:
+                formatted_name = format_skill_name(item.name, item.grade_id)
+            else:
+                formatted_name = format_item_name(item.name, item.grade_id)
+
             options.append(
                 discord.SelectOption(
-                    label=f"{type_emoji} {item.name}",
+                    label=f"{type_emoji} {formatted_name}",
                     description=f"{affordable} {item.price}G - {item.description[:30]}",
                     value=str(item.id)
                 )
@@ -255,7 +262,7 @@ class ShopView(discord.ui.View):
 
         if skill_items:
             skill_text = "\n".join([
-                f"✨ **{i.name}** - {i.price}G"
+                f"✨ **{format_skill_name(i.name, i.grade_id)}** - {i.price}G"
                 for i in skill_items[:5]
             ])
             embed.add_field(
@@ -266,7 +273,7 @@ class ShopView(discord.ui.View):
 
         if equip_items:
             equip_text = "\n".join([
-                f"⚔️ **{i.name}** - {i.price}G"
+                f"⚔️ **{format_item_name(i.name, i.grade_id)}** - {i.price}G"
                 for i in equip_items[:5]
             ])
             embed.add_field(
@@ -277,7 +284,7 @@ class ShopView(discord.ui.View):
 
         if consumable_items:
             consumable_text = "\n".join([
-                f"🧪 **{i.name}** - {i.price}G"
+                f"🧪 **{format_item_name(i.name, i.grade_id)}** - {i.price}G"
                 for i in consumable_items[:5]
             ])
             embed.add_field(
@@ -330,9 +337,15 @@ class ShopSelectView(discord.ui.View):
             color=EmbedColor.DEFAULT
         )
         if self.selected_item:
+            # 등급별 색상 적용
+            if self.selected_item.item_type == ShopItemType.SKILL:
+                formatted_name = format_skill_name(self.selected_item.name, self.selected_item.grade_id)
+            else:
+                formatted_name = format_item_name(self.selected_item.name, self.selected_item.grade_id)
+
             embed.add_field(
                 name="선택됨",
-                value=f"**{self.selected_item.name}**",
+                value=f"**{formatted_name}**",
                 inline=False
             )
             total = self.selected_item.price * self.quantity

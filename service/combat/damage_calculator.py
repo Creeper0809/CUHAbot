@@ -47,11 +47,12 @@ class DamageCalculator:
         critical_rate: float = DAMAGE.DEFAULT_CRITICAL_RATE,
         critical_multiplier: float = DAMAGE.CRITICAL_MULTIPLIER,
         force_critical: bool = False,
+        attribute_multiplier: float = 1.0,
     ) -> DamageResult:
         """
         물리 데미지 계산
 
-        공식: (Attack * skill_multiplier) - (Defense * (1 - armor_pen) * PHYSICAL_DEFENSE_RATIO)
+        공식: (Attack * skill_multiplier * attribute_multiplier) - (Defense * (1 - armor_pen) * PHYSICAL_DEFENSE_RATIO)
 
         Args:
             attack: 공격자의 공격력
@@ -61,6 +62,7 @@ class DamageCalculator:
             critical_rate: 치명타 확률 (0.0 ~ 1.0)
             critical_multiplier: 치명타 데미지 배율
             force_critical: 강제 치명타 여부
+            attribute_multiplier: 속성 배율 (상성 + 피해 증가 효과 포함)
 
         Returns:
             DamageResult: 계산 결과
@@ -68,8 +70,8 @@ class DamageCalculator:
         # 방어력 무시 비율 제한
         actual_armor_pen = min(armor_penetration, DAMAGE.MAX_ARMOR_PENETRATION)
 
-        # 기본 데미지 계산
-        raw_damage = int(attack * skill_multiplier)
+        # 기본 데미지 계산 (속성 배율 적용)
+        raw_damage = int(attack * skill_multiplier * attribute_multiplier)
 
         # 방어력 적용
         effective_defense = defense * (1 - actual_armor_pen)
@@ -108,11 +110,12 @@ class DamageCalculator:
         critical_rate: float = DAMAGE.DEFAULT_CRITICAL_RATE,
         critical_multiplier: float = DAMAGE.CRITICAL_MULTIPLIER,
         force_critical: bool = False,
+        attribute_multiplier: float = 1.0,
     ) -> DamageResult:
         """
         마법 데미지 계산
 
-        공식: (AP_Attack * skill_multiplier) - (AP_Defense * (1 - magic_pen) * MAGICAL_DEFENSE_RATIO)
+        공식: (AP_Attack * skill_multiplier * attribute_multiplier) - (AP_Defense * (1 - magic_pen) * MAGICAL_DEFENSE_RATIO)
 
         Args:
             ap_attack: 공격자의 마법 공격력
@@ -122,6 +125,7 @@ class DamageCalculator:
             critical_rate: 치명타 확률 (0.0 ~ 1.0)
             critical_multiplier: 치명타 데미지 배율
             force_critical: 강제 치명타 여부
+            attribute_multiplier: 속성 배율 (상성 + 피해 증가 효과 포함)
 
         Returns:
             DamageResult: 계산 결과
@@ -129,8 +133,8 @@ class DamageCalculator:
         # 마법 관통 비율 제한
         actual_magic_pen = min(magic_penetration, DAMAGE.MAX_ARMOR_PENETRATION)
 
-        # 기본 데미지 계산
-        raw_damage = int(ap_attack * skill_multiplier)
+        # 기본 데미지 계산 (속성 배율 적용)
+        raw_damage = int(ap_attack * skill_multiplier * attribute_multiplier)
 
         # 마법 방어력 적용
         effective_defense = ap_defense * (1 - actual_magic_pen)

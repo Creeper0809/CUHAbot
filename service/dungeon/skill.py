@@ -24,6 +24,11 @@ class Skill:
         return self._skill_model.id
 
     @property
+    def attribute(self) -> str:
+        """스킬 속성"""
+        return getattr(self._skill_model, 'attribute', '무속성')
+
+    @property
     def components(self) -> list:
         """스킬 컴포넌트 목록"""
         return self._components

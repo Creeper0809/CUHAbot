@@ -136,7 +136,7 @@ class UserService:
             기본 스탯 딕셔너리
         """
         if level <= 50:
-            hp = 100 + (level * 20)
+            hp = 300 + (level * 20)
             attack = 10 + (level * 2)
             ap_attack = 5 + int(level * 1.5)
             ad_defense = 5 + level
@@ -145,7 +145,7 @@ class UserService:
             # 고레벨 공식 (Lv.51+)
             base_level = 50
             over_level = level - 50
-            hp = (100 + (base_level * 20) +
+            hp = (300 + (base_level * 20) +
                   (over_level * 30) +
                   int(over_level ** 2 / 10))
             attack = (10 + (base_level * 2) +
@@ -253,27 +253,35 @@ class UserService:
             stats = await UserStats.create(user=user)
 
         stats.experience += amount
+        user.exp += amount  # User.exp도 함께 업데이트
         old_level = user.level
         new_level = old_level
 
         # 레벨업 체크
         while stats.experience >= UserService._get_required_exp(new_level + 1):
-            stats.experience -= UserService._get_required_exp(new_level + 1)
+            required_exp = UserService._get_required_exp(new_level + 1)
+            stats.experience -= required_exp
             new_level += 1
-            stats.stat_points += USER_STATS.STAT_POINTS_PER_LEVEL
+            user.stat_points += USER_STATS.STAT_POINTS_PER_LEVEL
+
+        # 경험치가 음수가 되지 않도록 보호
+        if stats.experience < 0:
+            stats.experience = 0
 
         leveled_up = new_level > old_level
 
         if leveled_up:
             user.level = new_level
             base_stats = UserService.calculate_base_stats(new_level)
+            old_max_hp = UserService.calculate_base_stats(old_level)["hp"]
             user.hp = base_stats["hp"]
             user.attack = base_stats["attack"]
-            # HP 비율 유지
-            hp_ratio = user.now_hp / UserService.calculate_base_stats(old_level)["hp"]
+            # HP 비율 유지 (단, 100%를 초과하지 않도록)
+            hp_ratio = min(user.now_hp / old_max_hp, 1.0) if old_max_hp > 0 else 1.0
             user.now_hp = int(base_stats["hp"] * hp_ratio)
-            await user.save()
 
+        # User 저장 (레벨업 여부와 관계없이)
+        await user.save()
         await stats.save()
 
         return {

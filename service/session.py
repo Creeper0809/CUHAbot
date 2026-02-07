@@ -12,6 +12,7 @@ from typing import Optional, TYPE_CHECKING
 if TYPE_CHECKING:
     from models import Dungeon, User
     from discord import Message
+    from service.dungeon.combat_context import CombatContext
 
 logger = logging.getLogger(__name__)
 
@@ -78,6 +79,10 @@ class DungeonSession:
 
     # 음성 채널 상태
     voice_channel_id: Optional[int] = None
+
+    # 전투 컨텍스트 (1:N 전투 지원)
+    combat_context: Optional["CombatContext"] = None
+    """현재 전투 중인 몬스터 그룹 (전투 중에만 존재)"""
 
     def is_dungeon_cleared(self) -> bool:
         """던전 클리어 조건 확인"""

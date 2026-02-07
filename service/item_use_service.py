@@ -159,9 +159,11 @@ class ItemUseService:
                 item_name=item.name
             )
 
-        chest_grade = ItemUseService._get_chest_grade(item.id)
-        if chest_grade:
-            return await ItemUseService._use_chest_consumable(user, inv_item, chest_grade)
+        # 새 박스 시스템 체크
+        from config import BOX_CONFIGS
+        box_config = BOX_CONFIGS.get(item.id)
+        if box_config:
+            return await ItemUseService._use_box_consumable(user, inv_item, box_config)
 
         # 효과 적용
         effect_desc = await ItemUseService._apply_consume_effect(user, consume)
@@ -201,15 +203,6 @@ class ItemUseService:
             effects.append("효과 없음")
 
         return ", ".join(effects)
-
-    @staticmethod
-    def _get_chest_grade(item_id: int) -> Optional[str]:
-        chest_map = {
-            DROP.CHEST_ITEM_NORMAL_ID: "normal",
-            DROP.CHEST_ITEM_SILVER_ID: "silver",
-            DROP.CHEST_ITEM_GOLD_ID: "gold",
-        }
-        return chest_map.get(item_id)
 
     @staticmethod
     def _calculate_chest_gold(user_level: int, chest_grade: str) -> int:
@@ -265,63 +258,184 @@ class ItemUseService:
         return random.choice(candidates)
 
     @staticmethod
-    async def _use_chest_consumable(
+    async def _pick_skill_by_grade(grade_name: str) -> Optional["Skill_Model"]:
+        """
+        등급별 스킬 무작위 선택
+
+        Args:
+            grade_name: 등급 이름 ("D", "C", "B", "A", "S" 등)
+
+        Returns:
+            Skill_Model 또는 None
+        """
+        from models import Skill_Model
+
+        grade = await Grade.get_or_none(name=grade_name)
+        if not grade:
+            return None
+
+        # 몬스터 전용 스킬 제외 (ID 9000번대)
+        candidates = await Skill_Model.filter(grade=grade.id, id__lt=9000)
+
+        if not candidates:
+            return None
+
+        return random.choice(candidates)
+
+    @staticmethod
+    async def _roll_item_grade_by_table(table_id: int) -> Optional[str]:
+        """
+        특정 테이블 ID로 등급 롤
+
+        Args:
+            table_id: ItemGradeProbability.cheat_id
+
+        Returns:
+            등급 이름 또는 None
+        """
+        grade_probs = await ItemGradeProbability.filter(cheat_id=table_id).all()
+        if not grade_probs:
+            return None
+
+        grades = []
+        weights = []
+        for entry in grade_probs:
+            if entry.grade is None:
+                continue
+            grade_value = entry.grade.value if hasattr(entry.grade, "value") else str(entry.grade)
+            grades.append(grade_value)
+            weights.append(float(entry.probability or 0))
+
+        if grades and sum(weights) > 0:
+            return random.choices(grades, weights=weights, k=1)[0]
+
+        return None
+
+    @staticmethod
+    async def _use_box_consumable(
         user: User,
         inv_item: UserInventory,
-        chest_grade: str
+        box_config: "BoxConfig"
     ) -> ItemUseResult:
+        """
+        상자 아이템 사용 (새로운 박스 시스템)
+
+        Args:
+            user: 사용자
+            inv_item: 인벤토리 아이템
+            box_config: 상자 설정
+
+        Returns:
+            사용 결과
+        """
+        from config import BoxRewardType
+        from service.skill_ownership_service import SkillOwnershipService
+
         item = inv_item.item
         stats = await UserStats.get_or_none(user=user)
         if not stats:
             stats = await UserStats.create(user=user)
 
-        if random.random() < DROP.CHEST_GOLD_RATE:
-            gold_gained = ItemUseService._calculate_chest_gold(user.level, chest_grade)
+        # 설정 검증
+        if not box_config.validate():
+            return ItemUseResult(
+                success=False,
+                message="상자 설정이 올바르지 않습니다.",
+                item_name=item.name
+            )
+
+        # 보상 타입 선택 (확률 기반)
+        reward_types = [r.reward_type for r in box_config.rewards]
+        weights = [r.probability for r in box_config.rewards]
+        selected_type = random.choices(reward_types, weights=weights, k=1)[0]
+
+        # 선택된 보상 설정 찾기
+        reward_config = next(
+            r for r in box_config.rewards if r.reward_type == selected_type
+        )
+
+        effect_desc = ""
+
+        # 보상 타입별 처리
+        if selected_type == BoxRewardType.GOLD:
+            # 골드 지급
+            gold_gained = ItemUseService._calculate_chest_gold(user.level, "normal")
+            gold_gained = int(gold_gained * box_config.gold_multiplier)
             stats.gold += gold_gained
             await stats.save()
+            effect_desc = f"골드 +{gold_gained}"
 
-            inv_item.quantity -= 1
-            if inv_item.quantity <= 0:
-                await inv_item.delete()
+        elif selected_type == BoxRewardType.EQUIPMENT:
+            # 등급 결정
+            if reward_config.guaranteed_grade:
+                grade_name = reward_config.guaranteed_grade
+            elif reward_config.grade_table_id:
+                grade_name = await ItemUseService._roll_item_grade_by_table(
+                    reward_config.grade_table_id
+                )
             else:
-                await inv_item.save()
+                grade_name = await ItemUseService._roll_item_grade("normal")
 
-            logger.info(
-                f"User {user.id} opened chest {item.id} ({item.name}): gold={gold_gained}"
-            )
+            if not grade_name:
+                return ItemUseResult(
+                    success=False,
+                    message="등급 판정에 실패했습니다.",
+                    item_name=item.name
+                )
 
-            return ItemUseResult(
-                success=True,
-                message=f"'{item.name}'을(를) 열었습니다!",
-                item_name=item.name,
-                effect_description=f"골드 +{gold_gained}"
-            )
+            # 장비 선택
+            equipment = await ItemUseService._pick_equipment_by_grade(grade_name)
+            if not equipment or not equipment.item:
+                return ItemUseResult(
+                    success=False,
+                    message="상자에서 나올 장비를 찾을 수 없습니다.",
+                    item_name=item.name
+                )
 
-        grade_name = await ItemUseService._roll_item_grade(chest_grade)
-        if not grade_name:
-            return ItemUseResult(
-                success=False,
-                message="상자 등급 판정에 실패했습니다.",
-                item_name=item.name
-            )
+            # 인벤토리 추가
+            try:
+                await InventoryService.add_item(user, equipment.item.id, 1)
+            except InventoryFullError:
+                return ItemUseResult(
+                    success=False,
+                    message="인벤토리가 가득 차서 상자를 열 수 없습니다.",
+                    item_name=item.name
+                )
 
-        equipment = await ItemUseService._pick_equipment_by_grade(grade_name)
-        if not equipment or not equipment.item:
-            return ItemUseResult(
-                success=False,
-                message="상자에서 나올 장비를 찾을 수 없습니다.",
-                item_name=item.name
-            )
+            effect_desc = f"장비 '{equipment.item.name}' ({grade_name}등급) 획득"
 
-        try:
-            await InventoryService.add_item(user, equipment.item.id, 1)
-        except InventoryFullError:
-            return ItemUseResult(
-                success=False,
-                message="인벤토리가 가득 차서 상자를 열 수 없습니다.",
-                item_name=item.name
-            )
+        elif selected_type == BoxRewardType.SKILL:
+            # 등급 결정
+            if reward_config.guaranteed_grade:
+                grade_name = reward_config.guaranteed_grade
+            elif reward_config.grade_table_id:
+                grade_name = await ItemUseService._roll_item_grade_by_table(
+                    reward_config.grade_table_id
+                )
+            else:
+                grade_name = await ItemUseService._roll_item_grade("normal")
 
+            if not grade_name:
+                return ItemUseResult(
+                    success=False,
+                    message="등급 판정에 실패했습니다.",
+                    item_name=item.name
+                )
+
+            # 스킬 선택
+            skill = await ItemUseService._pick_skill_by_grade(grade_name)
+            if not skill:
+                return ItemUseResult(
+                    success=False,
+                    message="상자에서 나올 스킬을 찾을 수 없습니다.",
+                    item_name=item.name
+                )
+
+            # 스킬 추가
+            await SkillOwnershipService.add_skill(user, skill.id, quantity=1)
+            effect_desc = f"스킬 '{skill.name}' ({grade_name}등급) 획득"
+
+        # 상자 소모
         inv_item.quantity -= 1
         if inv_item.quantity <= 0:
             await inv_item.delete()
@@ -329,12 +443,13 @@ class ItemUseService:
             await inv_item.save()
 
         logger.info(
-            f"User {user.id} opened chest {item.id} ({item.name}): item={equipment.item.id}"
+            f"User {user.id} opened box {item.id} ({item.name}): "
+            f"{selected_type.value} - {effect_desc}"
         )
 
         return ItemUseResult(
             success=True,
             message=f"'{item.name}'을(를) 열었습니다!",
             item_name=item.name,
-            effect_description=f"장비 '{equipment.item.name}' 획득"
+            effect_description=effect_desc
         )

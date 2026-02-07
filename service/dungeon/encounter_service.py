@@ -91,7 +91,7 @@ class EncounterFactory:
             # 보물상자 등급 랜덤
             grade = random.choices(
                 ["normal", "silver", "gold"],
-                weights=[70, 25, 5],
+                weights=[85, 14, 1],
                 k=1
             )[0]
             return TreasureEncounter(chest_grade=grade)

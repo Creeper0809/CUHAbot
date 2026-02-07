@@ -46,6 +46,7 @@ class ShopItem:
     item_type: ShopItemType
     # 아이템일 경우 Item ID, 스킬일 경우 Skill ID
     target_id: int
+    grade_id: Optional[int] = None  # 등급 ID (1=D, 2=C, 3=B, 4=A, 5=S)
 
 
 @dataclass
@@ -245,7 +246,8 @@ class ShopService:
                     description=item.description or "장비",
                     price=item.cost or 100,
                     item_type=ShopItemType.EQUIPMENT,
-                    target_id=item.id
+                    target_id=item.id,
+                    grade_id=getattr(item, 'grade_id', chosen.grade)
                 )
             )
 
@@ -265,7 +267,8 @@ class ShopService:
                         description=item.description or "장비",
                         price=item.cost or 100,
                         item_type=ShopItemType.EQUIPMENT,
-                        target_id=item.id
+                        target_id=item.id,
+                        grade_id=getattr(item, 'grade_id', chosen.grade)
                     )
                 )
 
@@ -319,7 +322,8 @@ class ShopService:
                     description=chosen.description or "스킬",
                     price=price,
                     item_type=ShopItemType.SKILL,
-                    target_id=chosen.id
+                    target_id=chosen.id,
+                    grade_id=chosen.grade
                 )
             )
 
@@ -338,7 +342,8 @@ class ShopService:
                         description=chosen.description or "스킬",
                         price=price,
                         item_type=ShopItemType.SKILL,
-                        target_id=chosen.id
+                        target_id=chosen.id,
+                        grade_id=chosen.grade
                     )
                 )
 

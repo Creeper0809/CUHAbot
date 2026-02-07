@@ -5,7 +5,8 @@ CUHABot 게임 설정 상수
 설정 변경 시 이 파일만 수정하면 됩니다.
 """
 from dataclasses import dataclass
-from enum import IntEnum
+from enum import IntEnum, Enum
+from typing import Optional, Dict
 
 
 # =============================================================================
@@ -34,12 +35,28 @@ class CombatConfig:
     EVENT_QUEUE_MAX_LENGTH: int = 5
     """이벤트 큐 최대 길이"""
 
-    # 턴 순서 계산
+    # 턴 순서 계산 (1:1 전투용, 레거시)
     SPEED_ADVANTAGE_CAP: int = 50
     """속도 우위 최대값 (±50)"""
 
     BASE_TURN_PROBABILITY: int = 50
     """기본 선공 확률 (%)"""
+
+    # 행동 게이지 시스템 (1:N 전투용)
+    ACTION_GAUGE_MAX: int = 100
+    """행동 게이지 최대값"""
+
+    ACTION_GAUGE_BASE_FILL: int = 10
+    """기본 게이지 충전량 (속도 10 기준)"""
+
+    ACTION_GAUGE_SPEED_MULTIPLIER: float = 1.0
+    """속도당 게이지 충전 배율 (충전량 = 속도 × 배율)"""
+
+    ACTION_GAUGE_COST: int = 100
+    """행동 후 게이지 소모량"""
+
+    MAX_ACTIONS_PER_LOOP: int = 100
+    """무한루프 방지용 최대 행동 횟수"""
 
     # 딜레이 (초)
     MAIN_LOOP_DELAY: float = 5.0
@@ -100,8 +117,37 @@ DAMAGE = DamageConfig()
 
 
 # =============================================================================
-# 속성 상성 상수
+# 속성 타입 및 상성
 # =============================================================================
+
+
+class AttributeType(str, Enum):
+    """속성 타입"""
+    NONE = "무속성"
+    FIRE = "화염"
+    ICE = "냉기"
+    LIGHTNING = "번개"
+    WATER = "수속성"
+    HOLY = "신성"
+    DARK = "암흑"
+
+
+# 속성 상성표: key가 value에 강함
+# Fire→Ice→Lightning→Water→Fire (순환), Holy↔Dark (상호)
+ATTRIBUTE_ADVANTAGE: dict[AttributeType, AttributeType] = {
+    AttributeType.FIRE: AttributeType.ICE,
+    AttributeType.ICE: AttributeType.LIGHTNING,
+    AttributeType.LIGHTNING: AttributeType.WATER,
+    AttributeType.WATER: AttributeType.FIRE,
+    AttributeType.HOLY: AttributeType.DARK,
+    AttributeType.DARK: AttributeType.HOLY,
+}
+
+# 역방향 (약점 조회용)
+ATTRIBUTE_DISADVANTAGE: dict[AttributeType, AttributeType] = {
+    v: k for k, v in ATTRIBUTE_ADVANTAGE.items()
+}
+
 
 @dataclass(frozen=True)
 class AttributeConfig:
@@ -124,6 +170,40 @@ class AttributeConfig:
 
 
 ATTRIBUTE = AttributeConfig()
+
+
+def get_attribute_multiplier(attacker_attr: str, defender_attr: str) -> float:
+    """
+    속성 상성에 따른 데미지 배율 계산
+
+    Args:
+        attacker_attr: 공격 스킬의 속성 (AttributeType.value 문자열)
+        defender_attr: 방어자의 속성 (AttributeType.value 문자열)
+
+    Returns:
+        데미지 배율
+    """
+    if attacker_attr == AttributeType.NONE.value or defender_attr == AttributeType.NONE.value:
+        return ATTRIBUTE.NEUTRAL_MULTIPLIER
+
+    if attacker_attr == defender_attr:
+        return ATTRIBUTE.SAME_ELEMENT_MULTIPLIER
+
+    try:
+        atk_type = AttributeType(attacker_attr)
+        def_type = AttributeType(defender_attr)
+    except ValueError:
+        return ATTRIBUTE.NEUTRAL_MULTIPLIER
+
+    # 강점 체크
+    if ATTRIBUTE_ADVANTAGE.get(atk_type) == def_type:
+        return ATTRIBUTE.ADVANTAGE_MULTIPLIER
+
+    # 약점 체크
+    if ATTRIBUTE_DISADVANTAGE.get(atk_type) == def_type:
+        return ATTRIBUTE.DISADVANTAGE_MULTIPLIER
+
+    return ATTRIBUTE.NEUTRAL_MULTIPLIER
 
 
 # =============================================================================
@@ -247,6 +327,29 @@ class DungeonConfig:
     BOSS_SPAWN_RATE: float = 0.05
     """보스 몬스터 기본 등장 확률 (스폰 테이블 내 존재 시)"""
 
+    BOSS_SPAWN_PROGRESS_THRESHOLD: float = 0.9
+    """보스 등장 가능 진행도 (90% 이상)"""
+
+    BOSS_SPAWN_RATE_AT_END: float = 0.1
+    """던전 마지막(90% 이상) 진행도에서 보스 등장 확률 (10%)"""
+
+    # 그룹 전투 설정
+    GROUP_SPAWN_RATE: float = 0.1
+    """몬스터 그룹 등장 확률 (10%)"""
+
+    MAX_GROUP_SIZE: int = 3
+    """최대 그룹 크기 (1~3마리)"""
+
+    # 그룹 전투 보너스
+    GROUP_EXP_BONUS: float = 1.2
+    """그룹 처치 시 경험치 보너스 (+20%)"""
+
+    GROUP_GOLD_BONUS: float = 1.1
+    """그룹 처치 시 골드 보너스 (+10%)"""
+
+    MIN_GROUP_SIZE: int = 1
+    """최소 그룹 크기"""
+
 
 DUNGEON = DungeonConfig()
 
@@ -276,31 +379,200 @@ class DropConfig:
     BOSS_DROP_MULTIPLIER: float = 10.0
     """보스 몬스터 드롭률 배율"""
 
-    # 상자 드롭
-    CHEST_DROP_RATE: float = 0.2
-    """몬스터 처치 시 상자 드롭 확률"""
-
-    CHEST_GOLD_RATE: float = 0.85
-    """상자에서 골드가 나올 확률"""
-
-    CHEST_GRADE_WEIGHTS: tuple[int, int, int] = (70, 25, 5)
-    """상자 등급 가중치 (normal, silver, gold)"""
-
-    CHEST_ITEM_NORMAL_ID: int = 5901
-    """일반 상자 아이템 ID"""
-
-    CHEST_ITEM_SILVER_ID: int = 5902
-    """실버 상자 아이템 ID"""
-
-    CHEST_ITEM_GOLD_ID: int = 5903
-    """골드 상자 아이템 ID"""
+    # 상자 드롭 (새 시스템)
+    BOX_DROP_RATE: float = 0.2
+    """몬스터 처치 시 상자 드롭 확률 (20%)"""
 
     # 스킬 드롭
     SKILL_DROP_RATE: float = 0.001
     """몬스터 스킬 드롭 확률 (0.1%)"""
 
+    # 보물상자 아이템 ID (인카운터용)
+    CHEST_ITEM_NORMAL_ID: int = 5940
+    """일반 보물상자 아이템 ID (혼합 상자 - 하급)"""
+
+    CHEST_ITEM_SILVER_ID: int = 5941
+    """은 보물상자 아이템 ID (혼합 상자 - 중급)"""
+
+    CHEST_ITEM_GOLD_ID: int = 5942
+    """금 보물상자 아이템 ID (혼합 상자 - 상급)"""
+
 
 DROP = DropConfig()
+
+
+# =============================================================================
+# 상자 시스템 (Box System)
+# =============================================================================
+
+class BoxRewardType(str, Enum):
+    """상자 보상 타입"""
+    GOLD = "gold"
+    EQUIPMENT = "equipment"
+    SKILL = "skill"
+
+
+@dataclass(frozen=True)
+class BoxRewardConfig:
+    """단일 보상 설정"""
+    reward_type: BoxRewardType
+    """보상 타입 (골드/장비/스킬)"""
+
+    probability: float
+    """보상 확률 (0.0~1.0)"""
+
+    guaranteed_grade: Optional[str] = None
+    """확정 등급 ("D", "C", "B", "A", "S" 등)"""
+
+    grade_table_id: Optional[int] = None
+    """등급 확률 테이블 ID (ItemGradeProbability.cheat_id)"""
+
+
+@dataclass(frozen=True)
+class BoxConfig:
+    """상자 설정"""
+    box_id: int
+    """상자 아이템 ID"""
+
+    name: str
+    """상자 이름"""
+
+    rewards: list[BoxRewardConfig]
+    """보상 목록"""
+
+    gold_multiplier: float = 1.0
+    """골드 보상 배율"""
+
+    def validate(self) -> bool:
+        """확률 합계 검증 (합이 ~1.0이어야 함)"""
+        total = sum(r.probability for r in self.rewards)
+        return 0.99 <= total <= 1.01
+
+
+# 상자 설정 레지스트리
+BOX_CONFIGS: Dict[int, BoxConfig] = {
+    # 등급별 장비 상자 (5920-5924)
+    5920: BoxConfig(
+        box_id=5920,
+        name="장비 상자 (D등급)",
+        rewards=[BoxRewardConfig(BoxRewardType.EQUIPMENT, 1.0, guaranteed_grade="D")]
+    ),
+    5921: BoxConfig(
+        box_id=5921,
+        name="장비 상자 (C등급)",
+        rewards=[BoxRewardConfig(BoxRewardType.EQUIPMENT, 1.0, guaranteed_grade="C")]
+    ),
+    5922: BoxConfig(
+        box_id=5922,
+        name="장비 상자 (B등급)",
+        rewards=[BoxRewardConfig(BoxRewardType.EQUIPMENT, 1.0, guaranteed_grade="B")]
+    ),
+    5923: BoxConfig(
+        box_id=5923,
+        name="장비 상자 (A등급)",
+        rewards=[BoxRewardConfig(BoxRewardType.EQUIPMENT, 1.0, guaranteed_grade="A")]
+    ),
+    5924: BoxConfig(
+        box_id=5924,
+        name="장비 상자 (S등급)",
+        rewards=[BoxRewardConfig(BoxRewardType.EQUIPMENT, 1.0, guaranteed_grade="S")]
+    ),
+
+    # 등급별 스킬 상자 (5930-5934)
+    5930: BoxConfig(
+        box_id=5930,
+        name="스킬 상자 (D등급)",
+        rewards=[BoxRewardConfig(BoxRewardType.SKILL, 1.0, guaranteed_grade="D")]
+    ),
+    5931: BoxConfig(
+        box_id=5931,
+        name="스킬 상자 (C등급)",
+        rewards=[BoxRewardConfig(BoxRewardType.SKILL, 1.0, guaranteed_grade="C")]
+    ),
+    5932: BoxConfig(
+        box_id=5932,
+        name="스킬 상자 (B등급)",
+        rewards=[BoxRewardConfig(BoxRewardType.SKILL, 1.0, guaranteed_grade="B")]
+    ),
+    5933: BoxConfig(
+        box_id=5933,
+        name="스킬 상자 (A등급)",
+        rewards=[BoxRewardConfig(BoxRewardType.SKILL, 1.0, guaranteed_grade="A")]
+    ),
+    5934: BoxConfig(
+        box_id=5934,
+        name="스킬 상자 (S등급)",
+        rewards=[BoxRewardConfig(BoxRewardType.SKILL, 1.0, guaranteed_grade="S")]
+    ),
+
+    # 혼합 상자 (5940-5943)
+    5940: BoxConfig(
+        box_id=5940,
+        name="혼합 상자 (하급)",
+        rewards=[
+            BoxRewardConfig(BoxRewardType.GOLD, 0.5),
+            BoxRewardConfig(BoxRewardType.EQUIPMENT, 0.3, grade_table_id=4),
+            BoxRewardConfig(BoxRewardType.SKILL, 0.2, grade_table_id=4),
+        ],
+        gold_multiplier=1.0
+    ),
+    5941: BoxConfig(
+        box_id=5941,
+        name="혼합 상자 (중급)",
+        rewards=[
+            BoxRewardConfig(BoxRewardType.GOLD, 0.4),
+            BoxRewardConfig(BoxRewardType.EQUIPMENT, 0.35, grade_table_id=5),
+            BoxRewardConfig(BoxRewardType.SKILL, 0.25, grade_table_id=5),
+        ],
+        gold_multiplier=2.0
+    ),
+    5942: BoxConfig(
+        box_id=5942,
+        name="혼합 상자 (상급)",
+        rewards=[
+            BoxRewardConfig(BoxRewardType.GOLD, 0.3),
+            BoxRewardConfig(BoxRewardType.EQUIPMENT, 0.4, grade_table_id=6),
+            BoxRewardConfig(BoxRewardType.SKILL, 0.3, grade_table_id=6),
+        ],
+        gold_multiplier=3.0
+    ),
+    5943: BoxConfig(
+        box_id=5943,
+        name="혼합 상자 (최상급)",
+        rewards=[
+            BoxRewardConfig(BoxRewardType.GOLD, 0.2),
+            BoxRewardConfig(BoxRewardType.EQUIPMENT, 0.45, grade_table_id=7),
+            BoxRewardConfig(BoxRewardType.SKILL, 0.35, grade_table_id=7),
+        ],
+        gold_multiplier=5.0
+    ),
+
+    # 특수 상자 (5945-5947)
+    5945: BoxConfig(
+        box_id=5945,
+        name="럭키 박스",
+        rewards=[
+            BoxRewardConfig(BoxRewardType.EQUIPMENT, 0.5, grade_table_id=8),
+            BoxRewardConfig(BoxRewardType.SKILL, 0.5, grade_table_id=8),
+        ]
+    ),
+    5946: BoxConfig(
+        box_id=5946,
+        name="신비한 상자",
+        rewards=[
+            BoxRewardConfig(BoxRewardType.EQUIPMENT, 0.5, grade_table_id=9),
+            BoxRewardConfig(BoxRewardType.SKILL, 0.5, grade_table_id=9),
+        ]
+    ),
+    5947: BoxConfig(
+        box_id=5947,
+        name="마스터 상자",
+        rewards=[
+            BoxRewardConfig(BoxRewardType.EQUIPMENT, 0.6, guaranteed_grade="A"),
+            BoxRewardConfig(BoxRewardType.SKILL, 0.4, guaranteed_grade="A"),
+        ]
+    ),
+}
 
 
 # =============================================================================
@@ -424,3 +696,112 @@ class UIConfig:
 
 
 UI = UIConfig()
+
+
+# =============================================================================
+# 키워드 시너지 시스템
+# =============================================================================
+
+@dataclass(frozen=True)
+class SynergyTier:
+    """시너지 단계"""
+    threshold: int
+    effect: str
+    damage_mult: float = 1.0
+    status_duration_bonus: int = 0
+    status_chance_bonus: float = 0.0
+
+
+# 속성 밀도 시너지 (Balance.md 기반)
+ATTRIBUTE_SYNERGIES = {
+    "화염": [
+        SynergyTier(3, "화염 +10%", 1.10),
+        SynergyTier(5, "화염 +20%, 화상+1턴", 1.20, status_duration_bonus=1),
+        SynergyTier(7, "화염 +35%, 화상 확률 +20%", 1.35, status_chance_bonus=0.20),
+        SynergyTier(10, "모든 공격 화상, 화상 2배", 1.50, status_duration_bonus=2),
+    ],
+    "냉기": [
+        SynergyTier(3, "냉기 +10%", 1.10),
+        SynergyTier(5, "냉기 +20%, 동결+10%", 1.20, status_chance_bonus=0.10),
+        SynergyTier(7, "냉기 +35%, 동결 확률 2배", 1.35, status_chance_bonus=0.35),
+        SynergyTier(10, "모든 공격 둔화, 50% 동결", 1.50, status_chance_bonus=0.50),
+    ],
+    "번개": [
+        SynergyTier(3, "번개 +10%", 1.10),
+        SynergyTier(5, "번개 +20%, 연쇄+1", 1.20),
+        SynergyTier(7, "번개 +35%, 마비 +30%", 1.35, status_chance_bonus=0.30),
+        SynergyTier(10, "모든 공격 2체 연쇄", 1.50),
+    ],
+    "수속성": [
+        SynergyTier(3, "회복 +15%", 1.15),
+        SynergyTier(5, "회복 +25%", 1.25),
+        SynergyTier(7, "회복 +40%", 1.40),
+        SynergyTier(10, "힐 2배", 2.0),
+    ],
+    "신성": [
+        SynergyTier(3, "회복 +15%", 1.15),
+        SynergyTier(5, "신성 +20%", 1.20),
+        SynergyTier(7, "회복 +35%", 1.35),
+        SynergyTier(10, "힐 2배", 2.0),
+    ],
+    "암흑": [
+        SynergyTier(3, "흡혈 +5%", 1.0),
+        SynergyTier(5, "흡혈 +15%", 1.0),
+        SynergyTier(7, "흡혈 +25%", 1.0),
+        SynergyTier(10, "흡혈 +40%", 1.0),
+    ],
+    "물리": [
+        SynergyTier(3, "물리 +10%", 1.10),
+        SynergyTier(5, "물리 +20%", 1.20),
+        SynergyTier(7, "물리 +35%", 1.35),
+        SynergyTier(10, "물리 +50%", 1.50),
+    ],
+}
+
+
+@dataclass(frozen=True)
+class ComboSynergy:
+    """복합 시너지"""
+    name: str
+    description: str
+    conditions: dict[str, int]
+    damage_mult: float = 1.0
+    damage_taken_mult: float = 1.0
+    lifesteal_bonus: float = 0.0
+
+
+COMBO_SYNERGIES = [
+    ComboSynergy(
+        "원소 조화",
+        "모든 속성 +15%",
+        {"화염": 2, "냉기": 2, "번개": 2, "수속성": 2},
+        damage_mult=1.15
+    ),
+    ComboSynergy(
+        "빛과 어둠",
+        "데미지 +25%, 흡혈 +10%",
+        {"신성": 4, "암흑": 4},
+        damage_mult=1.25,
+        lifesteal_bonus=0.10
+    ),
+    ComboSynergy(
+        "글래스 캐논",
+        "데미지 +40%, 받는 피해 +20%",
+        {"__attack_count__": 8},
+        damage_mult=1.40,
+        damage_taken_mult=1.20
+    ),
+    ComboSynergy(
+        "철벽 방어",
+        "받는 피해 -25%, 데미지 -30%",
+        {"__heal_buff_count__": 7},
+        damage_mult=0.70,
+        damage_taken_mult=0.75
+    ),
+    ComboSynergy(
+        "버서커",
+        "공격력 +15%",
+        {"__attack_count__": 5, "흡혈": 1},
+        damage_mult=1.15
+    ),
+]

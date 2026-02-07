@@ -6,7 +6,7 @@ from DTO.collection_view import CollectionView
 from DTO.dungeon_select_view import DungeonSelectView
 from DTO.inventory_view import InventoryView
 from DTO.skill_deck_view import SkillDeckView
-from DTO.stat_distribution_view import StatOverviewView
+from DTO.stat_distribution_view import StatOverviewView, StatSelectView
 from DTO.user_info_view import UserInfoView
 from bot import GUILD_ID
 from decorator.account import requires_account
@@ -24,6 +24,7 @@ from service.session import is_in_combat, create_session, end_session
 from service.skill_deck_service import SkillDeckService
 from service.equipment_service import EquipmentService
 from service.skill_ownership_service import SkillOwnershipService
+from service.temp_admin_service import is_admin_or_temp
 from models import User, UserStatEnum
 from service.equipment_service import EquipmentService
 
@@ -108,20 +109,6 @@ class DungeonCommand(commands.Cog):
         finally:
             # 예외 발생 여부와 관계없이 세션 정리 보장
             await end_session(user_id=interaction.user.id)
-
-    @app_commands.command(
-        name="아이템검색",
-        description="아이템 정보를 검색합니다"
-    )
-    @app_commands.guilds(GUILD_ID)
-    @app_commands.describe(item_name="검색할 아이템 이름")
-    async def search_item(self, interaction: discord.Interaction, item_name: str):
-        """아이템 정보 검색"""
-        try:
-            embed = await get_item_info(item_name)
-            await interaction.response.send_message(embed=embed)
-        except ItemNotFoundException as e:
-            await interaction.response.send_message(str(e))
 
     @app_commands.command(
         name="설명",
@@ -267,6 +254,24 @@ class DungeonCommand(commands.Cog):
             for owned in owned_skills
         }
 
+        # 강타(1001)는 항상 사용 가능하도록 추가
+        BASIC_ATTACK_SKILL_ID = 1001
+        if BASIC_ATTACK_SKILL_ID in skill_cache_by_id:
+            basic_skill = skill_cache_by_id[BASIC_ATTACK_SKILL_ID]
+            if basic_skill not in available_skills:
+                available_skills.insert(0, basic_skill)  # 맨 앞에 추가
+            # skill_quantities에 없으면 무제한으로 추가
+            if BASIC_ATTACK_SKILL_ID not in skill_quantities:
+                # 더미 객체 생성 (무제한 수량)
+                from models.user_owned_skill import UserOwnedSkill
+                dummy_owned = UserOwnedSkill(
+                    user=user,
+                    skill_id=BASIC_ATTACK_SKILL_ID,
+                    quantity=999,  # 무제한으로 간주
+                    equipped_count=0
+                )
+                skill_quantities[BASIC_ATTACK_SKILL_ID] = dummy_owned
+
         if not available_skills:
             await interaction.response.send_message(
                 "⚠️ 보유한 스킬이 없습니다.\n"
@@ -288,15 +293,6 @@ class DungeonCommand(commands.Cog):
         embed = view.create_embed()
         await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
         view.message = await interaction.original_response()
-
-        select_view = StatSelectView(
-            discord_user=interaction.user,
-            db_user=user,
-            parent_view=view
-        )
-        select_embed = select_view.create_embed()
-        select_msg = await interaction.followup.send(embed=select_embed, view=select_view, ephemeral=True)
-        select_view.message = select_msg
 
         # 사용자 응답 대기
         await view.wait()
@@ -335,9 +331,8 @@ class DungeonCommand(commands.Cog):
     @app_commands.describe(target="회복시킬 대상 (미지정시 자신)")
     async def heal(self, interaction: discord.Interaction, target: discord.Member = None):
         """관리자용 완전 회복"""
-        # 관리자 체크
-        user: User = await find_account_by_discordid(interaction.user.id)
-        if not user or user.user_role != "admin":
+        # 관리자 체크 (Discord 관리자 또는 임시 어드민)
+        if not is_admin_or_temp(interaction):
             await interaction.response.send_message(
                 "⚠️ 관리자만 사용할 수 있는 명령어입니다.",
                 ephemeral=True
@@ -416,14 +411,26 @@ class DungeonCommand(commands.Cog):
             )
             return
 
-        view = StatOverviewView(
+        # 1번 뷰 (개요)
+        overview_view = StatOverviewView(
             discord_user=interaction.user,
             db_user=user
         )
 
-        embed = view.create_embed()
-        await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
-        view.message = await interaction.original_response()
+        overview_embed = overview_view.create_embed()
+        await interaction.response.send_message(embed=overview_embed, view=overview_view, ephemeral=True)
+        overview_view.message = await interaction.original_response()
+
+        # 2번 뷰 (선택/분배)
+        select_view = StatSelectView(
+            discord_user=interaction.user,
+            db_user=user,
+            parent_view=overview_view
+        )
+
+        select_embed = select_view.create_embed()
+        select_msg = await interaction.followup.send(embed=select_embed, view=select_view, ephemeral=True)
+        select_view.message = select_msg
 
 
     @requires_account()
@@ -445,17 +452,21 @@ class DungeonCommand(commands.Cog):
         # 인벤토리 로드
         inventory = await InventoryService.get_inventory(user)
 
+        # 스킬 로드
+        from service.skill_ownership_service import SkillOwnershipService
+        owned_skills = await SkillOwnershipService.get_all_owned_skills(user)
+
         # View 생성
         view = InventoryView(
             user=interaction.user,
             db_user=user,
-            inventory=list(inventory)
+            inventory=list(inventory),
+            owned_skills=owned_skills
         )
 
         embed = view.create_embed()
         await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
         view.message = await interaction.original_response()
-
 
 
 async def setup(bot):
