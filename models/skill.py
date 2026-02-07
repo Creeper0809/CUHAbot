@@ -8,6 +8,7 @@ class Skill_Model(models.Model):
     name = fields.CharField(max_length=255)
     description = fields.TextField()
     config = fields.JSONField()
+    grade = fields.IntField(null=True)
 
     class Meta:
         table = "skill"

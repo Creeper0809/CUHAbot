@@ -195,7 +195,7 @@ class ShopView(discord.ui.View):
         self.user = user
         self.db_user = db_user
         self.user_gold = user_gold
-        self.shop_items = shop_items or ShopService.get_shop_items()
+        self.shop_items = shop_items or []
         self.message: Optional[discord.Message] = None
 
         # 컴포넌트 추가

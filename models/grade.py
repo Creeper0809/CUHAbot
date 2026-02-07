@@ -4,6 +4,7 @@ class Grade(models.Model):
     id = fields.IntField(pk=True)
     name = fields.CharField(max_length=50, null=True)
     description = fields.CharField(max_length=50, null=True)
+    shop_price = fields.IntField(null=True, default=0)
 
     class Meta:
         table = "grade"

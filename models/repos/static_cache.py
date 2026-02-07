@@ -3,6 +3,7 @@ import logging
 from models import Dungeon, Monster, DungeonSpawn, Item, Skill_Model
 from service.dungeon.skill import Skill
 from service.dungeon.skill_component import get_component_by_tag, skill_component_register
+from service.shop_service import ShopService
 
 logger = logging.getLogger(__name__)
 
@@ -67,6 +68,9 @@ async def load_static_data():
         logger.info(f"Skill {skill.id} ({skill.name}): {len(components)} components loaded")
 
     logger.info(f"Loaded {len(skill_cache_by_id)} skills")
+
+    # Grade 캐시 로딩 (상점 가격 등)
+    await ShopService.load_grade_cache()
 
 
 def _resolve_skill_components(skill_config):

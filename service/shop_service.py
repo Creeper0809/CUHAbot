@@ -22,6 +22,10 @@ from exceptions import (
 from service.skill_ownership_service import SkillOwnershipService
 from service.collection_service import CollectionService
 
+# Grade name → ID 캐시 (load_grade_cache로 초기화)
+_grade_name_to_id: Dict[str, int] = {}
+_grade_price_cache: Dict[int, int] = {}
+
 logger = logging.getLogger(__name__)
 
 
@@ -57,104 +61,33 @@ class PurchaseResult:
 
 class ShopService:
     """상점 서비스"""
-    SKILL_GRADE_MAP: Dict[int, str] = {
-        1: "D",
-        2: "D",
-        3: "C",
-        4: "C",
-        5: "B",
-        101: "C",
-        102: "C",
-        103: "B",
-        104: "B",
-        201: "C",
-        202: "C",
-        203: "B",
-        301: "B",
-        302: "B",
-        303: "A",
-        401: "C",
-        402: "C",
-        403: "B",
-        501: "B",
-        502: "B",
-        503: "A",
-        504: "A",
-        601: "B",
-        602: "B",
-        603: "A",
-        1001: "D",
-        1002: "C",
-        1003: "B",
-        1004: "A",
-        2001: "D",
-        2002: "C",
-        2003: "B",
-        2004: "A",
-        3001: "C",
-        3002: "C",
-        3003: "B",
-    }
 
-    SKILL_GRADE_PRICE: Dict[str, int] = {
-        "D": 500,
-        "C": 800,
-        "B": 1200,
-        "A": 1800,
-        "S": 3000,
-        "SS": 5000,
-        "SSS": 8000,
-        "Mythic": 12000,
-    }
-
-    # 기본 상점 아이템 정의
-    DEFAULT_SHOP_ITEMS: List[ShopItem] = [
-        # 소비 아이템 (포션) - Item ID는 docs/Items.md 기준
-        ShopItem(1, "초급 HP 포션", "HP 100 회복", 50, ShopItemType.CONSUMABLE, 5001),
-        ShopItem(2, "중급 HP 포션", "HP 300 회복", 150, ShopItemType.CONSUMABLE, 5002),
-        ShopItem(3, "고급 HP 포션", "HP 700 회복", 400, ShopItemType.CONSUMABLE, 5003),
-
-        # 무기 - docs/Items.md 기준
-        ShopItem(11, "나무 검", "기본 검 (Attack +5)", 100, ShopItemType.EQUIPMENT, 1001),
-        ShopItem(12, "철검", "튼튼한 검 (Attack +12)", 300, ShopItemType.EQUIPMENT, 1002),
-        ShopItem(13, "강철검", "강철 검 (Attack +25)", 800, ShopItemType.EQUIPMENT, 1003),
-        ShopItem(14, "전투 도끼", "강력한 도끼 (Attack +35)", 1200, ShopItemType.EQUIPMENT, 1103),
-        ShopItem(15, "장궁", "원거리 무기 (Attack +22)", 700, ShopItemType.EQUIPMENT, 1303),
-
-        # 방어구 - 투구
-        ShopItem(21, "천 두건", "기본 투구 (HP +20)", 80, ShopItemType.EQUIPMENT, 2001),
-        ShopItem(22, "가죽 모자", "가죽 투구 (HP +40)", 200, ShopItemType.EQUIPMENT, 2002),
-        ShopItem(23, "철 투구", "철 투구 (HP +80)", 500, ShopItemType.EQUIPMENT, 2003),
-
-        # 방어구 - 갑옷
-        ShopItem(31, "천 옷", "기본 갑옷 (HP +30)", 100, ShopItemType.EQUIPMENT, 2101),
-        ShopItem(32, "가죽 갑옷", "가죽 갑옷 (HP +60)", 250, ShopItemType.EQUIPMENT, 2102),
-        ShopItem(33, "사슬 갑옷", "사슬 갑옷 (HP +120)", 600, ShopItemType.EQUIPMENT, 2103),
-
-        # 방어구 - 장갑
-        ShopItem(41, "천 장갑", "기본 장갑 (Attack +2)", 60, ShopItemType.EQUIPMENT, 2201),
-        ShopItem(42, "가죽 장갑", "가죽 장갑 (Attack +5)", 150, ShopItemType.EQUIPMENT, 2202),
-
-        # 기본 스킬
-        ShopItem(101, "강타", "100% 물리 데미지", 500, ShopItemType.SKILL, 1001),
-        ShopItem(102, "연속 베기", "60% 물리 데미지 x 2회", 800, ShopItemType.SKILL, 1002),
-        ShopItem(103, "급소 찌르기", "120% + 치명타 보너스", 1000, ShopItemType.SKILL, 1003),
-        ShopItem(104, "응급 처치", "HP 15% 회복", 600, ShopItemType.SKILL, 2001),
-        ShopItem(105, "결의", "공격력/방어력 +15%", 1200, ShopItemType.SKILL, 3005),
-    ]
+    DEFAULT_SKILL_PRICE: int = 500
+    """등급 정보가 없는 스킬의 기본 가격"""
 
     @staticmethod
-    def get_shop_items() -> List[ShopItem]:
-        """상점 아이템 목록 반환"""
-        return ShopService.DEFAULT_SHOP_ITEMS.copy()
+    async def load_grade_cache() -> None:
+        """Grade 테이블 캐시 로드 (봇 시작 시 호출)"""
+        global _grade_name_to_id, _grade_price_cache
+        grades = await Grade.all()
+        _grade_name_to_id = {g.name: g.id for g in grades if g.name}
+        _grade_price_cache = {g.id: (g.shop_price or 0) for g in grades}
+        logger.info(f"Grade cache loaded: {len(grades)} grades")
 
     @staticmethod
-    def get_shop_item(shop_item_id: int) -> Optional[ShopItem]:
-        """상점 아이템 조회"""
-        for item in ShopService.DEFAULT_SHOP_ITEMS:
-            if item.id == shop_item_id:
-                return item
-        return None
+    def get_grade_price(grade_id: Optional[int]) -> int:
+        """등급 ID로 상점 가격 조회"""
+        if grade_id is None:
+            return ShopService.DEFAULT_SKILL_PRICE
+        return _grade_price_cache.get(grade_id, ShopService.DEFAULT_SKILL_PRICE)
+
+    @staticmethod
+    async def get_grade_name_by_id(grade_id: Optional[int]) -> str:
+        """등급 ID로 등급 이름 조회"""
+        if grade_id is None:
+            return "D"
+        grade = await Grade.get_or_none(id=grade_id)
+        return grade.name if grade else "D"
 
     @staticmethod
     def get_shop_item_from_list(
@@ -175,6 +108,7 @@ class ShopService:
     @staticmethod
     async def purchase_item(
         user: User,
+        shop_items: List[ShopItem],
         shop_item_id: int,
         quantity: int = 1
     ) -> PurchaseResult:
@@ -183,6 +117,7 @@ class ShopService:
 
         Args:
             user: 구매자
+            shop_items: 현재 상점에 표시된 아이템 목록
             shop_item_id: 상점 아이템 ID
             quantity: 구매 수량
 
@@ -194,7 +129,7 @@ class ShopService:
             ItemNotFoundError: 아이템 없음
             SkillNotFoundError: 스킬 없음
         """
-        shop_item = ShopService.get_shop_item(shop_item_id)
+        shop_item = ShopService.get_shop_item_from_list(shop_items, shop_item_id)
         if not shop_item:
             raise ItemNotFoundError(shop_item_id)
 
@@ -237,20 +172,13 @@ class ShopService:
 
     @staticmethod
     async def _build_potion_items() -> List[ShopItem]:
-        """포션 아이템 고정 표시"""
+        """포션 아이템 고정 표시 (DB 조회)"""
         potion_items = await Item.filter(
             type=ItemType.CONSUME,
             name__contains="포션"
         ).all()
 
         shop_items = []
-        if not potion_items:
-            fallback = [
-                item for item in ShopService.DEFAULT_SHOP_ITEMS
-                if item.item_type == ShopItemType.CONSUMABLE
-            ]
-            return fallback
-
         for item in potion_items:
             shop_items.append(
                 ShopItem(
@@ -341,18 +269,17 @@ class ShopService:
                     )
                 )
 
-        if len(selected) < count:
-            selected.extend(ShopService.DEFAULT_SHOP_ITEMS[:count - len(selected)])
-
         return selected
 
     @staticmethod
     async def _build_random_skill_items(count: int = 5) -> List[ShopItem]:
-        """스킬을 등급 확률에 따라 랜덤 선택"""
+        """스킬을 등급 확률에 따라 랜덤 선택 (DB 조회)"""
+        grade_map = {grade.id: grade.name for grade in await Grade.all()}
         skills = await Skill_Model.all()
+
         skills_by_grade: Dict[str, List[Skill_Model]] = {}
         for skill in skills:
-            grade_name = ShopService.SKILL_GRADE_MAP.get(skill.id, "D")
+            grade_name = grade_map.get(skill.grade, "D") if skill.grade else "D"
             skills_by_grade.setdefault(grade_name, []).append(skill)
 
         grade_weights = [
@@ -369,9 +296,6 @@ class ShopService:
         selected: List[ShopItem] = []
         selected_targets = set()
         attempts = 0
-        all_candidates = []
-        for grade_items in skills_by_grade.values():
-            all_candidates.extend(grade_items)
 
         while len(selected) < count and attempts < 100:
             attempts += 1
@@ -387,39 +311,36 @@ class ShopService:
                 continue
 
             selected_targets.add(chosen.id)
-            grade_name = ShopService.SKILL_GRADE_MAP.get(chosen.id, "D")
+            price = ShopService.get_grade_price(chosen.grade)
             selected.append(
                 ShopItem(
                     id=ShopService._build_shop_item_id("skill", chosen.id),
                     name=chosen.name,
                     description=chosen.description or "스킬",
-                    price=ShopService.SKILL_GRADE_PRICE.get(grade_name, 500),
+                    price=price,
                     item_type=ShopItemType.SKILL,
                     target_id=chosen.id
                 )
             )
 
-        if len(selected) < count and all_candidates:
+        # 부족 시 남은 스킬로 채우기
+        if len(selected) < count:
+            all_candidates = [s for s in skills if s.id not in selected_targets]
             for chosen in all_candidates:
                 if len(selected) >= count:
                     break
-                if chosen.id in selected_targets:
-                    continue
                 selected_targets.add(chosen.id)
-                grade_name = ShopService.SKILL_GRADE_MAP.get(chosen.id, "D")
+                price = ShopService.get_grade_price(chosen.grade)
                 selected.append(
                     ShopItem(
                         id=ShopService._build_shop_item_id("skill", chosen.id),
                         name=chosen.name,
                         description=chosen.description or "스킬",
-                        price=ShopService.SKILL_GRADE_PRICE.get(grade_name, 500),
+                        price=price,
                         item_type=ShopItemType.SKILL,
                         target_id=chosen.id
                     )
                 )
-
-        if len(selected) < count:
-            selected.extend(ShopService.DEFAULT_SHOP_ITEMS[:count - len(selected)])
 
         return selected
 
@@ -547,8 +468,8 @@ class ShopService:
             raise ItemNotFoundError(inventory_id)
 
         # 판매 가격 (기본 가격의 50%)
-        # TODO: Item 모델에 base_price 필드 필요
-        sell_price = 50 * quantity  # 임시 고정 가격
+        base_price = inventory.item.cost or 50
+        sell_price = (base_price // 2) * quantity
 
         # 골드 추가
         user.cuha_point += sell_price
