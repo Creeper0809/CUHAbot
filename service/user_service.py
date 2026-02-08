@@ -8,7 +8,6 @@ from datetime import date
 from typing import Optional
 
 from models import User
-from models.user_stats import UserStats
 from models.user_skill_deck import UserSkillDeck
 from config import USER_STATS, SKILL_DECK_SIZE
 from exceptions import (
@@ -70,9 +69,6 @@ class UserService:
             level=USER_STATS.INITIAL_LEVEL,
             attack=base_stats["attack"]
         )
-
-        # UserStats 생성
-        await UserStats.create(user=user)
 
         # 기본 스킬 덱 초기화
         await UserService._initialize_default_deck(user)
@@ -171,19 +167,6 @@ class UserService:
         }
 
     @staticmethod
-    async def get_user_stats(user: User) -> Optional[UserStats]:
-        """
-        사용자 스탯 조회
-
-        Args:
-            user: 대상 사용자
-
-        Returns:
-            UserStats 객체 또는 None
-        """
-        return await UserStats.get_or_none(user=user)
-
-    @staticmethod
     async def process_attendance(user: User) -> dict:
         """
         출석 체크 처리
@@ -201,38 +184,34 @@ class UserService:
         Raises:
             AlreadyAttendedError: 이미 출석한 경우
         """
-        stats = await UserStats.get_or_none(user=user)
-        if not stats:
-            stats = await UserStats.create(user=user)
-
         today = date.today()
 
         # 이미 출석한 경우
-        if stats.last_attendance == today:
+        if user.last_attendance == today:
             raise AlreadyAttendedError()
 
         # 연속 출석 계산
-        if stats.last_attendance and (today - stats.last_attendance).days == 1:
-            stats.attendance_streak += 1
+        if user.last_attendance and (today - user.last_attendance).days == 1:
+            user.attendance_streak += 1
         else:
-            stats.attendance_streak = 1
+            user.attendance_streak = 1
 
-        stats.last_attendance = today
+        user.last_attendance = today
 
         # 보상 계산 (연속 출석 보너스)
         base_gold = 100
-        streak_bonus = min(stats.attendance_streak, 7) * 50  # 최대 7일 보너스
+        streak_bonus = min(user.attendance_streak, 7) * 50  # 최대 7일 보너스
         total_gold = base_gold + streak_bonus
 
-        stats.gold += total_gold
-        await stats.save()
+        user.gold += total_gold
+        await user.save()
 
-        logger.info(f"User {user.id} attendance: streak={stats.attendance_streak}, gold={total_gold}")
+        logger.info(f"User {user.id} attendance: streak={user.attendance_streak}, gold={total_gold}")
 
         return {
             "success": True,
             "message": f"출석 완료! {total_gold} 골드를 획득했습니다.",
-            "streak": stats.attendance_streak,
+            "streak": user.attendance_streak,
             "gold_earned": total_gold
         }
 
@@ -248,25 +227,20 @@ class UserService:
         Returns:
             레벨업 결과 딕셔너리
         """
-        stats = await UserStats.get_or_none(user=user)
-        if not stats:
-            stats = await UserStats.create(user=user)
-
-        stats.experience += amount
-        user.exp += amount  # User.exp도 함께 업데이트
+        user.exp += amount
         old_level = user.level
         new_level = old_level
 
         # 레벨업 체크
-        while stats.experience >= UserService._get_required_exp(new_level + 1):
+        while user.exp >= UserService._get_required_exp(new_level + 1):
             required_exp = UserService._get_required_exp(new_level + 1)
-            stats.experience -= required_exp
+            user.exp -= required_exp
             new_level += 1
             user.stat_points += USER_STATS.STAT_POINTS_PER_LEVEL
 
         # 경험치가 음수가 되지 않도록 보호
-        if stats.experience < 0:
-            stats.experience = 0
+        if user.exp < 0:
+            user.exp = 0
 
         leveled_up = new_level > old_level
 
@@ -280,16 +254,15 @@ class UserService:
             hp_ratio = min(user.now_hp / old_max_hp, 1.0) if old_max_hp > 0 else 1.0
             user.now_hp = int(base_stats["hp"] * hp_ratio)
 
-        # User 저장 (레벨업 여부와 관계없이)
+        # User 저장
         await user.save()
-        await stats.save()
 
         return {
             "leveled_up": leveled_up,
             "old_level": old_level,
             "new_level": new_level,
             "experience_gained": amount,
-            "current_experience": stats.experience,
+            "current_experience": user.exp,
             "stat_points_gained": (new_level - old_level) * USER_STATS.STAT_POINTS_PER_LEVEL
         }
 

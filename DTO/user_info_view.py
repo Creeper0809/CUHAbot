@@ -7,7 +7,6 @@ import discord
 from typing import Optional, List
 
 from models import User, UserStatEnum
-from models.user_stats import UserStats
 from models.user_equipment import UserEquipment, EquipmentSlot
 from models.user_skill_deck import UserSkillDeck
 from models.repos.static_cache import skill_cache_by_id, item_cache
@@ -26,16 +25,16 @@ class UserInfoView(discord.ui.View):
         self,
         discord_user: discord.User,
         user: User,
-        stats: Optional[UserStats],
         equipment: List[UserEquipment],
         skill_deck: List[int],
+        set_summary: Optional[List] = None,
     ):
         super().__init__(timeout=120)
         self.discord_user = discord_user
         self.user = user
-        self.stats = stats
         self.equipment = equipment
         self.skill_deck = skill_deck
+        self.set_summary = set_summary or []
         self.current_tab = "info"  # info, equipment, skills
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
@@ -104,12 +103,12 @@ class UserInfoView(discord.ui.View):
             inline=True
         )
 
-        # 보조 전투 스탯 (기본값 또는 UserStats에서)
+        # 보조 전투 스탯 (User에서 직접 가져오기)
         # Balance.md 기준 기본값: 명중 90%, 회피 5%, 치명타율 5%, 치명타 배율 150%
-        accuracy = self.stats.accuracy if self.stats else 90
-        evasion = self.stats.evasion if self.stats else 5
-        crit_rate = self.stats.critical_rate if self.stats else 5
-        crit_damage = self.stats.critical_damage if self.stats else 150
+        accuracy = self.user.accuracy
+        evasion = self.user.evasion
+        crit_rate = self.user.critical_rate
+        crit_damage = self.user.critical_damage
 
         embed.add_field(
             name="🎯 전투 보조",
@@ -130,7 +129,7 @@ class UserInfoView(discord.ui.View):
             value=(
                 f"```\n"
                 f"자연회복 : {self.user.hp_regen} HP/분\n"
-                f"골드     : {self.user.cuha_point:,}G\n"
+                f"골드     : {self.user.gold:,}G\n"
                 f"스탯 P   : {self.user.stat_points}P\n"
                 f"```"
             ),
@@ -212,6 +211,20 @@ class UserInfoView(discord.ui.View):
             value="```\n" + "\n".join(right_text) + "\n```",
             inline=True
         )
+
+        # 세트 효과 표시
+        if self.set_summary:
+            set_text = []
+            for set_name, count, effect_descs in self.set_summary:
+                set_text.append(f"✨ {set_name} ({count}개)")
+                for desc in effect_descs:
+                    set_text.append(f"  • {desc}")
+
+            embed.add_field(
+                name="🌟 세트 효과",
+                value="```\n" + "\n".join(set_text) + "\n```",
+                inline=False
+            )
 
         embed.set_footer(text="⬇️ 아래 버튼으로 다른 정보를 확인하세요")
         return embed

@@ -38,7 +38,7 @@ class User(models.Model):
     id = fields.IntField(pk=True)
     discord_id = fields.BigIntField(unique=True)
     username = fields.CharField(max_length=255, null=True)
-    cuha_point = fields.BigIntField(default=0)
+    gold = fields.BigIntField(default=0)
     created_at = fields.DatetimeField(auto_now_add=True)
     user_role = fields.CharField(max_length=255, default="user")
 
@@ -56,6 +56,27 @@ class User(models.Model):
     level = fields.IntField(default=1)
     exp = fields.BigIntField(default=0)  # 현재 경험치
     stat_points = fields.IntField(default=0)  # 분배 가능한 스탯 포인트
+
+    # 보너스 스탯 (스탯 분배로 얻은 영구 스탯)
+    bonus_hp = fields.IntField(default=0)
+    bonus_attack = fields.IntField(default=0)
+    bonus_ap_attack = fields.IntField(default=0)
+    bonus_ad_defense = fields.IntField(default=0)
+    bonus_ap_defense = fields.IntField(default=0)
+    bonus_speed = fields.IntField(default=0)
+
+    # 보조 스탯 (퍼센트 기반)
+    accuracy = fields.IntField(default=90)  # 명중률 (100 = 100%)
+    evasion = fields.IntField(default=5)  # 회피율
+    critical_rate = fields.IntField(default=5)  # 치명타 확률
+    critical_damage = fields.IntField(default=150)  # 치명타 데미지 (150 = 150%)
+
+    # 재화
+    gold = fields.BigIntField(default=0)
+
+    # 출석 관련
+    last_attendance = fields.DateField(null=True)
+    attendance_streak = fields.IntField(default=0)
 
     # 상태
     now_hp = fields.IntField(default=300)
@@ -139,6 +160,28 @@ class User(models.Model):
             buff.apply_stat(stat)
 
         return stat
+
+    def get_luck(self) -> int:
+        """
+        행운 스탯 반환 (장비 + 패시브 스킬)
+
+        Returns:
+            행운 스탯 (기본 0)
+
+        TODO: 추후 장비 및 패시브 스킬에서 행운 값 계산
+        - 행운의 부적 (악세서리): +5
+        - 행운 패시브: +10
+        - 보물 사냥꾼 패시브: +30
+        """
+        luck = 0
+
+        # TODO: 장비에서 luck 스탯 가져오기
+        equipment_stats = getattr(self, "equipment_stats", {})
+        luck += equipment_stats.get("luck", 0)
+
+        # TODO: 패시브 스킬에서 luck 보너스 가져오기
+
+        return luck
 
     def is_dead(self) -> bool:
         """사망 여부 확인"""

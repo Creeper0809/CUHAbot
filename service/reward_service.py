@@ -142,7 +142,7 @@ class RewardService:
 
         # 경험치 및 골드 추가
         user.exp += exp_gained
-        user.cuha_point += gold_gained
+        user.gold += gold_gained
 
         # 레벨업 체크
         new_level = calculate_level_from_exp(user.exp)
@@ -176,7 +176,7 @@ class RewardService:
         logger.info(
             f"Rewards applied: user={user.discord_id}, "
             f"exp=+{exp_gained} (total: {user.exp}), "
-            f"gold=+{gold_gained} (total: {user.cuha_point})"
+            f"gold=+{gold_gained} (total: {user.gold})"
         )
 
         return RewardResult(

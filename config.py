@@ -43,8 +43,8 @@ class CombatConfig:
     """기본 선공 확률 (%)"""
 
     # 행동 게이지 시스템 (1:N 전투용)
-    ACTION_GAUGE_MAX: int = 100
-    """행동 게이지 최대값"""
+    ACTION_GAUGE_MAX: int = 10
+    """행동 게이지 최대값 (속도 10 기준)"""
 
     ACTION_GAUGE_BASE_FILL: int = 10
     """기본 게이지 충전량 (속도 10 기준)"""
@@ -52,7 +52,7 @@ class CombatConfig:
     ACTION_GAUGE_SPEED_MULTIPLIER: float = 1.0
     """속도당 게이지 충전 배율 (충전량 = 속도 × 배율)"""
 
-    ACTION_GAUGE_COST: int = 100
+    ACTION_GAUGE_COST: int = 10
     """행동 후 게이지 소모량"""
 
     MAX_ACTIONS_PER_LOOP: int = 100

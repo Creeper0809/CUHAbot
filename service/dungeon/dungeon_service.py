@@ -316,7 +316,7 @@ async def _send_dungeon_summary(
         name="최종 상태",
         value=(
             f"❤️ HP: {session.user.now_hp}/{session.user.hp}\n"
-            f"📊 Lv.{session.user.level} | 💰 {session.user.cuha_point}"
+            f"📊 Lv.{session.user.level} | 💰 {session.user.gold}"
         ),
         inline=False
     )
@@ -837,8 +837,12 @@ async def _try_drop_monster_box(
     Returns:
         드랍 메시지 또는 None
     """
-    # 드랍 확률 체크
-    drop_rate = DROP.BOX_DROP_RATE * _get_monster_drop_multiplier(monster)
+    # 드랍 확률 체크 (행운 보너스 적용)
+    base_rate = DROP.BOX_DROP_RATE * _get_monster_drop_multiplier(monster)
+    luck = session.user.get_luck()
+    luck_multiplier = 1.0 + (luck * 0.01)  # 1% per luck point
+    drop_rate = base_rate * luck_multiplier
+
     if random.random() > min(drop_rate, 1.0):
         return None
 
@@ -1252,20 +1256,22 @@ def _create_gauge_bar(gauge: int, length: int = 8) -> str:
     행동 게이지 바 생성
 
     Args:
-        gauge: 현재 게이지 (0~100+)
+        gauge: 현재 게이지 (0~10+)
         length: 바 길이
 
     Returns:
         게이지 바 문자열
     """
-    ratio = max(0, min(gauge / 100, 1.0))
+    from config import COMBAT
+
+    ratio = max(0, min(gauge / COMBAT.ACTION_GAUGE_MAX, 1.0))
     filled = int(ratio * length)
     empty = length - filled
 
-    # 게이지 100 이상이면 특수 표시
-    if gauge >= 100:
+    # 게이지 MAX 이상이면 특수 표시
+    if gauge >= COMBAT.ACTION_GAUGE_MAX:
         return "⚡" * length  # 완전 충전
-    elif gauge >= 75:
+    elif gauge >= COMBAT.ACTION_GAUGE_MAX * 0.75:
         return "🟦" * filled + "⬜" * empty
     else:
         return "🟦" * filled + "⬜" * empty
@@ -1725,20 +1731,12 @@ async def _process_turn_multi(
         if user.now_hp <= 0:
             return True
 
-        # 게이지 충전
-        context.fill_gauges(user)
-
-        # 라운드 체크 (속도 20 기준 라운드 마커)
-        if context.check_and_advance_round():
-            combat_log.append(f"━━━ 🌟 **라운드 {context.round_number}** ━━━")
-            await combat_message.edit(embed=_create_battle_embed_multi(user, context, combat_log))
-            await asyncio.sleep(COMBAT.TURN_PHASE_DELAY * 0.5)  # 짧은 딜레이
-
         # 다음 행동자 결정
         actor = context.get_next_actor(user)
 
         if not actor:
-            # 아직 행동 가능한 엔티티가 없음 (게이지 부족)
+            # 행동 가능한 엔티티가 없음 → 게이지 충전
+            context.fill_gauges(user)
             # 다음 충전 사이클로
             continue
 
@@ -1759,12 +1757,19 @@ async def _process_turn_multi(
             # 게이지 소모
             context.consume_gauge(actor)
 
+            # 상태이상 duration 감소
+            _decrement_status_durations(actor)
+
             # UI 업데이트
             await combat_message.edit(embed=_create_battle_embed_multi(user, context, combat_log))
             await asyncio.sleep(COMBAT.TURN_PHASE_DELAY)
 
-            # 상태이상 duration 감소
-            _decrement_status_durations(actor)
+            # 라운드 체크 (행동 불가 상태도 턴 소모)
+            if context.check_and_advance_round():
+                combat_log.append(f"━━━ 🌟 **라운드 {context.round_number}** ━━━")
+                await combat_message.edit(embed=_create_battle_embed_multi(user, context, combat_log))
+                await asyncio.sleep(COMBAT.TURN_PHASE_DELAY * 0.5)  # 짧은 딜레이
+
             continue
 
         # 행동 처리
@@ -1783,6 +1788,12 @@ async def _process_turn_multi(
         # UI 업데이트
         await combat_message.edit(embed=_create_battle_embed_multi(user, context, combat_log))
         await asyncio.sleep(COMBAT.TURN_PHASE_DELAY)
+
+        # 라운드 체크 (행동 후 체크하여 자연스러운 순서)
+        if context.check_and_advance_round():
+            combat_log.append(f"━━━ 🌟 **라운드 {context.round_number}** ━━━")
+            await combat_message.edit(embed=_create_battle_embed_multi(user, context, combat_log))
+            await asyncio.sleep(COMBAT.TURN_PHASE_DELAY * 0.5)  # 짧은 딜레이
 
         # 전투 종료 체크
         if user.now_hp <= 0 or context.is_all_dead():
@@ -1876,6 +1887,99 @@ def _decrement_status_durations(entity) -> None:
                 entity.status.remove(status)
 
 
+def _predict_action_order(
+    player: User,
+    context: CombatContext,
+    max_count: int = 6
+) -> list[tuple[Union[User, Monster], int]]:
+    """
+    현재 게이지 상태에서 다음 행동 순서 예측 (라운드 정보 포함)
+
+    Args:
+        player: 플레이어
+        context: 전투 컨텍스트
+        max_count: 예측할 최대 행동 수
+
+    Returns:
+        다음 행동할 엔티티와 라운드 번호 리스트 [(엔티티, 라운드), ...]
+    """
+    from models.users import User as UserClass
+
+    # 현재 게이지 복사 (시뮬레이션용)
+    gauges = context.action_gauges.copy()
+    round_marker_gauge = context.round_marker_gauge
+    current_round = context.round_number
+    action_order = []
+    simulation_limit = 1000  # 무한루프 방지
+
+    for _ in range(simulation_limit):
+        if len(action_order) >= max_count:
+            break
+
+        # 라운드 마커 체크
+        if round_marker_gauge >= COMBAT.ACTION_GAUGE_MAX:
+            current_round += 1
+            round_marker_gauge -= COMBAT.ACTION_GAUGE_COST
+            round_marker_gauge = max(0, round_marker_gauge)
+
+        # 행동 가능한 엔티티 찾기
+        ready_entities = []
+
+        # 유저 체크
+        user_gauge = gauges.get(id(player), 0)
+        if user_gauge >= COMBAT.ACTION_GAUGE_MAX and player.now_hp > 0:
+            ready_entities.append((player, user_gauge))
+
+        # 몬스터들 체크
+        for monster in context.get_all_alive_monsters():
+            monster_gauge = gauges.get(id(monster), 0)
+            if monster_gauge >= COMBAT.ACTION_GAUGE_MAX:
+                ready_entities.append((monster, monster_gauge))
+
+        if ready_entities:
+            # 가장 높은 게이지를 가진 엔티티 선택
+            max_gauge = max(gauge for _, gauge in ready_entities)
+            max_gauge_entities = [entity for entity, gauge in ready_entities if gauge == max_gauge]
+
+            # 동점일 경우 유저 우선 (같은 라운드에 행동하지 않도록)
+            user_entities = [e for e in max_gauge_entities if isinstance(e, UserClass)]
+            if user_entities:
+                actor = user_entities[0]
+            else:
+                actor = max_gauge_entities[0]
+
+            action_order.append((actor, current_round))
+            gauges[id(actor)] = max(0, gauges.get(id(actor), 0) - COMBAT.ACTION_GAUGE_COST)
+        else:
+            # 게이지 충전
+            user_speed = player.get_stat()[UserStatEnum.SPEED]
+            gauges[id(player)] = gauges.get(id(player), 0) + int(user_speed * COMBAT.ACTION_GAUGE_SPEED_MULTIPLIER)
+
+            for monster in context.get_all_alive_monsters():
+                monster_speed = monster.speed
+                gauges[id(monster)] = gauges.get(id(monster), 0) + int(monster_speed * COMBAT.ACTION_GAUGE_SPEED_MULTIPLIER)
+
+            # 라운드 마커 충전
+            round_marker_gauge += int(10 * COMBAT.ACTION_GAUGE_SPEED_MULTIPLIER)
+
+    return action_order
+
+
+def _reset_all_skill_usage_counts() -> None:
+    """
+    모든 스킬의 사용 횟수 카운터 리셋 (전투 종료 시 호출)
+
+    전투당 1회 제한이 있는 스킬들의 used_count를 0으로 초기화합니다.
+    static_cache의 모든 스킬을 순회하며 리셋합니다.
+    """
+    from models.repos.static_cache import skill_cache_by_id
+
+    for skill in skill_cache_by_id.values():
+        for component in skill.components:
+            if hasattr(component, 'used_count'):
+                component.used_count = 0
+
+
 def _create_battle_embed_multi(
     player: User,
     context: CombatContext,
@@ -1900,25 +2004,38 @@ def _create_battle_embed_multi(
         color=EmbedColor.COMBAT
     )
 
-    # 플레이어
-    player_stat = player.get_stat()
-    player_max_hp = player_stat[UserStatEnum.HP]
-    player_hp_bar = _create_hp_bar(player.now_hp, player_max_hp, 10)
-    player_hp_pct = int((player.now_hp / player_max_hp) * 100) if player_max_hp > 0 else 0
-    player_status = get_status_icons(player)
+    # 파티 멤버 표시 (1열, 중앙 정렬)
+    # TODO: 현재는 단일 플레이어만 지원, 추후 파티 시스템 확장 예정
+    party_members = [player]  # 추후 session.party_members로 대체 예정
 
-    # 행동 게이지 표시
-    player_gauge = context.action_gauges.get(id(player), 0)
-    player_gauge_bar = _create_gauge_bar(player_gauge)
+    # 중앙 정렬을 위한 빈 필드 추가
+    if len(party_members) == 1:
+        # 1명: 좌측 빈 필드 추가
+        embed.add_field(name="\u200b", value="\u200b", inline=True)
 
-    player_value = f"{player_hp_bar}\n**{player.now_hp}** / {player_max_hp} ({player_hp_pct}%)"
-    player_value += f"\n⚡ {player_gauge_bar} ({player_gauge}/100)"
-    if player_status:
-        player_value += f"\n{player_status}"
+    # 파티 멤버 표시
+    for member in party_members:
+        member_stat = member.get_stat()
+        member_max_hp = member_stat[UserStatEnum.HP]
+        member_hp_bar = _create_hp_bar(member.now_hp, member_max_hp, 10)
+        member_hp_pct = int((member.now_hp / member_max_hp) * 100) if member_max_hp > 0 else 0
+        member_status = get_status_icons(member)
 
-    embed.add_field(name=f"👤 {player.get_name()}", value=player_value, inline=False)
+        member_value = f"{member_hp_bar}\n**{member.now_hp}** / {member_max_hp} ({member_hp_pct}%)"
+        if member_status:
+            member_value += f"\n{member_status}"
 
-    # 몬스터들 (최대 3마리)
+        embed.add_field(name=f"👤 {member.get_name()}", value=member_value, inline=True)
+
+    # 중앙 정렬을 위한 빈 필드 추가
+    if len(party_members) == 1:
+        # 1명: 우측 빈 필드 추가
+        embed.add_field(name="\u200b", value="\u200b", inline=True)
+    elif len(party_members) == 2:
+        # 2명: 우측 빈 필드 추가
+        embed.add_field(name="\u200b", value="\u200b", inline=True)
+
+    # 몬스터들 추가 (2열)
     for monster in context.monsters:
         hp_bar = _create_hp_bar(monster.now_hp, monster.hp, 8)
         hp_pct = int((monster.now_hp / monster.hp) * 100) if monster.hp > 0 else 0
@@ -1926,12 +2043,7 @@ def _create_battle_embed_multi(
 
         death_mark = " 💀" if monster.now_hp <= 0 else ""
 
-        # 행동 게이지 표시
-        monster_gauge = context.action_gauges.get(id(monster), 0)
-        monster_gauge_bar = _create_gauge_bar(monster_gauge)
-
         monster_value = f"{hp_bar}\n**{monster.now_hp}** / {monster.hp} ({hp_pct}%)"
-        monster_value += f"\n⚡ {monster_gauge_bar} ({monster_gauge}/100)"
         if status and monster.now_hp > 0:
             monster_value += f"\n{status}"
 
@@ -1941,12 +2053,24 @@ def _create_battle_embed_multi(
             inline=True
         )
 
+    # 행동 순서 예측 (전투 로그 위에 표시)
+    action_order = _predict_action_order(player, context, max_count=4)
+    if action_order:
+        order_items = []
+        for actor, round_num in action_order:
+            if isinstance(actor, User):
+                order_items.append(f"[R{round_num}]👤**{actor.get_name()}**")
+            else:
+                order_items.append(f"[R{round_num}]👹**{actor.get_name()}**")
+        order_text = " → ".join(order_items)
+        embed.add_field(name="⏭️ 다음 행동 순서", value=order_text, inline=False)
+
     # 전투 로그
     log_text = "\n".join(combat_log) if combat_log else "```전투 준비 중...```"
     embed.add_field(name="📜 전투 로그", value=log_text, inline=False)
 
     # Footer에 라운드 정보 표시
-    round_marker_pct = int((context.round_marker_gauge / 100) * 100)
+    round_marker_pct = int((context.round_marker_gauge / COMBAT.ACTION_GAUGE_MAX) * 100)
     embed.set_footer(text=f"🌟 라운드 {context.round_number} | 다음 라운드까지: {round_marker_pct}%")
 
     return embed
@@ -2074,5 +2198,9 @@ async def _execute_combat_context(
         return await _process_combat_result_multi(session, context, turn_count)
 
     finally:
+        # 전투 종료 처리
         set_combat_state(user.discord_id, False)
         session.combat_context = None
+
+        # 모든 스킬의 사용 횟수 리셋 (전투당 1회 제한 초기화)
+        _reset_all_skill_usage_counts()

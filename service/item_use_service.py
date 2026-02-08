@@ -6,10 +6,9 @@ ItemUseService
 import logging
 import random
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 
 from models import EquipmentItem, Grade, ItemGradeProbability, User
-from models.user_stats import UserStats
 from models.user_inventory import UserInventory
 from models.consume_item import ConsumeItem
 from models.user_equipment import EquipmentSlot
@@ -24,6 +23,9 @@ from exceptions import (
 from service.session import get_session
 from service.equipment_service import EquipmentService
 from service.inventory_service import InventoryService
+
+if TYPE_CHECKING:
+    from service.session import DungeonSession
 
 logger = logging.getLogger(__name__)
 
@@ -68,14 +70,9 @@ class ItemUseService:
             사용 결과
 
         Raises:
-            CombatRestrictionError: 전투 중 아이템 사용 시도
+            CombatRestrictionError: 전투 중 아이템 사용 시도 (투척 아이템 제외)
             ItemNotFoundError: 아이템을 찾을 수 없음
         """
-        # 전투 중 체크
-        session = get_session(user.discord_id)
-        if session and session.in_combat:
-            raise CombatRestrictionError("아이템 사용")
-
         # 인벤토리 아이템 조회
         inv_item = await UserInventory.get_or_none(
             id=inventory_id,
@@ -84,6 +81,19 @@ class ItemUseService:
 
         if not inv_item:
             raise ItemNotFoundError(inventory_id)
+
+        # 전투 중 체크 (투척 아이템은 예외)
+        session = get_session(user.discord_id)
+        if session and session.in_combat:
+            # 소비 아이템인 경우 투척 가능 여부 확인
+            if inv_item.item.type == ItemType.CONSUME:
+                consume = await ConsumeItem.get_or_none(item=inv_item.item)
+                # 투척 아이템이 아니면 전투 중 사용 불가
+                if not consume or not consume.throwable_damage:
+                    raise CombatRestrictionError("아이템 사용")
+            else:
+                # 소비 아이템이 아니면 전투 중 사용 불가
+                raise CombatRestrictionError("아이템 사용")
 
         item = inv_item.item
         item_type = item.type
@@ -165,6 +175,11 @@ class ItemUseService:
         if box_config:
             return await ItemUseService._use_box_consumable(user, inv_item, box_config)
 
+        # 투척 아이템 전투 중 사용
+        session = get_session(user.discord_id)
+        if consume.throwable_damage and session and session.in_combat:
+            return await ItemUseService._use_throwable(user, inv_item, consume, session)
+
         # 효과 적용
         effect_desc = await ItemUseService._apply_consume_effect(user, consume)
 
@@ -191,7 +206,9 @@ class ItemUseService:
 
     @staticmethod
     async def _apply_consume_effect(user: User, consume: ConsumeItem) -> str:
-        """소모품 효과 적용"""
+        """소모품 효과 적용 (버프, 회복, 정화)"""
+        from service.dungeon.buff import get_buff_by_tag, remove_status_effects
+
         effects = []
 
         # HP 회복
@@ -199,10 +216,90 @@ class ItemUseService:
             actual_heal = user.heal(consume.amount)
             effects.append(f"HP +{actual_heal}")
 
+        # 버프 적용
+        if consume.buff_type and consume.buff_amount and consume.buff_duration:
+            try:
+                buff = get_buff_by_tag(consume.buff_type)
+                buff.amount = consume.buff_amount
+                buff.duration = consume.buff_duration
+                user.status.append(buff)
+                effects.append(f"{buff.get_description()}")
+            except KeyError:
+                logger.warning(f"Unknown buff type: {consume.buff_type}")
+
+        # 디버프 정화
+        if consume.cleanse_debuff:
+            cleanse_msg = remove_status_effects(user, count=99, filter_debuff=True)
+            if cleanse_msg:
+                effects.append("디버프 정화")
+
         if not effects:
             effects.append("효과 없음")
 
         return ", ".join(effects)
+
+    @staticmethod
+    async def _use_throwable(
+        user: User,
+        inv_item: UserInventory,
+        consume: ConsumeItem,
+        session: "DungeonSession"
+    ) -> ItemUseResult:
+        """
+        투척 아이템 전투 중 사용
+
+        Args:
+            user: 사용자
+            inv_item: 인벤토리 아이템
+            consume: 소모품 정보
+            session: 던전 세션
+
+        Returns:
+            사용 결과
+        """
+        item = inv_item.item
+
+        if not session.combat_context or not session.combat_context.monsters:
+            return ItemUseResult(
+                success=False,
+                message="전투 중이 아닙니다.",
+                item_name=item.name
+            )
+
+        # 투척 데미지 계산 (기본 데미지)
+        damage = consume.throwable_damage
+        total_damage = 0
+        targets_hit = []
+
+        # 모든 적에게 데미지 (AOE)
+        for monster in session.combat_context.monsters:
+            if monster.is_alive():
+                monster.take_damage(damage)
+                total_damage += damage
+                targets_hit.append(monster.name)
+
+                logger.info(
+                    f"User {user.id} threw {item.name} at {monster.name} "
+                    f"for {damage} damage"
+                )
+
+        # 수량 차감
+        inv_item.quantity -= 1
+        if inv_item.quantity <= 0:
+            await inv_item.delete()
+        else:
+            await inv_item.save()
+
+        # 결과 메시지
+        targets_str = ", ".join(targets_hit) if targets_hit else "적"
+        effect_desc = f"{targets_str}에게 {damage} 데미지"
+
+        return ItemUseResult(
+            success=True,
+            message=f"'{item.name}'을(를) 투척했습니다!",
+            item_name=item.name,
+            effect_description=effect_desc
+        )
 
     @staticmethod
     def _calculate_chest_gold(user_level: int, chest_grade: str) -> int:
@@ -332,9 +429,6 @@ class ItemUseService:
         from service.skill_ownership_service import SkillOwnershipService
 
         item = inv_item.item
-        stats = await UserStats.get_or_none(user=user)
-        if not stats:
-            stats = await UserStats.create(user=user)
 
         # 설정 검증
         if not box_config.validate():
@@ -361,8 +455,8 @@ class ItemUseService:
             # 골드 지급
             gold_gained = ItemUseService._calculate_chest_gold(user.level, "normal")
             gold_gained = int(gold_gained * box_config.gold_multiplier)
-            stats.gold += gold_gained
-            await stats.save()
+            user.gold += gold_gained
+            await user.save()
             effect_desc = f"골드 +{gold_gained}"
 
         elif selected_type == BoxRewardType.EQUIPMENT:

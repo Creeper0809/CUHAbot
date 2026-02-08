@@ -104,7 +104,7 @@ class ShopService:
     @staticmethod
     async def get_user_gold(user: User) -> int:
         """유저 골드 조회"""
-        return user.cuha_point
+        return user.gold
 
     @staticmethod
     async def purchase_item(
@@ -146,8 +146,8 @@ class ShopService:
         total_cost = shop_item.price * quantity
 
         # 골드 확인
-        if user.cuha_point < total_cost:
-            raise InsufficientGoldError(total_cost, user.cuha_point)
+        if user.gold < total_cost:
+            raise InsufficientGoldError(total_cost, user.gold)
 
         # 타입별 처리
         if shop_item.item_type == ShopItemType.SKILL:
@@ -374,7 +374,7 @@ class ShopService:
             raise SkillNotFoundError(skill_id)
 
         # 골드 차감
-        user.cuha_point -= total_cost
+        user.gold -= total_cost
         await user.save()
 
         # 스킬 소유권 추가
@@ -394,7 +394,7 @@ class ShopService:
             item_name=shop_item.name,
             quantity=quantity,
             total_cost=total_cost,
-            remaining_gold=user.cuha_point
+            remaining_gold=user.gold
         )
 
     @staticmethod
@@ -413,7 +413,7 @@ class ShopService:
             raise ItemNotFoundError(item_id)
 
         # 골드 차감
-        user.cuha_point -= total_cost
+        user.gold -= total_cost
         await user.save()
 
         # 인벤토리에 추가
@@ -442,7 +442,7 @@ class ShopService:
             item_name=shop_item.name,
             quantity=quantity,
             total_cost=total_cost,
-            remaining_gold=user.cuha_point
+            remaining_gold=user.gold
         )
 
     @staticmethod
@@ -477,7 +477,7 @@ class ShopService:
         sell_price = (base_price // 2) * quantity
 
         # 골드 추가
-        user.cuha_point += sell_price
+        user.gold += sell_price
         await user.save()
 
         # 인벤토리에서 제거
@@ -499,5 +499,5 @@ class ShopService:
             item_name=item_name,
             quantity=quantity,
             total_cost=-sell_price,  # 음수 = 획득
-            remaining_gold=user.cuha_point
+            remaining_gold=user.gold
         )

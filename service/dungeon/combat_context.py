@@ -31,7 +31,7 @@ class CombatContext:
 
     행동 게이지 시스템:
     - 각 전투원의 속도에 비례해 게이지 충전
-    - 게이지 100 도달 시 행동 가능
+    - 게이지 10 도달 시 행동 가능
     - 행동 후 게이지 소모
     """
 
@@ -51,7 +51,7 @@ class CombatContext:
     """현재 라운드 번호"""
 
     round_marker_gauge: int = 0
-    """라운드 마커 게이지 (속도 20 기준 더미)"""
+    """라운드 마커 게이지 (속도 10 기준 더미)"""
 
     def get_primary_monster(self) -> "Monster":
         """
@@ -159,21 +159,23 @@ class CombatContext:
 
         # 유저 게이지 충전
         user_speed = self._get_entity_speed(user)
-        self.action_gauges[id(user)] += int(user_speed * COMBAT.ACTION_GAUGE_SPEED_MULTIPLIER)
+        user_id = id(user)
+        self.action_gauges[user_id] = self.action_gauges.get(user_id, 0) + int(user_speed * COMBAT.ACTION_GAUGE_SPEED_MULTIPLIER)
 
-        # 몬스터들 게이지 충전
+        # 몬스터들 게이지 충전 (새로 추가된 몬스터도 안전하게 처리)
         for monster in self.get_all_alive_monsters():
             monster_speed = self._get_entity_speed(monster)
-            self.action_gauges[id(monster)] += int(monster_speed * COMBAT.ACTION_GAUGE_SPEED_MULTIPLIER)
+            monster_id = id(monster)
+            self.action_gauges[monster_id] = self.action_gauges.get(monster_id, 0) + int(monster_speed * COMBAT.ACTION_GAUGE_SPEED_MULTIPLIER)
 
-        # 라운드 마커 충전 (속도 20 고정)
-        self.round_marker_gauge += int(20 * COMBAT.ACTION_GAUGE_SPEED_MULTIPLIER)
+        # 라운드 마커 충전 (속도 10 고정)
+        self.round_marker_gauge += int(10 * COMBAT.ACTION_GAUGE_SPEED_MULTIPLIER)
 
     def check_and_advance_round(self) -> bool:
         """
         라운드 마커 체크 및 라운드 진행
 
-        라운드 마커 게이지가 100 이상이면 라운드 증가
+        라운드 마커 게이지가 10 이상이면 라운드 증가
 
         Returns:
             라운드가 증가했으면 True
@@ -189,9 +191,9 @@ class CombatContext:
 
     def get_next_actor(self, user: "User") -> Optional[Union["User", "Monster"]]:
         """
-        다음 행동할 전투원 반환 (게이지 100 이상)
+        다음 행동할 전투원 반환 (게이지 10 이상)
 
-        게이지가 100 이상인 전투원 중 가장 높은 게이지를 가진 엔티티를 반환합니다.
+        게이지가 10 이상인 전투원 중 가장 높은 게이지를 가진 엔티티를 반환합니다.
         동점일 경우 랜덤으로 선택합니다.
 
         Args:
@@ -202,7 +204,7 @@ class CombatContext:
         """
         from config import COMBAT
 
-        # 행동 가능한 전투원 수집 (게이지 >= 100, 살아있음, 행동 가능)
+        # 행동 가능한 전투원 수집 (게이지 >= 10, 살아있음, 행동 가능)
         ready_entities = []
 
         # 유저 체크
@@ -223,8 +225,13 @@ class CombatContext:
         max_gauge = max(gauge for _, gauge in ready_entities)
         max_gauge_entities = [entity for entity, gauge in ready_entities if gauge == max_gauge]
 
-        # 동점이면 랜덤 선택
-        return random.choice(max_gauge_entities)
+        # 동점일 경우 유저 우선 (같은 라운드에 행동하지 않도록)
+        from models.users import User as UserClass
+        user_entities = [e for e in max_gauge_entities if isinstance(e, UserClass)]
+        if user_entities:
+            return user_entities[0]
+        else:
+            return max_gauge_entities[0]
 
     def consume_gauge(self, entity: Union["User", "Monster"]) -> None:
         """
@@ -251,10 +258,9 @@ class CombatContext:
         Returns:
             속도 값
         """
-        from models.users import User
+        from models.users import User, UserStatEnum
 
         if isinstance(entity, User):
-            from models.user_stats import UserStatEnum
             return entity.get_stat()[UserStatEnum.SPEED]
         else:
             return entity.speed

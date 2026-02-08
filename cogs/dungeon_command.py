@@ -13,8 +13,8 @@ from decorator.account import requires_account
 from models.repos import find_account_by_discordid
 from models.repos.dungeon_repo import find_all_dungeon
 from models.repos.static_cache import skill_cache_by_id
-from models.user_stats import UserStats
 from models.user_equipment import UserEquipment
+from models.user_inventory import UserInventory
 from service.dungeon.dungeon_service import start_dungeon
 from service.collection_service import CollectionService, EntryNotFoundError
 from service.dungeon.item_service import get_item_info, ItemNotFoundException
@@ -181,9 +181,6 @@ class DungeonCommand(commands.Cog):
         # 자연 회복 적용 (HP 정보 표시 전 자동 적용)
         await HealingService.apply_natural_regen(user)
 
-        # 스탯 정보 로드
-        stats = await UserStats.get_or_none(user=user)
-
         # 장비 정보 로드
         equipment = await UserEquipment.filter(user=user).prefetch_related(
             "inventory_item__item"
@@ -193,13 +190,17 @@ class DungeonCommand(commands.Cog):
         # 스킬 덱 로드
         skill_deck = await SkillDeckService.get_deck_as_list(user)
 
+        # 세트 효과 요약 로드
+        from service.set_detection_service import SetDetectionService
+        set_summary = await SetDetectionService.get_set_summary(user)
+
         # View 생성
         view = UserInfoView(
             discord_user=interaction.user,
             user=user,
-            stats=stats,
             equipment=list(equipment),
-            skill_deck=skill_deck
+            skill_deck=skill_deck,
+            set_summary=set_summary
         )
 
         embed = view.create_embed()
@@ -467,6 +468,44 @@ class DungeonCommand(commands.Cog):
         embed = view.create_embed()
         await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
         view.message = await interaction.original_response()
+
+    @requires_account()
+    @app_commands.command(
+        name="강화",
+        description="장비 아이템을 강화합니다"
+    )
+    @app_commands.guilds(GUILD_ID)
+    async def enhance(self, interaction: discord.Interaction):
+        """장비 강화"""
+        from DTO.enhancement_view import EnhancementView
+        from resources.item_emoji import ItemType
+
+        user: User = await find_account_by_discordid(interaction.user.id)
+        if not user:
+            await interaction.response.send_message(
+                "등록된 계정이 없습니다. `/등록`을 먼저 해주세요.",
+                ephemeral=True
+            )
+            return
+
+        # 장비 아이템만 조회
+        equipment_items = await UserInventory.filter(
+            user=user,
+            item__type=ItemType.EQUIP
+        ).prefetch_related("item")
+
+        view = EnhancementView(
+            user=interaction.user,
+            db_user=user,
+            equipment_items=list(equipment_items)
+        )
+
+        embed = view.create_default_embed()
+        await interaction.response.send_message(
+            embed=embed,
+            view=view,
+            ephemeral=True
+        )
 
 
 async def setup(bot):

@@ -215,3 +215,56 @@ class InventoryService:
             사용 중인 슬롯 수
         """
         return await UserInventory.filter(user=user).count()
+
+    @staticmethod
+    async def delete_inventory_item(
+        user: User,
+        inventory_id: int
+    ) -> bool:
+        """
+        인벤토리 항목 삭제 (ID 기반)
+
+        Args:
+            user: 대상 사용자
+            inventory_id: 인벤토리 항목 ID
+
+        Returns:
+            성공 여부
+
+        Raises:
+            ItemNotFoundError: 아이템을 찾을 수 없음
+        """
+        inv_item = await UserInventory.get_or_none(
+            id=inventory_id,
+            user=user
+        )
+
+        if not inv_item:
+            raise ItemNotFoundError(inventory_id)
+
+        await inv_item.delete()
+        logger.info(f"Deleted inventory item {inventory_id} from user {user.id}")
+        return True
+
+    @staticmethod
+    async def batch_delete_items(
+        user: User,
+        inventory_ids: List[int]
+    ) -> int:
+        """
+        여러 인벤토리 항목 일괄 삭제
+
+        Args:
+            user: 대상 사용자
+            inventory_ids: 삭제할 인벤토리 항목 ID 목록
+
+        Returns:
+            삭제된 항목 수
+        """
+        deleted_count = await UserInventory.filter(
+            id__in=inventory_ids,
+            user=user
+        ).delete()
+
+        logger.info(f"Batch deleted {deleted_count} items from user {user.id}")
+        return deleted_count

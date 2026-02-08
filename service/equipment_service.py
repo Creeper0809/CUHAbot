@@ -15,6 +15,7 @@ from exceptions import (
     ItemNotEquippableError,
     EquipmentSlotMismatchError,
     CombatRestrictionError,
+    LevelRequirementError,
 )
 from service.session import get_session
 
@@ -46,6 +47,7 @@ class EquipmentService:
             ItemNotFoundError: 인벤토리 아이템을 찾을 수 없음
             ItemNotEquippableError: 장착 불가능한 아이템
             EquipmentSlotMismatchError: 슬롯 불일치
+            LevelRequirementError: 레벨 요구사항 미충족
         """
         # 전투 중 체크
         session = get_session(user.discord_id)
@@ -75,6 +77,10 @@ class EquipmentService:
                     EquipmentSlot.get_korean_name(expected_slot),
                     EquipmentSlot.get_korean_name(slot)
                 )
+
+        # 레벨 요구사항 체크
+        if equipment.require_level and user.level < equipment.require_level:
+            raise LevelRequirementError(equipment.require_level, user.level)
 
         # 기존 장비 해제
         await UserEquipment.filter(user=user, slot=slot).delete()
@@ -165,7 +171,7 @@ class EquipmentService:
     @staticmethod
     async def calculate_equipment_stats(user: User) -> Dict[str, int]:
         """
-        장착 장비 스탯 합산
+        장착 장비 스탯 합산 (장비 + 강화 + 세트 효과)
 
         Args:
             user: 대상 사용자
@@ -173,6 +179,8 @@ class EquipmentService:
         Returns:
             스탯 딕셔너리
         """
+        from service.set_detection_service import SetDetectionService
+
         equipped = await UserEquipment.filter(user=user).prefetch_related(
             "inventory_item__item"
         )
@@ -209,6 +217,20 @@ class EquipmentService:
                         total_stats["attack"] += int(equipment.attack * (bonus_mult - 1))
                     if equipment.speed:
                         total_stats["speed"] += int(equipment.speed * (bonus_mult - 1))
+
+        # 세트 효과 보너스 적용
+        set_bonuses = await SetDetectionService.get_set_bonus_stats(user)
+        for stat, bonus in set_bonuses.items():
+            if stat in total_stats:
+                # 고정값 보너스 (예: hp: 200)
+                if isinstance(bonus, int):
+                    total_stats[stat] += bonus
+                # 퍼센트 보너스 (예: all_resistance: 0.1)
+                elif isinstance(bonus, float) and 0 < bonus < 1:
+                    # 퍼센트 보너스는 기존 스탯에 곱연산
+                    total_stats[stat] = int(total_stats[stat] * (1 + bonus))
+                else:
+                    total_stats[stat] += int(bonus)
 
         return total_stats
 

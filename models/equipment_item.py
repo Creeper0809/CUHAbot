@@ -8,6 +8,7 @@ from models.base_item import BaseItem
 class ItemInfoKey(Enum):
     GRADE = "등급"
     EQUIP_POSITION = "장착 위치"
+    REQUIRE_LEVEL = "요구 레벨"
 
 class StatKey(Enum):
     ATTACK = ("attack", "공격력")
@@ -40,6 +41,7 @@ class EquipmentItem(BaseItem):
     speed = fields.IntField(null=True)
     grade = fields.IntField(null=True)
     equip_pos = fields.IntField(null=True)
+    require_level = fields.IntField(null=True, default=1)
 
     class Meta:
         table = "equipment_item"
@@ -53,7 +55,7 @@ class EquipmentItem(BaseItem):
         }
 
     async def apply_to_embed(self, embed) -> None:
-        
+
         # 스탯 정보 추가
         self.add_stats_to_embed(embed, self.raw_stats)
 
@@ -72,6 +74,14 @@ class EquipmentItem(BaseItem):
             embed.add_field(
                 name=ItemInfoKey.EQUIP_POSITION.value,
                 value=f"```      {pos_name}      ```",
+                inline=True
+            )
+
+        # 요구 레벨 정보 추가
+        if self.require_level and self.require_level > 1:
+            embed.add_field(
+                name=ItemInfoKey.REQUIRE_LEVEL.value,
+                value=f"```      Lv.{self.require_level}      ```",
                 inline=True
             )
 

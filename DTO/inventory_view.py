@@ -5,14 +5,24 @@
 """
 import discord
 from typing import Optional, List
+from enum import Enum
 
 from config import EmbedColor, UI
 from models import User
 from models.user_inventory import UserInventory
 from resources.item_emoji import ItemType
 from service.item_use_service import ItemUseService
+from service.inventory_service import InventoryService
 from exceptions import CombatRestrictionError, ItemNotFoundError, ItemNotEquippableError
 from utility.grade_display import format_item_name
+
+
+class SortType(Enum):
+    """정렬 타입"""
+    GRADE = "등급"
+    NAME = "이름"
+    QUANTITY = "수량"
+    NONE = "기본"
 
 
 class ItemSelectDropdown(discord.ui.Select):
@@ -104,7 +114,7 @@ class TabButton(discord.ui.Button):
 
         # 탭 변경
         view.current_tab = self.tab_type
-        view.inventory = view._filter_by_tab()
+        view.inventory = view._filter_and_sort()
         view.page = 0  # 페이지 초기화
         view.total_pages = max(1, (len(view.inventory) + view.items_per_page - 1) // view.items_per_page)
 
@@ -113,6 +123,86 @@ class TabButton(discord.ui.Button):
 
         embed = view.create_embed()
         await interaction.response.edit_message(embed=embed, view=view)
+
+
+class SortButton(discord.ui.Button):
+    """정렬 버튼 (클릭 시 순환)"""
+
+    def __init__(self):
+        super().__init__(
+            label="정렬: 기본",
+            style=discord.ButtonStyle.secondary,
+            emoji="🔄",
+            row=0
+        )
+
+    async def callback(self, interaction: discord.Interaction):
+        view: InventoryView = self.view
+
+        # 정렬 타입 순환 (기본 → 등급 → 이름 → 수량 → 기본)
+        sort_cycle = [SortType.NONE, SortType.GRADE, SortType.NAME, SortType.QUANTITY]
+        current_index = sort_cycle.index(view.current_sort)
+        next_index = (current_index + 1) % len(sort_cycle)
+        view.current_sort = sort_cycle[next_index]
+
+        # 정렬 적용
+        view.inventory = view._filter_and_sort()
+        view.page = 0
+        view.total_pages = max(1, (len(view.inventory) + view.items_per_page - 1) // view.items_per_page)
+
+        # 버튼 라벨 업데이트
+        self.label = f"정렬: {view.current_sort.value}"
+
+        embed = view.create_embed()
+        await interaction.response.edit_message(embed=embed, view=view)
+
+
+class SearchButton(discord.ui.Button):
+    """검색 버튼 (모달 열기)"""
+
+    def __init__(self):
+        super().__init__(
+            label="검색",
+            style=discord.ButtonStyle.secondary,
+            emoji="🔍",
+            row=0
+        )
+
+    async def callback(self, interaction: discord.Interaction):
+        modal = SearchModal(self.view)
+        await interaction.response.send_modal(modal)
+
+
+class SearchModal(discord.ui.Modal, title="아이템 검색"):
+    """검색 모달"""
+
+    search_input = discord.ui.TextInput(
+        label="검색어",
+        placeholder="아이템 이름을 입력하세요 (비우면 검색 해제)",
+        required=False,
+        max_length=50
+    )
+
+    def __init__(self, view: 'InventoryView'):
+        super().__init__()
+        self.view = view
+        # 현재 검색어가 있으면 기본값으로 설정
+        if view.search_query:
+            self.search_input.default = view.search_query
+
+    async def on_submit(self, interaction: discord.Interaction):
+        query = self.search_input.value.strip()
+        self.view.search_query = query if query else None
+
+        # 검색 적용
+        self.view.inventory = self.view._filter_and_sort()
+        self.view.page = 0
+        self.view.total_pages = max(1, (len(self.view.inventory) + self.view.items_per_page - 1) // self.view.items_per_page)
+
+        embed = self.view.create_embed()
+        if query:
+            embed.set_footer(text=f"🔍 검색: '{query}' | 아이템 사용 버튼 → 선택 창에서 사용")
+        await interaction.response.edit_message(embed=embed, view=self.view)
 
 
 class InventoryView(discord.ui.View):
@@ -137,7 +227,9 @@ class InventoryView(discord.ui.View):
         self.all_inventory = inventory  # 전체 인벤토리
         self.owned_skills = owned_skills or []  # 보유 스킬
         self.current_tab = ItemType.CONSUME  # 기본 탭: 소모품
-        self.inventory = self._filter_by_tab()  # 탭별 필터링된 인벤토리
+        self.current_sort = SortType.NONE  # 정렬 타입
+        self.search_query: Optional[str] = None  # 검색어
+        self.inventory = self._filter_and_sort()  # 탭별 필터링 + 정렬
         self.page = 0
         self.items_per_page = UI.ITEMS_PER_PAGE
         self.total_pages = max(1, (len(self.inventory) + self.items_per_page - 1) // self.items_per_page)
@@ -145,6 +237,7 @@ class InventoryView(discord.ui.View):
         self.selected_item_id: Optional[int] = None
 
         self._add_tab_buttons()
+        self._add_sort_button()
         self.add_item(InventorySelectButton())
         self._remove_action_buttons()
 
@@ -174,11 +267,51 @@ class InventoryView(discord.ui.View):
         else:
             return self.all_inventory
 
+    def _filter_and_sort(self) -> List:
+        """탭 필터링 + 검색 + 정렬"""
+        # 1. 탭 필터링
+        items = self._filter_by_tab()
+
+        # 2. 검색 필터 적용
+        if self.search_query:
+            query = self.search_query.lower()
+            if self.current_tab == ItemType.SKILL:
+                from models.repos.static_cache import skill_cache_by_id
+                items = [
+                    inv for inv in items
+                    if skill_cache_by_id.get(inv.skill_id) and
+                    query in skill_cache_by_id.get(inv.skill_id).name.lower()
+                ]
+            else:
+                items = [
+                    inv for inv in items
+                    if query in inv.item.name.lower()
+                ]
+
+        # 3. 정렬
+        if self.current_tab != ItemType.SKILL:  # 스킬은 정렬 제외
+            if self.current_sort == SortType.GRADE:
+                # 등급순 (내림차순: S → D)
+                items.sort(key=lambda inv: getattr(inv.item, 'grade_id', 0) or 0, reverse=True)
+            elif self.current_sort == SortType.NAME:
+                # 이름순 (가나다순)
+                items.sort(key=lambda inv: inv.item.name)
+            elif self.current_sort == SortType.QUANTITY:
+                # 수량순 (내림차순)
+                items.sort(key=lambda inv: inv.quantity, reverse=True)
+
+        return items
+
     def _add_tab_buttons(self) -> None:
         """탭 버튼 추가"""
         self.add_item(TabButton("🧪 소모품", ItemType.CONSUME, is_active=(self.current_tab == ItemType.CONSUME)))
         self.add_item(TabButton("⚔️ 장비", ItemType.EQUIP, is_active=(self.current_tab == ItemType.EQUIP)))
         self.add_item(TabButton("📜 스킬", ItemType.SKILL, is_active=(self.current_tab == ItemType.SKILL)))
+
+    def _add_sort_button(self) -> None:
+        """정렬 및 검색 버튼 추가"""
+        self.add_item(SortButton())
+        self.add_item(SearchButton())
 
     def _update_tab_buttons(self) -> None:
         """탭 버튼 업데이트 (선택된 탭 강조)"""
@@ -303,7 +436,7 @@ class InventoryView(discord.ui.View):
         from service.skill_ownership_service import SkillOwnershipService
         self.owned_skills = await SkillOwnershipService.get_all_owned_skills(self.db_user)
 
-        self.inventory = self._filter_by_tab()
+        self.inventory = self._filter_and_sort()
         self.total_pages = max(1, (len(self.inventory) + self.items_per_page - 1) // self.items_per_page)
         if self.message:
             embed = self.create_embed()
@@ -458,6 +591,7 @@ class InventorySelectView(discord.ui.View):
         self.add_item(QuantityButton("-1", -1, row=1))
         self.add_item(QuantityButton("-5", -5, row=1))
         self.add_item(InventoryUseButton())
+        self.add_item(InventoryDeleteButton())
         self.add_item(InventorySelectCloseButton())
 
     def create_embed(self) -> discord.Embed:
@@ -607,11 +741,80 @@ class InventoryUseButton(discord.ui.Button):
             )
 
 
+class InventoryDeleteButton(discord.ui.Button):
+    """아이템 삭제 버튼"""
+
+    def __init__(self):
+        super().__init__(label="삭제", style=discord.ButtonStyle.danger, emoji="🗑️", row=3)
+
+    async def callback(self, interaction: discord.Interaction):
+        view: InventorySelectView = self.view
+        if not view.selected_inventory_item:
+            await interaction.response.send_message("먼저 아이템을 선택하세요!", ephemeral=True)
+            return
+
+        # 확인 모달 표시
+        modal = DeleteConfirmModal(view)
+        await interaction.response.send_modal(modal)
+
+
+class DeleteConfirmModal(discord.ui.Modal, title="아이템 삭제 확인"):
+    """삭제 확인 모달"""
+
+    confirm_input = discord.ui.TextInput(
+        label="정말 삭제하시겠습니까? (예/아니오)",
+        placeholder="'예'를 입력하면 삭제됩니다",
+        required=True,
+        max_length=10
+    )
+
+    def __init__(self, view: InventorySelectView):
+        super().__init__()
+        self.view = view
+
+    async def on_submit(self, interaction: discord.Interaction):
+        confirm = self.confirm_input.value.strip().lower()
+
+        if confirm not in ["예", "yes", "y"]:
+            await interaction.response.send_message("❌ 삭제가 취소되었습니다.", ephemeral=True)
+            return
+
+        try:
+            item_name = self.view.selected_inventory_item.item.name
+            inventory_id = self.view.selected_inventory_item.id
+
+            # 아이템 삭제
+            await InventoryService.delete_inventory_item(
+                self.view.db_user,
+                inventory_id
+            )
+
+            # 인벤토리 갱신
+            if self.view.list_view:
+                await self.view.list_view.refresh_message()
+            await self.view.refresh_items()
+
+            # 선택 해제
+            self.view.selected_item_id = None
+            self.view.selected_inventory_item = None
+
+            embed = self.view.create_embed()
+            embed.add_field(
+                name="🗑️ 삭제 완료",
+                value=f"**{item_name}**을(를) 삭제했습니다.",
+                inline=False
+            )
+            await interaction.response.edit_message(embed=embed, view=self.view)
+
+        except ItemNotFoundError:
+            await interaction.response.send_message("⚠️ 아이템을 찾을 수 없습니다.", ephemeral=True)
+
+
 class InventorySelectCloseButton(discord.ui.Button):
     """선택 창 닫기"""
 
     def __init__(self):
-        super().__init__(label="닫기", style=discord.ButtonStyle.danger, emoji="❌", row=3)
+        super().__init__(label="닫기", style=discord.ButtonStyle.secondary, emoji="❌", row=3)
 
     async def callback(self, interaction: discord.Interaction):
         await interaction.response.edit_message(content="선택 창을 닫았습니다.", embed=None, view=None)
