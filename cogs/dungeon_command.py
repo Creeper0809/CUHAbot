@@ -2,13 +2,14 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-from DTO.collection_view import CollectionView
-from DTO.dungeon_select_view import DungeonSelectView
-from DTO.inventory_view import InventoryView
-from DTO.skill_deck_view import SkillDeckView
-from DTO.stat_distribution_view import StatOverviewView, StatSelectView
-from DTO.user_info_view import UserInfoView
+from views.collection_view import CollectionView
+from views.dungeon_select_view import DungeonSelectView
+from views.inventory import InventoryView
+from views.skill_deck import SkillDeckView
+from views.stat_distribution_view import StatOverviewView, StatSelectView
+from views.user_info_view import UserInfoView
 from bot import GUILD_ID
+from config import DUNGEON, SKILL_ID
 from decorator.account import requires_account
 from models.repos import find_account_by_discordid
 from models.repos.dungeon_repo import find_all_dungeon
@@ -18,15 +19,15 @@ from models.user_inventory import UserInventory
 from service.dungeon.dungeon_service import start_dungeon
 from service.collection_service import CollectionService, EntryNotFoundError
 from service.dungeon.item_service import get_item_info, ItemNotFoundException
-from service.healing_service import HealingService
-from service.inventory_service import InventoryService
+from service.player.healing_service import HealingService
+from service.item.inventory_service import InventoryService
 from service.session import is_in_combat, create_session, end_session
-from service.skill_deck_service import SkillDeckService
-from service.equipment_service import EquipmentService
-from service.skill_ownership_service import SkillOwnershipService
+from service.skill.skill_deck_service import SkillDeckService
+from service.item.equipment_service import EquipmentService
+from service.skill.skill_ownership_service import SkillOwnershipService
 from service.temp_admin_service import is_admin_or_temp
 from models import User, UserStatEnum
-from service.equipment_service import EquipmentService
+from service.item.equipment_service import EquipmentService
 
 
 class DungeonCommand(commands.Cog):
@@ -62,14 +63,15 @@ class DungeonCommand(commands.Cog):
             # HP 체크 - 너무 낮으면 경고
             max_hp = user.get_stat()[UserStatEnum.HP]
             hp_percent = (user.now_hp / max_hp) * 100 if max_hp > 0 else 0
-            if hp_percent < 30:
+            min_hp_pct = DUNGEON.MIN_HP_PERCENT_TO_ENTER
+            if hp_percent < min_hp_pct * 100:
                 # 완전 회복까지 예상 시간 계산
-                hp_needed = int(max_hp * 0.3) - user.now_hp
+                hp_needed = int(max_hp * min_hp_pct) - user.now_hp
                 minutes_needed = (hp_needed + user.hp_regen - 1) // user.hp_regen if user.hp_regen > 0 else 999
 
                 await interaction.response.send_message(
                     f"⚠️ HP가 너무 낮습니다! ({user.now_hp}/{max_hp}, {hp_percent:.0f}%)\n"
-                    f"HP 30% 이상이 되어야 입장 가능합니다.\n"
+                    f"HP {int(min_hp_pct * 100)}% 이상이 되어야 입장 가능합니다.\n"
                     f"자연 회복으로 약 **{minutes_needed}분** 후 입장 가능합니다.",
                     ephemeral=True
                 )
@@ -191,7 +193,7 @@ class DungeonCommand(commands.Cog):
         skill_deck = await SkillDeckService.get_deck_as_list(user)
 
         # 세트 효과 요약 로드
-        from service.set_detection_service import SetDetectionService
+        from service.item.set_detection_service import SetDetectionService
         set_summary = await SetDetectionService.get_set_summary(user)
 
         # View 생성
@@ -255,8 +257,8 @@ class DungeonCommand(commands.Cog):
             for owned in owned_skills
         }
 
-        # 강타(1001)는 항상 사용 가능하도록 추가
-        BASIC_ATTACK_SKILL_ID = 1001
+        # 강타는 항상 사용 가능하도록 추가
+        BASIC_ATTACK_SKILL_ID = SKILL_ID.BASIC_ATTACK_ID
         if BASIC_ATTACK_SKILL_ID in skill_cache_by_id:
             basic_skill = skill_cache_by_id[BASIC_ATTACK_SKILL_ID]
             if basic_skill not in available_skills:
@@ -454,7 +456,7 @@ class DungeonCommand(commands.Cog):
         inventory = await InventoryService.get_inventory(user)
 
         # 스킬 로드
-        from service.skill_ownership_service import SkillOwnershipService
+        from service.skill.skill_ownership_service import SkillOwnershipService
         owned_skills = await SkillOwnershipService.get_all_owned_skills(user)
 
         # View 생성
@@ -477,7 +479,7 @@ class DungeonCommand(commands.Cog):
     @app_commands.guilds(GUILD_ID)
     async def enhance(self, interaction: discord.Interaction):
         """장비 강화"""
-        from DTO.enhancement_view import EnhancementView
+        from views.enhancement_view import EnhancementView
         from resources.item_emoji import ItemType
 
         user: User = await find_account_by_discordid(interaction.user.id)

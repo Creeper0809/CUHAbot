@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING, Any, Optional
 from tortoise import models, fields
 
 if TYPE_CHECKING:
-    from service.dungeon.buff import Buff
+    from service.dungeon.status import Buff
     from service.dungeon.skill import Skill
 
 

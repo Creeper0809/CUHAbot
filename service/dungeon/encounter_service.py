@@ -20,19 +20,19 @@ if TYPE_CHECKING:
     from models import Monster
 
 
-# =============================================================================
-# 인카운터 확률 설정
-# =============================================================================
+from config import ENCOUNTER
 
-DEFAULT_ENCOUNTER_WEIGHTS = {
-    EncounterType.MONSTER: 60,       # 60%
-    EncounterType.TREASURE: 10,      # 10%
-    EncounterType.TRAP: 10,          # 10%
-    EncounterType.EVENT: 10,         # 10%
-    EncounterType.NPC: 5,            # 5%
-    EncounterType.HIDDEN_ROOM: 5,    # 5%
-}
-"""기본 인카운터 확률 가중치"""
+
+def _get_default_encounter_weights() -> dict:
+    """config에서 기본 인카운터 가중치 생성"""
+    return {
+        EncounterType.MONSTER: ENCOUNTER.MONSTER_WEIGHT,
+        EncounterType.TREASURE: ENCOUNTER.TREASURE_WEIGHT,
+        EncounterType.TRAP: ENCOUNTER.TRAP_WEIGHT,
+        EncounterType.EVENT: ENCOUNTER.EVENT_WEIGHT,
+        EncounterType.NPC: ENCOUNTER.NPC_WEIGHT,
+        EncounterType.HIDDEN_ROOM: ENCOUNTER.HIDDEN_ROOM_WEIGHT,
+    }
 
 
 # =============================================================================
@@ -63,7 +63,7 @@ class EncounterFactory:
             결정된 인카운터 타입
         """
         if weights is None:
-            weights = DEFAULT_ENCOUNTER_WEIGHTS.copy()
+            weights = _get_default_encounter_weights().copy()
 
         if exclude_monster:
             weights = {k: v for k, v in weights.items() if k != EncounterType.MONSTER}
@@ -91,14 +91,20 @@ class EncounterFactory:
             # 보물상자 등급 랜덤
             grade = random.choices(
                 ["normal", "silver", "gold"],
-                weights=[85, 14, 1],
+                weights=[
+                    ENCOUNTER.CHEST_NORMAL_WEIGHT,
+                    ENCOUNTER.CHEST_SILVER_WEIGHT,
+                    ENCOUNTER.CHEST_GOLD_WEIGHT,
+                ],
                 k=1
             )[0]
             return TreasureEncounter(chest_grade=grade)
 
         elif encounter_type == EncounterType.TRAP:
-            # 함정 피해 랜덤 (5% ~ 15%)
-            damage_percent = random.uniform(0.05, 0.15)
+            # 함정 피해 랜덤
+            damage_percent = random.uniform(
+                ENCOUNTER.TRAP_DAMAGE_MIN, ENCOUNTER.TRAP_DAMAGE_MAX
+            )
             return TrapEncounter(damage_percent=damage_percent)
 
         elif encounter_type == EncounterType.EVENT:
@@ -134,4 +140,4 @@ class EncounterFactory:
         """
         # 현재는 모든 던전에 기본 확률 사용
         # 나중에 던전 테이블에 encounter_weights 필드 추가 가능
-        return DEFAULT_ENCOUNTER_WEIGHTS.copy()
+        return _get_default_encounter_weights().copy()

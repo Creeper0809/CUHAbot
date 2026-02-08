@@ -6,9 +6,9 @@ from bot import GUILD_ID
 from models import Item, Skill_Model
 from models.repos.static_cache import load_static_data
 from models.repos.users_repo import find_account_by_discordid
-from service.inventory_service import InventoryService
-from service.skill_ownership_service import SkillOwnershipService
-from service.user_service import UserService
+from service.item.inventory_service import InventoryService
+from service.skill.skill_ownership_service import SkillOwnershipService
+from service.player.user_service import UserService
 from service.temp_admin_service import (
     is_admin_or_temp, add_temp_admin, remove_temp_admin,
     get_all_temp_admins

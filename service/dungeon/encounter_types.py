@@ -12,7 +12,7 @@ import random
 
 import discord
 
-from DTO.encounter_view import (
+from views.encounter_view import (
     TreasureView,
     TrapView,
     RandomEventView,
@@ -23,9 +23,9 @@ from DTO.encounter_view import (
 from config import DROP
 from exceptions import InventoryFullError
 from models import Item, UserStatEnum
-from service.inventory_service import InventoryService
-from DTO.shop_view import ShopView
-from service.shop_service import ShopService
+from service.item.inventory_service import InventoryService
+from views.shop_view import ShopView
+from service.economy.shop_service import ShopService
 
 if TYPE_CHECKING:
     from service.session import DungeonSession

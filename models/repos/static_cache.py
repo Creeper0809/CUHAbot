@@ -2,8 +2,8 @@ import logging
 
 from models import Dungeon, Monster, DungeonSpawn, Item, Skill_Model
 from service.dungeon.skill import Skill
-from service.dungeon.skill_component import get_component_by_tag, skill_component_register
-from service.shop_service import ShopService
+from service.dungeon.components import get_component_by_tag, skill_component_register
+from service.economy.shop_service import ShopService
 
 logger = logging.getLogger(__name__)
 
