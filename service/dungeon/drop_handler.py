@@ -11,6 +11,7 @@ from config import DROP, DUNGEON
 from exceptions import InventoryFullError
 from models import Droptable, Item, Monster, User
 from service.item.inventory_service import InventoryService
+from service.item.grade_service import GradeService
 
 logger = logging.getLogger(__name__)
 
@@ -45,18 +46,26 @@ async def try_drop_monster_box(session, monster: Monster) -> Optional[str]:
     weights = [weight for _, weight in box_pool]
     box_id = random.choices(box_ids, weights=weights, k=1)[0]
 
+    # 던전 레벨을 instance_grade에 저장 (상자 렙제 필터링용)
+    from models.repos.static_cache import get_previous_dungeon_level
+    dungeon_level = session.dungeon.require_level if session.dungeon else 0
+    prev_level = get_previous_dungeon_level(dungeon_level)
+
     try:
-        await InventoryService.add_item(session.user, box_id, 1)
+        await InventoryService.add_item(
+            session.user, box_id, 1,
+            instance_grade=dungeon_level,
+        )
     except InventoryFullError:
         return "📦 상자를 얻었지만 인벤토리가 가득 찼다..."
 
     item = await Item.get_or_none(id=box_id)
     item_name = item.name if item else "상자"
-    return f"📦 「{item_name}」 획득!"
+    return f"📦 「{item_name}({prev_level}~{dungeon_level}Lv)」 획득!"
 
 
 async def try_drop_boss_special_item(user: User, monster: Monster) -> Optional[str]:
-    """보스 전용 아이템 드롭"""
+    """보스 전용 아이템 드롭 (인스턴스 등급 부여)"""
     from service.dungeon.reward_calculator import is_boss_monster
 
     if not is_boss_monster(monster):
@@ -79,12 +88,21 @@ async def try_drop_boss_special_item(user: User, monster: Monster) -> Optional[s
     if not item:
         return None
 
+    # 인스턴스 등급 롤링 (보스 컨텍스트)
+    grade = GradeService.roll_grade("boss")
+    effects = GradeService.roll_special_effects(grade)
+    grade_display = GradeService.get_grade_display(grade)
+
     try:
-        await InventoryService.add_item(user, item.id, 1)
+        await InventoryService.add_item(
+            user, item.id, 1,
+            instance_grade=grade,
+            special_effects=effects,
+        )
     except InventoryFullError:
         return "🎖️ 보스 전리품을 얻었지만 인벤토리가 가득 찼다..."
 
-    return f"🎖️ **보스 전리품!** 「{item.name}」 획득!"
+    return f"🎖️ **보스 전리품!** {grade_display} 「{item.name}」 획득!"
 
 
 async def try_drop_monster_skill(user: User, monster: Monster) -> Optional[str]:

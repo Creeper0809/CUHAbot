@@ -28,7 +28,9 @@ class InventoryService:
         user: User,
         item_id: int,
         quantity: int = 1,
-        enhancement_level: int = 0
+        enhancement_level: int = 0,
+        instance_grade: int = 0,
+        special_effects: Optional[list] = None,
     ) -> UserInventory:
         """
         아이템 추가
@@ -38,6 +40,8 @@ class InventoryService:
             item_id: 아이템 ID
             quantity: 수량
             enhancement_level: 강화 레벨 (장비만 해당)
+            instance_grade: 인스턴스 등급 (0=없음, 1=D ~ 8=신화)
+            special_effects: 특수 효과 리스트 (A등급 이상 장비)
 
         Returns:
             UserInventory 객체
@@ -50,19 +54,20 @@ class InventoryService:
         if not item:
             raise ItemNotFoundError(item_id)
 
-        # 동일 아이템/강화 레벨이 있으면 스택 처리
-        existing = await UserInventory.get_or_none(
-            user=user,
-            item=item,
-            enhancement_level=enhancement_level
-        )
-        if existing:
-            existing.quantity += quantity
-            await existing.save()
-            logger.debug(f"Stacked item {item_id} x{quantity} for user {user.id}")
-            # 도감에 등록 (이미 등록된 경우 무시됨)
-            await CollectionService.register_item(user, item_id)
-            return existing
+        # 특수 효과가 있는 장비는 스택하지 않음 (개별 관리)
+        if not special_effects:
+            existing = await UserInventory.get_or_none(
+                user=user,
+                item=item,
+                enhancement_level=enhancement_level,
+                instance_grade=instance_grade,
+            )
+            if existing:
+                existing.quantity += quantity
+                await existing.save()
+                logger.debug(f"Stacked item {item_id} x{quantity} for user {user.id}")
+                await CollectionService.register_item(user, item_id)
+                return existing
 
         # 인벤토리 슬롯 체크 (새 슬롯 생성 시만)
         current_slots = await UserInventory.filter(user=user).count()
@@ -74,9 +79,13 @@ class InventoryService:
             user=user,
             item=item,
             quantity=quantity,
-            enhancement_level=enhancement_level
+            enhancement_level=enhancement_level,
+            instance_grade=instance_grade,
+            special_effects=special_effects,
         )
-        logger.info(f"Added item {item_id} x{quantity} to user {user.id}")
+        logger.info(
+            f"Added item {item_id} x{quantity} (grade={instance_grade}) to user {user.id}"
+        )
 
         # 도감에 등록
         await CollectionService.register_item(user, item_id)

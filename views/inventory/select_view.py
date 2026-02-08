@@ -15,6 +15,7 @@ from models.user_inventory import UserInventory
 from resources.item_emoji import ItemType
 from service.item.item_use_service import ItemUseService
 from service.item.inventory_service import InventoryService
+from service.item.grade_service import GradeService
 from exceptions import CombatRestrictionError, ItemNotFoundError, ItemNotEquippableError
 
 from views.inventory.components import ItemSelectDropdown
@@ -69,10 +70,23 @@ class InventorySelectView(discord.ui.View):
             max_quantity = self.selected_inventory_item.quantity if item.type == ItemType.CONSUME else 1
             self.use_quantity = max(1, min(self.use_quantity, max_quantity))
 
+            # 인스턴스 등급 표시 (장비만)
+            grade_info = ""
+            instance_grade = getattr(self.selected_inventory_item, 'instance_grade', 0)
+            if instance_grade > 0:
+                grade_display = GradeService.get_grade_display(instance_grade)
+                grade_info = f"**등급**: {grade_display}\n"
+                effects_text = GradeService.format_special_effects(
+                    self.selected_inventory_item.special_effects
+                )
+                if effects_text:
+                    grade_info += f"**특수 효과**:\n{effects_text}\n"
+
             embed.add_field(
                 name=f"✅ 선택됨: {item.name}",
                 value=(
                     f"**종류**: {item_type}\n"
+                    f"{grade_info}"
                     f"**설명**: {item.description or '없음'}\n"
                     f"**보유 수량**: {self.selected_inventory_item.quantity}\n"
                     f"**사용 수량**: {self.use_quantity}\n"

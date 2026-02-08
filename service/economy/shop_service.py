@@ -21,6 +21,7 @@ from exceptions import (
 )
 from service.skill.skill_ownership_service import SkillOwnershipService
 from service.collection_service import CollectionService
+from service.item.grade_service import GradeService
 
 # Grade name → ID 캐시 (load_grade_cache로 초기화)
 _grade_name_to_id: Dict[str, int] = {}
@@ -161,10 +162,12 @@ class ShopService:
         return result
 
     @staticmethod
-    async def get_shop_items_for_display() -> List[ShopItem]:
+    async def get_shop_items_for_display(dungeon_level: int = 1) -> List[ShopItem]:
         """상점 드롭다운에 표시할 아이템 구성"""
         potions = await ShopService._build_potion_items()
-        random_equipment = await ShopService._build_random_equipment_items(count=5)
+        random_equipment = await ShopService._build_random_equipment_items(
+            count=5, dungeon_level=dungeon_level
+        )
         random_skills = await ShopService._build_random_skill_items(count=5)
         return potions + random_equipment + random_skills
 
@@ -190,51 +193,35 @@ class ShopService:
             )
         return shop_items
 
+    # 상점 인스턴스 등급 상한 (A등급 = 4)
+    SHOP_MAX_INSTANCE_GRADE = 4
+
     @staticmethod
-    async def _build_random_equipment_items(count: int = 5) -> List[ShopItem]:
-        """장비를 등급 확률에 따라 랜덤 선택"""
-        grade_map = {grade.id: grade.name for grade in await Grade.all()}
-        equipment_items = await EquipmentItem.all().prefetch_related("item")
-
-        equipment_by_grade: Dict[str, List[EquipmentItem]] = {}
-        for equipment in equipment_items:
-            grade_name = grade_map.get(equipment.grade, "D")
-            equipment_by_grade.setdefault(grade_name, []).append(equipment)
-
-        grade_weights = [
-            ("D", DROP.DROP_RATE_D),
-            ("C", DROP.DROP_RATE_C),
-            ("B", DROP.DROP_RATE_B),
-            ("A", DROP.DROP_RATE_A),
-            ("S", DROP.DROP_RATE_S),
-            ("SS", DROP.DROP_RATE_SS),
-            ("SSS", DROP.DROP_RATE_SSS),
-            ("Mythic", DROP.DROP_RATE_MYTHIC),
-        ]
+    async def _build_random_equipment_items(
+        count: int = 5, dungeon_level: int = 1
+    ) -> List[ShopItem]:
+        """던전 레벨 범위 내 장비 풀에서 랜덤 선택"""
+        from models.repos.static_cache import get_previous_dungeon_level
+        prev_level = get_previous_dungeon_level(dungeon_level)
+        equipment_items = await EquipmentItem.filter(
+            require_level__gte=prev_level,
+            require_level__lte=dungeon_level,
+        ).prefetch_related("item")
+        if not equipment_items:
+            return []
 
         selected: List[ShopItem] = []
         selected_targets = set()
-        attempts = 0
-        all_candidates = []
-        for grade_items in equipment_by_grade.values():
-            all_candidates.extend(grade_items)
+        candidates = list(equipment_items)
+        random.shuffle(candidates)
 
-        while len(selected) < count and attempts < 100:
-            attempts += 1
-            grades, weights = zip(*grade_weights)
-            grade = random.choices(grades, weights=weights, k=1)[0]
-
-            candidates = equipment_by_grade.get(grade, [])
-
-            if not candidates:
+        for chosen in candidates:
+            if len(selected) >= count:
+                break
+            if chosen.id in selected_targets:
                 continue
 
-            chosen = random.choice(candidates)
-            target_key = chosen.id
-            if target_key in selected_targets:
-                continue
-
-            selected_targets.add(target_key)
+            selected_targets.add(chosen.id)
             item = chosen.item
             selected.append(
                 ShopItem(
@@ -244,30 +231,8 @@ class ShopService:
                     price=item.cost or 100,
                     item_type=ShopItemType.EQUIPMENT,
                     target_id=item.id,
-                    grade_id=getattr(item, 'grade_id', chosen.grade)
                 )
             )
-
-        if len(selected) < count and all_candidates:
-            for chosen in all_candidates:
-                if len(selected) >= count:
-                    break
-                target_key = chosen.id
-                if target_key in selected_targets:
-                    continue
-                selected_targets.add(target_key)
-                item = chosen.item
-                selected.append(
-                    ShopItem(
-                        id=ShopService._build_shop_item_id("equipment", item.id),
-                        name=item.name,
-                        description=item.description or "장비",
-                        price=item.cost or 100,
-                        item_type=ShopItemType.EQUIPMENT,
-                        target_id=item.id,
-                        grade_id=getattr(item, 'grade_id', chosen.grade)
-                    )
-                )
 
         return selected
 
@@ -400,7 +365,9 @@ class ShopService:
         shop_item: ShopItem,
         quantity: int
     ) -> PurchaseResult:
-        """아이템 구매 처리"""
+        """아이템 구매 처리 (장비는 인스턴스 등급 부여)"""
+        from service.item.inventory_service import InventoryService
+
         item_id = shop_item.target_id
         total_cost = shop_item.price * quantity
 
@@ -413,20 +380,19 @@ class ShopService:
         user.gold -= total_cost
         await user.save()
 
-        # 인벤토리에 추가
-        inventory, created = await UserInventory.get_or_create(
-            user=user,
-            item=item,
-            enhancement_level=0,
-            defaults={"quantity": quantity}
-        )
-
-        if not created:
-            inventory.quantity += quantity
-            await inventory.save()
-
-        # 도감에 등록
-        await CollectionService.register_item(user, item_id)
+        # 장비 아이템이면 인스턴스 등급 부여 (상점은 A등급까지)
+        if item.type == ItemType.EQUIP:
+            for _ in range(quantity):
+                instance_grade = GradeService.roll_grade("normal")
+                instance_grade = min(instance_grade, ShopService.SHOP_MAX_INSTANCE_GRADE)
+                special_effects = GradeService.roll_special_effects(instance_grade)
+                await InventoryService.add_item(
+                    user, item_id, 1,
+                    instance_grade=instance_grade,
+                    special_effects=special_effects,
+                )
+        else:
+            await InventoryService.add_item(user, item_id, quantity)
 
         logger.info(
             f"User {user.id} purchased item {item_id} x{quantity} "

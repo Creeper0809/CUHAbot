@@ -108,7 +108,10 @@ class InventoryView(discord.ui.View):
     def _apply_sort(self, items: List) -> List:
         """정렬 적용"""
         if self.current_sort == SortType.GRADE:
-            items.sort(key=lambda inv: getattr(inv.item, 'grade_id', 0) or 0, reverse=True)
+            items.sort(
+                key=lambda inv: getattr(inv, 'instance_grade', 0) or 0,
+                reverse=True
+            )
         elif self.current_sort == SortType.NAME:
             items.sort(key=lambda inv: inv.item.name)
         elif self.current_sort == SortType.QUANTITY:
@@ -234,9 +237,9 @@ class InventoryView(discord.ui.View):
 
     @staticmethod
     def _format_equip_item(inv) -> str:
-        """장비 아이템 포맷"""
-        grade_id = getattr(inv.item, 'grade_id', None)
-        formatted_name = format_item_name(inv.item.name, grade_id)
+        """장비 아이템 포맷 (인스턴스 등급 표시)"""
+        instance_grade = getattr(inv, 'instance_grade', 0)
+        formatted_name = format_item_name(inv.item.name, instance_grade if instance_grade > 0 else None)
         enhance = f" +{inv.enhancement_level}" if inv.enhancement_level > 0 else ""
         return f"⚔️ **{formatted_name}**{enhance}"
 
@@ -245,6 +248,13 @@ class InventoryView(discord.ui.View):
         """소모품 아이템 포맷"""
         grade_id = getattr(inv.item, 'grade_id', None)
         formatted_name = format_item_name(inv.item.name, grade_id)
+        # 상자 아이템이면 저장된 던전 레벨 범위 표시
+        from config import BOX_CONFIGS
+        instance_grade = getattr(inv, 'instance_grade', 0)
+        if inv.item.id in BOX_CONFIGS and instance_grade > 0:
+            from models.repos.static_cache import get_previous_dungeon_level
+            prev_level = get_previous_dungeon_level(instance_grade)
+            formatted_name = f"{formatted_name}({prev_level}~{instance_grade}Lv)"
         return f"🧪 **{formatted_name}** x{inv.quantity}"
 
     async def refresh_message(self) -> None:

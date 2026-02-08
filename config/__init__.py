@@ -25,6 +25,11 @@ from config.skills import SKILL_DECK_SIZE, DEFAULT_SKILL_SLOT, SkillIdConfig, SK
 from config.shop import ShopConfig, SHOP, InventoryConfig, INVENTORY
 from config.leveling import LEVELING_EXP_TABLE, LEVELING_EXP_DEFAULT
 from config.synergies import SynergyTier, ATTRIBUTE_SYNERGIES, ComboSynergy, COMBO_SYNERGIES
+from config.grade import (
+    InstanceGrade, GradeInfo, GRADE_TABLE,
+    GRADE_DROP_WEIGHTS, SpecialEffectDef, SPECIAL_EFFECT_POOL,
+    get_grade_info, get_grade_name_map,
+)
 from config.multiplayer import (
     PartyConfig, PARTY,
     WeeklyTowerConfig, WEEKLY_TOWER,
@@ -67,4 +72,8 @@ __all__ = [
     "PartyConfig", "PARTY",
     "WeeklyTowerConfig", "WEEKLY_TOWER",
     "AuctionConfig", "AUCTION",
+    # grade
+    "InstanceGrade", "GradeInfo", "GRADE_TABLE",
+    "GRADE_DROP_WEIGHTS", "SpecialEffectDef", "SPECIAL_EFFECT_POOL",
+    "get_grade_info", "get_grade_name_map",
 ]

@@ -13,16 +13,18 @@ item_cache = {}
 spawn_info = {}
 skill_cache_by_id = {}
 box_drop_table = {}  # {"normal": [(box_id, weight), ...], ...}
+_dungeon_levels_sorted: list[int] = []  # 던전 require_level 정렬 리스트
 
 
 async def load_static_data():
     """정적 데이터 로드 (봇 시작 시 호출)"""
-    global dungeon_cache, monster_cache_by_id, item_cache, spawn_info, skill_cache_by_id, box_drop_table
+    global dungeon_cache, monster_cache_by_id, item_cache, spawn_info, skill_cache_by_id, box_drop_table, _dungeon_levels_sorted
     logger.info("Loading static data...")
 
     # 던전 로딩
     dungeons = await Dungeon.all()
     dungeon_cache = {d.id: d for d in dungeons}
+    _dungeon_levels_sorted = sorted(set(d.require_level for d in dungeons))
     logger.info(f"Loaded {len(dungeon_cache)} dungeons")
 
     # 몬스터 로딩
@@ -130,3 +132,11 @@ def _resolve_skill_components(skill_config):
 
 def get_dungeons():
     return dungeon_cache
+
+
+def get_previous_dungeon_level(current_level: int) -> int:
+    """현재 던전 렙제의 바로 이전 단계 던전 렙제 반환"""
+    for i, lvl in enumerate(_dungeon_levels_sorted):
+        if lvl >= current_level:
+            return _dungeon_levels_sorted[i - 1] if i > 0 else 0
+    return _dungeon_levels_sorted[-1] if _dungeon_levels_sorted else 0

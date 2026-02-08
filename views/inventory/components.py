@@ -41,8 +41,15 @@ class ItemSelectDropdown(discord.ui.Select):
             enhance = f" +{inv.enhancement_level}" if inv.enhancement_level > 0 else ""
             qty = f" x{inv.quantity}" if inv.quantity > 1 else ""
 
-            grade_id = getattr(inv.item, 'grade_id', None)
-            formatted_name = format_item_name(inv.item.name, grade_id)
+            instance_grade = getattr(inv, 'instance_grade', 0)
+            formatted_name = format_item_name(inv.item.name, instance_grade if instance_grade > 0 else None)
+
+            # 상자 아이템이면 저장된 던전 레벨 범위 표시
+            from config import BOX_CONFIGS
+            if inv.item.id in BOX_CONFIGS and instance_grade > 0:
+                from models.repos.static_cache import get_previous_dungeon_level
+                prev_level = get_previous_dungeon_level(instance_grade)
+                formatted_name = f"{formatted_name}({prev_level}~{instance_grade}Lv)"
 
             options.append(
                 discord.SelectOption(

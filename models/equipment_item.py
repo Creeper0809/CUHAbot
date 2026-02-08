@@ -1,12 +1,10 @@
 from tortoise import models, fields
 from typing import Dict, Optional
-from models.grade import Grade
 from models.equip_pos import EquipPos
 from enum import Enum
 from models.base_item import BaseItem
 
 class ItemInfoKey(Enum):
-    GRADE = "등급"
     EQUIP_POSITION = "장착 위치"
     REQUIRE_LEVEL = "요구 레벨"
 
@@ -39,7 +37,6 @@ class EquipmentItem(BaseItem):
     attack = fields.IntField(null=True)
     hp = fields.IntField(null=True)
     speed = fields.IntField(null=True)
-    grade = fields.IntField(null=True)
     equip_pos = fields.IntField(null=True)
     require_level = fields.IntField(null=True, default=1)
 
@@ -59,15 +56,6 @@ class EquipmentItem(BaseItem):
         # 스탯 정보 추가
         self.add_stats_to_embed(embed, self.raw_stats)
 
-        # 등급 정보 추가
-        grade_name = await self.get_grade_name()
-        if grade_name:
-            embed.add_field(
-                name=ItemInfoKey.GRADE.value,
-                value=f"```      {grade_name}      ```",
-                inline=True
-            )
-
         # 장착 위치 정보 추가
         pos_name = await self.get_position_name()
         if pos_name:
@@ -84,10 +72,6 @@ class EquipmentItem(BaseItem):
                 value=f"```      Lv.{self.require_level}      ```",
                 inline=True
             )
-
-    async def get_grade_name(self) -> Optional[str]:
-        grade = await Grade.get_or_none(id=self.grade)
-        return grade.name if grade else None
 
     async def get_position_name(self) -> Optional[str]:
         pos = await EquipPos.get_or_none(id=self.equip_pos)

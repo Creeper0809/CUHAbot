@@ -114,13 +114,21 @@ class TreasureEncounter(Encounter):
         chest_item_id = chest_item_map.get(self.chest_grade)
         item_name = "상자"
 
+        from models.repos.static_cache import get_previous_dungeon_level
+        dungeon_level = session.dungeon.require_level if session.dungeon else 0
+        prev_level = get_previous_dungeon_level(dungeon_level)
+
         if chest_item_id:
             item = await Item.get_or_none(id=chest_item_id)
             if item:
                 item_name = item.name
 
             try:
-                await InventoryService.add_item(session.user, chest_item_id, 1)
+                await InventoryService.add_item(
+                    session.user, chest_item_id, 1,
+                    instance_grade=dungeon_level,
+                )
+                item_name = f"{item_name}({prev_level}~{dungeon_level}Lv)"
             except InventoryFullError:
                 item_name = "상자 (인벤토리 가득 참)"
 
@@ -408,7 +416,9 @@ class NPCEncounter(Encounter):
                 user=interaction.user,
                 db_user=user,
                 user_gold=user_gold,
-                shop_items=await ShopService.get_shop_items_for_display(),
+                shop_items=await ShopService.get_shop_items_for_display(
+                    dungeon_level=session.dungeon.require_level
+                ),
                 timeout=120
             )
 

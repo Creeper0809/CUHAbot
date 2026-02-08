@@ -406,7 +406,7 @@ async def seed_equipment_items():
         item_id = int(row["ID"])
         slot = row.get("슬롯", "")
         equip_pos = SLOT_TO_EQUIP_POS.get(slot)
-        grade = parse_grade(row.get("등급", "D"))
+        require_level = parse_level(row.get("Lv", "1"))
 
         item = await Item.create(
             id=item_id,
@@ -421,8 +421,8 @@ async def seed_equipment_items():
             attack=nullable_int(row.get("Attack", "")),
             hp=nullable_int(row.get("HP", "")),
             speed=nullable_int(row.get("Speed", "")),
-            grade=grade,
             equip_pos=equip_pos,
+            require_level=require_level,
         )
         count += 1
 

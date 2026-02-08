@@ -23,6 +23,7 @@ from exceptions import (
 from service.session import get_session
 from service.item.equipment_service import EquipmentService
 from service.item.inventory_service import InventoryService
+from service.item.grade_service import GradeService
 
 if TYPE_CHECKING:
     from service.session import DungeonSession
@@ -173,7 +174,11 @@ class ItemUseService:
         from config import BOX_CONFIGS
         box_config = BOX_CONFIGS.get(item.id)
         if box_config:
-            return await ItemUseService._use_box_consumable(user, inv_item, box_config)
+            # 상자에 저장된 던전 레벨 사용 (instance_grade에 저장됨)
+            dungeon_level = inv_item.instance_grade if inv_item.instance_grade > 0 else None
+            return await ItemUseService._use_box_consumable(
+                user, inv_item, box_config, dungeon_level=dungeon_level
+            )
 
         # 투척 아이템 전투 중 사용
         session = get_session(user.discord_id)
@@ -344,11 +349,19 @@ class ItemUseService:
         return random.choices(grades, weights=weights, k=1)[0]
 
     @staticmethod
-    async def _pick_equipment_by_grade(grade_name: str) -> Optional[EquipmentItem]:
-        grade = await Grade.get_or_none(name=grade_name)
-        if not grade:
-            return None
-        candidates = await EquipmentItem.filter(grade=grade.id).prefetch_related("item")
+    async def _pick_random_equipment(
+        dungeon_level: Optional[int] = None
+    ) -> Optional[EquipmentItem]:
+        """장비 풀에서 랜덤 선택 (던전 레벨 범위 필터링)"""
+        if dungeon_level is not None:
+            from models.repos.static_cache import get_previous_dungeon_level
+            prev_level = get_previous_dungeon_level(dungeon_level)
+            candidates = await EquipmentItem.filter(
+                require_level__gte=prev_level,
+                require_level__lte=dungeon_level,
+            ).prefetch_related("item")
+        else:
+            candidates = await EquipmentItem.all().prefetch_related("item")
         if not candidates:
             return None
         return random.choice(candidates)
@@ -411,7 +424,8 @@ class ItemUseService:
     async def _use_box_consumable(
         user: User,
         inv_item: UserInventory,
-        box_config: "BoxConfig"
+        box_config: "BoxConfig",
+        dungeon_level: Optional[int] = None
     ) -> ItemUseResult:
         """
         상자 아이템 사용 (새로운 박스 시스템)
@@ -459,25 +473,8 @@ class ItemUseService:
             effect_desc = f"골드 +{gold_gained}"
 
         elif selected_type == BoxRewardType.EQUIPMENT:
-            # 등급 결정
-            if reward_config.guaranteed_grade:
-                grade_name = reward_config.guaranteed_grade
-            elif reward_config.grade_table_id:
-                grade_name = await ItemUseService._roll_item_grade_by_table(
-                    reward_config.grade_table_id
-                )
-            else:
-                grade_name = await ItemUseService._roll_item_grade("normal")
-
-            if not grade_name:
-                return ItemUseResult(
-                    success=False,
-                    message="등급 판정에 실패했습니다.",
-                    item_name=item.name
-                )
-
-            # 장비 선택
-            equipment = await ItemUseService._pick_equipment_by_grade(grade_name)
+            # 장비 랜덤 선택 (던전 레벨 필터링)
+            equipment = await ItemUseService._pick_random_equipment(dungeon_level)
             if not equipment or not equipment.item:
                 return ItemUseResult(
                     success=False,
@@ -485,9 +482,19 @@ class ItemUseService:
                     item_name=item.name
                 )
 
+            # 인스턴스 등급 롤링 (상자 컨텍스트)
+            grade_context = _get_box_grade_context(box_config.box_id)
+            instance_grade = GradeService.roll_grade(grade_context)
+            special_effects = GradeService.roll_special_effects(instance_grade)
+            grade_display = GradeService.get_grade_display(instance_grade)
+
             # 인벤토리 추가
             try:
-                await InventoryService.add_item(user, equipment.item.id, 1)
+                await InventoryService.add_item(
+                    user, equipment.item.id, 1,
+                    instance_grade=instance_grade,
+                    special_effects=special_effects,
+                )
             except InventoryFullError:
                 return ItemUseResult(
                     success=False,
@@ -495,7 +502,9 @@ class ItemUseService:
                     item_name=item.name
                 )
 
-            effect_desc = f"장비 '{equipment.item.name}' ({grade_name}등급) 획득"
+            effect_desc = (
+                f"{grade_display} 장비 '{equipment.item.name}' 획득"
+            )
 
         elif selected_type == BoxRewardType.SKILL:
             # 등급 결정
@@ -546,3 +555,17 @@ class ItemUseService:
             item_name=item.name,
             effect_description=effect_desc
         )
+
+
+def _get_box_grade_context(box_id: int) -> str:
+    """상자 ID에 따른 인스턴스 등급 드롭 컨텍스트 반환"""
+    context_map = {
+        5940: "box_low",
+        5941: "box_mid",
+        5942: "box_high",
+        5943: "box_best",
+        5945: "box_high",   # 럭키 박스
+        5946: "box_best",   # 신비한 상자
+        5947: "box_high",   # 마스터 상자
+    }
+    return context_map.get(box_id, "box_low")

@@ -171,7 +171,7 @@ class EquipmentService:
     @staticmethod
     async def calculate_equipment_stats(user: User) -> Dict[str, int]:
         """
-        장착 장비 스탯 합산 (장비 + 강화 + 세트 효과)
+        장착 장비 스탯 합산 (장비 * 등급 배율 + 강화 + 특수효과 + 세트 효과)
 
         Args:
             user: 대상 사용자
@@ -180,6 +180,7 @@ class EquipmentService:
             스탯 딕셔너리
         """
         from service.item.set_detection_service import SetDetectionService
+        from service.item.grade_service import GradeService
 
         equipped = await UserEquipment.filter(user=user).prefetch_related(
             "inventory_item__item"
@@ -193,44 +194,62 @@ class EquipmentService:
             "ap_defense": 0,
             "speed": 0
         }
+        # 퍼센트 기반 특수 효과 누적
+        special_effects_agg: Dict[str, float] = {}
 
         for eq in equipped:
             equipment = await EquipmentItem.get_or_none(
                 item=eq.inventory_item.item
             )
-            if equipment:
-                # 기본 스탯
-                if equipment.hp:
-                    total_stats["hp"] += equipment.hp
-                if equipment.attack:
-                    total_stats["attack"] += equipment.attack
-                if equipment.speed:
-                    total_stats["speed"] += equipment.speed
+            if not equipment:
+                continue
 
-                # 강화 보너스 적용 (5% per level)
-                enhancement = eq.inventory_item.enhancement_level
-                if enhancement > 0:
-                    bonus_mult = 1 + (enhancement * 0.05)
-                    if equipment.hp:
-                        total_stats["hp"] += int(equipment.hp * (bonus_mult - 1))
-                    if equipment.attack:
-                        total_stats["attack"] += int(equipment.attack * (bonus_mult - 1))
-                    if equipment.speed:
-                        total_stats["speed"] += int(equipment.speed * (bonus_mult - 1))
+            # 인스턴스 등급 배율
+            grade_mult = GradeService.get_stat_multiplier(
+                eq.inventory_item.instance_grade
+            )
+
+            # 기본 스탯 * 등급 배율
+            base_hp = int(equipment.hp * grade_mult) if equipment.hp else 0
+            base_atk = int(equipment.attack * grade_mult) if equipment.attack else 0
+            base_spd = int(equipment.speed * grade_mult) if equipment.speed else 0
+
+            total_stats["hp"] += base_hp
+            total_stats["attack"] += base_atk
+            total_stats["speed"] += base_spd
+
+            # 강화 보너스 (등급 적용 후 기준, 5% per level)
+            enhancement = eq.inventory_item.enhancement_level
+            if enhancement > 0:
+                bonus_mult = enhancement * 0.05
+                total_stats["hp"] += int(base_hp * bonus_mult)
+                total_stats["attack"] += int(base_atk * bonus_mult)
+                total_stats["speed"] += int(base_spd * bonus_mult)
+
+            # 특수 효과 집계
+            effects = eq.inventory_item.special_effects
+            if effects:
+                for effect in effects:
+                    etype = effect.get("type", "")
+                    value = effect.get("value", 0)
+                    special_effects_agg[etype] = (
+                        special_effects_agg.get(etype, 0) + value
+                    )
+
+        # 특수 효과 → 스탯 변환
+        _apply_special_effects_to_stats(total_stats, special_effects_agg)
 
         # 세트 효과 보너스 적용
         set_bonuses = await SetDetectionService.get_set_bonus_stats(user)
         for stat, bonus in set_bonuses.items():
-            if stat in total_stats:
-                # 고정값 보너스 (예: hp: 200)
-                if isinstance(bonus, int):
-                    total_stats[stat] += bonus
-                # 퍼센트 보너스 (예: all_resistance: 0.1)
-                elif isinstance(bonus, float) and 0 < bonus < 1:
-                    # 퍼센트 보너스는 기존 스탯에 곱연산
-                    total_stats[stat] = int(total_stats[stat] * (1 + bonus))
-                else:
-                    total_stats[stat] += int(bonus)
+            if stat not in total_stats:
+                continue
+            if isinstance(bonus, int):
+                total_stats[stat] += bonus
+            elif isinstance(bonus, float) and 0 < bonus < 1:
+                total_stats[stat] = int(total_stats[stat] * (1 + bonus))
+            else:
+                total_stats[stat] += int(bonus)
 
         return total_stats
 
@@ -239,3 +258,31 @@ class EquipmentService:
         """장비 스탯을 런타임 필드에 반영"""
         stats = await EquipmentService.calculate_equipment_stats(user)
         user.equipment_stats = stats
+
+
+def _apply_special_effects_to_stats(
+    stats: Dict[str, int],
+    effects_agg: Dict[str, float]
+) -> None:
+    """
+    누적된 특수 효과를 스탯에 반영
+
+    퍼센트 기반 효과는 기존 스탯에 곱연산으로 적용합니다.
+    전투 전용 효과 (lifesteal, crit_rate 등)는 별도 딕셔너리에 보관합니다.
+    """
+    # HP 퍼센트 보너스
+    bonus_hp_pct = effects_agg.get("bonus_hp_pct", 0)
+    if bonus_hp_pct > 0 and stats["hp"] > 0:
+        stats["hp"] += int(stats["hp"] * bonus_hp_pct / 100)
+
+    # 속도 퍼센트 보너스
+    bonus_speed_pct = effects_agg.get("bonus_speed_pct", 0)
+    if bonus_speed_pct > 0 and stats["speed"] > 0:
+        stats["speed"] += int(stats["speed"] * bonus_speed_pct / 100)
+
+    # 전투 전용 효과는 stats에 키로 추가 (combat에서 참조)
+    combat_effects = ["lifesteal", "crit_rate", "crit_damage", "armor_pen"]
+    for effect_type in combat_effects:
+        value = effects_agg.get(effect_type, 0)
+        if value > 0:
+            stats[effect_type] = value
