@@ -120,6 +120,8 @@ class TabButton(discord.ui.Button):
         view.total_pages = max(1, (len(view.inventory) + view.items_per_page - 1) // view.items_per_page)
 
         view._update_tab_buttons()
+        view._remove_enhancement_button()
+        view._add_enhancement_button()
 
         embed = view.create_embed()
         await interaction.response.edit_message(embed=embed, view=view)
@@ -133,7 +135,7 @@ class SortButton(discord.ui.Button):
             label="정렬: 기본",
             style=discord.ButtonStyle.secondary,
             emoji="🔄",
-            row=0
+            row=1
         )
 
     async def callback(self, interaction: discord.Interaction):
@@ -162,7 +164,7 @@ class SearchButton(discord.ui.Button):
             label="검색",
             style=discord.ButtonStyle.secondary,
             emoji="🔍",
-            row=0
+            row=1
         )
 
     async def callback(self, interaction: discord.Interaction):

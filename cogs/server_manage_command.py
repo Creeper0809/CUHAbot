@@ -3,12 +3,12 @@ import discord
 from discord.ext import commands
 from discord import app_commands
 
-from bot import GUILD_ID
+from bot import GUILD_IDS
 
 user = app_commands.Group(
     name="user",
     description="유저 명령어",
-    guild_ids=[GUILD_ID]
+    guild_ids=GUILD_IDS
 )
 
 class ServerManageCommand(commands.Cog):
@@ -19,7 +19,7 @@ class ServerManageCommand(commands.Cog):
         name="dice",
         description="주사위 굴리기",
     )
-    @app_commands.guilds(GUILD_ID)
+    @app_commands.guilds(*GUILD_IDS)
     async def roll_dice(self, interaction: discord.Interaction):
         n = random.randint(1, 6)
         await interaction.response.send_message(f"🎲 {n}")
@@ -28,7 +28,7 @@ class ServerManageCommand(commands.Cog):
         name="rsp",
         description="가위 바위 보"
     )
-    @app_commands.guilds(GUILD_ID)
+    @app_commands.guilds(*GUILD_IDS)
     @app_commands.describe(choice_rsp="가위/바위/보 택 1")
     @app_commands.choices(choice_rsp = [
         app_commands.Choice(name = "가위",value="가위"),

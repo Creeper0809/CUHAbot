@@ -103,12 +103,35 @@ class UserInfoView(discord.ui.View):
             inline=True
         )
 
-        # 보조 전투 스탯 (User에서 직접 가져오기)
-        # Balance.md 기준 기본값: 명중 90%, 회피 5%, 치명타율 5%, 치명타 배율 150%
-        accuracy = self.user.accuracy
-        evasion = self.user.evasion
-        crit_rate = self.user.critical_rate
-        crit_damage = self.user.critical_damage
+        # 5대 능력치
+        embed.add_field(
+            name="📊 능력치",
+            value=(
+                f"```\n"
+                f"STR(힘)  : {self.user.bonus_str}\n"
+                f"INT(지능): {self.user.bonus_int}\n"
+                f"DEX(민첩): {self.user.bonus_dex}\n"
+                f"VIT(활력): {self.user.bonus_vit}\n"
+                f"LUK(행운): {self.user.bonus_luk}\n"
+                f"```"
+            ),
+            inline=True
+        )
+
+        # 보조 전투 스탯 (능력치 변환 포함)
+        accuracy = stat.get(UserStatEnum.ACCURACY, self.user.accuracy)
+        evasion = stat.get(UserStatEnum.EVASION, self.user.evasion)
+        crit_rate = stat.get(UserStatEnum.CRITICAL_RATE, self.user.critical_rate)
+        crit_damage = stat.get(UserStatEnum.CRITICAL_DAMAGE, self.user.critical_damage)
+        drop_rate = self.user.get_drop_rate_bonus()
+        equipment_stats = getattr(self.user, "equipment_stats", {})
+        lifesteal = equipment_stats.get("lifesteal", 0)
+
+        # 패시브 스킬 보너스 추가
+        from service.dungeon.skill import get_passive_stat_bonuses
+        passive_bonuses = get_passive_stat_bonuses(self.skill_deck)
+        lifesteal += passive_bonuses.get("lifesteal", 0) * 100  # 비율→퍼센트
+        drop_rate += passive_bonuses.get("drop_rate", 0) * 100  # 비율→퍼센트
 
         embed.add_field(
             name="🎯 전투 보조",
@@ -118,23 +141,41 @@ class UserInfoView(discord.ui.View):
                 f"회피율   : {evasion}%\n"
                 f"치명타율 : {crit_rate}%\n"
                 f"치명타배율: {crit_damage}%\n"
+                f"드롭률   : +{drop_rate:.1f}%\n"
+                f"흡혈     : {lifesteal:.1f}%\n"
                 f"```"
             ),
             inline=True
         )
 
         # 회복 및 재화
+        regen_rate = self.user.get_hp_regen_rate()
+        regen_per_min = max(1, int(max_hp * regen_rate))
         embed.add_field(
             name="💚 회복 / 💰 재화",
             value=(
                 f"```\n"
-                f"자연회복 : {self.user.hp_regen} HP/분\n"
+                f"자연회복 : {regen_per_min} HP/분 ({regen_rate:.1%})\n"
                 f"골드     : {self.user.gold:,}G\n"
                 f"스탯 P   : {self.user.stat_points}P\n"
                 f"```"
             ),
             inline=True
         )
+
+        # 시너지 표시
+        from service.player.synergy_service import SynergyService
+        active_synergies = SynergyService.evaluate_synergies(
+            self.user.bonus_str, self.user.bonus_int,
+            self.user.bonus_dex, self.user.bonus_vit, self.user.bonus_luk
+        )
+        if active_synergies:
+            synergy_text = SynergyService.format_synergies_display(active_synergies)
+            embed.add_field(
+                name="✨ 시너지",
+                value=synergy_text,
+                inline=False
+            )
 
         # 경험치 바 계산
         level_progress = RewardService.get_level_progress(self.user)
@@ -282,22 +323,27 @@ class UserInfoView(discord.ui.View):
             inline=True
         )
 
-        # 스킬 발동 확률 계산
+        # 스킬 발동 확률 계산 (패시브 제외 - 백에서 셔플 안 됨)
         skill_counts = {}
+        active_slot_count = 0
         for skill_id in self.skill_deck:
-            if skill_id:
-                skill_counts[skill_id] = skill_counts.get(skill_id, 0) + 1
+            if not skill_id:
+                continue
+            skill = skill_cache_by_id.get(skill_id)
+            if skill and skill.is_passive:
+                continue
+            skill_counts[skill_id] = skill_counts.get(skill_id, 0) + 1
+            active_slot_count += 1
 
         if skill_counts:
             prob_lines = []
             for skill_id, count in sorted(skill_counts.items(), key=lambda x: -x[1]):
                 if skill_id in skill_cache_by_id:
                     skill = skill_cache_by_id[skill_id]
-                    # 등급별 색상 적용
                     grade_id = skill.skill_model.grade
                     formatted_name = format_skill_name(skill.name, grade_id)
-                    prob = count * 10  # 슬롯당 10%
-                    prob_lines.append(f"• {formatted_name}: {prob}%")
+                    prob = (count / active_slot_count * 100) if active_slot_count > 0 else 0
+                    prob_lines.append(f"• {formatted_name}: {prob:.0f}%")
 
             embed.add_field(
                 name="🎲 발동 확률",

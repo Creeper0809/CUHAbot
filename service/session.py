@@ -84,6 +84,10 @@ class DungeonSession:
     combat_context: Optional["CombatContext"] = None
     """현재 전투 중인 몬스터 그룹 (전투 중에만 존재)"""
 
+    # 탐험 버프 (아이템으로 부여)
+    explore_buffs: dict = field(default_factory=dict)
+    """활성 탐험 버프: {"drop_bonus": 50, "avoid_combat": 1, "force_treasure": 1, ...}"""
+
     def is_dungeon_cleared(self) -> bool:
         """던전 클리어 조건 확인"""
         return self.exploration_step >= self.max_steps

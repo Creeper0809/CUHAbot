@@ -143,8 +143,15 @@ class EnhancementService:
         grade_id = getattr(inv_item.item, 'grade_id', 3)
         cost = EnhancementService._calculate_cost(grade_id, current_level)
 
-        # 성공률 조회
+        # 성공률 조회 (축복/저주 보정)
         success_rate = EnhancementService._get_success_rate(current_level)
+        is_blessed = inv_item.is_blessed
+        is_cursed = inv_item.is_cursed
+
+        if is_blessed:
+            success_rate = min(1.0, success_rate + 0.10)
+        if is_cursed:
+            success_rate = max(0.0, success_rate - 0.10)
 
         # 골드 확인
         current_gold = user.gold
@@ -163,6 +170,8 @@ class EnhancementService:
             "item_name": inv_item.item.name,
             "grade_id": grade_id,
             "reason": reason,
+            "is_blessed": is_blessed,
+            "is_cursed": is_cursed,
         }
 
     @staticmethod
@@ -221,8 +230,15 @@ class EnhancementService:
         user.gold -= cost
         await user.save()
 
-        # 성공률 조회
+        # 성공률 조회 (축복/저주 보정)
         success_rate = EnhancementService._get_success_rate(current_level)
+        is_blessed = inv_item.is_blessed
+        is_cursed = inv_item.is_cursed
+
+        if is_blessed:
+            success_rate = min(1.0, success_rate + 0.10)
+        if is_cursed:
+            success_rate = max(0.0, success_rate - 0.10)
 
         # 강화 시도
         roll = random.random()
@@ -240,13 +256,12 @@ class EnhancementService:
             await inv_item.save()
 
         else:
-            # 실패: 레벨 범위별 패널티
-            if current_level <= 3:
-                # +0~3: 유지
+            # 축복 상태: 실패 시 항상 유지
+            if is_blessed:
                 result_type = EnhancementResult.FAIL_MAINTAIN
 
             elif current_level <= 6:
-                # +4~6: 유지
+                # +0~6: 유지
                 result_type = EnhancementResult.FAIL_MAINTAIN
 
             elif current_level <= 9:
@@ -265,15 +280,17 @@ class EnhancementService:
 
             else:
                 # +13~15: 초기화 또는 파괴
+                destroy_rate = ENHANCEMENT.DESTRUCTION_RATE
+                if is_cursed:
+                    destroy_rate *= 2  # 저주 시 파괴 확률 2배
+
                 destruction_roll = random.random()
-                if destruction_roll < ENHANCEMENT.DESTRUCTION_RATE:
-                    # 파괴 (20%)
+                if destruction_roll < destroy_rate:
                     result_type = EnhancementResult.FAIL_DESTROY
                     item_destroyed = True
                     new_level = 0
                     await inv_item.delete()
                 else:
-                    # 초기화 (80%)
                     new_level = 0
                     result_type = EnhancementResult.FAIL_RESET
                     inv_item.enhancement_level = 0

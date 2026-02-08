@@ -53,6 +53,9 @@ class CombatContext:
     round_marker_gauge: int = 0
     """라운드 마커 게이지 (속도 10 기준 더미)"""
 
+    user: Optional["User"] = None
+    """전투 참여 유저 (오라 패시브 등에서 사용)"""
+
     def get_primary_monster(self) -> "Monster":
         """
         단일 타겟 스킬용 주 타겟 반환

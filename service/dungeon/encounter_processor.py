@@ -39,7 +39,23 @@ async def process_encounter(session: DungeonSession, interaction: discord.Intera
     """
     session.exploration_step += 1
 
-    encounter_type = EncounterFactory.roll_encounter_type()
+    # 탐험 버프 처리
+    buffs = session.explore_buffs
+
+    # 전투 회피 버프 (몬스터 기피제)
+    if buffs.get("avoid_combat", 0) > 0:
+        encounter_type = EncounterFactory.roll_encounter_type(exclude_monster=True)
+        buffs["avoid_combat"] -= 1
+        if buffs["avoid_combat"] <= 0:
+            del buffs["avoid_combat"]
+    # 보물 확정 버프 (보물 지도)
+    elif buffs.get("force_treasure", 0) > 0:
+        encounter_type = EncounterType.TREASURE
+        buffs["force_treasure"] -= 1
+        if buffs["force_treasure"] <= 0:
+            del buffs["force_treasure"]
+    else:
+        encounter_type = EncounterFactory.roll_encounter_type()
 
     logger.debug(
         f"Encounter rolled: user={session.user.discord_id}, "
@@ -188,13 +204,20 @@ async def _ask_fight_or_flee(interaction: discord.Interaction, monster: Monster)
     """전투/도주 선택 UI 표시"""
     from models.repos.skill_repo import get_skill_by_id
 
-    skill_names = []
+    active_skill_names = []
+    passive_skill_names = []
     monster_skill_ids = getattr(monster, 'skill_ids', [])
     for sid in monster_skill_ids:
         if sid != 0:
             skill = get_skill_by_id(sid)
-            if skill and skill.name not in skill_names:
-                skill_names.append(skill.name)
+            if not skill:
+                continue
+            if skill.is_passive:
+                if skill.name not in passive_skill_names:
+                    passive_skill_names.append(skill.name)
+            else:
+                if skill.name not in active_skill_names:
+                    active_skill_names.append(skill.name)
 
     embed = discord.Embed(
         title=f"🐲 {monster.name} 이(가) 나타났다!",
@@ -202,16 +225,38 @@ async def _ask_fight_or_flee(interaction: discord.Interaction, monster: Monster)
         color=EmbedColor.ERROR
     )
     monster_stat = monster.get_stat()
-    embed.add_field(name="❤️ 체력", value=f"{monster_stat[UserStatEnum.HP]}", inline=True)
-    embed.add_field(name="⚔️ 공격력", value=f"{monster_stat[UserStatEnum.ATTACK]}", inline=True)
-    embed.add_field(name="🔮 마공", value=f"{monster_stat[UserStatEnum.AP_ATTACK]}", inline=True)
-    embed.add_field(name="🛡️ 방어력", value=f"{monster_stat[UserStatEnum.DEFENSE]}", inline=True)
-    embed.add_field(name="🌀 마방", value=f"{monster_stat[UserStatEnum.AP_DEFENSE]}", inline=True)
-    embed.add_field(name="💨 속도", value=f"{monster_stat[UserStatEnum.SPEED]}", inline=True)
-    embed.add_field(name="💫 회피", value=f"{getattr(monster, 'evasion', 0)}%", inline=True)
+    evasion = getattr(monster, 'evasion', 0)
+    attribute = getattr(monster, 'attribute', '무속성')
 
-    if skill_names:
-        embed.add_field(name="📜 스킬", value=", ".join(skill_names), inline=False)
+    embed.add_field(
+        name="⚔️ 전투 스탯",
+        value=(
+            f"```\n"
+            f"체력   : {monster_stat[UserStatEnum.HP]:,}\n"
+            f"공격력 : {monster_stat[UserStatEnum.ATTACK]}\n"
+            f"방어력 : {monster_stat[UserStatEnum.DEFENSE]}\n"
+            f"속도   : {monster_stat[UserStatEnum.SPEED]}\n"
+            f"```"
+        ),
+        inline=True
+    )
+    embed.add_field(
+        name="✨ 추가 스탯",
+        value=(
+            f"```\n"
+            f"마법공격: {monster_stat[UserStatEnum.AP_ATTACK]}\n"
+            f"마법방어: {monster_stat[UserStatEnum.AP_DEFENSE]}\n"
+            f"회피율 : {evasion}%\n"
+            f"속성   : {attribute}\n"
+            f"```"
+        ),
+        inline=True
+    )
+
+    if active_skill_names:
+        embed.add_field(name="📜 스킬", value=", ".join(active_skill_names), inline=False)
+    if passive_skill_names:
+        embed.add_field(name="🌟 패시브", value=", ".join(passive_skill_names), inline=False)
 
     view = FightOrFleeView(user=interaction.user)
     msg = await interaction.user.send(embed=embed, view=view)

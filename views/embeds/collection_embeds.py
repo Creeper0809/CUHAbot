@@ -8,13 +8,68 @@ from typing import Optional
 import discord
 
 from models import Item, Monster
+from resources.item_emoji import ItemType
 
 
 async def create_item_embed(item: Item, is_collected: bool) -> discord.Embed:
     """아이템 Embed 생성"""
     embed = await item.get_description_embed()
+
+    if item.type == ItemType.EQUIP:
+        if embed.description == "설명 없음":
+            from models.repos.static_cache import get_equipment_info
+            info = get_equipment_info(item.id)
+            if info:
+                parts = []
+                pos = info.get("equip_pos")
+                if pos:
+                    parts.append(f"**{pos}** 장비")
+                set_name = info.get("set_name")
+                if set_name:
+                    parts.append(f"**{set_name}** 세트")
+                embed.description = " · ".join(parts) if parts else ""
+        await _add_equipment_set_info(embed, item.id)
+
     _add_collection_status(embed, is_collected)
     return embed
+
+
+async def _add_equipment_set_info(embed: discord.Embed, item_id: int) -> None:
+    """장비 세트 정보를 embed에 추가"""
+    from models.repos.static_cache import set_name_by_item_id, item_cache
+    from models.set_item import SetItem, SetEffect
+
+    set_name = set_name_by_item_id.get(item_id)
+    if not set_name:
+        return
+
+    # 같은 세트 구성원 (캐시에서 조회)
+    member_names = []
+    for iid, sname in set_name_by_item_id.items():
+        if sname != set_name:
+            continue
+        cached_item = item_cache.get(iid)
+        if not cached_item:
+            continue
+        marker = " ◀" if iid == item_id else ""
+        member_names.append(f"• {cached_item.name}{marker}")
+
+    set_text = f"**{set_name}** 세트\n" + "\n".join(member_names)
+    embed.add_field(name="🔗 세트 정보", value=set_text, inline=False)
+
+    # 세트 효과 조회
+    set_item = await SetItem.filter(name=set_name).first()
+    if not set_item:
+        return
+
+    effects = await SetEffect.filter(set_item=set_item).order_by('pieces_required')
+    if not effects:
+        return
+
+    effect_lines = [
+        f"**{e.pieces_required}세트**: {e.effect_description}" for e in effects
+    ]
+    embed.add_field(name="✨ 세트 효과", value="\n".join(effect_lines), inline=False)
 
 
 def create_skill_embed(skill, is_collected: bool) -> discord.Embed:
@@ -286,33 +341,103 @@ def _add_monster_reward_fields(embed: discord.Embed, monster: Monster) -> None:
 
 
 def _add_monster_stat_fields(embed: discord.Embed, monster: Monster) -> None:
-    """몬스터 스탯 필드"""
-    embed.add_field(name="❤️ 체력", value=f"{monster.hp:,}", inline=True)
-    embed.add_field(name="⚔️ 공격력", value=f"{monster.attack}", inline=True)
-    embed.add_field(name="🔮 마공", value=f"{getattr(monster, 'ap_attack', 0)}", inline=True)
-    embed.add_field(name="🛡️ 방어력", value=f"{getattr(monster, 'defense', 0)}", inline=True)
-    embed.add_field(name="🌀 마방", value=f"{getattr(monster, 'ap_defense', 0)}", inline=True)
-    embed.add_field(name="💨 속도", value=f"{getattr(monster, 'speed', 10)}", inline=True)
-    embed.add_field(name="💫 회피", value=f"{getattr(monster, 'evasion', 0)}%", inline=True)
+    """몬스터 스탯 필드 (코드블록으로 정리)"""
+    ap_attack = getattr(monster, 'ap_attack', 0)
+    ap_defense = getattr(monster, 'ap_defense', 0)
+    speed = getattr(monster, 'speed', 10)
+    evasion = getattr(monster, 'evasion', 0)
+    attribute = getattr(monster, 'attribute', '무속성')
+
+    embed.add_field(
+        name="⚔️ 전투 스탯",
+        value=(
+            f"```\n"
+            f"체력   : {monster.hp:,}\n"
+            f"공격력 : {monster.attack}\n"
+            f"방어력 : {getattr(monster, 'defense', 0)}\n"
+            f"속도   : {speed}\n"
+            f"```"
+        ),
+        inline=True
+    )
+
+    embed.add_field(
+        name="✨ 추가 스탯",
+        value=(
+            f"```\n"
+            f"마법공격: {ap_attack}\n"
+            f"마법방어: {ap_defense}\n"
+            f"회피율 : {evasion}%\n"
+            f"속성   : {attribute}\n"
+            f"```"
+        ),
+        inline=True
+    )
 
 
 def _add_monster_skill_fields(embed: discord.Embed, monster: Monster, get_skill_by_id) -> None:
-    """몬스터 스킬 필드"""
+    """몬스터 스킬 필드 (중복 합산 + 패시브 분리)"""
     monster_skill_ids = getattr(monster, 'skill_ids', [])
-    skill_lines = []
-    for i, sid in enumerate(monster_skill_ids, 1):
-        if sid != 0:
-            skill = get_skill_by_id(sid)
-            if skill:
-                skill_desc = skill.description or "설명 없음"
-                skill_lines.append(f"**스킬 {i}**: {skill.name}\n└ {skill_desc}")
 
-    if skill_lines:
+    # 스킬 카운트 및 패시브 분리
+    active_counts: dict[int, int] = {}
+    passive_ids: list[int] = []
+    active_total = 0
+
+    for sid in monster_skill_ids:
+        if sid == 0:
+            continue
+        skill = get_skill_by_id(sid)
+        if not skill:
+            continue
+        if skill.is_passive:
+            if sid not in passive_ids:
+                passive_ids.append(sid)
+        else:
+            active_counts[sid] = active_counts.get(sid, 0) + 1
+            active_total += 1
+
+    # 액티브 스킬: 확률 + 설명
+    if active_counts:
+        skill_lines = []
+        for sid, count in sorted(active_counts.items(), key=lambda x: -x[1]):
+            skill = get_skill_by_id(sid)
+            if not skill:
+                continue
+            prob = int(count / active_total * 100) if active_total > 0 else 0
+            desc = skill.description or ""
+            if desc:
+                skill_lines.append(f"• **{skill.name}** ({prob}%)\n  └ {desc}")
+            else:
+                skill_lines.append(f"• **{skill.name}** ({prob}%)")
+
         embed.add_field(
-            name="⚔️ 사용 스킬",
-            value="\n\n".join(skill_lines),
+            name=f"⚔️ 사용 스킬 ({active_total}슬롯)",
+            value="\n".join(skill_lines),
             inline=False
         )
+
+    # 패시브 스킬
+    if passive_ids:
+        passive_lines = []
+        for sid in passive_ids:
+            skill = get_skill_by_id(sid)
+            if not skill:
+                continue
+            desc = skill.description or ""
+            if desc:
+                passive_lines.append(f"• **{skill.name}**\n  └ {desc}")
+            else:
+                passive_lines.append(f"• **{skill.name}**")
+
+        embed.add_field(
+            name="🌟 패시브",
+            value="\n".join(passive_lines),
+            inline=False
+        )
+
+    if not active_counts and not passive_ids:
+        embed.add_field(name="⚔️ 사용 스킬", value="기본 공격만 사용", inline=False)
 
 
 def _add_monster_drop_fields(embed: discord.Embed, monster_type: str) -> None:

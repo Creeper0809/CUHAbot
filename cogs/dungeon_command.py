@@ -6,9 +6,9 @@ from views.collection_view import CollectionView
 from views.dungeon_select_view import DungeonSelectView
 from views.inventory import InventoryView
 from views.skill_deck import SkillDeckView
-from views.stat_distribution_view import StatOverviewView, StatSelectView
+from views.stat_distribution_view import StatDistributionView
 from views.user_info_view import UserInfoView
-from bot import GUILD_ID
+from bot import GUILD_IDS
 from config import DUNGEON, SKILL_ID
 from decorator.account import requires_account
 from models.repos import find_account_by_discordid
@@ -26,8 +26,58 @@ from service.skill.skill_deck_service import SkillDeckService
 from service.item.equipment_service import EquipmentService
 from service.skill.skill_ownership_service import SkillOwnershipService
 from service.temp_admin_service import is_admin_or_temp
+from service.player.stat_service import StatService
 from models import User, UserStatEnum
-from service.item.equipment_service import EquipmentService
+from exceptions import InsufficientGoldError
+
+
+class StatResetConfirmView(discord.ui.View):
+    """스탯 리셋 확인 뷰"""
+
+    def __init__(self, user: User, cost: int, total_points: int):
+        super().__init__(timeout=30)
+        self.user = user
+        self.cost = cost
+        self.total_points = total_points
+
+    @discord.ui.button(label="확인", style=discord.ButtonStyle.danger)
+    async def confirm(self, interaction: discord.Interaction, button: discord.ui.Button):
+        try:
+            result = await StatService.reset_stats(self.user)
+        except InsufficientGoldError:
+            await interaction.response.edit_message(
+                embed=discord.Embed(
+                    title="❌ 골드 부족",
+                    description=f"리셋 비용 {self.cost:,}G가 부족합니다.",
+                    color=discord.Color.red()
+                ),
+                view=None
+            )
+            self.stop()
+            return
+
+        embed = discord.Embed(
+            title="✅ 스탯 리셋 완료",
+            description=(
+                f"**{result['refunded']}** 포인트가 반환되었습니다.\n"
+                f"소모 골드: {result['cost']:,}G"
+            ),
+            color=discord.Color.green()
+        )
+        await interaction.response.edit_message(embed=embed, view=None)
+        self.stop()
+
+    @discord.ui.button(label="취소", style=discord.ButtonStyle.secondary)
+    async def cancel(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.edit_message(
+            embed=discord.Embed(
+                title="❌ 리셋 취소",
+                description="스탯 리셋이 취소되었습니다.",
+                color=discord.Color.greyple()
+            ),
+            view=None
+        )
+        self.stop()
 
 
 class DungeonCommand(commands.Cog):
@@ -39,7 +89,7 @@ class DungeonCommand(commands.Cog):
         name="던전입장",
         description="던전에 입장합니다"
     )
-    @app_commands.guilds(GUILD_ID)
+    @app_commands.guilds(*GUILD_IDS)
     async def enter_dungeon(self, interaction: discord.Interaction):
         # 원자적 세션 생성 (이미 존재하면 None 반환)
         session = await create_session(interaction.user.id)
@@ -65,9 +115,10 @@ class DungeonCommand(commands.Cog):
             hp_percent = (user.now_hp / max_hp) * 100 if max_hp > 0 else 0
             min_hp_pct = DUNGEON.MIN_HP_PERCENT_TO_ENTER
             if hp_percent < min_hp_pct * 100:
-                # 완전 회복까지 예상 시간 계산
+                # 완전 회복까지 예상 시간 계산 (VIT 기반)
                 hp_needed = int(max_hp * min_hp_pct) - user.now_hp
-                minutes_needed = (hp_needed + user.hp_regen - 1) // user.hp_regen if user.hp_regen > 0 else 999
+                regen_per_min = max(1, int(max_hp * user.get_hp_regen_rate()))
+                minutes_needed = (hp_needed + regen_per_min - 1) // regen_per_min
 
                 await interaction.response.send_message(
                     f"⚠️ HP가 너무 낮습니다! ({user.now_hp}/{max_hp}, {hp_percent:.0f}%)\n"
@@ -116,7 +167,7 @@ class DungeonCommand(commands.Cog):
         name="설명",
         description="아이템, 스킬, 몬스터 정보를 검색합니다"
     )
-    @app_commands.guilds(GUILD_ID)
+    @app_commands.guilds(*GUILD_IDS)
     @app_commands.describe(이름="검색할 이름 (아이템/스킬/몬스터)")
     async def search_entry(self, interaction: discord.Interaction, 이름: str):
         """통합 검색 (아이템/스킬/몬스터)"""
@@ -134,7 +185,7 @@ class DungeonCommand(commands.Cog):
         name="도감",
         description="수집한 아이템, 스킬, 몬스터 도감을 확인합니다"
     )
-    @app_commands.guilds(GUILD_ID)
+    @app_commands.guilds(*GUILD_IDS)
     async def collection(self, interaction: discord.Interaction):
         """도감 조회"""
         user: User = await find_account_by_discordid(interaction.user.id)
@@ -169,7 +220,7 @@ class DungeonCommand(commands.Cog):
         name="내정보",
         description="내 캐릭터 정보를 확인합니다 (스탯, 장비, 스킬)"
     )
-    @app_commands.guilds(GUILD_ID)
+    @app_commands.guilds(*GUILD_IDS)
     async def my_info(self, interaction: discord.Interaction):
         """내 정보 조회"""
         user: User = await find_account_by_discordid(interaction.user.id)
@@ -213,7 +264,7 @@ class DungeonCommand(commands.Cog):
         name="덱",
         description="스킬 덱을 확인하고 편집합니다"
     )
-    @app_commands.guilds(GUILD_ID)
+    @app_commands.guilds(*GUILD_IDS)
     async def skill_deck(self, interaction: discord.Interaction):
         """스킬 덱 확인 및 편집"""
         # 전투 중 체크
@@ -330,7 +381,7 @@ class DungeonCommand(commands.Cog):
         name="치유",
         description="[관리자] 대상의 HP를 완전히 회복합니다"
     )
-    @app_commands.guilds(GUILD_ID)
+    @app_commands.guilds(*GUILD_IDS)
     @app_commands.describe(target="회복시킬 대상 (미지정시 자신)")
     async def heal(self, interaction: discord.Interaction, target: discord.Member = None):
         """관리자용 완전 회복"""
@@ -383,7 +434,7 @@ class DungeonCommand(commands.Cog):
         name="스탯",
         description="스탯 포인트를 분배합니다"
     )
-    @app_commands.guilds(GUILD_ID)
+    @app_commands.guilds(*GUILD_IDS)
     async def stat_distribution(self, interaction: discord.Interaction):
         """스탯 분배"""
         # 전투 중 체크
@@ -414,34 +465,76 @@ class DungeonCommand(commands.Cog):
             )
             return
 
-        # 1번 뷰 (개요)
-        overview_view = StatOverviewView(
+        # 스탯 분배 뷰 (5대 능력치 시스템)
+        stat_view = StatDistributionView(
             discord_user=interaction.user,
             db_user=user
         )
 
-        overview_embed = overview_view.create_embed()
-        await interaction.response.send_message(embed=overview_embed, view=overview_view, ephemeral=True)
-        overview_view.message = await interaction.original_response()
+        stat_embed = stat_view.create_embed()
+        await interaction.response.send_message(embed=stat_embed, view=stat_view, ephemeral=True)
+        stat_view.message = await interaction.original_response()
 
-        # 2번 뷰 (선택/분배)
-        select_view = StatSelectView(
-            discord_user=interaction.user,
-            db_user=user,
-            parent_view=overview_view
+    @requires_account()
+    @app_commands.command(
+        name="스탯리셋",
+        description="분배한 능력치를 초기화합니다 (골드 소모)"
+    )
+    @app_commands.guilds(*GUILD_IDS)
+    async def stat_reset(self, interaction: discord.Interaction):
+        """스탯 리셋"""
+        if is_in_combat(interaction.user.id):
+            await interaction.response.send_message(
+                "⚠️ 전투 중에는 스탯을 리셋할 수 없습니다!",
+                ephemeral=True
+            )
+            return
+
+        user: User = await find_account_by_discordid(interaction.user.id)
+        if not user:
+            await interaction.response.send_message(
+                "등록된 계정이 없습니다. `/등록`을 먼저 해주세요.",
+                ephemeral=True
+            )
+            return
+
+        cost = StatService.calculate_reset_cost(user)
+        total_points = (
+            user.bonus_str + user.bonus_int + user.bonus_dex
+            + user.bonus_vit + user.bonus_luk
         )
 
-        select_embed = select_view.create_embed()
-        select_msg = await interaction.followup.send(embed=select_embed, view=select_view, ephemeral=True)
-        select_view.message = select_msg
+        if total_points == 0:
+            await interaction.response.send_message(
+                "📊 리셋할 능력치가 없습니다!",
+                ephemeral=True
+            )
+            return
 
+        # 확인 뷰
+        confirm_view = StatResetConfirmView(user, cost, total_points)
+        embed = discord.Embed(
+            title="🔄 스탯 리셋 확인",
+            description=(
+                f"**비용:** {cost:,}G (보유: {user.gold:,}G)\n"
+                f"**반환 포인트:** {total_points}\n\n"
+                f"현재 능력치:\n"
+                f"  STR: {user.bonus_str} / INT: {user.bonus_int} / DEX: {user.bonus_dex}\n"
+                f"  VIT: {user.bonus_vit} / LUK: {user.bonus_luk}\n\n"
+                "정말로 초기화하시겠습니까?"
+            ),
+            color=discord.Color.orange()
+        )
+        await interaction.response.send_message(
+            embed=embed, view=confirm_view, ephemeral=True
+        )
 
     @requires_account()
     @app_commands.command(
         name="인벤토리",
         description="보유한 아이템을 확인합니다"
     )
-    @app_commands.guilds(GUILD_ID)
+    @app_commands.guilds(*GUILD_IDS)
     async def inventory(self, interaction: discord.Interaction):
         """인벤토리 조회"""
         user: User = await find_account_by_discordid(interaction.user.id)
@@ -471,43 +564,6 @@ class DungeonCommand(commands.Cog):
         await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
         view.message = await interaction.original_response()
 
-    @requires_account()
-    @app_commands.command(
-        name="강화",
-        description="장비 아이템을 강화합니다"
-    )
-    @app_commands.guilds(GUILD_ID)
-    async def enhance(self, interaction: discord.Interaction):
-        """장비 강화"""
-        from views.enhancement_view import EnhancementView
-        from resources.item_emoji import ItemType
-
-        user: User = await find_account_by_discordid(interaction.user.id)
-        if not user:
-            await interaction.response.send_message(
-                "등록된 계정이 없습니다. `/등록`을 먼저 해주세요.",
-                ephemeral=True
-            )
-            return
-
-        # 장비 아이템만 조회
-        equipment_items = await UserInventory.filter(
-            user=user,
-            item__type=ItemType.EQUIP
-        ).prefetch_related("item")
-
-        view = EnhancementView(
-            user=interaction.user,
-            db_user=user,
-            equipment_items=list(equipment_items)
-        )
-
-        embed = view.create_default_embed()
-        await interaction.response.send_message(
-            embed=embed,
-            view=view,
-            ephemeral=True
-        )
 
 
 async def setup(bot):

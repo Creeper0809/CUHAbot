@@ -6,6 +6,7 @@ import random
 from config import DAMAGE
 from models import UserStatEnum
 from service.dungeon.components.base import SkillComponent, register_skill_with_tag
+from service.dungeon.damage_pipeline import process_incoming_damage
 from service.dungeon.status import (
     apply_status_effect, remove_status_effects,
     get_status_stacks, has_status_effect,
@@ -107,8 +108,14 @@ class ComboComponent(SkillComponent):
         logs = []
         bonus_damage = self._calculate_combo_damage(attacker)
 
+        actual_damage = 0
         if bonus_damage > 0:
-            target.take_damage(bonus_damage)
+            event = process_incoming_damage(
+                target, bonus_damage, attacker=attacker,
+                attribute=self.skill_attribute,
+            )
+            actual_damage = event.actual_damage
+            logs.extend(event.extra_logs)
 
         # 스택 소모
         if self.consume_stacks:
@@ -125,10 +132,10 @@ class ComboComponent(SkillComponent):
         crit_mark = " 💥" if self.force_critical else ""
 
         if bonus_damage > 0:
-            main_log = f"{combo_name} **{attacker.get_name()}** 「{self.skill_name}」 → **+{bonus_damage}**{crit_mark}"
+            main_log = f"{combo_name} **{attacker.get_name()}** 「{self.skill_name}」 → **{target.get_name()}** +{actual_damage}{crit_mark}"
             logs.insert(0, main_log)
         else:
-            logs.insert(0, f"{combo_name} **{attacker.get_name()}** 「{self.skill_name}」 발동!")
+            logs.insert(0, f"{combo_name} **{attacker.get_name()}** 「{self.skill_name}」 → **{target.get_name()}** 발동!")
 
         return "\n".join(logs)
 
@@ -236,3 +243,107 @@ class SummonComponent(SkillComponent):
             if s.combat_context and attacker in s.combat_context.monsters:
                 return s
         return None
+
+
+@register_skill_with_tag("passive_revive")
+class OnDeathReviveComponent(SkillComponent):
+    """
+    사망 시 부활 패시브 - 사망 시 HP를 회복하여 부활
+
+    _check_death_triggers()에서 on_death 호출 시 발동합니다.
+    _applied_entities로 전투당 1회 제한.
+
+    Config options:
+        hp_percent (float): 부활 시 최대 HP 대비 회복 비율 (예: 0.5 = 50%)
+        max_uses (int): 전투당 최대 부활 횟수 (기본 1)
+    """
+
+    def __init__(self):
+        super().__init__()
+        self.hp_percent: float = 0.3
+        self.max_uses: int = 1
+        self._applied_entities: set[int] = set()
+
+    def apply_config(self, config, skill_name, priority=0):
+        super().apply_config(config, skill_name, priority)
+        self.hp_percent = config.get("hp_percent", 0.3)
+        self.max_uses = config.get("max_uses", 1)
+
+    def on_death(self, dying_entity, killer, context):
+        entity_id = id(dying_entity)
+        if entity_id in self._applied_entities:
+            return ""
+
+        self._applied_entities.add(entity_id)
+
+        from models import UserStatEnum
+        max_hp = dying_entity.get_stat().get(UserStatEnum.HP, getattr(dying_entity, 'hp', 0))
+        revive_hp = max(1, int(max_hp * self.hp_percent))
+        dying_entity.now_hp = revive_hp
+
+        return (
+            f"💀✨ **{dying_entity.get_name()}** 「{self.skill_name}」 발동! "
+            f"HP {revive_hp}({int(self.hp_percent * 100)}%)로 부활!"
+        )
+
+    def on_turn_start(self, attacker, target):
+        entity_id = id(attacker)
+        if entity_id in self._applied_entities:
+            return ""
+        return (
+            f"🌟 **{attacker.get_name()}** 패시브 「{self.skill_name}」 → "
+            f"사망 시 HP {int(self.hp_percent * 100)}%로 부활"
+        )
+
+
+@register_skill_with_tag("on_death_summon")
+class OnDeathSummonComponent(SkillComponent):
+    """
+    사망 시 소환 컴포넌트
+
+    보유 몬스터가 사망할 때 다른 몬스터를 소환합니다.
+    on_turn에서는 아무것도 하지 않으며, on_death에서만 동작합니다.
+
+    Config options:
+        monster_ids (list[int]): 소환할 몬스터 ID 리스트
+        count (int): 소환할 개수 (기본 1)
+        chance (float): 발동 확률 (0.0~1.0, 기본 1.0=확정)
+    """
+
+    def __init__(self):
+        super().__init__()
+        self.monster_ids = []
+        self.count = 1
+        self.chance = 1.0
+
+    def apply_config(self, config, skill_name, priority=0):
+        super().apply_config(config, skill_name, priority)
+        self.monster_ids = config.get("monster_ids", [])
+        self.count = config.get("count", 1)
+        self.chance = config.get("chance", 1.0)
+
+    def on_death(self, dying_entity, killer, context):
+        from models.repos.static_cache import monster_cache_by_id
+
+        if not self.monster_ids:
+            return ""
+
+        if random.random() >= self.chance:
+            return ""
+
+        summoned_names = []
+        for _ in range(self.count):
+            selected_id = random.choice(self.monster_ids)
+            cached = monster_cache_by_id.get(selected_id)
+            if not cached:
+                continue
+            summoned = cached.copy()
+            context.monsters.append(summoned)
+            context.action_gauges[id(summoned)] = 0
+            summoned_names.append(summoned.get_name())
+
+        if not summoned_names:
+            return ""
+
+        names_str = ", ".join(summoned_names)
+        return f"💀 **{dying_entity.get_name()}** 분열! → {names_str} 출현!"

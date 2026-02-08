@@ -161,8 +161,8 @@
 - [x] 속성 상성표 구현 - `config.ATTRIBUTE_ADVANTAGE`
 - [x] 속성 데미지 배율 (+50%/-50%) - `config.get_attribute_multiplier()`
 - [x] DB 마이그레이션 - `skill.attribute`, `monster.attribute` 컬럼 추가
-- [ ] 속성 저항 시스템 (최대 75%) - 향후 확장
-- [ ] 속성 면역 처리 - 향후 확장
+- [x] 속성 저항 시스템 (최대 75%) - `ElementResistanceComponent`, `damage_pipeline.py`
+- [x] 속성 면역 처리 - `ElementImmunityComponent`, `damage_pipeline.py`
 
 ### 3.2 속성별 스킬 구현 ✅
 - [x] 화염 스킬 9개 (1101-1109)
@@ -191,7 +191,7 @@
 - [x] 스택형 상태이상 (화상/중독/출혈/잠식/콤보 등) - `StatusEffect.stacks`, `max_stacks`
 - [x] 상태이상 아이콘/이모지 - `get_status_icons()`
 - [x] 전투 루프 통합 - `process_status_ticks()`, `can_entity_act()`, `decay_all_durations()`
-- [ ] 상태이상 저항 계산 - 향후 확장
+- [x] 상태이상 저항/면역 - `StatusImmunityComponent`, `helpers.py` 면역 체크
 - [x] 피니셔 효과 (파쇄/소각/연소/과부하) - ConsumeComponent, ComboComponent
 
 ### 3.5 키워드 콤보 체인 ✅
@@ -275,11 +275,11 @@
 - [x] 장비 교체 UI
 - [x] 레벨 제한 체크 - `LevelRequirementError`
 - [x] 장비 스탯 합산 - `calculate_equipment_stats()` (장비 + 강화 + 세트)
-- [ ] **장비 능력치 요구 시스템** - `docs/Items.md`
-  - [ ] DB 필드 추가 (`require_str/int/dex/vit/luk`)
-  - [ ] 착용 시 능력치 요구 체크 (`can_equip()`)
-  - [ ] 장비 정보 UI에 요구 능력치 표시
-  - [ ] 기존 장비 데이터에 요구치 설정
+- [x] **장비 능력치 요구 시스템** - `docs/Items.md`
+  - [x] DB 필드 추가 (`require_str/int/dex/vit/luk`)
+  - [x] 착용 시 능력치 요구 체크 (`StatRequirementError`)
+  - [x] 장비 정보 UI에 요구 능력치 표시
+  - [x] 기존 장비 데이터에 요구치 설정
 
 > 구현: `models/user_equipment.py` (9 slots), `service/item/equipment_service.py`
 
@@ -297,16 +297,16 @@
 - [x] 강화 성공률 (단계별 차등: 100%→80%→60%→40%→20%)
 - [x] 강화 실패 처리 (유지/-1/-2/reset/파괴)
 - [x] 강화 비용 (골드) - 등급별/레벨별 계산
-- [ ] 축복/저주 시스템
+- [x] 축복/저주 시스템 - 축복(+10% 성공률, 실패 시 유지), 저주(-10%, 파괴 2배)
 
 > 구현: `views/enhancement_view.py`, `service/item/enhancement_service.py`
 
-### 4.6 소비 아이템 시스템 (~부분 구현)
+### 4.6 소비 아이템 시스템 ✅
 - [x] HP 포션 (등급별) - `ConsumeItem` 모델
 - [x] 버프 포션 - buff_type, buff_amount, buff_duration
-- [ ] 상태이상 해제 아이템 - debuff_cleanse 필드 존재, UI 미확인
+- [x] 상태이상 해제 아이템 - debuff_cleanse 필드, `apply_to_embed()` 표시
 - [x] 투척 아이템 (전투용) - throwable_damage 필드
-- [ ] 탐험 보조 아이템
+- [x] 탐험 보조 아이템 - 몬스터 기피제, 보물 지도, 드롭률 버프, 귀환 스크롤
 
 > 구현: `models/consume_item.py`, `service/item/item_use_service.py`
 
@@ -319,23 +319,23 @@
 
 > 구현: `service/dungeon/drop_handler.py`, `models/droptable.py`, `config/drops.py`
 
-### 4.8 능력치 시스템 (리워크 예정)
+### 4.8 능력치 시스템 ✅
 - [x] 레벨업 시 포인트 획득 (레벨당 3포인트)
 - [x] 스탯 포인트 분배 UI - `views/stat_distribution_view.py`
-- [ ] **5대 능력치 시스템으로 전환** (STR/INT/DEX/VIT/LUK → 전투 스탯 변환) - `docs/Stats.md`
-  - [ ] DB 스키마 변경 (`bonus_hp` 등 → `bonus_str/int/dex/vit/luk`)
-  - [ ] 능력치 → 전투 스탯 변환 로직 (`get_stat()` 수정)
-  - [ ] 스탯 분배 UI 변경 (6개 전투 스탯 → 5대 능력치)
-  - [ ] HP 자연회복 %방식 전환 (고정값 → 최대HP × (1% + VIT×0.04%))
-- [ ] 스탯 시너지 효과 (Tier 1/2/3, 총 18종) - `docs/Stats.md`
-  - [ ] 시너지 조건 판정 시스템
-  - [ ] 시너지 효과 전투 스탯 적용
-  - [ ] 시너지 발동 UI 표시
-- [ ] 스탯 리셋 기능
-- [ ] 기존 유저 마이그레이션 (bonus 필드 변환)
+- [x] **5대 능력치 시스템으로 전환** (STR/INT/DEX/VIT/LUK → 전투 스탯 변환) - `docs/Stats.md`
+  - [x] DB 스키마 변경 (`bonus_str/int/dex/vit/luk`)
+  - [x] 능력치 → 전투 스탯 변환 로직 (`stat_conversion.py`, `get_stat()` 수정)
+  - [x] 스탯 분배 UI 변경 (5대 능력치 + 변환 미리보기)
+  - [x] HP 자연회복 %방식 전환 (최대HP × (1% + VIT×0.04%))
+- [x] 스탯 시너지 효과 (Tier 1/2/3, 총 18종) - `docs/Stats.md`
+  - [x] 시너지 조건 판정 시스템 (`config/stat_synergies.py`)
+  - [x] 시너지 효과 전투 스탯 적용 (`synergy_service.py`)
+  - [x] 시너지 발동 UI 표시 (`user_info_view.py`)
+- [x] 스탯 리셋 기능 (`service/player/stat_service.py`)
+- [x] 기존 유저 마이그레이션 (`scripts/migrate_stat_rework.py`)
 
 > 기획: `docs/Stats.md`
-> 구현: `views/stat_distribution_view.py`, `models/users.py`, `config/user_stats.py`
+> 구현: `views/stat_distribution_view.py`, `models/users.py`, `service/player/stat_conversion.py`, `service/player/synergy_service.py`
 
 ### 4.9 경험치/레벨 시스템 ✅
 - [x] 경험치 획득 공식 - `RewardService`, `add_experience()`
@@ -448,12 +448,16 @@
 - [ ] Lv.6 키워드별 초월 효과 해금 (공격 효과 18종 + 보조 효과 7종)
 
 ### 6.6 패시브 스킬 시스템
-- [ ] 전투 패시브 (공격/방어/속도/치명타/상태이상)
+- [x] 전투 패시브 (공격/방어/속도/치명타/상태이상) - `PassiveBuffComponent`, `passive_regen`, `passive_turn_scaling`
 - [ ] 파밍 패시브 (경험치/드롭/골드)
 - [ ] 탐험 패시브 (이동속도/함정감지/숨겨진방)
 - [ ] 소셜 패시브 (파티 버프)
-- [ ] 특수 패시브 (부활/피흡)
-- [ ] 조건부 패시브 (HP 조건 등)
+- [x] 특수 패시브 (부활/피흡) - `OnDeathReviveComponent`, `DamageReflectionComponent`
+- [x] 조건부 패시브 (HP 조건 등) - `ConditionalPassiveComponent`
+- [x] 방어 패시브 (면역/저항/반사/상태면역) - `defensive_passive_components.py`
+- [x] 오라 패시브 (아군 버프/적 디버프) - `aura_passive_components.py`
+- [x] 디버프 감소 패시브 - `DebuffReductionComponent`
+- [x] 데미지 파이프라인 (면역→저항→보호막→반사) - `damage_pipeline.py`
 
 ### 6.7 N:M 파티 전투
 - [x] 파티 전투 UI 레이아웃 (중앙 정렬, 1-3명 지원)
@@ -603,4 +607,4 @@
 
 ---
 
-*최종 업데이트: 2026-02-08 (Phase 3 완료, Phase 4 80% 완료 - 인벤토리/장비/강화/드롭/레벨링 완성)*
+*최종 업데이트: 2026-02-09 (Phase 3 완료, Phase 4 80% 완료, 패시브 Phase 2 완료 - 데미지 파이프라인/방어패시브/오라/부활/턴성장/디버프감소)*

@@ -34,6 +34,17 @@ async def try_drop_monster_box(session, monster: Monster) -> Optional[str]:
     luck_multiplier = 1.0 + (luck * DUNGEON.LUCK_DROP_BONUS_PER_POINT)
     drop_rate = base_rate * luck_multiplier
 
+    # 탐험 드롭률 버프 적용
+    drop_bonus = session.explore_buffs.get("drop_bonus", 0)
+    if drop_bonus > 0:
+        drop_rate *= (1 + drop_bonus / 100)
+        session.explore_buffs["drop_bonus"] = 0
+        del session.explore_buffs["drop_bonus"]
+
+    # 스탯 시너지: 드롭률 배수 (운명의 총아)
+    from service.player.stat_synergy_combat import get_drop_rate_multiplier
+    drop_rate *= get_drop_rate_multiplier(session.user)
+
     if random.random() > min(drop_rate, 1.0):
         return None
 
@@ -119,11 +130,14 @@ async def try_drop_monster_skill(user: User, monster: Monster) -> Optional[str]:
     from service.skill.skill_ownership_service import SkillOwnershipService
     from models.repos.skill_repo import get_skill_by_id
 
-    monster_skills = getattr(monster, 'skill_ids', [])
-    if not monster_skills:
-        return None
+    # drop_skill_ids 우선, 없으면 skill_ids에서 player_obtainable 필터링 (fallback)
+    drop_skills = getattr(monster, 'drop_skill_ids', [])
+    if drop_skills:
+        valid_skills = [sid for sid in drop_skills if sid != 0]
+    else:
+        monster_skills = getattr(monster, 'skill_ids', [])
+        valid_skills = [sid for sid in monster_skills if sid != 0]
 
-    valid_skills = [sid for sid in monster_skills if sid != 0]
     if not valid_skills:
         return None
 

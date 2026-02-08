@@ -369,6 +369,18 @@ class LevelRequirementError(CUHABotError):
         )
 
 
+class StatRequirementError(CUHABotError):
+    """능력치 요구사항 미충족"""
+
+    def __init__(self, stat_name: str, required: int, current: int):
+        self.stat_name = stat_name
+        self.required = required
+        self.current = current
+        super().__init__(
+            f"{stat_name}이(가) 부족합니다. (필요: {required}, 현재: {current})"
+        )
+
+
 # =============================================================================
 # 출석 관련 예외
 # =============================================================================

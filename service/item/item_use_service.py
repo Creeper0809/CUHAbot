@@ -170,6 +170,36 @@ class ItemUseService:
                 item_name=item.name
             )
 
+        # 귀환 스크롤: 던전 즉시 탈출 (보상 유지)
+        if item.id == 5701:
+            session = get_session(user.discord_id)
+            if not session:
+                return ItemUseResult(
+                    success=False,
+                    message="던전 밖에서는 사용할 수 없습니다.",
+                    item_name=item.name,
+                )
+            session.ended = True
+            inv_item.quantity -= 1
+            if inv_item.quantity <= 0:
+                await inv_item.delete()
+            else:
+                await inv_item.save()
+            return ItemUseResult(
+                success=True,
+                message=f"'{item.name}'을(를) 사용했습니다!",
+                item_name=item.name,
+                effect_description="던전에서 즉시 탈출합니다. 현재 보상이 유지됩니다.",
+            )
+
+        # 축복/저주 주문서는 대상 선택이 필요
+        if item.id in (ItemUseService.BLESS_SCROLL_ID, ItemUseService.CURSE_REMOVE_SCROLL_ID):
+            return ItemUseResult(
+                success=False,
+                message="이 주문서는 강화 메뉴에서 대상 장비를 선택하여 사용하세요.",
+                item_name=item.name,
+            )
+
         # 새 박스 시스템 체크
         from config import BOX_CONFIGS
         box_config = BOX_CONFIGS.get(item.id)
@@ -209,12 +239,31 @@ class ItemUseService:
             effect_description=effect_desc
         )
 
+    # 탐험 보조 아이템 ID 매핑
+    EXPLORE_BUFF_ITEMS = {
+        5710: ("avoid_combat", 3, "전투 회피 3회"),     # 투명 망토
+        5711: ("force_treasure", 1, "보물 확정 1회"),   # 행운의 주사위
+        5803: ("drop_bonus", 50, "드롭률 +50%"),       # 드롭률 부스터
+    }
+
     @staticmethod
     async def _apply_consume_effect(user: User, consume: ConsumeItem) -> str:
-        """소모품 효과 적용 (버프, 회복, 정화)"""
+        """소모품 효과 적용 (버프, 회복, 정화, 탐험 버프)"""
         from service.dungeon.status import get_buff_by_tag, remove_status_effects
 
         effects = []
+
+        # 탐험 보조 아이템 체크
+        item_id = consume.item_id
+        if item_id in ItemUseService.EXPLORE_BUFF_ITEMS:
+            buff_key, buff_val, desc = ItemUseService.EXPLORE_BUFF_ITEMS[item_id]
+            session = get_session(user.discord_id)
+            if session:
+                current = session.explore_buffs.get(buff_key, 0)
+                session.explore_buffs[buff_key] = current + buff_val
+                effects.append(desc)
+            else:
+                effects.append("던전 밖에서는 효과가 없습니다")
 
         # HP 회복
         if consume.amount and consume.amount > 0:
@@ -554,6 +603,101 @@ class ItemUseService:
             message=f"'{item.name}'을(를) 열었습니다!",
             item_name=item.name,
             effect_description=effect_desc
+        )
+
+
+    # 축복/저주 주문서 아이템 ID
+    BLESS_SCROLL_ID = 6301
+    CURSE_REMOVE_SCROLL_ID = 6302
+
+    @staticmethod
+    async def use_scroll_on_target(
+        user: User,
+        scroll_inventory_id: int,
+        target_inventory_id: int,
+    ) -> ItemUseResult:
+        """
+        축복/저주 주문서를 대상 장비에 사용
+
+        Args:
+            user: 사용자
+            scroll_inventory_id: 주문서 인벤토리 ID
+            target_inventory_id: 대상 장비 인벤토리 ID
+
+        Returns:
+            사용 결과
+        """
+        # 주문서 조회
+        scroll_inv = await UserInventory.get_or_none(
+            id=scroll_inventory_id, user=user
+        ).prefetch_related("item")
+        if not scroll_inv:
+            raise ItemNotFoundError(scroll_inventory_id)
+
+        # 대상 장비 조회
+        target_inv = await UserInventory.get_or_none(
+            id=target_inventory_id, user=user
+        ).prefetch_related("item")
+        if not target_inv:
+            raise ItemNotFoundError(target_inventory_id)
+
+        if target_inv.item.type != ItemType.EQUIP:
+            return ItemUseResult(
+                success=False,
+                message="장비 아이템에만 사용할 수 있습니다.",
+                item_name=scroll_inv.item.name,
+            )
+
+        item_id = scroll_inv.item.id
+        effect_desc = ""
+
+        if item_id == ItemUseService.BLESS_SCROLL_ID:
+            if target_inv.is_blessed:
+                return ItemUseResult(
+                    success=False,
+                    message="이미 축복된 장비입니다.",
+                    item_name=scroll_inv.item.name,
+                )
+            target_inv.is_blessed = True
+            target_inv.is_cursed = False  # 축복 시 저주 해제
+            await target_inv.save()
+            effect_desc = f"'{target_inv.item.name}'에 축복 부여"
+
+        elif item_id == ItemUseService.CURSE_REMOVE_SCROLL_ID:
+            if not target_inv.is_cursed:
+                return ItemUseResult(
+                    success=False,
+                    message="저주되지 않은 장비입니다.",
+                    item_name=scroll_inv.item.name,
+                )
+            target_inv.is_cursed = False
+            await target_inv.save()
+            effect_desc = f"'{target_inv.item.name}'의 저주 해제"
+
+        else:
+            return ItemUseResult(
+                success=False,
+                message="이 아이템은 대상에게 사용할 수 없습니다.",
+                item_name=scroll_inv.item.name,
+            )
+
+        # 주문서 소모
+        scroll_inv.quantity -= 1
+        if scroll_inv.quantity <= 0:
+            await scroll_inv.delete()
+        else:
+            await scroll_inv.save()
+
+        logger.info(
+            f"User {user.id} used scroll {item_id} on "
+            f"target {target_inventory_id}: {effect_desc}"
+        )
+
+        return ItemUseResult(
+            success=True,
+            message=f"'{scroll_inv.item.name}'을(를) 사용했습니다!",
+            item_name=scroll_inv.item.name,
+            effect_description=effect_desc,
         )
 
 

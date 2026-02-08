@@ -11,6 +11,7 @@ import json
 import os
 import re
 import sys
+import unicodedata
 
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, PROJECT_ROOT)
@@ -116,6 +117,26 @@ def nullable_int(value: str) -> int | None:
         return None
 
 
+def strip_emoji(text: str) -> str:
+    """이모지를 제거하고 이름만 추출 ('🔥 화염' → '화염')"""
+    result = []
+    for ch in text:
+        cat = unicodedata.category(ch)
+        if cat not in ("So", "Sk", "Cf", "Mn"):
+            result.append(ch)
+    return "".join(result).strip()
+
+
+def safe_float(value: str, default: float = 0.0) -> float:
+    """문자열을 float로 안전하게 변환"""
+    if not value or not value.strip():
+        return default
+    try:
+        return float(value.strip())
+    except ValueError:
+        return default
+
+
 # ============================================================
 # DB 초기화
 # ============================================================
@@ -150,6 +171,10 @@ async def reset_all_tables():
         "user_deck_presets",
         "user_stats",
         "users",
+        # 세트 관련
+        "set_item_members",
+        "set_effects",
+        "set_items",
         # 관계 테이블
         "dungeon_spawn",
         "droptable",
@@ -368,6 +393,9 @@ async def seed_monsters():
         # skill_ids 파싱 (JSON 배열)
         skill_ids = json.loads(row.get("skill_ids", "[]"))
 
+        # drop_skill_ids 파싱 (JSON 배열)
+        drop_skill_ids = json.loads(row.get("drop_skill_ids", "[]"))
+
         # group_ids 파싱 (쉼표 구분 -> 정수 리스트)
         group_str = row.get("그룹", "").strip()
         if group_str:
@@ -386,6 +414,7 @@ async def seed_monsters():
             speed=safe_int(row.get("Speed", "10"), 10),
             attribute=row.get("속성", "무속성") or "무속성",
             skill_ids=skill_ids,
+            drop_skill_ids=drop_skill_ids,
             group_ids=group_ids,
         )
         count += 1
@@ -419,10 +448,18 @@ async def seed_equipment_items():
         await EquipmentItem.create(
             item=item,
             attack=nullable_int(row.get("Attack", "")),
+            ap_attack=nullable_int(row.get("AP_Attack", "")),
             hp=nullable_int(row.get("HP", "")),
+            ad_defense=nullable_int(row.get("AD_Def", "")),
+            ap_defense=nullable_int(row.get("AP_Def", "")),
             speed=nullable_int(row.get("Speed", "")),
             equip_pos=equip_pos,
             require_level=require_level,
+            require_str=safe_int(row.get("Req_STR", "0")),
+            require_int=safe_int(row.get("Req_INT", "0")),
+            require_dex=safe_int(row.get("Req_DEX", "0")),
+            require_vit=safe_int(row.get("Req_VIT", "0")),
+            require_luk=safe_int(row.get("Req_LUK", "0")),
         )
         count += 1
 
@@ -565,6 +602,77 @@ async def seed_dungeon_spawns():
     print(f"✓ DungeonSpawn {count}개 삽입 (monsters.csv 기반)")
 
 
+async def seed_sets():
+    """세트 정의 + 구성원 + 효과 삽입 (set_effects.csv + items_equipment.csv)"""
+    from models.set_item import SetItem, SetItemMember, SetEffect
+    from models.equipment_item import EquipmentItem
+
+    # 1) set_effects.csv에서 고유 세트 추출 → SetItem 생성
+    rows = read_csv("set_effects.csv")
+    seen_sets: dict[str, int] = {}  # name → auto ID
+    next_id = 1
+
+    for row in rows:
+        name = row["세트이름"]
+        if name not in seen_sets:
+            await SetItem.create(
+                id=next_id,
+                name=name,
+                description=row.get("설명", ""),
+            )
+            seen_sets[name] = next_id
+            next_id += 1
+
+    print(f"  SetItem {len(seen_sets)}개 삽입")
+
+    # 2) items_equipment.csv '세트' 컬럼 → SetItemMember 생성
+    equip_items = await EquipmentItem.all()
+    item_fk_to_pk = {ei.item_id: ei.id for ei in equip_items}
+
+    equip_rows = read_csv("items_equipment.csv")
+    member_count = 0
+
+    for row in equip_rows:
+        set_raw = row.get("세트", "").strip()
+        if not set_raw:
+            continue
+
+        set_name = strip_emoji(set_raw)
+        set_id = seen_sets.get(set_name)
+        if set_id is None:
+            continue
+
+        item_id = int(row["ID"])
+        equip_pk = item_fk_to_pk.get(item_id)
+        if equip_pk is None:
+            continue
+
+        await SetItemMember.create(
+            set_item_id=set_id,
+            equipment_item_id=equip_pk,
+        )
+        member_count += 1
+
+    print(f"  SetItemMember {member_count}개 삽입")
+
+    # 3) set_effects.csv → SetEffect 생성
+    effect_count = 0
+    for row in rows:
+        set_id = seen_sets[row["세트이름"]]
+        effect_config = json.loads(row["효과config"])
+
+        await SetEffect.create(
+            set_item_id=set_id,
+            pieces_required=int(row["필요수"]),
+            effect_description=row["효과설명"],
+            effect_config=effect_config,
+        )
+        effect_count += 1
+
+    print(f"  SetEffect {effect_count}개 삽입")
+    print(f"✓ 세트 데이터 삽입 완료 (set_effects.csv)")
+
+
 # ============================================================
 # 메인
 # ============================================================
@@ -587,7 +695,7 @@ async def main():
     await seed_item_grade_probability()
 
     # 3. CSV 게임 데이터
-    print("\n[3/3] CSV 게임 데이터 삽입")
+    print("\n[3/4] CSV 게임 데이터 삽입")
     await seed_skills()
     await seed_dungeons()
     await seed_monsters()
@@ -596,6 +704,10 @@ async def main():
     await seed_enhancement_items()
     await seed_material_items()
     await seed_dungeon_spawns()
+
+    # 4. 세트 데이터 (장비 데이터 의존)
+    print("\n[4/4] 세트 아이템 데이터 삽입")
+    await seed_sets()
 
     await Tortoise.close_connections()
 

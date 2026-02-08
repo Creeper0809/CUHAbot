@@ -2,11 +2,13 @@
 HealingService
 
 자연 회복 시스템을 담당합니다.
+HP 자연회복은 최대 HP 비례 % 방식 (VIT 기반).
 """
 import logging
 from datetime import datetime, timezone
 
 from models import User
+from models.users import UserStatEnum
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +21,8 @@ class HealingService:
         """
         자연 회복 적용
 
-        마지막 회복 시간 이후 경과한 시간에 따라 HP를 회복합니다.
+        VIT 기반 최대 HP 비례 회복:
+        회복량/분 = 최대 HP × (1% + VIT × 0.04%)
 
         Args:
             user: 대상 사용자
@@ -48,13 +51,16 @@ class HealingService:
             return 0
 
         # 이미 풀 HP면 시간만 갱신
-        if user.now_hp >= user.hp:
+        max_hp = user.get_stat()[UserStatEnum.HP]
+        if user.now_hp >= max_hp:
             user.last_regen_time = now
             await user.save()
             return 0
 
-        # 회복량 계산
-        regen_amount = user.hp_regen * elapsed_minutes
+        # VIT 기반 회복량 계산
+        regen_rate = user.get_hp_regen_rate()
+        regen_amount = int(max_hp * regen_rate * elapsed_minutes)
+        regen_amount = max(regen_amount, 1)  # 최소 1 HP 회복
         actual_heal = user.heal(regen_amount)
 
         # 시간 갱신
@@ -63,7 +69,7 @@ class HealingService:
 
         logger.info(
             f"Natural regen applied: user={user.discord_id}, "
-            f"minutes={elapsed_minutes}, healed={actual_heal}"
+            f"minutes={elapsed_minutes}, rate={regen_rate:.2%}, healed={actual_heal}"
         )
 
         return actual_heal
@@ -91,25 +97,30 @@ class HealingService:
         if last_time.tzinfo is None:
             last_time = last_time.replace(tzinfo=timezone.utc)
 
+        max_hp = user.get_stat()[UserStatEnum.HP]
+        regen_rate = user.get_hp_regen_rate()
+        regen_per_min = int(max_hp * regen_rate)
+
         elapsed_seconds = (now - last_time).total_seconds()
         elapsed_minutes = int(elapsed_seconds // 60)
-        pending_heal = user.hp_regen * elapsed_minutes
+        pending_heal = regen_per_min * elapsed_minutes
 
         # 최대 회복 가능량
-        max_heal = max(0, user.hp - user.now_hp)
+        max_heal = max(0, max_hp - user.now_hp)
         pending_heal = min(pending_heal, max_heal)
 
         # 풀 HP까지 필요한 시간
-        hp_needed = max(0, user.hp - user.now_hp)
-        if user.hp_regen > 0 and hp_needed > 0:
-            minutes_to_full = (hp_needed + user.hp_regen - 1) // user.hp_regen
+        hp_needed = max(0, max_hp - user.now_hp)
+        if regen_per_min > 0 and hp_needed > 0:
+            minutes_to_full = (hp_needed + regen_per_min - 1) // regen_per_min
         else:
             minutes_to_full = 0
 
         return {
             "current_hp": user.now_hp,
-            "max_hp": user.hp,
-            "hp_regen": user.hp_regen,
+            "max_hp": max_hp,
+            "regen_rate": regen_rate,
+            "regen_per_min": regen_per_min,
             "elapsed_minutes": elapsed_minutes,
             "pending_heal": pending_heal,
             "minutes_to_full": minutes_to_full,
@@ -126,8 +137,9 @@ class HealingService:
         Returns:
             회복된 HP량
         """
-        heal_amount = user.hp - user.now_hp
-        user.now_hp = user.hp
+        max_hp = user.get_stat()[UserStatEnum.HP]
+        heal_amount = max_hp - user.now_hp
+        user.now_hp = max_hp
         user.last_regen_time = datetime.now(timezone.utc)
         await user.save()
 

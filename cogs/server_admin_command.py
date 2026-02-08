@@ -2,7 +2,7 @@ import discord
 from discord.ext import commands
 from discord import app_commands
 
-from bot import GUILD_ID
+from bot import GUILD_IDS
 from models import Item, Skill_Model
 from models.repos.static_cache import load_static_data
 from models.repos.users_repo import find_account_by_discordid
@@ -18,7 +18,7 @@ from exceptions import ItemNotFoundError, InventoryFullError, SkillNotFoundError
 admin = app_commands.Group(
     name="admin",
     description="관리자 전용 명령어",
-    guild_ids=[GUILD_ID]
+    guild_ids=GUILD_IDS
 )
 
 class ServerAdminCammand(commands.Cog):
@@ -29,7 +29,7 @@ class ServerAdminCammand(commands.Cog):
         name="임시어드민",
         description="[관리자] 대상에게 임시 어드민 권한을 부여합니다 (봇 재시작 시 초기화)"
     )
-    @app_commands.guilds(GUILD_ID)
+    @app_commands.guilds(*GUILD_IDS)
     @app_commands.describe(target="임시 어드민으로 지정할 대상")
     @commands.has_permissions(administrator=True)
     async def grant_temp_admin(
@@ -54,7 +54,7 @@ class ServerAdminCammand(commands.Cog):
         name="임시어드민해제",
         description="[관리자] 대상의 임시 어드민 권한을 해제합니다"
     )
-    @app_commands.guilds(GUILD_ID)
+    @app_commands.guilds(*GUILD_IDS)
     @app_commands.describe(target="임시 어드민 권한을 해제할 대상")
     @commands.has_permissions(administrator=True)
     async def revoke_temp_admin(
@@ -78,7 +78,7 @@ class ServerAdminCammand(commands.Cog):
         name="임시어드민목록",
         description="[관리자] 현재 임시 어드민 목록을 확인합니다"
     )
-    @app_commands.guilds(GUILD_ID)
+    @app_commands.guilds(*GUILD_IDS)
     @commands.has_permissions(administrator=True)
     async def list_temp_admins_cmd(self, interaction: discord.Interaction):
         temp_admins = get_all_temp_admins()
@@ -156,7 +156,7 @@ class ServerAdminCammand(commands.Cog):
         name="아이템지급",
         description="[관리자] 대상에게 아이템을 지급합니다"
     )
-    @app_commands.guilds(GUILD_ID)
+    @app_commands.guilds(*GUILD_IDS)
     @app_commands.describe(
         target="지급 대상 (미지정시 자신)",
         item_id="아이템 ID",
@@ -267,7 +267,7 @@ class ServerAdminCammand(commands.Cog):
         name="스킬지급",
         description="[관리자] 대상에게 스킬을 지급합니다"
     )
-    @app_commands.guilds(GUILD_ID)
+    @app_commands.guilds(*GUILD_IDS)
     @app_commands.describe(
         target="지급 대상 (미지정시 자신)",
         skill_id="스킬 ID",
@@ -375,7 +375,7 @@ class ServerAdminCammand(commands.Cog):
         name="경험치지급",
         description="[관리자] 대상에게 경험치를 지급합니다"
     )
-    @app_commands.guilds(GUILD_ID)
+    @app_commands.guilds(*GUILD_IDS)
     @app_commands.describe(
         target="지급 대상 (미지정시 자신)",
         amount="경험치 양"
@@ -436,7 +436,7 @@ class ServerAdminCammand(commands.Cog):
         name="도감전체해금",
         description="[관리자] 대상의 도감을 전체 해금합니다"
     )
-    @app_commands.guilds(GUILD_ID)
+    @app_commands.guilds(*GUILD_IDS)
     @app_commands.describe(target="해금할 대상 (미지정시 자신)")
     async def unlock_all_collection(
         self,

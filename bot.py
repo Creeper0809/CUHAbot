@@ -22,6 +22,7 @@ load_dotenv()
 
 is_dev = os.getenv('DEV')
 GUILD_ID = int(os.getenv('GUILD_ID') or 0)
+GUILD_IDS = [GUILD_ID, 1470048099379576886]
 if is_dev == "TRUE":
     APPLICATION_ID = int(os.getenv('DEV_APPLICATION_ID') or 0)
     TOKEN = os.getenv('DEV_DISCORD_TOKEN')
@@ -57,7 +58,8 @@ class MyBot(commands.Bot):
         self.tree.clear_commands(guild=None)
         logging.info("전역 커맨드 삭제 완료")
 
-        self.tree.clear_commands(guild=discord.Object(id=GUILD_ID))
+        for gid in GUILD_IDS:
+            self.tree.clear_commands(guild=discord.Object(id=gid))
         logging.info("길드 커맨드 삭제 완료")
 
         for fn in os.listdir("./cogs"):
@@ -65,8 +67,9 @@ class MyBot(commands.Bot):
                 await self.load_extension(f"cogs.{fn[:-3]}")
                 logging.info(f"Loaded cogs.{fn[:-3]}")
 
-        guild_synced = await self.tree.sync(guild=discord.Object(id=GUILD_ID))
-        logging.info(f"전역 {len(guild_synced)}개 re-synced: {[c.name for c in guild_synced]}")
+        for gid in GUILD_IDS:
+            guild_synced = await self.tree.sync(guild=discord.Object(id=gid))
+            logging.info(f"길드 {gid}: {len(guild_synced)}개 synced")
 
 
     async def init_db(self):
@@ -97,7 +100,8 @@ if __name__ == "__main__":
     async def on_app_command_error(interaction: discord.Interaction, error):
         if isinstance(error, CommandSignatureMismatch):
             await interaction.response.defer(ephemeral=True, thinking=True)
-            synced = await bot.tree.sync(guild=discord.Object(id=GUILD_ID))
+            guild_obj = discord.Object(id=interaction.guild_id) if interaction.guild_id else discord.Object(id=GUILD_ID)
+            synced = await bot.tree.sync(guild=guild_obj)
             return await interaction.followup.send(
                 f"⚠️ 명령 시그니처가 갱신되어 `{', '.join(c.name for c in synced)}` 명령어를 재등록했습니다 .\n "
                 "다시 시도해 주세요.",

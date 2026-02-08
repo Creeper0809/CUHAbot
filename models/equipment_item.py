@@ -10,7 +10,10 @@ class ItemInfoKey(Enum):
 
 class StatKey(Enum):
     ATTACK = ("attack", "공격력")
+    AP_ATTACK = ("ap_attack", "마법공격력")
     HP = ("hp", "체력")
+    AD_DEFENSE = ("ad_defense", "물리방어")
+    AP_DEFENSE = ("ap_defense", "마법방어")
     SPEED = ("speed", "속도")
 
     def __init__(self, key: str, display: str):
@@ -35,10 +38,20 @@ class EquipmentItem(BaseItem):
         to_field='id'
     )
     attack = fields.IntField(null=True)
+    ap_attack = fields.IntField(null=True)
     hp = fields.IntField(null=True)
+    ad_defense = fields.IntField(null=True)
+    ap_defense = fields.IntField(null=True)
     speed = fields.IntField(null=True)
     equip_pos = fields.IntField(null=True)
     require_level = fields.IntField(null=True, default=1)
+
+    # 능력치 요구 사항
+    require_str = fields.IntField(default=0)
+    require_int = fields.IntField(default=0)
+    require_dex = fields.IntField(default=0)
+    require_vit = fields.IntField(default=0)
+    require_luk = fields.IntField(default=0)
 
     class Meta:
         table = "equipment_item"
@@ -47,9 +60,27 @@ class EquipmentItem(BaseItem):
     def raw_stats(self) -> Dict[StatKey, Optional[int]]:
         return {
             StatKey.ATTACK: self.attack,
+            StatKey.AP_ATTACK: self.ap_attack,
             StatKey.HP: self.hp,
-            StatKey.SPEED: self.speed
+            StatKey.AD_DEFENSE: self.ad_defense,
+            StatKey.AP_DEFENSE: self.ap_defense,
+            StatKey.SPEED: self.speed,
         }
+
+    def get_requirements(self) -> Dict[str, int]:
+        """능력치 요구사항 반환 (0이 아닌 것만)"""
+        reqs = {}
+        if self.require_str:
+            reqs["STR"] = self.require_str
+        if self.require_int:
+            reqs["INT"] = self.require_int
+        if self.require_dex:
+            reqs["DEX"] = self.require_dex
+        if self.require_vit:
+            reqs["VIT"] = self.require_vit
+        if self.require_luk:
+            reqs["LUK"] = self.require_luk
+        return reqs
 
     async def apply_to_embed(self, embed) -> None:
 
@@ -71,6 +102,16 @@ class EquipmentItem(BaseItem):
                 name=ItemInfoKey.REQUIRE_LEVEL.value,
                 value=f"```      Lv.{self.require_level}      ```",
                 inline=True
+            )
+
+        # 요구 능력치 표시
+        reqs = self.get_requirements()
+        if reqs:
+            req_lines = [f"{name} {value}" for name, value in reqs.items()]
+            embed.add_field(
+                name="📋 요구 능력치",
+                value=f"```{' / '.join(req_lines)}```",
+                inline=False
             )
 
     async def get_position_name(self) -> Optional[str]:

@@ -20,9 +20,19 @@ from service.dungeon.components.support_components import (
 )
 from service.dungeon.components.stat_components import (
     BuffComponent, DebuffComponent, PassiveBuffComponent,
+    PassiveRegenComponent, ConditionalPassiveComponent,
+    TurnScalingComponent, DebuffReductionComponent,
 )
 from service.dungeon.components.special_components import (
     StatusComponent, ComboComponent, SummonComponent,
+    OnDeathReviveComponent, OnDeathSummonComponent,
+)
+from service.dungeon.components.defensive_passive_components import (
+    ElementImmunityComponent, ElementResistanceComponent,
+    DamageReflectionComponent, StatusImmunityComponent,
+)
+from service.dungeon.components.aura_passive_components import (
+    AuraBuffComponent, AuraDebuffComponent,
 )
 
 __all__ = [
@@ -38,6 +48,14 @@ __all__ = [
     "HealComponent", "ShieldComponent", "CleanseComponent",
     # 스탯
     "BuffComponent", "DebuffComponent", "PassiveBuffComponent",
+    "PassiveRegenComponent", "ConditionalPassiveComponent",
+    "TurnScalingComponent", "DebuffReductionComponent",
     # 특수
     "StatusComponent", "ComboComponent", "SummonComponent",
+    "OnDeathReviveComponent", "OnDeathSummonComponent",
+    # 방어 패시브
+    "ElementImmunityComponent", "ElementResistanceComponent",
+    "DamageReflectionComponent", "StatusImmunityComponent",
+    # 오라 패시브
+    "AuraBuffComponent", "AuraDebuffComponent",
 ]

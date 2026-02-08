@@ -5,3 +5,5 @@ class TurnConfig:
         return ""
     def on_turn_end(self,attacker,target):
         return ""
+    def on_death(self, dying_entity, killer, context):
+        return ""

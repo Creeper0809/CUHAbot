@@ -240,7 +240,7 @@ class ShopService:
     async def _build_random_skill_items(count: int = 5) -> List[ShopItem]:
         """스킬을 등급 확률에 따라 랜덤 선택 (DB 조회)"""
         grade_map = {grade.id: grade.name for grade in await Grade.all()}
-        skills = await Skill_Model.all()
+        skills = await Skill_Model.filter(player_obtainable=True)
 
         skills_by_grade: Dict[str, List[Skill_Model]] = {}
         for skill in skills:

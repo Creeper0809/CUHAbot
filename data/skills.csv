@@ -563,7 +563,7 @@
 9236,【몬】화염 폭발,active,monster,화염,일반,"단일 250% 마법 데미지, 화상 스택 소모 시 스택당 100% 추가",몬스터 전용,화염/연소/피니셔,"{""components"": [{""tag"": ""attack"", ""ap_ratio"": 2.5, ""is_physical"": false}, {""tag"": ""consume"", ""consume_type"": ""burn"", ""ap_ratio"": 1.0, ""is_physical"": false}]}",N
 9237,【몬】화염구,active,monster,화염,일반,"130% 마법 데미지, 화상 2턴",몬스터 전용,화상,"{""components"": [{""tag"": ""attack"", ""ap_ratio"": 1.3, ""is_physical"": false}, {""tag"": ""status"", ""type"": ""burn"", ""chance"": 0.6, ""duration"": 2}]}",N
 9238,【몬】독 포자 II,active,monster,무속성,일반,"100% 데미지, 중독 3턴 (매 턴 5% HP 감소)",몬스터 전용,중독,"{""components"": [{""tag"": ""attack"", ""ap_ratio"": 1.0, ""is_physical"": false}, {""tag"": ""status"", ""type"": ""poison"", ""chance"": 0.6, ""duration"": 3, ""stacks"": 1}]}",N
-9239,슬라임 분열,active,monster,무속성,일반,"120% 데미지, 처치 시 미니 슬라임 2마리 소환",몬스터 전용,소환,"{""components"": [{""tag"": ""attack"", ""ad_ratio"": 1.2}]}",N
+9239,슬라임 분열,active,monster,무속성,일반,"120% 데미지, 처치 시 미니 슬라임 2마리 소환",몬스터 전용,소환,"{""components"": [{""tag"": ""attack"", ""ad_ratio"": 1.2}, {""tag"": ""on_death_summon"", ""monster_ids"": [1], ""count"": 2}]}",N
 9240,【몬】흡혈 II,active,monster,무속성,일반,"90% 데미지, 피해량의 50% 회복",몬스터 전용,회복,"{""components"": [{""tag"": ""attack"", ""ad_ratio"": 0.9}, {""tag"": ""lifesteal"", ""ratio"": 0.5}]}",N
 9241,불꽃 돌진,active,monster,화염,일반,"130% 화염 데미지, 20% 확률 화상 2턴",몬스터 전용,화염/화상/셋업,"{""components"": [{""tag"": ""attack"", ""ap_ratio"": 1.3, ""is_physical"": false}, {""tag"": ""status"", ""type"": ""burn"", ""chance"": 0.5, ""duration"": 2}]}",N
 9242,냉기 물어뜯기,active,monster,냉기,일반,"110% 데미지, 둔화 2턴",몬스터 전용,둔화,"{""components"": [{""tag"": ""attack"", ""ad_ratio"": 1.1}, {""tag"": ""status"", ""type"": ""slow"", ""chance"": 0.4, ""duration"": 2}]}",N
@@ -604,3 +604,44 @@
 9277,신성 파괴,active,monster,암흑,일반,"320% 암흑 데미지, 신성 속성에 2배, 버프 1개 제거",몬스터 전용,정화/암흑,"{""components"":[{""tag"":""attack"",""ap_ratio"":3.2,""is_physical"":false,""bonus_vs_holy"":2.0},{""tag"":""cleanse"",""target"":""enemy"",""cleanse_type"":""buffs"",""count"":1}]}",N
 9278,창조의 섬광,active,monster,무속성,일반,"전체 350% 데미지, 자신 HP 10% 회복",몬스터 전용,전체/광역/회복,"{""components"":[{""tag"":""attack"",""ap_ratio"":3.5,""is_physical"":false,""target"":""all""},{""tag"":""heal"",""heal_percent"":0.1,""target"":""self""}]}",N
 9279,기원의 폭발,active,monster,무속성,일반,"전체 380% 데미지, 버프 모두 제거",몬스터 전용,정화/전체/광역,"{""components"":[{""tag"":""attack"",""ap_ratio"":3.8,""is_physical"":false,""target"":""all""},{""tag"":""cleanse"",""target"":""all_enemies"",""cleanse_type"":""buffs""}]}",N
+9501,무리 본능,passive,monster,무속성,일반,공격력 +20%,몬스터 전용,패시브,"{""components"":[{""tag"":""passive_buff"",""attack_percent"":0.2}]}",N
+9502,화염 민첩,passive,monster,화염,일반,회피율 +15%,몬스터 전용,패시브,"{""components"":[{""tag"":""passive_buff"",""evasion_percent"":0.15}]}",N
+9503,용암 갑옷,passive,monster,화염,일반,"방어력 +30%, 속도 -50%",몬스터 전용,패시브,"{""components"":[{""tag"":""passive_buff"",""defense_percent"":0.3,""speed_percent"":-0.5}]}",N
+9504,질풍 비행,passive,monster,무속성,일반,회피율 +20%,몬스터 전용,패시브,"{""components"":[{""tag"":""passive_buff"",""evasion_percent"":0.2}]}",N
+9505,폭풍의 가호,passive,monster,번개,일반,회피율 +25%,몬스터 전용,패시브,"{""components"":[{""tag"":""passive_buff"",""evasion_percent"":0.25}]}",N
+9506,용의 비늘,passive,monster,무속성,일반,방어력 +15%,몬스터 전용,패시브,"{""components"":[{""tag"":""passive_buff"",""defense_percent"":0.15}]}",N
+9507,용의 지혜,passive,monster,무속성,일반,마법 공격력 +20%,몬스터 전용,패시브,"{""components"":[{""tag"":""passive_buff"",""ap_attack_percent"":0.2}]}",N
+9508,신성 갑옷,passive,monster,신성,일반,방어력 +25%,몬스터 전용,패시브,"{""components"":[{""tag"":""passive_buff"",""defense_percent"":0.25}]}",N
+9509,비실체화,passive,monster,암흑,일반,방어력 +50%,몬스터 전용,패시브,"{""components"":[{""tag"":""passive_buff"",""defense_percent"":0.5}]}",N
+9510,원거리,passive,monster,무속성,일반,회피율 +10%,몬스터 전용,패시브,"{""components"":[{""tag"":""passive_buff"",""evasion_percent"":0.1}]}",N
+9511,부족의 힘,passive,monster,무속성,일반,"HP 30% 이하 시 공격력 +50%, 속도 +50%",몬스터 전용,패시브/조건,"{""components"":[{""tag"":""conditional_passive"",""hp_threshold"":0.3,""attack_percent"":0.5,""speed_percent"":0.5}]}",N
+9512,전사의 각성,passive,monster,무속성,일반,"HP 50% 이하 시 공격력 +20%, 방어력 +20%",몬스터 전용,패시브/조건,"{""components"":[{""tag"":""conditional_passive"",""hp_threshold"":0.5,""attack_percent"":0.2,""defense_percent"":0.2}]}",N
+9513,투기장의 의지,passive,monster,무속성,일반,HP 30% 이하 시 공격력 +40%,몬스터 전용,패시브/조건,"{""components"":[{""tag"":""conditional_passive"",""hp_threshold"":0.3,""attack_percent"":0.4}]}",N
+9514,타락한 왕관,passive,monster,암흑,일반,HP 50% 이하 시 공격력 +30%,몬스터 전용,패시브/조건,"{""components"":[{""tag"":""conditional_passive"",""hp_threshold"":0.5,""attack_percent"":0.3}]}",N
+9515,원초의 힘,passive,monster,무속성,일반,HP 50% 이하 시 공격력 +100%,몬스터 전용,패시브/조건,"{""components"":[{""tag"":""conditional_passive"",""hp_threshold"":0.5,""attack_percent"":1.0}]}",N
+9516,심연의 각성,passive,monster,암흑,일반,HP 25% 이하 시 공격력 +50%,몬스터 전용,패시브/조건,"{""components"":[{""tag"":""conditional_passive"",""hp_threshold"":0.25,""attack_percent"":0.5}]}",N
+9517,마왕의 위엄,passive,monster,암흑,일반,"HP 30% 이하 시 공격력 +100%, 속도 +100%",몬스터 전용,패시브/조건,"{""components"":[{""tag"":""conditional_passive"",""hp_threshold"":0.3,""attack_percent"":1.0,""speed_percent"":1.0}]}",N
+9518,원초의 힘(약),passive,monster,무속성,일반,HP 50% 이하 시 공격력 +30%,몬스터 전용,패시브/조건,"{""components"":[{""tag"":""conditional_passive"",""hp_threshold"":0.5,""attack_percent"":0.3}]}",N
+9521,숲의 주인,passive,monster,무속성,일반,매 턴 HP 2% 회복,몬스터 전용,패시브/재생,"{""components"":[{""tag"":""passive_regen"",""percent"":0.02}]}",N
+9522,회복의 물,passive,monster,수속성,일반,매 턴 HP 3% 회복,몬스터 전용,패시브/재생,"{""components"":[{""tag"":""passive_regen"",""percent"":0.03}]}",N
+9523,세계수의 축복,passive,monster,무속성,일반,매 턴 HP 5% 회복,몬스터 전용,패시브/재생,"{""components"":[{""tag"":""passive_regen"",""percent"":0.05}]}",N
+9524,잔존하는 신격,passive,monster,무속성,일반,"방어력 +25%, 매 턴 HP 5% 회복",몬스터 전용,패시브/재생,"{""components"":[{""tag"":""passive_buff"",""defense_percent"":0.25},{""tag"":""passive_regen"",""percent"":0.05}]}",N
+9525,용신의 권능,passive,monster,무속성,일반,매 턴 HP 3% 회복,몬스터 전용,패시브/재생,"{""components"":[{""tag"":""passive_regen"",""percent"":0.03}]}",N
+9526,원초의 존재,passive,monster,무속성,일반,매 턴 HP 5% 회복,몬스터 전용,패시브/재생,"{""components"":[{""tag"":""passive_regen"",""percent"":0.05}]}",N
+9527,창조신의 잔재,passive,monster,무속성,일반,매 턴 HP 3% 회복,몬스터 전용,패시브/재생,"{""components"":[{""tag"":""passive_regen"",""percent"":0.03}]}",N
+9528,창조신의 권능,passive,monster,무속성,일반,매 턴 HP 10% 회복,몬스터 전용,패시브/재생,"{""components"":[{""tag"":""passive_regen"",""percent"":0.1}]}",N
+9529,태양신의 권능,passive,monster,신성,일반,매 턴 HP 5% 회복,몬스터 전용,패시브/재생,"{""components"":[{""tag"":""passive_regen"",""percent"":0.05}]}",N
+9531,마력 보호막,passive,monster,무속성,일반,방어력 +25%,몬스터 전용,패시브,"{""components"":[{""tag"":""passive_buff"",""defense_percent"":0.25}]}",N
+9532,단단한 등껍질,passive,monster,무속성,일반,방어력 +30%,몬스터 전용,패시브,"{""components"":[{""tag"":""passive_buff"",""defense_percent"":0.3}]}",N
+9533,원소 적응,passive,monster,무속성,일반,방어력 +20%,몬스터 전용,패시브,"{""components"":[{""tag"":""passive_buff"",""defense_percent"":0.2}]}",N
+9534,신성한 석상,passive,monster,신성,일반,방어력 +25%,몬스터 전용,패시브,"{""components"":[{""tag"":""passive_buff"",""defense_percent"":0.25}]}",N
+9535,신격의 잔재,passive,monster,무속성,일반,방어력 +15%,몬스터 전용,패시브,"{""components"":[{""tag"":""passive_buff"",""defense_percent"":0.15}]}",N
+9536,심해의 압력,passive,monster,수속성,일반,"방어력 +40%, 속도 -20%",몬스터 전용,패시브,"{""components"":[{""tag"":""passive_buff"",""defense_percent"":0.4,""speed_percent"":-0.2}]}",N
+9537,한계 초월,passive,monster,무속성,일반,"HP 25% 이하 시 공격력 +30%, 방어력 +30%",몬스터 전용,패시브/조건,"{""components"":[{""tag"":""conditional_passive"",""hp_threshold"":0.25,""attack_percent"":0.3,""defense_percent"":0.3}]}",N
+9538,영광의 전사,passive,monster,무속성,일반,공격력 +15%,몬스터 전용,패시브,"{""components"":[{""tag"":""passive_buff"",""attack_percent"":0.15}]}",N
+9539,타락한 축복,passive,monster,암흑,일반,공격력 +10%,몬스터 전용,패시브,"{""components"":[{""tag"":""passive_buff"",""attack_percent"":0.1}]}",N
+9540,성장,passive,monster,무속성,일반,공격력 +10%,몬스터 전용,패시브,"{""components"":[{""tag"":""passive_buff"",""attack_percent"":0.1}]}",N
+9541,냉기 오라,passive,monster,빙결,일반,주변 적 속도 -10%,몬스터 전용,패시브/오라,"{""components"":[{""tag"":""passive_aura_debuff"",""target"":""enemies"",""speed_percent"":-0.1}]}",N
+9542,공포의 존재,passive,monster,암흑,일반,전투 시작 시 적 공격력 -10%,몬스터 전용,패시브/오라,"{""components"":[{""tag"":""passive_aura_debuff"",""target"":""enemies"",""attack_percent"":-0.1}]}",N
+9543,고대의 지혜,passive,monster,무속성,일반,디버프 지속시간 -50%,몬스터 전용,패시브,"{""components"":[{""tag"":""passive_debuff_reduction"",""reduction_percent"":0.5}]}",N
+9544,불사의 지배,passive,monster,암흑,일반,사망 시 HP 50%로 부활 (1회),몬스터 전용,패시브,"{""components"":[{""tag"":""passive_revive"",""hp_percent"":0.5,""max_uses"":1}]}",N

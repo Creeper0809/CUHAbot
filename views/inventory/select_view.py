@@ -287,7 +287,7 @@ class InventorySelectButton(discord.ui.Button):
     """아이템 사용 버튼 (선택 창 열기)"""
 
     def __init__(self):
-        super().__init__(label="아이템 사용", style=discord.ButtonStyle.success, emoji="✅", row=1)
+        super().__init__(label="아이템 사용", style=discord.ButtonStyle.success, emoji="✅", row=2)
 
     async def callback(self, interaction: discord.Interaction):
         view = self.view
@@ -298,3 +298,25 @@ class InventorySelectButton(discord.ui.Button):
         )
         embed = select_view.create_embed()
         await interaction.response.send_message(embed=embed, view=select_view, ephemeral=True)
+
+
+class EnhancementSelectButton(discord.ui.Button):
+    """강화 버튼 (선택 창 열기) - 장비 탭에서만 표시"""
+
+    def __init__(self):
+        super().__init__(label="강화", style=discord.ButtonStyle.primary, emoji="⚒️", row=2)
+
+    async def callback(self, interaction: discord.Interaction):
+        from views.enhancement_view import EnhancementView
+
+        view = self.view
+        equipment_items = [inv for inv in view.inventory if inv.item.type == ItemType.EQUIP]
+
+        enhance_view = EnhancementView(
+            user=interaction.user,
+            db_user=view.db_user,
+            equipment_items=equipment_items,
+            list_view=view,
+        )
+        embed = enhance_view.create_default_embed()
+        await interaction.response.send_message(embed=embed, view=enhance_view, ephemeral=True)

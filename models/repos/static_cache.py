@@ -14,6 +14,8 @@ spawn_info = {}
 skill_cache_by_id = {}
 box_drop_table = {}  # {"normal": [(box_id, weight), ...], ...}
 _dungeon_levels_sorted: list[int] = []  # 던전 require_level 정렬 리스트
+equipment_cache = {}  # item_id -> EquipmentItem
+set_name_by_item_id = {}  # item_id -> set_name (e.g. "🔥 화염")
 
 
 async def load_static_data():
@@ -61,6 +63,7 @@ async def load_static_data():
                 continue
             try:
                 component = get_component_by_tag(tag)
+                component._tag = tag
                 component.apply_config(comp_config, skill.name)
                 component.skill_attribute = getattr(skill, 'attribute', '무속성')
                 components.append(component)
@@ -73,11 +76,67 @@ async def load_static_data():
 
     logger.info(f"Loaded {len(skill_cache_by_id)} skills")
 
+    # 장비 캐시 로딩
+    await _load_equipment_cache()
+
     # Grade 캐시 로딩 (상점 가격 등)
     await ShopService.load_grade_cache()
 
     # 상자 드랍 테이블 로딩
     await load_box_drop_table()
+
+
+EQUIP_POS_NAMES = {
+    1: "투구", 2: "갑옷", 3: "신발", 4: "무기",
+    5: "보조무기", 6: "장갑", 7: "목걸이", 8: "반지",
+}
+
+
+async def _load_equipment_cache():
+    """장비 및 세트 캐시 로드"""
+    global equipment_cache, set_name_by_item_id
+
+    from models.equipment_item import EquipmentItem
+    from models.set_item import SetItem, SetItemMember
+
+    # EquipmentItem: item_id -> EquipmentItem
+    all_equip = await EquipmentItem.all()
+    equipment_cache = {eq.item_id: eq for eq in all_equip}
+    logger.info(f"Loaded {len(equipment_cache)} equipment items into cache")
+
+    # SetItemMember -> SetItem: item_id -> set_name
+    all_sets = await SetItem.all()
+    set_name_map = {s.id: s.name for s in all_sets}
+
+    all_members = await SetItemMember.all()
+    # equipment_item_id(PK) -> item_id 역매핑
+    equip_pk_to_item_id = {eq.id: eq.item_id for eq in all_equip}
+
+    for member in all_members:
+        item_id = equip_pk_to_item_id.get(member.equipment_item_id)
+        set_name = set_name_map.get(member.set_item_id)
+        if item_id and set_name:
+            set_name_by_item_id[item_id] = set_name
+
+    logger.info(f"Loaded {len(set_name_by_item_id)} set memberships into cache")
+
+
+def get_equipment_info(item_id: int) -> dict:
+    """장비 아이템 캐시 정보 조회"""
+    eq = equipment_cache.get(item_id)
+    if not eq:
+        return {}
+    return {
+        "require_level": eq.require_level or 1,
+        "equip_pos": EQUIP_POS_NAMES.get(eq.equip_pos, ""),
+        "attack": eq.attack,
+        "ap_attack": eq.ap_attack,
+        "hp": eq.hp,
+        "ad_defense": eq.ad_defense,
+        "ap_defense": eq.ap_defense,
+        "speed": eq.speed,
+        "set_name": set_name_by_item_id.get(item_id, ""),
+    }
 
 
 async def load_box_drop_table():

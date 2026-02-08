@@ -16,6 +16,7 @@ from exceptions import (
     EquipmentSlotMismatchError,
     CombatRestrictionError,
     LevelRequirementError,
+    StatRequirementError,
 )
 from service.session import get_session
 
@@ -81,6 +82,18 @@ class EquipmentService:
         # 레벨 요구사항 체크
         if equipment.require_level and user.level < equipment.require_level:
             raise LevelRequirementError(equipment.require_level, user.level)
+
+        # 능력치 요구사항 체크
+        stat_checks = [
+            ("STR", equipment.require_str, user.bonus_str),
+            ("INT", equipment.require_int, user.bonus_int),
+            ("DEX", equipment.require_dex, user.bonus_dex),
+            ("VIT", equipment.require_vit, user.bonus_vit),
+            ("LUK", equipment.require_luk, user.bonus_luk),
+        ]
+        for stat_name, required, current in stat_checks:
+            if required and current < required:
+                raise StatRequirementError(stat_name, required, current)
 
         # 기존 장비 해제
         await UserEquipment.filter(user=user, slot=slot).delete()
@@ -210,21 +223,24 @@ class EquipmentService:
             )
 
             # 기본 스탯 * 등급 배율
-            base_hp = int(equipment.hp * grade_mult) if equipment.hp else 0
-            base_atk = int(equipment.attack * grade_mult) if equipment.attack else 0
-            base_spd = int(equipment.speed * grade_mult) if equipment.speed else 0
+            base_stats = {
+                "hp": int(equipment.hp * grade_mult) if equipment.hp else 0,
+                "attack": int(equipment.attack * grade_mult) if equipment.attack else 0,
+                "ap_attack": int(equipment.ap_attack * grade_mult) if equipment.ap_attack else 0,
+                "ad_defense": int(equipment.ad_defense * grade_mult) if equipment.ad_defense else 0,
+                "ap_defense": int(equipment.ap_defense * grade_mult) if equipment.ap_defense else 0,
+                "speed": int(equipment.speed * grade_mult) if equipment.speed else 0,
+            }
 
-            total_stats["hp"] += base_hp
-            total_stats["attack"] += base_atk
-            total_stats["speed"] += base_spd
+            for stat_key, base_val in base_stats.items():
+                total_stats[stat_key] += base_val
 
             # 강화 보너스 (등급 적용 후 기준, 5% per level)
             enhancement = eq.inventory_item.enhancement_level
             if enhancement > 0:
                 bonus_mult = enhancement * 0.05
-                total_stats["hp"] += int(base_hp * bonus_mult)
-                total_stats["attack"] += int(base_atk * bonus_mult)
-                total_stats["speed"] += int(base_spd * bonus_mult)
+                for stat_key, base_val in base_stats.items():
+                    total_stats[stat_key] += int(base_val * bonus_mult)
 
             # 특수 효과 집계
             effects = eq.inventory_item.special_effects
