@@ -2,15 +2,32 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-from DTO.dungeon_select_view import DungeonSelectView
+from views.collection_view import CollectionView
+from views.dungeon_select_view import DungeonSelectView
+from views.inventory import InventoryView
+from views.skill_deck import SkillDeckView
+from views.stat_distribution_view import StatOverviewView, StatSelectView
+from views.user_info_view import UserInfoView
 from bot import GUILD_ID
+from config import DUNGEON, SKILL_ID
 from decorator.account import requires_account
 from models.repos import find_account_by_discordid
 from models.repos.dungeon_repo import find_all_dungeon
+from models.repos.static_cache import skill_cache_by_id
+from models.user_equipment import UserEquipment
+from models.user_inventory import UserInventory
 from service.dungeon.dungeon_service import start_dungeon
+from service.collection_service import CollectionService, EntryNotFoundError
 from service.dungeon.item_service import get_item_info, ItemNotFoundException
-from service.session import is_in_session, create_session, end_session
-from models import User
+from service.player.healing_service import HealingService
+from service.item.inventory_service import InventoryService
+from service.session import is_in_combat, create_session, end_session
+from service.skill.skill_deck_service import SkillDeckService
+from service.item.equipment_service import EquipmentService
+from service.skill.skill_ownership_service import SkillOwnershipService
+from service.temp_admin_service import is_admin_or_temp
+from models import User, UserStatEnum
+from service.item.equipment_service import EquipmentService
 
 
 class DungeonCommand(commands.Cog):
@@ -24,48 +41,474 @@ class DungeonCommand(commands.Cog):
     )
     @app_commands.guilds(GUILD_ID)
     async def enter_dungeon(self, interaction: discord.Interaction):
-        if is_in_session(interaction.user.id):
+        # 원자적 세션 생성 (이미 존재하면 None 반환)
+        session = await create_session(interaction.user.id)
+        if session is None:
             await interaction.response.send_message("이미 던전 탐험중입니다.")
-        session = create_session(interaction.user.id)
-
-        user: User = await find_account_by_discordid(session.user_id)
-        session.user = user
-
-        dungeons = find_all_dungeon()
-        if not dungeons:
-            await interaction.response.send_message("등록된 던전이 없습니다.")
             return
-        embed = discord.Embed(
-            title="🎯 던전을 선택하세요",
-            description="드롭다운에서 던전을 선택한 후 입장하거나 취소하세요.",
-            color=discord.Color.blurple()
-        )
-        view = DungeonSelectView(interaction.user, dungeons, session)
-        message = await interaction.response.send_message(embed=embed, view=view)
-        view.message = await interaction.original_response()
-        await view.wait()
-        if view.selected_dungeon is None:
-            await interaction.followup.send("던전 입장이 취소되었습니다.")
-            return
-        await interaction.followup.send(f"{view.selected_dungeon.name} 던전에 입장합니다!")
 
-        session.dungeon = view.selected_dungeon
+        try:
+            user: User = await find_account_by_discordid(session.user_id)
+            session.user = user
 
-        ended = await start_dungeon(session, interaction)
-        await end_session(user_id=interaction.user.id)
+            # 스킬 덱 로드 (전투에서 사용)
+            await SkillDeckService.load_deck_to_user(user)
+
+            # 장비 스탯 로드 (전투에서 사용)
+            await EquipmentService.apply_equipment_stats(user)
+
+            # 자연 회복 적용
+            await HealingService.apply_natural_regen(user)
+
+            # HP 체크 - 너무 낮으면 경고
+            max_hp = user.get_stat()[UserStatEnum.HP]
+            hp_percent = (user.now_hp / max_hp) * 100 if max_hp > 0 else 0
+            min_hp_pct = DUNGEON.MIN_HP_PERCENT_TO_ENTER
+            if hp_percent < min_hp_pct * 100:
+                # 완전 회복까지 예상 시간 계산
+                hp_needed = int(max_hp * min_hp_pct) - user.now_hp
+                minutes_needed = (hp_needed + user.hp_regen - 1) // user.hp_regen if user.hp_regen > 0 else 999
+
+                await interaction.response.send_message(
+                    f"⚠️ HP가 너무 낮습니다! ({user.now_hp}/{max_hp}, {hp_percent:.0f}%)\n"
+                    f"HP {int(min_hp_pct * 100)}% 이상이 되어야 입장 가능합니다.\n"
+                    f"자연 회복으로 약 **{minutes_needed}분** 후 입장 가능합니다.",
+                    ephemeral=True
+                )
+                return
+
+            dungeons = find_all_dungeon()
+            if not dungeons:
+                await interaction.response.send_message("등록된 던전이 없습니다.")
+                return
+
+            embed = discord.Embed(
+                title="🎯 던전을 선택하세요",
+                description="드롭다운에서 던전을 선택한 후 입장하거나 취소하세요.",
+                color=discord.Color.blurple()
+            )
+            view = DungeonSelectView(interaction.user, dungeons, session)
+            await interaction.response.send_message(embed=embed, view=view)
+            view.message = await interaction.original_response()
+            await view.wait()
+
+            if view.selected_dungeon is None:
+                await interaction.followup.send("던전 입장이 취소되었습니다.")
+                return
+
+            # 레벨 체크 (방어 로직)
+            if user.level < view.selected_dungeon.require_level:
+                await interaction.followup.send(
+                    f"⚠️ 레벨이 부족합니다. (현재: {user.level}, 필요: {view.selected_dungeon.require_level})"
+                )
+                return
+
+            await interaction.followup.send(f"{view.selected_dungeon.name} 던전에 입장합니다!")
+
+            session.dungeon = view.selected_dungeon
+            await start_dungeon(session, interaction)
+
+        finally:
+            # 예외 발생 여부와 관계없이 세션 정리 보장
+            await end_session(user_id=interaction.user.id)
 
     @app_commands.command(
-        name="정보",
-        description="아이템 정보 검색"
+        name="설명",
+        description="아이템, 스킬, 몬스터 정보를 검색합니다"
     )
     @app_commands.guilds(GUILD_ID)
-    @app_commands.describe(item_name="검색할 아이템 이름")
-    async def search_item(self, interaction: discord.Interaction, item_name: str):
+    @app_commands.describe(이름="검색할 이름 (아이템/스킬/몬스터)")
+    async def search_entry(self, interaction: discord.Interaction, 이름: str):
+        """통합 검색 (아이템/스킬/몬스터)"""
+        # 유저 정보 (도감 등록 여부 표시용)
+        user = await find_account_by_discordid(interaction.user.id)
+
         try:
-            embed = await get_item_info(item_name)
+            _, embed = await CollectionService.search_entry(이름, user)
             await interaction.response.send_message(embed=embed)
-        except ItemNotFoundException as e:
-            await interaction.response.send_message(str(e))
+        except EntryNotFoundError as e:
+            await interaction.response.send_message(str(e), ephemeral=True)
+
+    @requires_account()
+    @app_commands.command(
+        name="도감",
+        description="수집한 아이템, 스킬, 몬스터 도감을 확인합니다"
+    )
+    @app_commands.guilds(GUILD_ID)
+    async def collection(self, interaction: discord.Interaction):
+        """도감 조회"""
+        user: User = await find_account_by_discordid(interaction.user.id)
+        if not user:
+            await interaction.response.send_message(
+                "등록된 계정이 없습니다. `/등록`을 먼저 해주세요.",
+                ephemeral=True
+            )
+            return
+
+        # 도감 데이터 로드
+        stats = await CollectionService.get_collection_stats(user)
+        items = await CollectionService.get_collected_items(user)
+        skills = await CollectionService.get_collected_skills(user)
+        monsters = await CollectionService.get_collected_monsters(user)
+
+        # View 생성
+        view = CollectionView(
+            discord_user=interaction.user,
+            user=user,
+            stats=stats,
+            items=items,
+            skills=skills,
+            monsters=monsters
+        )
+
+        embed = view.create_embed()
+        await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
+
+    @requires_account()
+    @app_commands.command(
+        name="내정보",
+        description="내 캐릭터 정보를 확인합니다 (스탯, 장비, 스킬)"
+    )
+    @app_commands.guilds(GUILD_ID)
+    async def my_info(self, interaction: discord.Interaction):
+        """내 정보 조회"""
+        user: User = await find_account_by_discordid(interaction.user.id)
+        if not user:
+            await interaction.response.send_message(
+                "등록된 계정이 없습니다. `/등록`을 먼저 해주세요.",
+                ephemeral=True
+            )
+            return
+
+        # 자연 회복 적용 (HP 정보 표시 전 자동 적용)
+        await HealingService.apply_natural_regen(user)
+
+        # 장비 정보 로드
+        equipment = await UserEquipment.filter(user=user).prefetch_related(
+            "inventory_item__item"
+        )
+        await EquipmentService.apply_equipment_stats(user)
+
+        # 스킬 덱 로드
+        skill_deck = await SkillDeckService.get_deck_as_list(user)
+
+        # 세트 효과 요약 로드
+        from service.item.set_detection_service import SetDetectionService
+        set_summary = await SetDetectionService.get_set_summary(user)
+
+        # View 생성
+        view = UserInfoView(
+            discord_user=interaction.user,
+            user=user,
+            equipment=list(equipment),
+            skill_deck=skill_deck,
+            set_summary=set_summary
+        )
+
+        embed = view.create_embed()
+        await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
+
+    @requires_account()
+    @app_commands.command(
+        name="덱",
+        description="스킬 덱을 확인하고 편집합니다"
+    )
+    @app_commands.guilds(GUILD_ID)
+    async def skill_deck(self, interaction: discord.Interaction):
+        """스킬 덱 확인 및 편집"""
+        # 전투 중 체크
+        if is_in_combat(interaction.user.id):
+            await interaction.response.send_message(
+                "⚠️ 전투 중에는 덱을 변경할 수 없습니다!",
+                ephemeral=True
+            )
+            return
+
+        user: User = await find_account_by_discordid(interaction.user.id)
+        if not user:
+            await interaction.response.send_message(
+                "등록된 계정이 없습니다. `/등록`을 먼저 해주세요.",
+                ephemeral=True
+            )
+            return
+
+        # 현재 덱 로드
+        current_deck = await SkillDeckService.get_deck_as_list(user)
+
+        # 기존 유저 마이그레이션 (스킬 소유 데이터 생성)
+        await SkillOwnershipService.migrate_existing_user(user, current_deck)
+
+        # 현재 덱에 있는 스킬을 도감에 자동 등록 (기존 유저 호환)
+        for skill_id in set(current_deck):
+            if skill_id != 0:
+                await CollectionService.register_skill(user, skill_id)
+
+        # 보유 스킬 목록 (소유한 스킬만)
+        owned_skills = await SkillOwnershipService.get_all_owned_skills(user)
+        available_skills = [
+            skill_cache_by_id[owned.skill_id]
+            for owned in owned_skills
+            if owned.skill_id in skill_cache_by_id
+        ]
+
+        # 스킬별 보유 수량 정보
+        skill_quantities = {
+            owned.skill_id: owned
+            for owned in owned_skills
+        }
+
+        # 강타는 항상 사용 가능하도록 추가
+        BASIC_ATTACK_SKILL_ID = SKILL_ID.BASIC_ATTACK_ID
+        if BASIC_ATTACK_SKILL_ID in skill_cache_by_id:
+            basic_skill = skill_cache_by_id[BASIC_ATTACK_SKILL_ID]
+            if basic_skill not in available_skills:
+                available_skills.insert(0, basic_skill)  # 맨 앞에 추가
+            # skill_quantities에 없으면 무제한으로 추가
+            if BASIC_ATTACK_SKILL_ID not in skill_quantities:
+                # 더미 객체 생성 (무제한 수량)
+                from models.user_owned_skill import UserOwnedSkill
+                dummy_owned = UserOwnedSkill(
+                    user=user,
+                    skill_id=BASIC_ATTACK_SKILL_ID,
+                    quantity=999,  # 무제한으로 간주
+                    equipped_count=0
+                )
+                skill_quantities[BASIC_ATTACK_SKILL_ID] = dummy_owned
+
+        if not available_skills:
+            await interaction.response.send_message(
+                "⚠️ 보유한 스킬이 없습니다.\n"
+                "던전에서 스킬을 획득하거나, 상점에서 스킬을 구매하세요.",
+                ephemeral=True
+            )
+            return
+
+        # View 생성 및 초기화 (프리셋 로드)
+        view = SkillDeckView(
+            user=interaction.user,
+            current_deck=current_deck,
+            available_skills=available_skills,
+            db_user=user,
+            skill_quantities=skill_quantities
+        )
+        await view.initialize()
+
+        embed = view.create_embed()
+        await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
+        view.message = await interaction.original_response()
+
+        # 사용자 응답 대기
+        await view.wait()
+
+        # 저장 처리
+        if view.saved and view.changes_made:
+            # 스킬 소유 수량 검증
+            can_change, error_msg = await SkillOwnershipService.can_change_deck(
+                user, current_deck, view.current_deck
+            )
+            if not can_change:
+                await interaction.followup.send(
+                    f"⚠️ 덱 저장 실패: {error_msg}",
+                    ephemeral=True
+                )
+                return
+
+            # 소유 수량 업데이트
+            await SkillOwnershipService.apply_deck_change(
+                user, current_deck, view.current_deck
+            )
+
+            # 덱 슬롯 저장
+            for slot_index, skill_id in enumerate(view.current_deck):
+                await SkillDeckService.set_skill(user, slot_index, skill_id)
+
+            # 유저 객체에 덱 로드
+            await SkillDeckService.load_deck_to_user(user)
+
+    @requires_account()
+    @app_commands.command(
+        name="치유",
+        description="[관리자] 대상의 HP를 완전히 회복합니다"
+    )
+    @app_commands.guilds(GUILD_ID)
+    @app_commands.describe(target="회복시킬 대상 (미지정시 자신)")
+    async def heal(self, interaction: discord.Interaction, target: discord.Member = None):
+        """관리자용 완전 회복"""
+        # 관리자 체크 (Discord 관리자 또는 임시 어드민)
+        if not is_admin_or_temp(interaction):
+            await interaction.response.send_message(
+                "⚠️ 관리자만 사용할 수 있는 명령어입니다.",
+                ephemeral=True
+            )
+            return
+
+        # 대상 결정
+        target_discord_id = target.id if target else interaction.user.id
+        target_user: User = await find_account_by_discordid(target_discord_id)
+
+        if not target_user:
+            await interaction.response.send_message(
+                "대상 유저가 등록되어 있지 않습니다.",
+                ephemeral=True
+            )
+            return
+
+        # 완전 회복 적용
+        healed = await HealingService.full_heal(target_user)
+
+        target_name = target.display_name if target else interaction.user.display_name
+
+        embed = discord.Embed(
+            title="💚 완전 회복",
+            description=f"**{target_name}**의 HP가 완전히 회복되었습니다!",
+            color=discord.Color.green()
+        )
+
+        embed.add_field(
+            name="회복량",
+            value=f"+{healed} HP",
+            inline=True
+        )
+
+        embed.add_field(
+            name="현재 HP",
+            value=f"{target_user.now_hp}/{target_user.hp}",
+            inline=True
+        )
+
+        await interaction.response.send_message(embed=embed)
+
+    @requires_account()
+    @app_commands.command(
+        name="스탯",
+        description="스탯 포인트를 분배합니다"
+    )
+    @app_commands.guilds(GUILD_ID)
+    async def stat_distribution(self, interaction: discord.Interaction):
+        """스탯 분배"""
+        # 전투 중 체크
+        if is_in_combat(interaction.user.id):
+            await interaction.response.send_message(
+                "⚠️ 전투 중에는 스탯을 분배할 수 없습니다!",
+                ephemeral=True
+            )
+            return
+
+        user: User = await find_account_by_discordid(interaction.user.id)
+        if not user:
+            await interaction.response.send_message(
+                "등록된 계정이 없습니다. `/등록`을 먼저 해주세요.",
+                ephemeral=True
+            )
+            return
+
+        # 자연 회복 적용
+        await HealingService.apply_natural_regen(user)
+
+        if user.stat_points <= 0:
+            await interaction.response.send_message(
+                "📊 분배 가능한 스탯 포인트가 없습니다!\n"
+                f"현재 레벨: Lv.{user.level}\n"
+                "레벨업을 하면 스탯 포인트를 얻을 수 있습니다.",
+                ephemeral=True
+            )
+            return
+
+        # 1번 뷰 (개요)
+        overview_view = StatOverviewView(
+            discord_user=interaction.user,
+            db_user=user
+        )
+
+        overview_embed = overview_view.create_embed()
+        await interaction.response.send_message(embed=overview_embed, view=overview_view, ephemeral=True)
+        overview_view.message = await interaction.original_response()
+
+        # 2번 뷰 (선택/분배)
+        select_view = StatSelectView(
+            discord_user=interaction.user,
+            db_user=user,
+            parent_view=overview_view
+        )
+
+        select_embed = select_view.create_embed()
+        select_msg = await interaction.followup.send(embed=select_embed, view=select_view, ephemeral=True)
+        select_view.message = select_msg
+
+
+    @requires_account()
+    @app_commands.command(
+        name="인벤토리",
+        description="보유한 아이템을 확인합니다"
+    )
+    @app_commands.guilds(GUILD_ID)
+    async def inventory(self, interaction: discord.Interaction):
+        """인벤토리 조회"""
+        user: User = await find_account_by_discordid(interaction.user.id)
+        if not user:
+            await interaction.response.send_message(
+                "등록된 계정이 없습니다. `/등록`을 먼저 해주세요.",
+                ephemeral=True
+            )
+            return
+
+        # 인벤토리 로드
+        inventory = await InventoryService.get_inventory(user)
+
+        # 스킬 로드
+        from service.skill.skill_ownership_service import SkillOwnershipService
+        owned_skills = await SkillOwnershipService.get_all_owned_skills(user)
+
+        # View 생성
+        view = InventoryView(
+            user=interaction.user,
+            db_user=user,
+            inventory=list(inventory),
+            owned_skills=owned_skills
+        )
+
+        embed = view.create_embed()
+        await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
+        view.message = await interaction.original_response()
+
+    @requires_account()
+    @app_commands.command(
+        name="강화",
+        description="장비 아이템을 강화합니다"
+    )
+    @app_commands.guilds(GUILD_ID)
+    async def enhance(self, interaction: discord.Interaction):
+        """장비 강화"""
+        from views.enhancement_view import EnhancementView
+        from resources.item_emoji import ItemType
+
+        user: User = await find_account_by_discordid(interaction.user.id)
+        if not user:
+            await interaction.response.send_message(
+                "등록된 계정이 없습니다. `/등록`을 먼저 해주세요.",
+                ephemeral=True
+            )
+            return
+
+        # 장비 아이템만 조회
+        equipment_items = await UserInventory.filter(
+            user=user,
+            item__type=ItemType.EQUIP
+        ).prefetch_related("item")
+
+        view = EnhancementView(
+            user=interaction.user,
+            db_user=user,
+            equipment_items=list(equipment_items)
+        )
+
+        embed = view.create_default_embed()
+        await interaction.response.send_message(
+            embed=embed,
+            view=view,
+            ephemeral=True
+        )
+
 
 async def setup(bot):
     await bot.add_cog(DungeonCommand(bot))

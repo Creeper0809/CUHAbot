@@ -26,7 +26,18 @@ class ConsumeItem(models.Model):
         to_field='id',
         unique=True
     )
-    amount = fields.IntField()
+    amount = fields.IntField()  # HP 회복량
+
+    # 버프 효과
+    buff_type = fields.CharField(max_length=50, null=True)  # attack, defense, speed, etc.
+    buff_amount = fields.IntField(null=True)  # 버프 수치
+    buff_duration = fields.IntField(null=True)  # 지속 시간 (턴)
+
+    # 디버프 해제
+    cleanse_debuff = fields.BooleanField(default=False)
+
+    # 투척 아이템 (전투 중 사용 가능)
+    throwable_damage = fields.IntField(null=True)  # 투척 데미지
 
     class Meta:
         table = "consume_item"

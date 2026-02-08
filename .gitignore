@@ -3,3 +3,5 @@
 .vscode
 __pycache__/
 .github
+.fuse_hidden*
+**/.fuse_hidden*
