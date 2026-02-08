@@ -169,6 +169,7 @@ class Monster(models.Model):
         Returns:
             스탯 열거형을 키로 하는 스탯 딕셔너리
         """
+        from config import DAMAGE
         from models import UserStatEnum
         from service.dungeon.skill import get_passive_stat_bonuses
 
@@ -179,6 +180,8 @@ class Monster(models.Model):
             UserStatEnum.DEFENSE: getattr(self, 'defense', 0),
             UserStatEnum.AP_ATTACK: getattr(self, 'ap_attack', 0),
             UserStatEnum.AP_DEFENSE: getattr(self, 'ap_defense', 0),
+            UserStatEnum.ACCURACY: DAMAGE.DEFAULT_ACCURACY,
+            UserStatEnum.EVASION: getattr(self, 'evasion', 0),
         }
 
         # 패시브 스킬 스탯 보너스 적용

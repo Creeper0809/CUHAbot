@@ -158,19 +158,23 @@ class PassiveBuffComponent(SkillComponent):
         self.evasion_percent = 0.0
         self.ap_attack_percent = 0.0
         self.crit_rate = 0.0
+        self.crit_damage = 0.0
         self.lifesteal = 0.0
         self.drop_rate = 0.0
         self._applied_entities: set[int] = set()
+        self._raw_config: dict = {}
 
     def apply_config(self, config, skill_name, priority=0):
         super().apply_config(config, skill_name, priority)
+        self._raw_config = {k: v for k, v in config.items() if k != "tag"}
         self.attack_percent = config.get("attack_percent", 0.0)
         self.hp_percent = config.get("hp_percent", 0.0)
         self.defense_percent = config.get("defense_percent", 0.0)
         self.speed_percent = config.get("speed_percent", 0.0)
-        self.evasion_percent = config.get("evasion_percent", 0.0)
+        self.evasion_percent = config.get("evasion_percent", 0.0) or config.get("evasion", 0.0)
         self.ap_attack_percent = config.get("ap_attack_percent", 0.0)
         self.crit_rate = config.get("crit_rate", 0.0)
+        self.crit_damage = config.get("crit_damage", 0.0)
         self.lifesteal = config.get("lifesteal", 0.0)
         self.drop_rate = config.get("drop_rate", 0.0)
 
@@ -196,6 +200,8 @@ class PassiveBuffComponent(SkillComponent):
             effects.append(f"마공 +{int(self.ap_attack_percent * 100)}%")
         if self.crit_rate != 0:
             effects.append(f"치명타 +{int(self.crit_rate * 100)}%")
+        if self.crit_damage != 0:
+            effects.append(f"치명타배율 +{int(self.crit_damage * 100)}%")
         if self.lifesteal != 0:
             effects.append(f"흡혈 +{int(self.lifesteal * 100)}%")
         if self.drop_rate != 0:

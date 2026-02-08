@@ -26,58 +26,7 @@ from service.skill.skill_deck_service import SkillDeckService
 from service.item.equipment_service import EquipmentService
 from service.skill.skill_ownership_service import SkillOwnershipService
 from service.temp_admin_service import is_admin_or_temp
-from service.player.stat_service import StatService
 from models import User, UserStatEnum
-from exceptions import InsufficientGoldError
-
-
-class StatResetConfirmView(discord.ui.View):
-    """스탯 리셋 확인 뷰"""
-
-    def __init__(self, user: User, cost: int, total_points: int):
-        super().__init__(timeout=30)
-        self.user = user
-        self.cost = cost
-        self.total_points = total_points
-
-    @discord.ui.button(label="확인", style=discord.ButtonStyle.danger)
-    async def confirm(self, interaction: discord.Interaction, button: discord.ui.Button):
-        try:
-            result = await StatService.reset_stats(self.user)
-        except InsufficientGoldError:
-            await interaction.response.edit_message(
-                embed=discord.Embed(
-                    title="❌ 골드 부족",
-                    description=f"리셋 비용 {self.cost:,}G가 부족합니다.",
-                    color=discord.Color.red()
-                ),
-                view=None
-            )
-            self.stop()
-            return
-
-        embed = discord.Embed(
-            title="✅ 스탯 리셋 완료",
-            description=(
-                f"**{result['refunded']}** 포인트가 반환되었습니다.\n"
-                f"소모 골드: {result['cost']:,}G"
-            ),
-            color=discord.Color.green()
-        )
-        await interaction.response.edit_message(embed=embed, view=None)
-        self.stop()
-
-    @discord.ui.button(label="취소", style=discord.ButtonStyle.secondary)
-    async def cancel(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.edit_message(
-            embed=discord.Embed(
-                title="❌ 리셋 취소",
-                description="스탯 리셋이 취소되었습니다.",
-                color=discord.Color.greyple()
-            ),
-            view=None
-        )
-        self.stop()
 
 
 class DungeonCommand(commands.Cog):
@@ -456,15 +405,6 @@ class DungeonCommand(commands.Cog):
         # 자연 회복 적용
         await HealingService.apply_natural_regen(user)
 
-        if user.stat_points <= 0:
-            await interaction.response.send_message(
-                "📊 분배 가능한 스탯 포인트가 없습니다!\n"
-                f"현재 레벨: Lv.{user.level}\n"
-                "레벨업을 하면 스탯 포인트를 얻을 수 있습니다.",
-                ephemeral=True
-            )
-            return
-
         # 스탯 분배 뷰 (5대 능력치 시스템)
         stat_view = StatDistributionView(
             discord_user=interaction.user,
@@ -474,60 +414,6 @@ class DungeonCommand(commands.Cog):
         stat_embed = stat_view.create_embed()
         await interaction.response.send_message(embed=stat_embed, view=stat_view, ephemeral=True)
         stat_view.message = await interaction.original_response()
-
-    @requires_account()
-    @app_commands.command(
-        name="스탯리셋",
-        description="분배한 능력치를 초기화합니다 (골드 소모)"
-    )
-    @app_commands.guilds(*GUILD_IDS)
-    async def stat_reset(self, interaction: discord.Interaction):
-        """스탯 리셋"""
-        if is_in_combat(interaction.user.id):
-            await interaction.response.send_message(
-                "⚠️ 전투 중에는 스탯을 리셋할 수 없습니다!",
-                ephemeral=True
-            )
-            return
-
-        user: User = await find_account_by_discordid(interaction.user.id)
-        if not user:
-            await interaction.response.send_message(
-                "등록된 계정이 없습니다. `/등록`을 먼저 해주세요.",
-                ephemeral=True
-            )
-            return
-
-        cost = StatService.calculate_reset_cost(user)
-        total_points = (
-            user.bonus_str + user.bonus_int + user.bonus_dex
-            + user.bonus_vit + user.bonus_luk
-        )
-
-        if total_points == 0:
-            await interaction.response.send_message(
-                "📊 리셋할 능력치가 없습니다!",
-                ephemeral=True
-            )
-            return
-
-        # 확인 뷰
-        confirm_view = StatResetConfirmView(user, cost, total_points)
-        embed = discord.Embed(
-            title="🔄 스탯 리셋 확인",
-            description=(
-                f"**비용:** {cost:,}G (보유: {user.gold:,}G)\n"
-                f"**반환 포인트:** {total_points}\n\n"
-                f"현재 능력치:\n"
-                f"  STR: {user.bonus_str} / INT: {user.bonus_int} / DEX: {user.bonus_dex}\n"
-                f"  VIT: {user.bonus_vit} / LUK: {user.bonus_luk}\n\n"
-                "정말로 초기화하시겠습니까?"
-            ),
-            color=discord.Color.orange()
-        )
-        await interaction.response.send_message(
-            embed=embed, view=confirm_view, ephemeral=True
-        )
 
     @requires_account()
     @app_commands.command(

@@ -190,6 +190,7 @@ class User(models.Model):
         stat[UserStatEnum.EVASION] = int(stat[UserStatEnum.EVASION] + passive["evasion_percent"] * 100)
         stat[UserStatEnum.AP_ATTACK] = int(stat[UserStatEnum.AP_ATTACK] * (1 + passive["ap_attack_percent"]))
         stat[UserStatEnum.CRITICAL_RATE] = int(stat[UserStatEnum.CRITICAL_RATE] + passive["crit_rate"] * 100)
+        stat[UserStatEnum.CRITICAL_DAMAGE] = int(stat[UserStatEnum.CRITICAL_DAMAGE] + passive["crit_damage"] * 100)
 
         for buff in self.status:
             buff.apply_stat(stat)

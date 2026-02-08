@@ -166,13 +166,13 @@ class DamageCalculator:
 
     @staticmethod
     def roll_hit(
-        accuracy: int = 90,
-        evasion: int = 5,
+        accuracy: int = DAMAGE.DEFAULT_ACCURACY,
+        evasion: int = DAMAGE.DEFAULT_EVASION,
     ) -> bool:
         """
         명중 판정
 
-        공식: hit_rate = accuracy - evasion (최소 5%, 최대 100%)
+        공식: hit_rate = accuracy - evasion (최소 MIN_HIT_RATE%, 최대 MAX_HIT_RATE%)
 
         Args:
             accuracy: 공격자의 명중률 (%)
@@ -182,7 +182,7 @@ class DamageCalculator:
             명중 여부
         """
         hit_rate = accuracy - evasion
-        hit_rate = max(5, min(100, hit_rate))  # 5% ~ 100%
+        hit_rate = max(DAMAGE.MIN_HIT_RATE, min(DAMAGE.MAX_HIT_RATE, hit_rate))
 
         return random.randint(1, 100) <= hit_rate
 

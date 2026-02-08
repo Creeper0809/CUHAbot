@@ -12,7 +12,7 @@ from config.attributes import (
     get_attribute_multiplier,
 )
 from config.status_effects import StatusEffectConfig, STATUS_EFFECT
-from config.user_stats import UserStatsConfig, USER_STATS
+from config.user_stats import UserStatsConfig, USER_STATS, StatConversionConfig, STAT_CONVERSION
 from config.dungeon import DungeonConfig, DUNGEON
 from config.drops import (
     DropConfig, DROP,
@@ -49,6 +49,7 @@ __all__ = [
     "StatusEffectConfig", "STATUS_EFFECT",
     # user stats
     "UserStatsConfig", "USER_STATS",
+    "StatConversionConfig", "STAT_CONVERSION",
     # dungeon
     "DungeonConfig", "DUNGEON",
     # drops & boxes

@@ -39,6 +39,7 @@ def get_passive_stat_bonuses(skill_ids: list[int]) -> dict:
         "evasion_percent": 0.0,
         "ap_attack_percent": 0.0,
         "crit_rate": 0.0,
+        "crit_damage": 0.0,
         "lifesteal": 0.0,
         "drop_rate": 0.0,
     }

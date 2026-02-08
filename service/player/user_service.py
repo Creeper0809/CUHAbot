@@ -113,17 +113,7 @@ class UserService:
     @staticmethod
     def calculate_base_stats(level: int) -> dict[str, int]:
         """
-        레벨 기반 기본 스탯 계산 (Balance.md 공식)
-
-        Level 1-50:
-        - HP = 100 + (level × 20)
-        - Attack = 10 + (level × 2)
-        - AP_Attack = 5 + (level × 1.5)
-        - AD_Defense = 5 + level
-        - AP_Defense = 5 + level
-
-        Level 51+:
-        - 고레벨 성장 공식 적용
+        레벨 기반 기본 스탯 계산
 
         Args:
             level: 사용자 레벨
@@ -131,31 +121,32 @@ class UserService:
         Returns:
             기본 스탯 딕셔너리
         """
-        if level <= 50:
-            hp = 300 + (level * 20)
-            attack = 10 + (level * 2)
-            ap_attack = 5 + int(level * 1.5)
-            ad_defense = 5 + level
-            ap_defense = 5 + level
+        S = USER_STATS
+        threshold = S.HIGH_LEVEL_THRESHOLD
+
+        if level <= threshold:
+            hp = S.INITIAL_HP + level * S.HP_PER_LEVEL
+            attack = S.INITIAL_ATTACK + int(level * S.ATTACK_PER_LEVEL)
+            ap_attack = S.INITIAL_AP_ATTACK + int(level * S.AP_ATTACK_PER_LEVEL)
+            ad_defense = S.INITIAL_DEFENSE + int(level * S.DEFENSE_PER_LEVEL)
+            ap_defense = S.INITIAL_AP_DEFENSE + int(level * S.AP_DEFENSE_PER_LEVEL)
         else:
-            # 고레벨 공식 (Lv.51+)
-            base_level = 50
-            over_level = level - 50
-            hp = (300 + (base_level * 20) +
-                  (over_level * 30) +
-                  int(over_level ** 2 / 10))
-            attack = (10 + (base_level * 2) +
-                      (over_level * 3) +
-                      int(over_level / 5))
-            ap_attack = (5 + int(base_level * 1.5) +
-                         int(over_level * 2.5) +
-                         int(over_level / 5))
-            ad_defense = (5 + base_level +
-                          int(over_level * 1.5) +
-                          int(over_level / 8))
-            ap_defense = (5 + base_level +
-                          int(over_level * 1.5) +
-                          int(over_level / 8))
+            over = level - threshold
+            hp = (S.INITIAL_HP + threshold * S.HP_PER_LEVEL
+                  + over * S.HIGH_HP_PER_LEVEL
+                  + int(over ** 2 * S.HIGH_HP_QUADRATIC))
+            attack = (S.INITIAL_ATTACK + int(threshold * S.ATTACK_PER_LEVEL)
+                      + over * S.HIGH_ATTACK_PER_LEVEL
+                      + int(over / S.HIGH_ATTACK_BONUS_INTERVAL))
+            ap_attack = (S.INITIAL_AP_ATTACK + int(threshold * S.AP_ATTACK_PER_LEVEL)
+                         + int(over * S.HIGH_AP_ATTACK_PER_LEVEL)
+                         + int(over / S.HIGH_AP_ATTACK_BONUS_INTERVAL))
+            ad_defense = (S.INITIAL_DEFENSE + int(threshold * S.DEFENSE_PER_LEVEL)
+                          + int(over * S.HIGH_DEFENSE_PER_LEVEL)
+                          + int(over / S.HIGH_DEFENSE_BONUS_INTERVAL))
+            ap_defense = (S.INITIAL_AP_DEFENSE + int(threshold * S.AP_DEFENSE_PER_LEVEL)
+                          + int(over * S.HIGH_DEFENSE_PER_LEVEL)
+                          + int(over / S.HIGH_DEFENSE_BONUS_INTERVAL))
 
         return {
             "hp": hp,
@@ -163,7 +154,7 @@ class UserService:
             "ap_attack": ap_attack,
             "ad_defense": ad_defense,
             "ap_defense": ap_defense,
-            "speed": USER_STATS.INITIAL_SPEED
+            "speed": S.INITIAL_SPEED,
         }
 
     @staticmethod

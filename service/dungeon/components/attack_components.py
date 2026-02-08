@@ -104,6 +104,14 @@ class DamageComponent(SkillComponent):
 
         hit_logs = []
         for _ in range(self.hit_count):
+            # 명중 판정
+            if not self._roll_hit(attacker_stat, target_stat):
+                hit_logs.append(
+                    f"⚔️ **{attacker.get_name()}** 「{self.skill_name}」 → "
+                    f"**{target.get_name()}** **MISS!**"
+                )
+                continue
+
             result = self._calculate_hit(
                 attack_power, defense, crit_rate, combined_mult, crit_mult,
             )
@@ -224,6 +232,14 @@ class LifestealComponent(SkillComponent):
         total_damage = 0
 
         for _ in range(self.hit_count):
+            # 명중 판정
+            if not self._roll_hit(attacker_stat, target_stat):
+                hit_logs.append(
+                    f"🩸 **{attacker.get_name()}** 「{self.skill_name}」 → "
+                    f"**{target.get_name()}** **MISS!**"
+                )
+                continue
+
             result = self._calculate_hit(attack_power, defense, crit_rate, attr_mult * damage_taken_mult)
             event = process_incoming_damage(
                 target, result.damage, attacker=attacker,

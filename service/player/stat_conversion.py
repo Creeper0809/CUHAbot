@@ -6,6 +6,8 @@
 """
 from dataclasses import dataclass
 
+from config import STAT_CONVERSION as C
+
 
 @dataclass(frozen=True)
 class CombatStatBonus:
@@ -44,17 +46,17 @@ def convert_abilities_to_combat_stats(
         변환된 전투 스탯 보너스
     """
     return CombatStatBonus(
-        hp=int(str_val * 5 + int_val * 2 + vit * 12),
-        attack=int(str_val * 2.5 + dex * 1 + luk * 0.5),
-        ap_attack=int(int_val * 2.5),
-        ad_defense=int(str_val * 0.3 + vit * 1.2),
-        ap_defense=int(int_val * 0.8 + vit * 0.5),
-        speed=int(dex * 1),
-        accuracy=dex * 0.4,
-        evasion=dex * 0.3 + luk * 0.1,
-        crit_rate=dex * 0.1 + luk * 0.3,
-        crit_damage=luk * 1.0,
-        drop_rate=luk * 0.5,
+        hp=int(str_val * C.HP_STR + int_val * C.HP_INT + vit * C.HP_VIT),
+        attack=int(str_val * C.ATTACK_STR + dex * C.ATTACK_DEX + luk * C.ATTACK_LUK),
+        ap_attack=int(int_val * C.AP_ATTACK_INT),
+        ad_defense=int(str_val * C.AD_DEFENSE_STR + vit * C.AD_DEFENSE_VIT),
+        ap_defense=int(int_val * C.AP_DEFENSE_INT + vit * C.AP_DEFENSE_VIT),
+        speed=int(dex * C.SPEED_DEX),
+        accuracy=dex * C.ACCURACY_DEX,
+        evasion=dex * C.EVASION_DEX + luk * C.EVASION_LUK,
+        crit_rate=dex * C.CRIT_RATE_DEX + luk * C.CRIT_RATE_LUK,
+        crit_damage=luk * C.CRIT_DAMAGE_LUK,
+        drop_rate=luk * C.DROP_RATE_LUK,
     )
 
 
@@ -69,4 +71,4 @@ def calculate_hp_regen_rate(vit: int) -> float:
         분당 회복률 (최대 HP 대비 %)
         예: 0.01 = 1%/분, 0.03 = 3%/분
     """
-    return 0.01 + vit * 0.0004
+    return C.HP_REGEN_BASE + vit * C.HP_REGEN_VIT
