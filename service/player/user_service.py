@@ -10,6 +10,7 @@ from typing import Optional
 from models import User
 from models.user_skill_deck import UserSkillDeck
 from config import USER_STATS, SKILL_DECK_SIZE, SKILL_ID
+from config.leveling import LEVELING_EXP_TABLE, LEVELING_EXP_DEFAULT
 from exceptions import (
     UserNotFoundError,
     UserAlreadyExistsError,
@@ -30,13 +31,13 @@ class UserService:
         SKILL_ID.BASIC_ATTACK_ID,  # 슬롯 0: 강타 (100% 데미지)
         SKILL_ID.BASIC_ATTACK_ID,  # 슬롯 1: 강타
         SKILL_ID.BASIC_ATTACK_ID,  # 슬롯 2: 강타
-        1002,  # 슬롯 3: 연속 베기 (60% x 2회)
-        1002,  # 슬롯 4: 연속 베기
-        1003,  # 슬롯 5: 급소 찌르기 (120% + 치명타 보너스)
-        1003,  # 슬롯 6: 급소 찌르기
-        2001,  # 슬롯 7: 응급 처치 (HP 15% 회복)
-        2001,  # 슬롯 8: 응급 처치
-        3005,  # 슬롯 9: 결의 (공격력/방어력 +15%)
+        SKILL_ID.BASIC_ATTACK_ID,  # 슬롯 3: 연속 베기 (60% x 2회)
+        SKILL_ID.BASIC_ATTACK_ID,  # 슬롯 4: 연속 베기
+        SKILL_ID.BASIC_ATTACK_ID,  # 슬롯 5: 급소 찌르기 (120% + 치명타 보너스)
+        SKILL_ID.BASIC_ATTACK_ID,  # 슬롯 6: 급소 찌르기
+        SKILL_ID.BASIC_ATTACK_ID,  # 슬롯 7: 응급 처치 (HP 15% 회복)
+        SKILL_ID.BASIC_ATTACK_ID,  # 슬롯 8: 응급 처치
+        SKILL_ID.BASIC_ATTACK_ID,  # 슬롯 9: 결의 (공격력/방어력 +15%)
     ]
 
     @staticmethod
@@ -190,8 +191,8 @@ class UserService:
         user.last_attendance = today
 
         # 보상 계산 (연속 출석 보너스)
-        base_gold = 100
-        streak_bonus = min(user.attendance_streak, 7) * 50  # 최대 7일 보너스
+        base_gold = USER_STATS.ATTENDANCE_BASE_GOLD
+        streak_bonus = min(user.attendance_streak, USER_STATS.ATTENDANCE_MAX_STREAK) * USER_STATS.ATTENDANCE_STREAK_BONUS
         total_gold = base_gold + streak_bonus
 
         user.gold += total_gold
@@ -268,18 +269,7 @@ class UserService:
         Returns:
             필요 경험치
         """
-        if level <= 10:
-            return 100 * level
-        elif level <= 20:
-            return 200 * level
-        elif level <= 30:
-            return 400 * level
-        elif level <= 40:
-            return 800 * level
-        elif level <= 50:
-            return 1600 * level
-        elif level <= 60:
-            return 2400 * level
-        else:
-            # 고레벨 구간
-            return 3200 * level
+        for max_level, exp_mult in LEVELING_EXP_TABLE:
+            if level <= max_level:
+                return exp_mult * level
+        return LEVELING_EXP_DEFAULT * level

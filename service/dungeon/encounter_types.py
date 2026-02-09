@@ -20,7 +20,7 @@ from views.encounter_view import (
     HiddenRoomView,
     show_encounter_result
 )
-from config import DROP
+from config import DROP, DUNGEON
 from exceptions import InventoryFullError
 from models import Item, UserStatEnum
 from service.item.inventory_service import InventoryService
@@ -506,7 +506,7 @@ class HiddenRoomEncounter(Encounter):
         dungeon_level = session.dungeon.require_level if session.dungeon else 1
 
         # 숨겨진 방은 큰 보상
-        gold_gained = int(50 * (1 + dungeon_level / 5))
+        gold_gained = int(DUNGEON.TREASURE_BASE_GOLD * (1 + dungeon_level * DUNGEON.TREASURE_GOLD_PER_LEVEL))
         exp_gained = int(30 * (1 + dungeon_level / 10))
 
         # HP도 일부 회복

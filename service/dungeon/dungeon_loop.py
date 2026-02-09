@@ -75,7 +75,7 @@ async def start_dungeon(session: DungeonSession, interaction: discord.Interactio
 def _calculate_dungeon_steps(dungeon) -> int:
     """던전 스텝 수 계산"""
     base_steps = DUNGEON.BASE_STEPS
-    level_bonus = (dungeon.require_level // 10) * 5 if dungeon else 0
+    level_bonus = (dungeon.require_level // DUNGEON.LEVEL_BONUS_INTERVAL) * DUNGEON.LEVEL_BONUS_PER_INTERVAL if dungeon else 0
     return base_steps + level_bonus
 
 

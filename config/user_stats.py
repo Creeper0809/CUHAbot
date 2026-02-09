@@ -79,6 +79,29 @@ class UserStatsConfig:
     STAT_RESET_SCROLL_ID: int = 5817
     """스탯 초기화 스크롤 아이템 ID"""
 
+    # 초기 보조 스탯 (백분율)
+    INITIAL_ACCURACY: int = 90
+    """초기 명중률 (%)"""
+
+    INITIAL_EVASION: int = 5
+    """초기 회피율 (%)"""
+
+    INITIAL_CRITICAL_RATE: int = 5
+    """초기 치명타율 (%)"""
+
+    INITIAL_CRITICAL_DAMAGE: int = 150
+    """초기 치명타 데미지 (%)"""
+
+    # 출석 보상
+    ATTENDANCE_BASE_GOLD: int = 100
+    """출석 기본 골드"""
+
+    ATTENDANCE_STREAK_BONUS: int = 50
+    """연속 출석 1일당 추가 골드"""
+
+    ATTENDANCE_MAX_STREAK: int = 7
+    """연속 출석 보너스 최대 일수"""
+
 
 @dataclass(frozen=True)
 class StatConversionConfig:

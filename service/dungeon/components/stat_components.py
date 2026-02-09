@@ -8,6 +8,7 @@ from service.dungeon.status import (
     AttackBuff, DefenseBuff, SpeedBuff,
 )
 from service.player.stat_synergy_combat import get_buff_duration_bonus
+from config import COMBAT
 
 
 @register_skill_with_tag("buff")
@@ -304,7 +305,7 @@ class ConditionalPassiveComponent(SkillComponent):
         self._applied_entities.add(entity_id)
         stat = entity.get_stat()
         effects = []
-        duration = 999
+        duration = COMBAT.PERMANENT_BUFF_DURATION
 
         if self.attack_percent != 0:
             amount = int(stat[UserStatEnum.ATTACK] * self.attack_percent)
@@ -403,7 +404,7 @@ class TurnScalingComponent(SkillComponent):
 
         buff = buff_class()
         buff.amount = increment
-        buff.duration = 999
+        buff.duration = COMBAT.PERMANENT_BUFF_DURATION
         entity.status.append(buff)
 
         turn = self._turn_counts[entity_id]

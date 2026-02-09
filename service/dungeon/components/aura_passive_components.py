@@ -7,6 +7,7 @@ on_turn_start(attacker, context)에서 context를 통해 대상을 결정합니�
 from models import UserStatEnum
 from service.dungeon.components.base import SkillComponent, register_skill_with_tag
 from service.dungeon.status import AttackBuff, DefenseBuff, SpeedBuff
+from config import COMBAT
 
 
 @register_skill_with_tag("passive_aura_debuff")
@@ -71,7 +72,7 @@ class AuraDebuffComponent(SkillComponent):
     def _apply_aura_to(self, target):
         """대상에게 영구 디버프 적용"""
         stat = target.get_stat()
-        duration = 999
+        duration = COMBAT.PERMANENT_BUFF_DURATION
 
         if self.attack_percent != 0:
             amount = int(stat[UserStatEnum.ATTACK] * self.attack_percent)
@@ -174,7 +175,7 @@ class AuraBuffComponent(SkillComponent):
 
     def _apply_aura_to(self, target):
         stat = target.get_stat()
-        duration = 999
+        duration = COMBAT.PERMANENT_BUFF_DURATION
 
         if self.attack_percent != 0:
             amount = int(stat[UserStatEnum.ATTACK] * self.attack_percent)

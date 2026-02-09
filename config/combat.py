@@ -53,5 +53,9 @@ class CombatConfig:
     FLEE_ELITE_SUCCESS_RATE: float = 0.0
     """도주 성공 확률 (엘리트/보스)"""
 
+    # 버프/디버프
+    PERMANENT_BUFF_DURATION: int = 999
+    """영구 버프 지속시간 (패시브 등)"""
+
 
 COMBAT = CombatConfig()

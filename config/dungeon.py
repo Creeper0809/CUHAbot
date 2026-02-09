@@ -77,5 +77,19 @@ class DungeonConfig:
     MIN_HP_PERCENT_TO_ENTER: float = 0.3
     """던전 입장 최소 HP 비율 (30%)"""
 
+    # 보물 상자
+    TREASURE_BASE_GOLD: int = 50
+    """보물 상자 기본 골드"""
+
+    TREASURE_GOLD_PER_LEVEL: float = 0.2
+    """보물 상자 레벨당 골드 배율 (dungeon_level / 5)"""
+
+    # 던전 레벨 보너스
+    LEVEL_BONUS_INTERVAL: int = 10
+    """레벨 보너스 계산 간격 (10레벨마다)"""
+
+    LEVEL_BONUS_PER_INTERVAL: int = 5
+    """간격당 레벨 보너스"""
+
 
 DUNGEON = DungeonConfig()
