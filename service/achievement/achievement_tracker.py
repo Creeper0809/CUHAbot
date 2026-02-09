@@ -231,14 +231,28 @@ class AchievementProgressTracker:
         if filters is None:
             filters = {}
 
-        # 해당 타입의 업적 조회
-        query = Achievement.filter(objective_config__type=achievement_type)
+        # 모든 업적 조회 (Tortoise ORM은 JSONField 중첩 필터를 지원하지 않음)
+        all_achievements = await Achievement.all()
 
-        # 추가 필터 적용
-        for key, value in filters.items():
-            query = query.filter(**{f"objective_config__{key}": value})
+        # Python에서 필터링
+        achievements = []
+        for achievement in all_achievements:
+            if not achievement.objective_config:
+                continue
 
-        achievements = await query.all()
+            # 타입 확인
+            if achievement.objective_config.get("type") != achievement_type:
+                continue
+
+            # 추가 필터 확인
+            match = True
+            for key, value in filters.items():
+                if achievement.objective_config.get(key) != value:
+                    match = False
+                    break
+
+            if match:
+                achievements.append(achievement)
 
         for achievement in achievements:
             await self._process_achievement_progress(

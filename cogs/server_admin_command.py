@@ -643,6 +643,7 @@ class ServerAdminCammand(commands.Cog):
         # 전투 컨텍스트 생성
         from service.dungeon.combat_context import CombatContext
         from service.dungeon.combat_executor import execute_combat_context
+        from service.session import DungeonSession
 
         context = CombatContext.from_single(monster)
 
@@ -663,9 +664,17 @@ class ServerAdminCammand(commands.Cog):
                 effect_type = FieldEffectType(field_effect)
                 context.field_effect = create_field_effect(effect_type)
 
+        # 임시 세션 생성 (디버그 전투용)
+        debug_session = DungeonSession(
+            user_id=target_discord_id,
+            user=target_user,
+            dungeon=None,  # 디버그 전투는 던전 없음
+            allow_intervention=False  # 디버그 전투는 난입 불가
+        )
+
         # 전투 시작
         try:
-            result = await execute_combat_context(target_user, context, interaction)
+            result = await execute_combat_context(debug_session, interaction, context)
 
             target_name = target.display_name if target else interaction.user.display_name
 

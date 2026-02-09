@@ -134,23 +134,34 @@ def create_dungeon_embed(session, event_queue: deque[str]) -> Embed:
 def create_battle_embed_multi(
     player: User,
     context: CombatContext,
-    combat_log: deque[str]
+    combat_log: deque[str],
+    participants: dict = None
 ) -> Embed:
-    """전투 임베드 생성 (다중 몬스터 지원)"""
+    """전투 임베드 생성 (다중 몬스터 지원, 멀티플레이어 지원)"""
     alive = context.get_all_alive_monsters()
     monster_names = " + ".join([m.name for m in alive]) if alive else "없음"
 
+    # 파티 이름 생성
+    if participants:
+        party_names = [player.get_name()] + [p.get_name() for p in participants.values()]
+        party_display = " + ".join(party_names)
+    else:
+        party_display = player.get_name()
+
     embed = Embed(
-        title=f"⚔️ {player.get_name()} vs {monster_names}",
+        title=f"⚔️ {party_display} vs {monster_names}",
         color=EmbedColor.COMBAT
     )
 
-    # 파티 멤버 (현재 1인)
-    _add_player_fields(embed, player)
+    # 파티 멤버들 (리더 + 참가자들)
+    all_players = [player]
+    if participants:
+        all_players.extend(participants.values())
+
+    _add_all_player_fields(embed, all_players)
 
     # 몬스터들 (살아있는 것만)
-    for monster in context.get_all_alive_monsters():
-        _add_monster_field(embed, monster)
+    _add_all_monster_fields(embed, context.get_all_alive_monsters())
 
     # 행동 순서 예측
     action_order = predict_action_order(player, context, max_count=4)
@@ -178,8 +189,27 @@ def create_battle_embed_multi(
     return embed
 
 
+def _add_all_player_fields(embed: Embed, players: list[User]) -> None:
+    """모든 파티 멤버 필드 추가 (1행에 배치)"""
+    player_lines = []
+    for player in players:
+        member_stat = player.get_stat()
+        max_hp = member_stat[UserStatEnum.HP]
+        hp_bar = create_hp_bar(player.now_hp, max_hp, 10)
+        hp_pct = int((player.now_hp / max_hp) * 100) if max_hp > 0 else 0
+        status = get_status_icons(player)
+
+        line = f"👤 **{player.get_name()}**\n{hp_bar} **{player.now_hp}** / {max_hp} ({hp_pct}%)"
+        if status:
+            line += f" {status}"
+        player_lines.append(line)
+
+    # 모든 플레이어를 하나의 필드로 통합
+    embed.add_field(name="⚔️ 파티원", value="\n\n".join(player_lines), inline=False)
+
+
 def _add_player_fields(embed: Embed, player: User) -> None:
-    """파티 멤버 필드 추가 (중앙 정렬)"""
+    """파티 멤버 필드 추가 (중앙 정렬) - 레거시 호환"""
     # 좌측 빈 필드 (중앙 정렬)
     embed.add_field(name="\u200b", value="\u200b", inline=True)
 
@@ -199,8 +229,26 @@ def _add_player_fields(embed: Embed, player: User) -> None:
     embed.add_field(name="\u200b", value="\u200b", inline=True)
 
 
+def _add_all_monster_fields(embed: Embed, monsters: list[Monster]) -> None:
+    """모든 몬스터 필드 추가 (2행에 배치)"""
+    monster_lines = []
+    for monster in monsters:
+        hp_bar = create_hp_bar(monster.now_hp, monster.hp, 8)
+        hp_pct = int((monster.now_hp / monster.hp) * 100) if monster.hp > 0 else 0
+        status = get_status_icons(monster)
+        death_mark = " 💀" if monster.now_hp <= 0 else ""
+
+        line = f"👹 **{monster.get_name()}{death_mark}**\n{hp_bar} **{monster.now_hp}** / {monster.hp} ({hp_pct}%)"
+        if status and monster.now_hp > 0:
+            line += f" {status}"
+        monster_lines.append(line)
+
+    # 모든 몬스터를 하나의 필드로 통합
+    embed.add_field(name="👹 적", value="\n\n".join(monster_lines), inline=False)
+
+
 def _add_monster_field(embed: Embed, monster: Monster) -> None:
-    """몬스터 필드 추가"""
+    """몬스터 필드 추가 (레거시 호환용)"""
     hp_bar = create_hp_bar(monster.now_hp, monster.hp, 8)
     hp_pct = int((monster.now_hp / monster.hp) * 100) if monster.hp > 0 else 0
     status = get_status_icons(monster)

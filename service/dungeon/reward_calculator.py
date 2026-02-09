@@ -100,8 +100,23 @@ async def process_combat_result_multi(session, context, turn_count: int) -> str:
 
     user = session.user
 
-    if user.now_hp <= 0:
-        return "💀 패배..."
+    # 패배 판정: 모든 플레이어(리더 + 난입자)가 죽었을 때
+    all_players_dead = True
+    if user.now_hp > 0:
+        all_players_dead = False
+    elif session.participants:
+        for participant in session.participants.values():
+            if participant.now_hp > 0:
+                all_players_dead = False
+                break
+
+    if all_players_dead:
+        return "💀 패배... 전원 전투불능"
+
+    # 리더가 죽었으면 던전 탐험 종료 플래그 설정
+    leader_died = user.now_hp <= 0
+    if leader_died:
+        session.pending_exit = True
 
     # 승리 - 각 몬스터별 보상 합산
     monster_level = session.dungeon.require_level if session.dungeon else 1
@@ -146,36 +161,86 @@ async def process_combat_result_multi(session, context, turn_count: int) -> str:
         total_exp = int(total_exp * 1.2)
         total_gold = int(total_gold * 1.1)
 
-    session.total_exp += total_exp
-    session.total_gold += total_gold
     session.monsters_defeated += len(context.monsters)
 
-    # 이벤트 발행: 골드 획득
-    if total_gold > 0:
+    # 멀티플레이어 보상 분배
+    if session.participants:
+        from service.intervention.contribution_tracker import distribute_rewards
+
+        participant_rewards = await distribute_rewards(session, total_exp, total_gold)
+
+        # 각 참가자는 add_gold/add_experience 내부에서 GOLD_OBTAINED 이벤트 발행
+        # 여기서는 리더만 전투 승리 이벤트 발행
         await event_bus.publish(GameEvent(
-            type=GameEventType.GOLD_OBTAINED,
+            type=GameEventType.COMBAT_WON,
             user_id=user.id,
             data={
-                "gold_amount": total_gold
+                "is_flawless": user.now_hp == user.get_stat()[UserStatEnum.HP],
+                "is_fast": turn_count <= 3,
+                "turns": turn_count,
             }
         ))
 
-    # 이벤트 발행: 전투 승리
-    await event_bus.publish(GameEvent(
-        type=GameEventType.COMBAT_WON,
-        user_id=user.id,
-        data={
-            "is_flawless": user.now_hp == user.max_hp,
-            "is_fast": turn_count <= 3,
-            "turns": turn_count,
-        }
-    ))
+        monster_names = ", ".join([m.name for m in context.monsters])
+        result_msg = f"🏆 **{monster_names}** 처치! ({turn_count}턴)\n"
 
-    monster_names = ", ".join([m.name for m in context.monsters])
-    result_msg = (
-        f"🏆 **{monster_names}** 처치! ({turn_count}턴)\n"
-        f"   ⭐ +**{total_exp}** EXP │ 💰 +**{total_gold}** G"
-    )
+        # 리더 사망 경고
+        if leader_died:
+            result_msg += "   ⚠️ **파티 리더 전투불능! 던전 탐험이 종료됩니다.**\n"
+
+        result_msg += (
+            f"   💰 총 보상: ⭐ **{total_exp}** EXP │ 💰 **{total_gold}** G\n"
+            f"   👥 기여도 비례 분배:\n"
+        )
+
+        # 참가자별 보상 표시
+        for user_id, rewards in participant_rewards.items():
+            participant = session.participants.get(user_id)
+            if not participant:
+                participant = session.user if user_id == session.user_id else None
+
+            if participant:
+                share = session.contribution.get(user_id, 0) / sum(session.contribution.values())
+                result_msg += (
+                    f"      - {participant.get_name()}: "
+                    f"⭐ +{rewards['exp']} │ 💰 +{rewards['gold']} "
+                    f"({share:.1%})\n"
+                )
+
+        # 세션 누적 (요약용)
+        session.total_exp += total_exp
+        session.total_gold += total_gold
+    else:
+        # 단일 플레이어 보상
+        session.total_exp += total_exp
+        session.total_gold += total_gold
+
+        # 이벤트 발행: 골드 획득
+        if total_gold > 0:
+            await event_bus.publish(GameEvent(
+                type=GameEventType.GOLD_OBTAINED,
+                user_id=user.id,
+                data={
+                    "gold_amount": total_gold
+                }
+            ))
+
+        # 이벤트 발행: 전투 승리
+        await event_bus.publish(GameEvent(
+            type=GameEventType.COMBAT_WON,
+            user_id=user.id,
+            data={
+                "is_flawless": user.now_hp == user.get_stat()[UserStatEnum.HP],
+                "is_fast": turn_count <= 3,
+                "turns": turn_count,
+            }
+        ))
+
+        monster_names = ", ".join([m.name for m in context.monsters])
+        result_msg = (
+            f"🏆 **{monster_names}** 처치! ({turn_count}턴)\n"
+            f"   ⭐ +**{total_exp}** EXP │ 💰 +**{total_gold}** G"
+        )
 
     if result_lines:
         result_msg += "\n" + "\n".join(result_lines)

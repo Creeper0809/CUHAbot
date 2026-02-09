@@ -43,12 +43,12 @@ class FieldEffect(ABC):
         self.turn_count = 0
 
     @abstractmethod
-    def on_round_start(self, user: "User", monsters: list["Monster"]) -> list[str]:
+    def on_round_start(self, users: list["User"], monsters: list["Monster"]) -> list[str]:
         """
         라운드 시작 시 효과 발동
 
         Args:
-            user: 유저 엔티티
+            users: 유저 엔티티 리스트 (리더 + 난입자)
             monsters: 살아있는 몬스터 리스트
 
         Returns:
@@ -82,18 +82,19 @@ class FieldEffect(ABC):
 class BurnZoneEffect(FieldEffect):
     """화상 지대 - 매 라운드 최대 HP의 2% 데미지"""
 
-    def on_round_start(self, user: "User", monsters: list["Monster"]) -> list[str]:
+    def on_round_start(self, users: list["User"], monsters: list["Monster"]) -> list[str]:
         from models import UserStatEnum
 
         logs = []
         self.turn_count += 1
 
-        # 유저에게 데미지
-        if user.now_hp > 0:
-            max_hp = user.get_stat()[UserStatEnum.HP]
-            damage = max(1, int(max_hp * 0.02))
-            user.now_hp = max(0, user.now_hp - damage)
-            logs.append(f"🔥 **화상 지대** → **{user.get_name()}** {damage} 데미지")
+        # 모든 유저에게 데미지
+        for user in users:
+            if user.now_hp > 0:
+                max_hp = user.get_stat()[UserStatEnum.HP]
+                damage = max(1, int(max_hp * 0.02))
+                user.now_hp = max(0, user.now_hp - damage)
+                logs.append(f"🔥 **화상 지대** → **{user.get_name()}** {damage} 데미지")
 
         # 몬스터들에게 데미지
         for monster in monsters:
@@ -111,14 +112,14 @@ class BurnZoneEffect(FieldEffect):
 class FreezeZoneEffect(FieldEffect):
     """동결 지대 - 매 행동마다 15% 확률로 1턴 동결"""
 
-    def on_round_start(self, user: "User", monsters: list["Monster"]) -> list[str]:
+    def on_round_start(self, users: list["User"], monsters: list["Monster"]) -> list[str]:
         self.turn_count += 1
         return []
 
     def on_turn_end(self, actor: Union["User", "Monster"]) -> list[str]:
         import random
         from service.dungeon.status import apply_status_effect
-        from service.dungeon.status_effects import FreezeEffect
+        from service.dungeon.status.cc_effects import FreezeEffect
 
         logs = []
         if random.random() < 0.15:
@@ -131,7 +132,7 @@ class FreezeZoneEffect(FieldEffect):
 class ShockZoneEffect(FieldEffect):
     """감전 지대 - 데미지를 입힐 때 10% 확률로 인접 대상에게 연쇄"""
 
-    def on_round_start(self, user: "User", monsters: list["Monster"]) -> list[str]:
+    def on_round_start(self, users: list["User"], monsters: list["Monster"]) -> list[str]:
         self.turn_count += 1
         return []
 
@@ -143,19 +144,20 @@ class ShockZoneEffect(FieldEffect):
 class DrownTimerEffect(FieldEffect):
     """익사 타이머 - 매 3라운드마다 모두에게 최대 HP의 5% 데미지"""
 
-    def on_round_start(self, user: "User", monsters: list["Monster"]) -> list[str]:
+    def on_round_start(self, users: list["User"], monsters: list["Monster"]) -> list[str]:
         from models import UserStatEnum
 
         logs = []
         self.turn_count += 1
 
         if self.turn_count % 3 == 0:
-            # 유저에게 데미지
-            if user.now_hp > 0:
-                max_hp = user.get_stat()[UserStatEnum.HP]
-                damage = max(1, int(max_hp * 0.05))
-                user.now_hp = max(0, user.now_hp - damage)
-                logs.append(f"🌊 **익사 타이머** (R{self.turn_count}) → **{user.get_name()}** {damage} 데미지")
+            # 모든 유저에게 데미지
+            for user in users:
+                if user.now_hp > 0:
+                    max_hp = user.get_stat()[UserStatEnum.HP]
+                    damage = max(1, int(max_hp * 0.05))
+                    user.now_hp = max(0, user.now_hp - damage)
+                    logs.append(f"🌊 **익사 타이머** (R{self.turn_count}) → **{user.get_name()}** {damage} 데미지")
 
             # 몬스터들에게 데미지
             for monster in monsters:
@@ -173,16 +175,15 @@ class DrownTimerEffect(FieldEffect):
 class ChaosRiftEffect(FieldEffect):
     """차원 불안정 - 매 행동마다 20% 확률로 랜덤 상태이상"""
 
-    def on_round_start(self, user: "User", monsters: list["Monster"]) -> list[str]:
+    def on_round_start(self, users: list["User"], monsters: list["Monster"]) -> list[str]:
         self.turn_count += 1
         return []
 
     def on_turn_end(self, actor: Union["User", "Monster"]) -> list[str]:
         import random
         from service.dungeon.status import apply_status_effect
-        from service.dungeon.status_effects import (
-            BurnEffect, PoisonEffect, StunEffect, BlindEffect
-        )
+        from service.dungeon.status.dot_effects import BurnEffect, PoisonEffect
+        from service.dungeon.status.cc_effects import StunEffect
 
         logs = []
         if random.random() < 0.20:
@@ -190,7 +191,6 @@ class ChaosRiftEffect(FieldEffect):
                 (BurnEffect(stacks=1, duration=2), "화상"),
                 (PoisonEffect(stacks=1, duration=2), "중독"),
                 (StunEffect(duration=1), "기절"),
-                (BlindEffect(duration=1), "실명"),
             ]
             effect, name = random.choice(effects)
             apply_status_effect(actor, effect)
@@ -206,16 +206,17 @@ class TimeWarpEffect(FieldEffect):
         super().__init__(data)
         self.original_speeds = {}
 
-    def on_round_start(self, user: "User", monsters: list["Monster"]) -> list[str]:
+    def on_round_start(self, users: list["User"], monsters: list["Monster"]) -> list[str]:
         import random
         from models import UserStatEnum
 
         logs = []
         self.turn_count += 1
 
-        # 유저 속도 변동
-        if id(user) not in self.original_speeds:
-            self.original_speeds[id(user)] = user.get_stat()[UserStatEnum.SPEED]
+        # 모든 유저 속도 변동
+        for user in users:
+            if id(user) not in self.original_speeds:
+                self.original_speeds[id(user)] = user.get_stat()[UserStatEnum.SPEED]
 
         # 몬스터 속도 변동
         for monster in monsters:
@@ -240,17 +241,18 @@ class TimeWarpEffect(FieldEffect):
 class VoidErosionEffect(FieldEffect):
     """공허의 잠식 - 매 라운드 모든 버프 지속시간 1턴 추가 감소"""
 
-    def on_round_start(self, user: "User", monsters: list["Monster"]) -> list[str]:
+    def on_round_start(self, users: list["User"], monsters: list["Monster"]) -> list[str]:
         logs = []
         self.turn_count += 1
 
-        # 유저 버프 잠식
-        if user.buffs:
-            for buff in user.buffs[:]:
-                if hasattr(buff, 'duration') and buff.duration > 0:
-                    buff.duration = max(0, buff.duration - 1)
-                    if buff.duration <= 0:
-                        user.buffs.remove(buff)
+        # 모든 유저 버프 잠식
+        for user in users:
+            if user.buffs:
+                for buff in user.buffs[:]:
+                    if hasattr(buff, 'duration') and buff.duration > 0:
+                        buff.duration = max(0, buff.duration - 1)
+                        if buff.duration <= 0:
+                            user.buffs.remove(buff)
 
         # 몬스터 버프 잠식
         for monster in monsters:
@@ -277,8 +279,8 @@ class WaterPressureEffect(FieldEffect):
         super().__init__(data)
         self.applied = False
 
-    def on_round_start(self, user: "User", monsters: list["Monster"]) -> list[str]:
-        from service.dungeon.buff import BuffComponent
+    def on_round_start(self, users: list["User"], monsters: list["Monster"]) -> list[str]:
+        from service.dungeon.components.stat_components import BuffComponent
         from models import UserStatEnum
 
         logs = []
@@ -293,9 +295,10 @@ class WaterPressureEffect(FieldEffect):
                 is_percentage=True
             )
 
-            # 유저에게 적용
-            if user.now_hp > 0:
-                user.buffs.append(debuff)
+            # 모든 유저에게 적용
+            for user in users:
+                if user.now_hp > 0:
+                    user.buffs.append(debuff)
 
             # 몬스터들에게 적용
             for monster in monsters:
@@ -317,8 +320,8 @@ class AwakeningAuraEffect(FieldEffect):
         super().__init__(data)
         self.applied = False
 
-    def on_round_start(self, user: "User", monsters: list["Monster"]) -> list[str]:
-        from service.dungeon.buff import BuffComponent
+    def on_round_start(self, users: list["User"], monsters: list["Monster"]) -> list[str]:
+        from service.dungeon.components.stat_components import BuffComponent
         from models import UserStatEnum
 
         logs = []
@@ -333,9 +336,10 @@ class AwakeningAuraEffect(FieldEffect):
                 is_percentage=True
             )
 
-            # 유저에게 적용
-            if user.now_hp > 0:
-                user.buffs.append(buff)
+            # 모든 유저에게 적용
+            for user in users:
+                if user.now_hp > 0:
+                    user.buffs.append(buff)
 
             # 몬스터들에게 적용
             for monster in monsters:
@@ -353,7 +357,7 @@ class AwakeningAuraEffect(FieldEffect):
 class AncientCurseEffect(FieldEffect):
     """고대의 저주 - 매 행동마다 3% 확률로 즉사 (보스 제외)"""
 
-    def on_round_start(self, user: "User", monsters: list["Monster"]) -> list[str]:
+    def on_round_start(self, users: list["User"], monsters: list["Monster"]) -> list[str]:
         self.turn_count += 1
         return []
 

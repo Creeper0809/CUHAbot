@@ -24,6 +24,63 @@ from service.session import set_combat_state
 logger = logging.getLogger(__name__)
 
 
+def _all_players_dead(user: User, session) -> bool:
+    """
+    모든 플레이어(리더 + 난입자)가 죽었는지 확인
+
+    Args:
+        user: 리더 유저
+        session: 던전 세션
+
+    Returns:
+        모두 죽었으면 True, 한 명이라도 살아있으면 False
+    """
+    # 리더가 살아있으면 False
+    if user.now_hp > 0:
+        return False
+
+    # 난입자 중 한 명이라도 살아있으면 False
+    if session and session.participants:
+        for participant in session.participants.values():
+            if participant.now_hp > 0:
+                return False
+
+    # 모두 죽음
+    return True
+
+
+async def _update_all_combat_messages(
+    session,
+    combat_message: discord.Message,
+    user: User,
+    context: CombatContext,
+    combat_log: deque[str]
+) -> None:
+    """
+    모든 참가자의 전투 UI 메시지 업데이트 (리더 + 난입자)
+
+    Args:
+        session: 던전 세션
+        combat_message: 리더의 전투 메시지
+        user: 리더 유저
+        context: 전투 컨텍스트
+        combat_log: 전투 로그
+    """
+    from service.dungeon.dungeon_ui import create_battle_embed_multi
+
+    embed = create_battle_embed_multi(user, context, combat_log, session.participants)
+
+    # 리더 메시지 업데이트
+    await combat_message.edit(embed=embed)
+
+    # 참가자 메시지 업데이트
+    for participant_msg in session.participant_combat_messages.values():
+        try:
+            await participant_msg.edit(embed=embed)
+        except Exception as e:
+            logger.error(f"Failed to update participant combat UI: {e}")
+
+
 async def execute_combat_context(session, interaction: discord.Interaction, context: CombatContext) -> str:
     """
     전투 실행 (1:N 지원)
@@ -41,6 +98,7 @@ async def execute_combat_context(session, interaction: discord.Interaction, cont
 
     user = session.user
     session.combat_context = context
+    session.discord_client = interaction.client  # Discord client 저장 (난입자 UI 전송용)
 
     logger.info(
         f"Combat started: user={user.discord_id}, "
@@ -49,30 +107,79 @@ async def execute_combat_context(session, interaction: discord.Interaction, cont
 
     set_combat_state(user.discord_id, True)
 
+    # 전투 알림 게시 (관전 시스템)
     try:
-        combat_log: deque[str] = deque(maxlen=COMBAT.COMBAT_LOG_MAX_LENGTH)
-        embed = create_battle_embed_multi(user, context, combat_log)
+        from service.spectator.spectator_service import SpectatorService
+        notification_msg = await SpectatorService.post_combat_notification(session, interaction.channel)
+        session.combat_notification_message = notification_msg
+    except Exception as e:
+        logger.error(f"Failed to post combat notification: {e}")
+
+    try:
+        # 전투 UI 생성
+        embed = create_battle_embed_multi(user, context, context.combat_log, session.participants)
+
+        # 리더에게 전투 UI 전송
         combat_message = await interaction.user.send(embed=embed)
+
+        # 난입 참가자들에게도 전투 UI 전송
+        session.participant_combat_messages.clear()
+        for participant_id, participant in session.participants.items():
+            try:
+                discord_user = await interaction.client.fetch_user(participant.discord_id)
+                participant_msg = await discord_user.send(embed=embed)
+                session.participant_combat_messages[participant_id] = participant_msg
+                logger.info(f"Combat UI sent to participant: {participant.discord_id}")
+            except Exception as e:
+                logger.error(f"Failed to send combat UI to participant {participant_id}: {e}")
 
         turn_count = 1
 
-        while user.now_hp > 0 and not context.is_all_dead():
+        # 전투 루프: 플레이어 전원 사망 또는 몬스터 전원 사망까지 계속
+        while not _all_players_dead(user, session) and not context.is_all_dead():
             combat_ended = await _process_turn_multi(
-                user, context, turn_count, combat_log, combat_message
+                session, user, context, turn_count, context.combat_log, combat_message
             )
             if combat_ended:
                 break
             turn_count += 1
 
-        await combat_message.edit(embed=create_battle_embed_multi(user, context, combat_log))
+        # 최종 전투 결과 UI 업데이트 (리더 + 참가자들)
+        final_embed = create_battle_embed_multi(user, context, context.combat_log, session.participants)
+        await combat_message.edit(embed=final_embed)
+        for participant_msg in session.participant_combat_messages.values():
+            try:
+                await participant_msg.edit(embed=final_embed)
+            except Exception as e:
+                logger.error(f"Failed to update participant combat message: {e}")
+
         await asyncio.sleep(COMBAT.COMBAT_END_DELAY)
+
+        # 전투 메시지 삭제 (리더 + 참가자들)
         await combat_message.delete()
+        for participant_msg in session.participant_combat_messages.values():
+            try:
+                await participant_msg.delete()
+            except Exception as e:
+                logger.error(f"Failed to delete participant combat message: {e}")
 
         return await process_combat_result_multi(session, context, turn_count)
 
     finally:
         set_combat_state(user.discord_id, False)
         session.combat_context = None
+
+        # 참가자 전투 메시지 정리
+        session.participant_combat_messages.clear()
+
+        # 관전자 및 전투 알림 메시지 정리 (전투 종료 시 항상 실행)
+        if session.spectators or session.combat_notification_message:
+            try:
+                from service.spectator.spectator_service import SpectatorService
+                await SpectatorService.cleanup_spectators(session)
+            except Exception as e:
+                logger.error(f"Failed to cleanup spectators in finally: {e}")
+
         _reset_all_skill_usage_counts()
         _reset_equipment_component_caches(user)
 
@@ -83,6 +190,7 @@ async def execute_combat_context(session, interaction: discord.Interaction, cont
 
 
 async def _process_turn_multi(
+    session,
     user: User,
     context: CombatContext,
     turn_count: int,
@@ -91,6 +199,14 @@ async def _process_turn_multi(
 ) -> bool:
     """
     턴 처리 (1:N 지원) - 행동 게이지 시스템
+
+    Args:
+        session: 던전 세션 (멀티플레이어 지원)
+        user: 유저
+        context: 전투 컨텍스트
+        turn_count: 턴 수
+        combat_log: 전투 로그
+        combat_message: 전투 메시지
 
     Returns:
         전투 종료 여부
@@ -122,17 +238,21 @@ async def _process_turn_multi(
         combat_log.append(f"━━━ ⚔️ **전투 시작 - 라운드 {context.round_number}** ━━━")
         # 필드 효과: 1라운드 시작 시 즉시 처리
         if context.field_effect:
-            field_logs = context.field_effect.on_round_start(user, context.get_all_alive_monsters())
+            # 모든 플레이어 수집 (리더 + 난입자)
+            all_players = [user]
+            if session and session.participants:
+                all_players.extend(session.participants.values())
+            field_logs = context.field_effect.on_round_start(all_players, context.get_all_alive_monsters())
             for log in field_logs:
                 combat_log.append(log)
 
     while context.action_count < COMBAT.MAX_ACTIONS_PER_LOOP:
-        if context.is_all_dead() or user.now_hp <= 0:
+        if context.is_all_dead() or _all_players_dead(user, session):
             return True
 
-        actor = context.get_next_actor(user)
+        actor = context.get_next_actor(user, session.participants)
         if not actor:
-            context.fill_gauges(user)
+            context.fill_gauges(user, session.participants)
             continue
 
         context.action_count += 1
@@ -148,19 +268,26 @@ async def _process_turn_multi(
             combat_log.append(f"💫 **{actor.get_name()}** {cc_name}! 행동 불가")
             context.consume_gauge(actor)
             # 행동하지 못할 때는 지속시간 감소하지 않음 (행동 후에만 감소)
-            await combat_message.edit(embed=create_battle_embed_multi(user, context, combat_log))
+            await _update_all_combat_messages(session, combat_message, user, context, combat_log)
             await asyncio.sleep(COMBAT.TURN_PHASE_DELAY)
 
             if context.check_and_advance_round():
                 combat_log.append(f"━━━ 🌟 **라운드 {context.round_number}** ━━━")
-                await combat_message.edit(embed=create_battle_embed_multi(user, context, combat_log))
+                await _update_all_combat_messages(session, combat_message, user, context, combat_log)
             continue
 
         # 행동 실행
         alive_before = {id(m) for m in context.get_all_alive_monsters()}
-        action_logs = _execute_entity_action(user, actor, context)
+        action_logs = _execute_entity_action(session, user, actor, context)
         for log in action_logs:
             combat_log.append(log)
+
+        # 신규: 기여도 기록 (파티 리더 + 난입자)
+        if isinstance(actor, User):
+            from service.intervention.contribution_tracker import record_contribution
+            # 로그에서 데미지/치유량 추출
+            damage, healing = _parse_combat_metrics_from_logs(action_logs)
+            record_contribution(session, actor, damage=damage, healing=healing)
 
         # 사망 트리거 (on_death 컴포넌트)
         death_logs = _check_death_triggers(context, alive_before, user)
@@ -193,19 +320,52 @@ async def _process_turn_multi(
 
         _decrement_status_durations(actor)
 
-        await combat_message.edit(embed=create_battle_embed_multi(user, context, combat_log))
+        await _update_all_combat_messages(session, combat_message, user, context, combat_log)
+
+        # 관전자 업데이트
+        from service.spectator.spectator_service import SpectatorService
+        if session:
+            await SpectatorService.update_all_spectators(session)
+
         await asyncio.sleep(COMBAT.TURN_PHASE_DELAY)
 
         if context.check_and_advance_round():
             combat_log.append(f"━━━ 🌟 **라운드 {context.round_number}** ━━━")
+
+            # 신규: 난입자 처리
+            from service.intervention.intervention_service import InterventionService
+            intervention_logs = await InterventionService.process_pending_interventions(session, context)
+            for log in intervention_logs:
+                combat_log.append(log)
+
+            # 새로 추가된 난입자들에게 전투 UI 전송
+            if intervention_logs:
+                from service.dungeon.dungeon_ui import create_battle_embed_multi
+                for participant_id, participant in session.participants.items():
+                    # 이미 UI를 받은 참가자는 건너뛰기
+                    if participant_id in session.participant_combat_messages:
+                        continue
+                    try:
+                        discord_user = await session.discord_client.fetch_user(participant.discord_id)
+                        embed = create_battle_embed_multi(user, context, combat_log, session.participants)
+                        participant_msg = await discord_user.send(embed=embed)
+                        session.participant_combat_messages[participant_id] = participant_msg
+                        logger.info(f"Combat UI sent to new intervener: {participant.discord_id}")
+                    except Exception as e:
+                        logger.error(f"Failed to send combat UI to intervener {participant_id}: {e}")
+
             # 필드 효과: 라운드 시작 시 처리
             if context.field_effect:
-                field_logs = context.field_effect.on_round_start(user, context.get_all_alive_monsters())
+                # 모든 플레이어 수집 (리더 + 난입자)
+                all_players = [user]
+                if session and session.participants:
+                    all_players.extend(session.participants.values())
+                field_logs = context.field_effect.on_round_start(all_players, context.get_all_alive_monsters())
                 for log in field_logs:
                     combat_log.append(log)
-            await combat_message.edit(embed=create_battle_embed_multi(user, context, combat_log))
+            await _update_all_combat_messages(session, combat_message, user, context, combat_log)
 
-        if user.now_hp <= 0 or context.is_all_dead():
+        if _all_players_dead(user, session) or context.is_all_dead():
             return True
 
     logger.warning(f"Combat reached max actions: {COMBAT.MAX_ACTIONS_PER_LOOP}")
@@ -218,6 +378,7 @@ async def _process_turn_multi(
 
 
 def _execute_entity_action(
+    session,
     user: User,
     actor: Union[User, Monster],
     context: CombatContext
@@ -228,23 +389,30 @@ def _execute_entity_action(
 
     if isinstance(actor, UserClass):
         return _execute_user_action(actor, context)
-    return _execute_monster_action(actor, user)
+    return _execute_monster_action(monster=actor, user=user, context=context, session=session)
 
 
 def _execute_user_action(user: User, context: CombatContext) -> list[str]:
     """유저 행동"""
+    import random
     from service.dungeon.reward_calculator import get_attack_stat
 
     logs = []
     user_skill = user.next_skill()
 
+    # 랜덤으로 몬스터 선택 (살아있는 몬스터 중)
+    alive_monsters = context.get_all_alive_monsters()
+    if not alive_monsters:
+        return []
+    target = random.choice(alive_monsters)
+
     # 턴 시작 시 장비 효과 (행동 예측 등)
-    turn_start_logs = _apply_equipment_turn_start(user, context.get_primary_monster())
+    turn_start_logs = _apply_equipment_turn_start(user, target)
     logs.extend(turn_start_logs)
 
     if user_skill:
         if _is_skill_aoe(user_skill):
-            for monster in context.get_all_alive_monsters():
+            for monster in alive_monsters:
                 log = user_skill.on_turn(user, monster)
                 if log and log.strip():
                     logs.append(log)
@@ -252,7 +420,6 @@ def _execute_user_action(user: User, context: CombatContext) -> list[str]:
                 attack_logs = _apply_equipment_on_attack(user, monster, 0)  # TODO: 실제 데미지 전달
                 logs.extend(attack_logs)
         else:
-            target = context.get_primary_monster()
             log = user_skill.on_turn(user, target)
             if log and log.strip():
                 logs.append(log)
@@ -261,7 +428,6 @@ def _execute_user_action(user: User, context: CombatContext) -> list[str]:
             logs.extend(attack_logs)
     else:
         from service.dungeon.damage_pipeline import process_incoming_damage
-        target = context.get_primary_monster()
         damage = get_attack_stat(user)
         event = process_incoming_damage(target, damage, attacker=user)
         logs.extend(event.extra_logs)
@@ -278,29 +444,47 @@ def _execute_user_action(user: User, context: CombatContext) -> list[str]:
     return logs
 
 
-def _execute_monster_action(monster: Monster, user: User) -> list[str]:
-    """몬스터 행동"""
+def _execute_monster_action(monster: Monster, user: User, context: CombatContext, session) -> list[str]:
+    """몬스터 행동 (멀티플레이어 대응)"""
+    import random
     from service.dungeon.reward_calculator import get_attack_stat
     from service.dungeon.damage_pipeline import process_incoming_damage
 
     logs = []
+
+    # 공격 대상 선택 (리더 + 난입자 중 생존자)
+    alive_players = [user] if user.now_hp > 0 else []
+
+    # 세션에서 난입자 가져오기
+    if session and session.participants:
+        for participant in session.participants.values():
+            if participant.now_hp > 0:
+                alive_players.append(participant)
+
+    # 랜덤으로 대상 선택
+    if not alive_players:
+        # 모두 죽었으면 그냥 user 사용 (어차피 전투 종료됨)
+        target = user
+    else:
+        target = random.choice(alive_players)
+
     monster_skill = monster.next_skill()
 
     if monster_skill:
-        log = monster_skill.on_turn(monster, user)
+        log = monster_skill.on_turn(monster, target)
         if log and log.strip():
             logs.append(log)
         # 유저 피격 시 장비 훅 (가시 피해, 반격 등)
-        damaged_logs = _apply_equipment_on_damaged(user, monster, 0)  # TODO: 실제 데미지 전달
+        damaged_logs = _apply_equipment_on_damaged(target, monster, 0)  # TODO: 실제 데미지 전달
         logs.extend(damaged_logs)
     else:
         damage = get_attack_stat(monster)
-        event = process_incoming_damage(user, damage, attacker=monster)
+        event = process_incoming_damage(target, damage, attacker=monster)
         logs.extend(event.extra_logs)
-        logs.append(f"⚔️ **{monster.get_name()}** 기본 공격 → **{user.get_name()}** {event.actual_damage} 데미지")
+        logs.append(f"⚔️ **{monster.get_name()}** 기본 공격 → **{target.get_name()}** {event.actual_damage} 데미지")
 
         # 유저 피격 시 장비 훅
-        damaged_logs = _apply_equipment_on_damaged(user, monster, event.actual_damage)
+        damaged_logs = _apply_equipment_on_damaged(target, monster, event.actual_damage)
         logs.extend(damaged_logs)
 
         if event.reflected_damage > 0:
@@ -449,6 +633,50 @@ def _is_skill_aoe(skill) -> bool:
         if hasattr(component, 'is_aoe') and component.is_aoe:
             return True
     return False
+
+
+def _parse_combat_metrics_from_logs(logs: list[str]) -> tuple[int, int]:
+    """
+    전투 로그에서 데미지와 치유량을 추출
+
+    로그 패턴:
+    - 공격: "⚔️ **공격자** 「스킬명」 → **대상** 150💥..."
+    - 치유: "💚 **치유자** 「스킬명」 → **+100** HP"
+    - 흡혈: "   💚 흡혈: +50 HP"
+
+    Args:
+        logs: 행동 로그 리스트
+
+    Returns:
+        (총 데미지, 총 치유량)
+    """
+    import re
+
+    total_damage = 0
+    total_healing = 0
+
+    for log in logs:
+        # 공격 데미지 파싱: "→ **대상** 150💥" 또는 "→ **대상** 150"
+        # 패턴: "→ **대상** 숫자"에서 숫자 추출
+        damage_match = re.search(r'→\s+\*\*[^*]+\*\*\s+(\d+)', log)
+        if damage_match and '⚔️' in log:
+            damage = int(damage_match.group(1))
+            total_damage += damage
+            continue
+
+        # 치유량 파싱: "→ **+100** HP" 또는 "흡혈: +50 HP"
+        # 패턴: "+숫자 HP" 또는 "**+숫자** HP" (별표는 옵션)
+        healing_match = re.search(r'\*?\*?\+(\d+)\*?\*?\s*HP', log)
+        if healing_match and ('💚' in log or 'HP' in log):
+            healing = int(healing_match.group(1))
+            total_healing += healing
+            continue
+
+        # 반사 데미지는 제외 (🔄가 있으면 스킵)
+        if '🔄' in log:
+            continue
+
+    return total_damage, total_healing
 
 
 def _apply_synergy_hp_regen(user: User) -> str:

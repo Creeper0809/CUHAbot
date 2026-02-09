@@ -75,6 +75,14 @@ async def start_dungeon(session: DungeonSession, interaction: discord.Interactio
         session.status = SessionType.IDLE
         event_queue.append(event_result)
 
+        # 이벤트 완료 후 종료 대기 확인
+        if session.pending_exit:
+            session.ended = True
+            event_queue.append("🚶 파티 리더 전투불능으로 던전에서 귀환합니다...")
+            await _update_dungeon_log(session, event_queue)
+            # 리더가 죽었지만 승리했으므로 귀환 처리 (골드 패널티 없음)
+            return await _handle_dungeon_return(session, interaction, event_queue)
+
         await _update_dungeon_log(session, event_queue)
         await asyncio.sleep(COMBAT.MAIN_LOOP_DELAY)
 

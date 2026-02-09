@@ -391,3 +391,98 @@ class AlreadyAttendedError(CUHABotError):
 
     def __init__(self):
         super().__init__("오늘은 이미 출석했습니다.")
+
+
+# =============================================================================
+# 관전 시스템 관련 예외
+# =============================================================================
+
+
+class SpectatorError(CUHABotError):
+    """관전 시스템 기본 예외"""
+    pass
+
+
+class SpectatorTargetNotInDungeonError(SpectatorError):
+    """관전 대상이 던전에 없음"""
+
+    def __init__(self, user_name: str = None):
+        if user_name:
+            super().__init__(f"{user_name}님은 현재 던전에 있지 않습니다.")
+        else:
+            super().__init__("관전 대상이 던전에 있지 않습니다.")
+
+
+class SpectatorDMFailedError(SpectatorError):
+    """DM 전송 실패"""
+
+    def __init__(self):
+        super().__init__("DM을 보낼 수 없습니다. DM 설정을 확인해주세요.")
+
+
+# =============================================================================
+# 난입 시스템 관련 예외
+# =============================================================================
+
+
+class InterventionError(CUHABotError):
+    """난입 시스템 기본 예외"""
+    pass
+
+
+class InterventionWindowClosedError(InterventionError):
+    """난입 가능 시간 종료"""
+
+    def __init__(self, current_round: int):
+        from config.multiplayer import PARTY
+        self.current_round = current_round
+        super().__init__(
+            f"난입 가능 시간이 지났습니다. (현재 {current_round}라운드, {PARTY.INTERVENTION_WINDOW_TURNS}턴 이내만 가능)"
+        )
+
+
+class InterventionCooldownError(InterventionError):
+    """난입 쿨타임 중"""
+
+    def __init__(self, remaining_seconds: int):
+        self.remaining_seconds = remaining_seconds
+        minutes = remaining_seconds // 60
+        seconds = remaining_seconds % 60
+        super().__init__(
+            f"난입 쿨타임 중입니다. (남은 시간: {minutes}분 {seconds}초)"
+        )
+
+
+class CombatFullError(InterventionError):
+    """전투 인원 초과 (최대 3명, 리더 포함)"""
+
+    def __init__(self, max_participants: int = 3):
+        self.max_participants = max_participants
+        super().__init__(
+            f"전투 인원이 가득 찼습니다. (최대 {max_participants}명)"
+        )
+
+
+class AlreadyParticipatingError(InterventionError):
+    """이미 참여 중"""
+
+    def __init__(self):
+        super().__init__("이미 이 전투에 참여 중입니다.")
+
+
+class InsufficientLevelError(InterventionError):
+    """레벨 부족 (던전 입장 레벨 미달)"""
+
+    def __init__(self, required_level: int, current_level: int):
+        self.required_level = required_level
+        self.current_level = current_level
+        super().__init__(
+            f"레벨이 부족합니다. (필요: {required_level}, 현재: {current_level})"
+        )
+
+
+class InterventionNotAllowedError(InterventionError):
+    """난입이 허용되지 않음 (호스트가 차단)"""
+
+    def __init__(self):
+        super().__init__("이 전투는 난입이 허용되지 않습니다.")

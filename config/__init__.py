@@ -34,6 +34,7 @@ from config.multiplayer import (
     PartyConfig, PARTY,
     WeeklyTowerConfig, WEEKLY_TOWER,
     AuctionConfig, AUCTION,
+    SpectatorConfig, SPECTATOR,
 )
 
 __all__ = [
@@ -73,6 +74,7 @@ __all__ = [
     "PartyConfig", "PARTY",
     "WeeklyTowerConfig", "WEEKLY_TOWER",
     "AuctionConfig", "AUCTION",
+    "SpectatorConfig", "SPECTATOR",
     # grade
     "InstanceGrade", "GradeInfo", "GRADE_TABLE",
     "GRADE_DROP_WEIGHTS", "SpecialEffectDef", "SPECIAL_EFFECT_POOL",

@@ -57,6 +57,7 @@ class DungeonSession:
     content_type: ContentType = ContentType.NORMAL_DUNGEON
     in_combat: bool = False
     ended: bool = False
+    pending_exit: bool = False  # 이벤트 종료 후 던전 종료 대기
 
     # 진행 정보
     current_floor: int = 1          # 타워용 현재 층
@@ -73,6 +74,7 @@ class DungeonSession:
     ui_message: Optional["Message"] = None   # 공개 채널 메시지
     dm_message: Optional["Message"] = None   # DM 컨트롤 메시지
     message: Optional["Message"] = None      # 레거시 호환용
+    discord_client: Optional[object] = None  # Discord client (난입자 UI 전송용)
 
     # 시간 정보
     start_time: float = field(default_factory=lambda: asyncio.get_event_loop().time())
@@ -87,6 +89,32 @@ class DungeonSession:
     # 탐험 버프 (아이템으로 부여)
     explore_buffs: dict = field(default_factory=dict)
     """활성 탐험 버프: {"drop_bonus": 50, "avoid_combat": 1, "force_treasure": 1, ...}"""
+
+    # 관전자 추적 (관전 시스템)
+    spectators: set[int] = field(default_factory=set)
+    """이 세션을 관전 중인 Discord 유저 ID 집합"""
+
+    spectator_messages: dict[int, "Message"] = field(default_factory=dict)
+    """관전자 ID → 관전자 DM 메시지 매핑"""
+
+    combat_notification_message: Optional["Message"] = None
+    """서버 채널에 게시된 전투 알림 메시지 (관전 버튼 포함)"""
+
+    # 난입 시스템 (멀티플레이어 전투)
+    participants: dict[int, "User"] = field(default_factory=dict)
+    """파티 참가자 (user_id → User 엔티티). 리더는 user 필드에 별도 보관"""
+
+    participant_combat_messages: dict[int, "Message"] = field(default_factory=dict)
+    """참가자별 전투 UI 메시지 (user_id → DM 메시지). 리더는 별도 관리"""
+
+    intervention_pending: dict[int, float] = field(default_factory=dict)
+    """난입 대기 중인 유저 (user_id → 요청 시간 timestamp)"""
+
+    contribution: dict[int, int] = field(default_factory=dict)
+    """기여도 추적 (user_id → 누적 데미지+치유)"""
+
+    allow_intervention: bool = True
+    """난입 허용 여부 (유저가 설정)"""
 
     def is_dungeon_cleared(self) -> bool:
         """던전 클리어 조건 확인"""
@@ -153,6 +181,14 @@ async def end_session(user_id: int) -> None:
         # 전투 상태 강제 해제 (리소스 정리)
         session.in_combat = False
         session.status = SessionType.IDLE
+
+        # 관전자 정리
+        if session.spectators:
+            try:
+                from service.spectator.spectator_service import SpectatorService
+                await SpectatorService.cleanup_spectators(session)
+            except Exception as e:
+                logger.error(f"Failed to cleanup spectators on session end: {e}")
 
         # 사용자 데이터 저장
         if session.user:
