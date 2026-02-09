@@ -10,6 +10,8 @@ import logging
 
 from models.repos.static_cache import load_static_data
 from resources.item_emoji import ItemEmoji  # 이모지 매니저 임포트
+from service.event import EventBus
+from service.achievement import AchievementProgressTracker
 
 # 로그 기본 설정
 logging.basicConfig(
@@ -53,6 +55,10 @@ class MyBot(commands.Bot):
             application_id=APPLICATION_ID
         )
 
+        # 이벤트 시스템 (싱글톤)
+        self.event_bus = None
+        self.achievement_tracker = None
+
     async def setup_hook(self):
 
         self.tree.clear_commands(guild=None)
@@ -84,14 +90,22 @@ class MyBot(commands.Bot):
         logging.info("데이터 베이스 연결 시작")
         await self.init_db()
         logging.info("데이터 베이스 연결 완료")
-        
+
         # 이모지 초기화
         try:
             ItemEmoji.initialize(self)
             logging.info("이모지 초기화 완료")
         except Exception as e:
             logging.error(f"이모지 초기화 실패: {e}")
-            
+
+        # 이벤트 시스템 초기화
+        try:
+            self.event_bus = EventBus()
+            self.achievement_tracker = AchievementProgressTracker(self.event_bus)
+            logging.info("이벤트 시스템 및 업적 추적기 초기화 완료")
+        except Exception as e:
+            logging.error(f"이벤트 시스템 초기화 실패: {e}")
+
         logging.info(f"Logged in as {self.user} (ID: {self.user.id})")
 
 if __name__ == "__main__":

@@ -1,0 +1,32 @@
+id,name,category,tier,description,objective_config,reward_config,prerequisite_achievement_id,title_name
+1,몬스터 사냥꾼,combat,1,몬스터를 100마리 처치하세요,"{""type"": ""kill_total"", ""count"": 100}","{""exp"": 1000, ""gold"": 5000}",,
+2,몬스터 사냥꾼,combat,2,몬스터를 1000마리 처치하세요,"{""type"": ""kill_total"", ""count"": 1000}","{""exp"": 10000, ""gold"": 50000}",1,
+3,몬스터 사냥꾼,combat,3,몬스터를 10000마리 처치하세요,"{""type"": ""kill_total"", ""count"": 10000}","{""exp"": 50000, ""gold"": 500000}",2,몬스터 사냥꾼 마스터
+4,보스 헌터,combat,1,보스 몬스터를 10마리 처치하세요,"{""type"": ""kill_boss"", ""count"": 10}","{""exp"": 2000, ""gold"": 10000}",,
+5,보스 헌터,combat,2,보스 몬스터를 50마리 처치하세요,"{""type"": ""kill_boss"", ""count"": 50}","{""exp"": 20000, ""gold"": 100000}",4,
+6,보스 헌터,combat,3,보스 몬스터를 100마리 처치하세요,"{""type"": ""kill_boss"", ""count"": 100}","{""exp"": 100000, ""gold"": 1000000}",5,보스 헌터 마스터
+7,던전 탐험가,exploration,1,던전을 10회 탐험하세요,"{""type"": ""dungeon_explore"", ""count"": 10}","{""exp"": 500, ""gold"": 3000}",,
+8,던전 탐험가,exploration,2,던전을 100회 탐험하세요,"{""type"": ""dungeon_explore"", ""count"": 100}","{""exp"": 5000, ""gold"": 30000}",7,
+9,던전 탐험가,exploration,3,던전을 1000회 탐험하세요,"{""type"": ""dungeon_explore"", ""count"": 1000}","{""exp"": 25000, ""gold"": 300000}",8,던전 탐험가 마스터
+10,연승 행진,combat_mastery,1,10연승을 달성하세요,"{""type"": ""win_streak"", ""count"": 10}","{""exp"": 1500, ""gold"": 5000}",,
+11,연승 행진,combat_mastery,2,50연승을 달성하세요,"{""type"": ""win_streak"", ""count"": 50}","{""exp"": 15000, ""gold"": 50000}",10,
+12,연승 행진,combat_mastery,3,100연승을 달성하세요,"{""type"": ""win_streak"", ""count"": 100}","{""exp"": 75000, ""gold"": 500000}",11,연승의 제왕
+13,무상,combat_mastery,1,체력 100% 상태로 전투를 10회 승리하세요,"{""type"": ""win_flawless"", ""count"": 10}","{""exp"": 2000, ""gold"": 7000}",,
+14,무상,combat_mastery,2,체력 100% 상태로 전투를 50회 승리하세요,"{""type"": ""win_flawless"", ""count"": 50}","{""exp"": 20000, ""gold"": 70000}",13,
+15,무상,combat_mastery,3,체력 100% 상태로 전투를 100회 승리하세요,"{""type"": ""win_flawless"", ""count"": 100}","{""exp"": 100000, ""gold"": 700000}",14,무적의 전사
+16,속전속결,combat_mastery,1,3턴 이내에 전투를 10회 승리하세요,"{""type"": ""win_fast"", ""turns"": 3, ""count"": 10}","{""exp"": 2000, ""gold"": 7000}",,
+17,속전속결,combat_mastery,2,3턴 이내에 전투를 50회 승리하세요,"{""type"": ""win_fast"", ""turns"": 3, ""count"": 50}","{""exp"": 20000, ""gold"": 70000}",16,
+18,속전속결,combat_mastery,3,3턴 이내에 전투를 100회 승리하세요,"{""type"": ""win_fast"", ""turns"": 3, ""count"": 100}","{""exp"": 100000, ""gold"": 700000}",17,번개같은 전사
+19,수집가,collection,1,아이템을 100개 수집하세요,"{""type"": ""item_collected"", ""count"": 100}","{""exp"": 1000, ""gold"": 5000}",,
+20,수집가,collection,2,아이템을 1000개 수집하세요,"{""type"": ""item_collected"", ""count"": 1000}","{""exp"": 10000, ""gold"": 50000}",19,
+21,수집가,collection,3,아이템을 10000개 수집하세요,"{""type"": ""item_collected"", ""count"": 10000}","{""exp"": 50000, ""gold"": 500000}",20,수집광
+22,부자의 길,wealth,1,총 10000 골드를 획득하세요,"{""type"": ""gold_earned"", ""count"": 10000}","{""exp"": 500, ""gold"": 5000}",,
+23,부자의 길,wealth,2,총 100000 골드를 획득하세요,"{""type"": ""gold_earned"", ""count"": 100000}","{""exp"": 5000, ""gold"": 50000}",22,
+24,부자의 길,wealth,3,총 1000000 골드를 획득하세요,"{""type"": ""gold_earned"", ""count"": 1000000}","{""exp"": 25000, ""gold"": 500000}",23,황금의 손
+25,대부호,wealth,1,50000 골드를 보유하세요,"{""type"": ""gold_owned"", ""count"": 50000}","{""exp"": 1000, ""gold"": 10000}",,
+26,대부호,wealth,2,500000 골드를 보유하세요,"{""type"": ""gold_owned"", ""count"": 500000}","{""exp"": 10000, ""gold"": 100000}",25,
+27,대부호,wealth,3,5000000 골드를 보유하세요,"{""type"": ""gold_owned"", ""count"": 5000000}","{""exp"": 50000, ""gold"": 1000000}",26,억만장자
+28,수련의 길,growth,1,레벨 10에 도달하세요,"{""type"": ""level"", ""count"": 10}","{""exp"": 0, ""gold"": 5000}",,
+29,수련의 길,growth,2,레벨 30에 도달하세요,"{""type"": ""level"", ""count"": 30}","{""exp"": 0, ""gold"": 50000}",28,
+30,수련의 길,growth,3,레벨 50에 도달하세요,"{""type"": ""level"", ""count"": 50}","{""exp"": 0, ""gold"": 500000}",29,고수
+31,수련의 길,growth,4,레벨 100에 도달하세요,"{""type"": ""level"", ""count"": 100}","{""exp"": 0, ""gold"": 5000000}",30,전설의 모험가

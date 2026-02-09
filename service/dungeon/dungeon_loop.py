@@ -14,6 +14,7 @@ from models import UserStatEnum
 from views.dungeon_control import DungeonControlView
 from service.economy.reward_service import RewardService
 from service.session import DungeonSession, SessionType
+from service.event import EventBus, GameEvent, GameEventType
 
 logger = logging.getLogger(__name__)
 
@@ -33,6 +34,17 @@ async def start_dungeon(session: DungeonSession, interaction: discord.Interactio
     from service.dungeon.dungeon_ui import create_dungeon_embed
 
     logger.info(f"Dungeon started: user={session.user.discord_id}, dungeon={session.dungeon.id}")
+
+    # 이벤트 발행: 던전 탐험
+    event_bus = EventBus()
+    await event_bus.publish(GameEvent(
+        type=GameEventType.DUNGEON_EXPLORED,
+        user_id=session.user.id,
+        data={
+            "dungeon_id": session.dungeon.id,
+            "dungeon_name": session.dungeon.name
+        }
+    ))
 
     event_queue: deque[str] = deque(maxlen=COMBAT.EVENT_QUEUE_MAX_LENGTH)
     event_queue.append(f"━━━ 🏰 **탐험 시작** ━━━")

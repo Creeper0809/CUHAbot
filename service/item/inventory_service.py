@@ -16,6 +16,7 @@ from exceptions import (
 )
 from config import INVENTORY
 from service.collection_service import CollectionService
+from service.event import EventBus, GameEvent, GameEventType
 
 logger = logging.getLogger(__name__)
 
@@ -89,6 +90,19 @@ class InventoryService:
 
         # 도감에 등록
         await CollectionService.register_item(user, item_id)
+
+        # 이벤트 발행: 아이템 획득
+        event_bus = EventBus()
+        await event_bus.publish(GameEvent(
+            type=GameEventType.ITEM_OBTAINED,
+            user_id=user.id,
+            data={
+                "item_id": item_id,
+                "item_name": item.name,
+                "item_type": item.type.value if hasattr(item, "type") else None,
+                "quantity": quantity
+            }
+        ))
 
         return inv_item
 

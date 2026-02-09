@@ -9,6 +9,7 @@ from typing import Optional
 from config import DUNGEON, DROP
 from models import Monster, MonsterTypeEnum, User, UserStatEnum
 from service.collection_service import CollectionService
+from service.event import EventBus, GameEvent, GameEventType
 
 logger = logging.getLogger(__name__)
 
@@ -108,6 +109,9 @@ async def process_combat_result_multi(session, context, turn_count: int) -> str:
     total_gold = 0
     result_lines = []
 
+    # 이벤트 버스 (싱글톤)
+    event_bus = EventBus()
+
     for monster in context.monsters:
         exp_mult = get_monster_exp_multiplier(monster)
         gold_mult = get_monster_gold_multiplier(monster)
@@ -119,6 +123,19 @@ async def process_combat_result_multi(session, context, turn_count: int) -> str:
         total_gold += gold
 
         await CollectionService.register_monster(user, monster.id)
+
+        # 이벤트 발행: 몬스터 처치
+        await event_bus.publish(GameEvent(
+            type=GameEventType.MONSTER_KILLED,
+            user_id=user.id,
+            data={
+                "monster_id": monster.id,
+                "monster_name": monster.name,
+                "monster_attribute": getattr(monster, "attribute", None),
+                "is_boss": is_boss_monster(monster),
+                "dungeon_id": session.dungeon.id if session.dungeon else None
+            }
+        ))
 
         # 드롭 시도 (각 몬스터 독립)
         for drop_msg in await _try_all_drops(session, user, monster):
@@ -132,6 +149,27 @@ async def process_combat_result_multi(session, context, turn_count: int) -> str:
     session.total_exp += total_exp
     session.total_gold += total_gold
     session.monsters_defeated += len(context.monsters)
+
+    # 이벤트 발행: 골드 획득
+    if total_gold > 0:
+        await event_bus.publish(GameEvent(
+            type=GameEventType.GOLD_OBTAINED,
+            user_id=user.id,
+            data={
+                "gold_amount": total_gold
+            }
+        ))
+
+    # 이벤트 발행: 전투 승리
+    await event_bus.publish(GameEvent(
+        type=GameEventType.COMBAT_WON,
+        user_id=user.id,
+        data={
+            "is_flawless": user.now_hp == user.max_hp,
+            "is_fast": turn_count <= 3,
+            "turns": turn_count,
+        }
+    ))
 
     monster_names = ", ".join([m.name for m in context.monsters])
     result_msg = (
