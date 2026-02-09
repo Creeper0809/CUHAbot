@@ -3,7 +3,7 @@ from discord.ext import commands
 from discord import app_commands
 
 from bot import GUILD_IDS
-from models import Item, Skill_Model
+from models import Item, Skill_Model, UserStatEnum
 from models.repos.static_cache import load_static_data
 from models.repos.users_repo import find_account_by_discordid
 from service.item.inventory_service import InventoryService
@@ -410,24 +410,30 @@ class ServerAdminCammand(commands.Cog):
             )
             return
 
-        # 경험치 추가 및 레벨업 처리
-        result = await UserService.add_experience(target_user, amount)
+        # 경험치 추가 및 레벨업 처리 (RewardService 사용)
+        from service.economy.reward_service import RewardService
+
+        reward_result = await RewardService.apply_rewards(
+            target_user,
+            exp_gained=amount,
+            gold_gained=0
+        )
 
         target_name = target.display_name if target else interaction.user.display_name
 
-        if result["leveled_up"]:
-            level_diff = result["new_level"] - result["old_level"]
+        if reward_result.level_up:
+            level_up = reward_result.level_up
             response = (
-                f"✅ **{target_name}**에게 경험치 **+{amount}** 지급 완료\n"
-                f"🎉 레벨업! **Lv.{result['old_level']}** → **Lv.{result['new_level']}** "
-                f"(+{level_diff})\n"
-                f"📊 스탯 포인트 **+{result['stat_points_gained']}**"
+                f"✅ **{target_name}**에게 경험치 **+{amount:,}** 지급 완료\n"
+                f"🎉 레벨업! **Lv.{level_up.old_level}** → **Lv.{level_up.new_level}** "
+                f"(+{level_up.levels_gained})\n"
+                f"📊 스탯 포인트 **+{level_up.stat_points_gained}**"
             )
         else:
             response = (
-                f"✅ **{target_name}**에게 경험치 **+{amount}** 지급 완료\n"
-                f"📈 현재 레벨: **Lv.{result['new_level']}** "
-                f"(경험치: {result['current_experience']})"
+                f"✅ **{target_name}**에게 경험치 **+{amount:,}** 지급 완료\n"
+                f"📈 현재 레벨: **Lv.{target_user.level}** "
+                f"(총 경험치: {target_user.exp:,})"
             )
 
         await interaction.response.send_message(response, ephemeral=True)
@@ -451,43 +457,74 @@ class ServerAdminCammand(commands.Cog):
             )
             return
 
+        # 먼저 defer() 호출 (3초 타임아웃 방지)
+        await interaction.response.defer(ephemeral=True)
+
         target_discord_id = target.id if target else interaction.user.id
         target_user = await find_account_by_discordid(target_discord_id)
         if not target_user:
-            await interaction.response.send_message(
+            await interaction.followup.send(
                 "대상 유저가 등록되어 있지 않습니다.",
                 ephemeral=True
             )
             return
 
-        await interaction.response.defer(ephemeral=True)
-
-        # 모든 아이템, 스킬, 몬스터 등록
+        # 모든 아이템, 스킬, 몬스터 등록 (bulk insert)
         from models.repos.static_cache import item_cache, skill_cache_by_id, monster_cache_by_id
-        from service.collection_service import CollectionService
+        from models.user_collection import UserCollection, CollectionType
 
-        item_count = 0
-        skill_count = 0
-        monster_count = 0
+        # 기존 도감 항목 조회 (중복 방지)
+        existing_collections = await UserCollection.filter(user=target_user).all()
+        existing_set = {
+            (col.collection_type, col.target_id) for col in existing_collections
+        }
 
-        # 아이템 등록
+        # 신규 도감 항목 준비
+        new_collections = []
+
+        # 아이템 추가
         for item_id in item_cache.keys():
-            created = await CollectionService.register_item(target_user, item_id)
-            if created:
-                item_count += 1
+            if (CollectionType.ITEM, item_id) not in existing_set:
+                new_collections.append(
+                    UserCollection(
+                        user=target_user,
+                        collection_type=CollectionType.ITEM,
+                        target_id=item_id
+                    )
+                )
 
-        # 스킬 등록 (몬스터 스킬 제외, ID < 9000)
+        item_count = len([c for c in new_collections if c.collection_type == CollectionType.ITEM])
+
+        # 스킬 추가 (몬스터 스킬 제외, ID < 9000)
         for skill_id in skill_cache_by_id.keys():
             if skill_id < 9000:  # 몬스터 스킬 제외
-                created = await CollectionService.register_skill(target_user, skill_id)
-                if created:
-                    skill_count += 1
+                if (CollectionType.SKILL, skill_id) not in existing_set:
+                    new_collections.append(
+                        UserCollection(
+                            user=target_user,
+                            collection_type=CollectionType.SKILL,
+                            target_id=skill_id
+                        )
+                    )
 
-        # 몬스터 등록
+        skill_count = len([c for c in new_collections if c.collection_type == CollectionType.SKILL]) - item_count
+
+        # 몬스터 추가
         for monster_id in monster_cache_by_id.keys():
-            created = await CollectionService.register_monster(target_user, monster_id)
-            if created:
-                monster_count += 1
+            if (CollectionType.MONSTER, monster_id) not in existing_set:
+                new_collections.append(
+                    UserCollection(
+                        user=target_user,
+                        collection_type=CollectionType.MONSTER,
+                        target_id=monster_id
+                    )
+                )
+
+        monster_count = len(new_collections) - item_count - skill_count
+
+        # 벌크 삽입
+        if new_collections:
+            await UserCollection.bulk_create(new_collections)
 
         target_name = target.display_name if target else interaction.user.display_name
 
@@ -519,6 +556,349 @@ class ServerAdminCammand(commands.Cog):
         embed.set_footer(text=f"총 {total_count}개 항목 신규 등록")
 
         await interaction.followup.send(embed=embed, ephemeral=True)
+
+    @app_commands.command(
+        name="전투",
+        description="[관리자] 특정 몬스터와 즉시 전투를 시작합니다 (디버그용)"
+    )
+    @app_commands.guilds(*GUILD_IDS)
+    @app_commands.describe(
+        monster_id="전투할 몬스터 ID",
+        target="전투 대상 (미지정시 자신)",
+        field_effect="필드 효과 강제 설정 (선택사항)"
+    )
+    @app_commands.choices(field_effect=[
+        app_commands.Choice(name="랜덤 (기본)", value="random"),
+        app_commands.Choice(name="없음", value="none"),
+        app_commands.Choice(name="🔥 화상 지대", value="burn_zone"),
+        app_commands.Choice(name="❄️ 동결 지대", value="freeze_zone"),
+        app_commands.Choice(name="⚡ 감전 지대", value="shock_zone"),
+        app_commands.Choice(name="🌊 익사 타이머", value="drown_timer"),
+        app_commands.Choice(name="🌀 차원 불안정", value="chaos_rift"),
+        app_commands.Choice(name="⏰ 시간 왜곡", value="time_warp"),
+        app_commands.Choice(name="🕳️ 공허의 잠식", value="void_erosion"),
+        app_commands.Choice(name="💧 수압 효과", value="water_pressure"),
+        app_commands.Choice(name="✨ 각성의 기운", value="awakening_aura"),
+        app_commands.Choice(name="💀 고대의 저주", value="ancient_curse"),
+    ])
+    async def debug_combat(
+        self,
+        interaction: discord.Interaction,
+        monster_id: int,
+        target: discord.Member = None,
+        field_effect: str = "random"
+    ):
+        # 권한 체크
+        if not is_admin_or_temp(interaction):
+            await interaction.response.send_message(
+                "❌ 이 명령어는 관리자만 사용할 수 있습니다.",
+                ephemeral=True
+            )
+            return
+
+        target_discord_id = target.id if target else interaction.user.id
+        target_user = await find_account_by_discordid(target_discord_id)
+        if not target_user:
+            await interaction.response.send_message(
+                "대상 유저가 등록되어 있지 않습니다.",
+                ephemeral=True
+            )
+            return
+
+        # 몬스터 확인
+        from models.repos.static_cache import monster_cache_by_id
+        if monster_id not in monster_cache_by_id:
+            await interaction.response.send_message(
+                f"❌ 몬스터 ID `{monster_id}`를 찾을 수 없습니다.",
+                ephemeral=True
+            )
+            return
+
+        monster = monster_cache_by_id[monster_id].copy()
+
+        # HP 확인
+        if target_user.now_hp <= 0:
+            target_user.now_hp = 1
+
+        # 스킬 덱 로드
+        from service.skill.skill_deck_service import SkillDeckService
+        from service.item.equipment_service import EquipmentService
+        await SkillDeckService.load_deck_to_user(target_user)
+        await EquipmentService.apply_equipment_stats(target_user)
+
+        # 전투/도망 선택 화면 표시
+        from service.dungeon.encounter_processor import _ask_fight_or_flee
+
+        monsters = [monster]
+        will_fight = await _ask_fight_or_flee(interaction, monsters)
+
+        if will_fight is None:
+            await interaction.followup.send("아무 행동도 하지 않았습니다.", ephemeral=True)
+            return
+
+        if not will_fight:
+            await interaction.followup.send("전투에서 도망쳤습니다!", ephemeral=True)
+            return
+
+        # 전투 컨텍스트 생성
+        from service.dungeon.combat_context import CombatContext
+        from service.dungeon.combat_executor import execute_combat_context
+
+        context = CombatContext.from_single(monster)
+
+        # 필드 효과 설정
+        if field_effect != "none":
+            from service.dungeon.field_effects import (
+                FieldEffectType, create_field_effect, roll_random_field_effect
+            )
+
+            if field_effect == "random":
+                # 기본 30% 확률 적용
+                import random
+                from config import COMBAT
+                if random.random() < COMBAT.FIELD_EFFECT_SPAWN_RATE:
+                    context.field_effect = roll_random_field_effect()
+            else:
+                # 강제 필드 효과 적용
+                effect_type = FieldEffectType(field_effect)
+                context.field_effect = create_field_effect(effect_type)
+
+        # 전투 시작
+        try:
+            result = await execute_combat_context(target_user, context, interaction)
+
+            target_name = target.display_name if target else interaction.user.display_name
+
+            # 전투 결과 메시지
+            if result.victory:
+                result_msg = f"✅ **{target_name}** 승리!\n"
+                result_msg += f"💰 골드: {result.gold_reward}G\n"
+                result_msg += f"⭐ 경험치: {result.exp_reward}\n"
+                if result.level_up:
+                    result_msg += f"🎉 레벨 업! **Lv.{result.new_level}**"
+            else:
+                result_msg = f"💀 **{target_name}** 패배...\n"
+                result_msg += f"HP: {target_user.now_hp}/{target_user.get_stat()[UserStatEnum.HP]}"
+
+            await interaction.followup.send(result_msg)
+        except Exception as e:
+            await interaction.followup.send(
+                f"❌ 전투 실행 중 오류 발생: {e}",
+                ephemeral=True
+            )
+
+    async def monster_id_autocomplete(
+        self,
+        interaction: discord.Interaction,
+        current: str
+    ) -> list[app_commands.Choice[int]]:
+        from models.repos.static_cache import monster_cache_by_id
+
+        query = current.strip().lower()
+        monsters = list(monster_cache_by_id.values())
+
+        if query:
+            # ID 또는 이름으로 필터링
+            if query.isdigit():
+                # ID 검색
+                query_id = int(query)
+                monsters = [m for m in monsters if str(m.id).startswith(str(query_id))]
+            else:
+                # 이름 검색
+                monsters = [m for m in monsters if query in m.name.lower()]
+
+        # 최대 25개까지
+        monsters = sorted(monsters, key=lambda m: m.id)[:25]
+
+        choices = []
+        for monster in monsters:
+            # 속성 표시
+            attr = getattr(monster, 'attribute', '무속성')
+            hp = getattr(monster, 'hp', 0)
+
+            name = f"{monster.id} - {monster.name} [{attr}] HP:{hp}"
+
+            # Discord 제한: 100자
+            if len(name) > 100:
+                name = name[:97] + "..."
+
+            choices.append(app_commands.Choice(name=name, value=monster.id))
+
+        return choices
+
+    debug_combat.autocomplete("monster_id")(monster_id_autocomplete)
+
+    @app_commands.command(
+        name="인카운터",
+        description="[관리자] 특정 인카운터를 즉시 발생시킵니다 (디버그용)"
+    )
+    @app_commands.guilds(*GUILD_IDS)
+    @app_commands.describe(
+        encounter_type="발생시킬 인카운터 종류",
+        target="대상 유저 (미지정시 자신)",
+        chest_grade="보물상자 등급 (보물상자 인카운터 전용)",
+        damage_percent="함정 피해 비율 (함정 인카운터 전용, 기본 10%)"
+    )
+    @app_commands.choices(encounter_type=[
+        app_commands.Choice(name="📦 보물상자", value="treasure"),
+        app_commands.Choice(name="⚠️ 함정", value="trap"),
+        app_commands.Choice(name="✨ 랜덤 이벤트", value="event"),
+        app_commands.Choice(name="🧙 NPC", value="npc"),
+        app_commands.Choice(name="🚪 숨겨진 방", value="hidden_room"),
+    ])
+    @app_commands.choices(chest_grade=[
+        app_commands.Choice(name="일반 상자", value="normal"),
+        app_commands.Choice(name="은 상자", value="silver"),
+        app_commands.Choice(name="금 상자", value="gold"),
+    ])
+    async def debug_encounter(
+        self,
+        interaction: discord.Interaction,
+        encounter_type: str,
+        target: discord.Member = None,
+        chest_grade: str = "normal",
+        damage_percent: float = 0.1
+    ):
+        # 권한 체크
+        if not is_admin_or_temp(interaction):
+            await interaction.response.send_message(
+                "❌ 이 명령어는 관리자만 사용할 수 있습니다.",
+                ephemeral=True
+            )
+            return
+
+        target_discord_id = target.id if target else interaction.user.id
+        target_user = await find_account_by_discordid(target_discord_id)
+        if not target_user:
+            await interaction.response.send_message(
+                "대상 유저가 등록되어 있지 않습니다.",
+                ephemeral=True
+            )
+            return
+
+        # HP 확인
+        if target_user.now_hp <= 0:
+            target_user.now_hp = 1
+
+        await interaction.response.defer()
+
+        # 더미 세션 생성
+        from service.session import DungeonSession, SessionType
+        from models.repos.static_cache import dungeon_cache
+
+        # 첫 번째 던전을 가져옴 (더미용)
+        dummy_dungeon = list(dungeon_cache.values())[0] if dungeon_cache else None
+
+        session = DungeonSession(
+            user_id=target_user.discord_id,
+            user=target_user,
+            dungeon=dummy_dungeon,
+            status=SessionType.EXPLORING
+        )
+        session.total_exp = 0
+        session.total_gold = 0
+
+        # 인카운터 생성 및 실행
+        from service.dungeon.encounter_types import (
+            TreasureEncounter, TrapEncounter, RandomEventEncounter,
+            NPCEncounter, HiddenRoomEncounter
+        )
+
+        try:
+            if encounter_type == "treasure":
+                encounter = TreasureEncounter(chest_grade=chest_grade)
+                emoji = "📦"
+                type_name = f"{chest_grade.upper()} 보물상자"
+            elif encounter_type == "trap":
+                encounter = TrapEncounter(damage_percent=damage_percent)
+                emoji = "⚠️"
+                type_name = "함정"
+            elif encounter_type == "event":
+                encounter = RandomEventEncounter()
+                emoji = "✨"
+                type_name = "랜덤 이벤트"
+            elif encounter_type == "npc":
+                encounter = NPCEncounter()
+                emoji = "🧙"
+                type_name = "NPC"
+            elif encounter_type == "hidden_room":
+                encounter = HiddenRoomEncounter()
+                emoji = "🚪"
+                type_name = "숨겨진 방"
+            else:
+                await interaction.followup.send(
+                    "❌ 잘못된 인카운터 타입입니다.",
+                    ephemeral=True
+                )
+                return
+
+            # 인카운터 실행
+            result = await encounter.execute(session, interaction)
+
+            target_name = target.display_name if target else interaction.user.display_name
+
+            # 결과 임베드 생성
+            embed = discord.Embed(
+                title=f"{emoji} {type_name} 발생!",
+                description=f"**{target_name}**에게 인카운터가 발생했습니다.",
+                color=discord.Color.blue()
+            )
+
+            embed.add_field(
+                name="📜 결과",
+                value=result.message,
+                inline=False
+            )
+
+            # 획득 정보
+            gains = []
+            if result.exp_gained > 0:
+                gains.append(f"⭐ 경험치: +{result.exp_gained}")
+            if result.gold_gained > 0:
+                gains.append(f"💰 골드: +{result.gold_gained}")
+            if result.gold_gained < 0:
+                gains.append(f"💸 골드: {result.gold_gained}")
+            if result.damage_taken > 0:
+                gains.append(f"❤️ HP: -{result.damage_taken}")
+            if result.healing_received > 0:
+                gains.append(f"💚 HP: +{result.healing_received}")
+            if result.items_gained:
+                items_text = ", ".join([f"**{item}**" for item in result.items_gained])
+                gains.append(f"🎁 아이템: {items_text}")
+
+            if gains:
+                embed.add_field(
+                    name="📊 변동 사항",
+                    value="\n".join(gains),
+                    inline=False
+                )
+
+            # 현재 상태
+            from models import UserStatEnum
+            user_stat = target_user.get_stat()
+            max_hp = user_stat[UserStatEnum.HP]
+            hp_pct = int((target_user.now_hp / max_hp) * 100) if max_hp > 0 else 0
+
+            embed.add_field(
+                name="👤 현재 상태",
+                value=(
+                    f"❤️ HP: **{target_user.now_hp}** / {max_hp} ({hp_pct}%)\n"
+                    f"💰 골드: **{target_user.gold:,}**"
+                ),
+                inline=False
+            )
+
+            embed.set_footer(text=f"세션 누적: 💎 {session.total_exp} EXP | 💰 {session.total_gold} G")
+
+            await interaction.followup.send(embed=embed)
+
+        except Exception as e:
+            import traceback
+            error_detail = traceback.format_exc()
+            await interaction.followup.send(
+                f"❌ 인카운터 실행 중 오류 발생:\n```\n{e}\n```\n\n상세:\n```\n{error_detail[:1000]}\n```",
+                ephemeral=True
+            )
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(ServerAdminCammand(bot))

@@ -149,17 +149,27 @@ async def _try_all_drops(session, user: User, monster: Monster) -> list[str]:
     """모든 드롭 시도 후 메시지 리스트 반환"""
     from service.dungeon.drop_handler import (
         try_drop_boss_special_item, try_drop_monster_box, try_drop_monster_skill,
+        try_drop_monster_material,
     )
 
     drops = []
+
+    # 보스 전용 아이템
     boss_item = await try_drop_boss_special_item(user, monster)
     if boss_item:
         drops.append(boss_item)
 
+    # 일반 재료 드롭 (일반 몬스터)
+    material = await try_drop_monster_material(user, monster)
+    if material:
+        drops.append(material)
+
+    # 상자 드롭
     chest = await try_drop_monster_box(session, monster)
     if chest:
         drops.append(chest)
 
+    # 스킬 드롭
     skill = await try_drop_monster_skill(user, monster)
     if skill:
         drops.append(skill)

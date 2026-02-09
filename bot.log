@@ -1,0 +1,2209 @@
+2026-02-09 15:09:19 [WARNING] PyNaCl is not installed, voice will NOT be supported
+[2026-02-09 15:09:19] [INFO    ] discord.client: logging in using static token
+2026-02-09 15:09:19 [INFO] logging in using static token
+2026-02-09 15:09:19 [INFO] 전역 커맨드 삭제 완료
+2026-02-09 15:09:19 [INFO] 길드 커맨드 삭제 완료
+2026-02-09 15:09:19 [INFO] Loaded cogs.dungeon_command
+2026-02-09 15:09:19 [INFO] Loaded cogs.server_admin_command
+2026-02-09 15:09:19 [INFO] Loaded cogs.server_manage_command
+2026-02-09 15:09:20 [INFO] 길드 1366713918084485130: 20개 synced
+2026-02-09 15:09:20 [INFO] 길드 1470048099379576886: 20개 synced
+[2026-02-09 15:09:21] [INFO    ] discord.gateway: Shard ID None has connected to Gateway (Session ID: 70f710e7881d8a7c764298dcbf9c3034).
+2026-02-09 15:09:21 [INFO] Shard ID None has connected to Gateway (Session ID: 70f710e7881d8a7c764298dcbf9c3034).
+2026-02-09 15:09:23 [INFO] 데이터 베이스 연결 시작
+2026-02-09 15:09:23 [INFO] Loading static data...
+2026-02-09 15:09:23 [INFO] Loaded 31 dungeons
+2026-02-09 15:09:23 [INFO] Loaded 127 monsters
+2026-02-09 15:09:23 [INFO] Loaded spawn info for 31 dungeons
+2026-02-09 15:09:23 [INFO] Loaded 509 items
+2026-02-09 15:09:23 [INFO] Registered skill component tags: ['attack', 'lifesteal', 'consume', 'heal', 'shield', 'cleanse', 'buff', 'debuff', 'passive_buff', 'passive_regen', 'conditional_passive', 'passive_turn_scaling', 'passive_debuff_reduction', 'status', 'combo', 'summon', 'passive_revive', 'on_death_summon', 'passive_element_immunity', 'passive_element_resistance', 'passive_damage_reflection', 'passive_status_immunity', 'passive_aura_debuff', 'passive_aura_buff']
+2026-02-09 15:09:23 [INFO] Skill 1001 (강타): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 1001 (강타): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 1002 (연속 베기): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 1002 (연속 베기): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 1003 (급소 찌르기): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 1003 (급소 찌르기): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 1004 (회전 참격): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 1004 (회전 참격): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 1005 (연타): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 1005 (연타): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 1005 (연타): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 1006 (파워 스트라이크): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 1006 (파워 스트라이크): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 1007 (방패 밀치기): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 1007 (방패 밀치기): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 1007 (방패 밀치기): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 1008 (연속 자상): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 1008 (연속 자상): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 1008 (연속 자상): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 1009 (일섬): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 1009 (일섬): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 1010 (천공검): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 1010 (천공검): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 1011 (시간 베기): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 1011 (시간 베기): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 1012 (차원 절단): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 1012 (차원 절단): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 1013 (신살): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 1013 (신살): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 1101 (화염구): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 1101 (화염구): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 1101 (화염구): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 1102 (화염 폭발): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 1102 (화염 폭발): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 1102 (화염 폭발): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 1103 (불기둥): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 1103 (불기둥): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 1104 (화염 방벽): loaded component 'buff'
+2026-02-09 15:09:23 [INFO] Skill 1104 (화염 방벽): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 1104 (화염 방벽): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 1105 (메테오): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 1105 (메테오): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 1105 (메테오): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 1106 (지옥불): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 1106 (지옥불): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 1106 (지옥불): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 1107 (태양 폭발): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 1107 (태양 폭발): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 1107 (태양 폭발): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 1108 (연옥의 불길): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 1108 (연옥의 불길): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 1108 (연옥의 불길): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 1109 (태양신의 분노): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 1109 (태양신의 분노): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 1109 (태양신의 분노): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 1201 (얼음 화살): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 1201 (얼음 화살): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 1201 (얼음 화살): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 1202 (빙결): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 1202 (빙결): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 1202 (빙결): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 1203 (눈보라): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 1203 (눈보라): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 1203 (눈보라): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 1204 (얼음 갑옷): loaded component 'buff'
+2026-02-09 15:09:23 [INFO] Skill 1204 (얼음 갑옷): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 1204 (얼음 갑옷): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 1205 (빙하): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 1205 (빙하): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 1205 (빙하): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 1206 (절대 영도): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 1206 (절대 영도): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 1206 (절대 영도): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 1207 (심해 빙결): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 1207 (심해 빙결): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 1207 (심해 빙결): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 1208 (우주의 정적): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 1208 (우주의 정적): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 1208 (우주의 정적): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 6205 (위험 감지): loaded component 'passive_buff'
+2026-02-09 15:09:23 [INFO] Skill 6205 (위험 감지): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 1209 (빙하기): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 1209 (빙하기): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 1209 (빙하기): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 1301 (전격): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 1301 (전격): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 1301 (전격): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 1302 (번개 연쇄): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 1302 (번개 연쇄): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 1302 (번개 연쇄): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 1303 (천둥의 일격): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 1303 (천둥의 일격): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 1303 (천둥의 일격): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 1304 (전기장): loaded component 'buff'
+2026-02-09 15:09:23 [INFO] Skill 1304 (전기장): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 1304 (전기장): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 1304 (전기장): 3 components loaded
+2026-02-09 15:09:23 [INFO] Skill 1305 (낙뢰): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 1305 (낙뢰): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 1306 (천둥의 심판): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 1306 (천둥의 심판): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 1306 (천둥의 심판): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 1307 (용신의 뇌격): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 1307 (용신의 뇌격): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 1307 (용신의 뇌격): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 1308 (초월 낙뢰): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 1308 (초월 낙뢰): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 1309 (라의 심판): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 1309 (라의 심판): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 1309 (라의 심판): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 1401 (물의 창): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 1401 (물의 창): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 1402 (잠식의 물결): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 1402 (잠식의 물결): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 1402 (잠식의 물결): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 1403 (수류탄): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 1403 (수류탄): loaded component 'heal'
+2026-02-09 15:09:23 [INFO] Skill 1403 (수류탄): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 1404 (침수): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 1404 (침수): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 1404 (침수): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 1405 (물의 방패): loaded component 'buff'
+2026-02-09 15:09:23 [INFO] Skill 1405 (물의 방패): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 1406 (해일): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 1406 (해일): loaded component 'heal'
+2026-02-09 15:09:23 [INFO] Skill 1406 (해일): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 1407 (생명의 물결): loaded component 'heal'
+2026-02-09 15:09:23 [INFO] Skill 1407 (생명의 물결): loaded component 'cleanse'
+2026-02-09 15:09:23 [INFO] Skill 1407 (생명의 물결): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 1408 (심해의 축복): loaded component 'heal'
+2026-02-09 15:09:23 [INFO] Skill 1408 (심해의 축복): loaded component 'shield'
+2026-02-09 15:09:23 [INFO] Skill 1408 (심해의 축복): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 1409 (생명의 원천): loaded component 'heal'
+2026-02-09 15:09:23 [INFO] Skill 1409 (생명의 원천): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 1410 (창세의 생명): loaded component 'heal'
+2026-02-09 15:09:23 [INFO] Skill 1410 (창세의 생명): loaded component 'buff'
+2026-02-09 15:09:23 [INFO] Skill 1410 (창세의 생명): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 1501 (빛의 화살): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 1501 (빛의 화살): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 1502 (치유의 빛): loaded component 'heal'
+2026-02-09 15:09:23 [INFO] Skill 1502 (치유의 빛): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 1503 (정화): loaded component 'heal'
+2026-02-09 15:09:23 [INFO] Skill 1503 (정화): loaded component 'cleanse'
+2026-02-09 15:09:23 [INFO] Skill 1503 (정화): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 1504 (축복): loaded component 'buff'
+2026-02-09 15:09:23 [INFO] Skill 1504 (축복): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 1505 (심판의 빛): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 1505 (심판의 빛): loaded component 'cleanse'
+2026-02-09 15:09:23 [INFO] Skill 1505 (심판의 빛): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 1506 (신성한 심판): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 1506 (신성한 심판): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 1507 (천사의 강림): loaded component 'buff'
+2026-02-09 15:09:23 [INFO] Skill 1507 (천사의 강림): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 1508 (용신의 가호): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 1508 (용신의 가호): loaded component 'buff'
+2026-02-09 15:09:23 [INFO] Skill 1508 (용신의 가호): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 1509 (신의 심판): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 1509 (신의 심판): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 1510 (라의 강림): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 1510 (라의 강림): loaded component 'heal'
+2026-02-09 15:09:23 [INFO] Skill 1510 (라의 강림): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 1601 (암흑 화살): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 1601 (암흑 화살): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 1601 (암흑 화살): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 1602 (생명력 흡수): loaded component 'lifesteal'
+2026-02-09 15:09:23 [INFO] Skill 1602 (생명력 흡수): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 1603 (저주): loaded component 'debuff'
+2026-02-09 15:09:23 [INFO] Skill 1603 (저주): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 1604 (어둠의 갑옷): loaded component 'buff'
+2026-02-09 15:09:23 [INFO] Skill 1604 (어둠의 갑옷): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 1605 (영혼 착취): loaded component 'lifesteal'
+2026-02-09 15:09:23 [INFO] Skill 1605 (영혼 착취): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 1606 (영혼 수확): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 1606 (영혼 수확): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 1607 (죽음의 손길): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 1607 (죽음의 손길): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 1608 (공허의 침식): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 1608 (공허의 침식): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 1608 (공허의 침식): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 1609 (영혼 파괴): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 1609 (영혼 파괴): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 1610 (완전한 어둠): loaded component 'lifesteal'
+2026-02-09 15:09:23 [INFO] Skill 1610 (완전한 어둠): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 2001 (응급 처치): loaded component 'heal'
+2026-02-09 15:09:23 [INFO] Skill 2001 (응급 처치): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 2002 (재생): loaded component 'heal'
+2026-02-09 15:09:23 [INFO] Skill 2002 (재생): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 2003 (간이 해독): loaded component 'heal'
+2026-02-09 15:09:23 [INFO] Skill 2003 (간이 해독): loaded component 'cleanse'
+2026-02-09 15:09:23 [INFO] Skill 2003 (간이 해독): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 2004 (치유): loaded component 'heal'
+2026-02-09 15:09:23 [INFO] Skill 2004 (치유): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 2005 (대치유): loaded component 'heal'
+2026-02-09 15:09:23 [INFO] Skill 2005 (대치유): loaded component 'cleanse'
+2026-02-09 15:09:23 [INFO] Skill 2005 (대치유): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 2006 (기적의 치유): loaded component 'heal'
+2026-02-09 15:09:23 [INFO] Skill 2006 (기적의 치유): loaded component 'cleanse'
+2026-02-09 15:09:23 [INFO] Skill 2006 (기적의 치유): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 2007 (시간 역행): loaded component 'heal'
+2026-02-09 15:09:23 [INFO] Skill 2007 (시간 역행): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 2008 (완전 재생): loaded component 'heal'
+2026-02-09 15:09:23 [INFO] Skill 2008 (완전 재생): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 2009 (창조의 손길): loaded component 'heal'
+2026-02-09 15:09:23 [INFO] Skill 2009 (창조의 손길): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 3001 (집중): loaded component 'buff'
+2026-02-09 15:09:23 [INFO] Skill 3001 (집중): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 3002 (분노): loaded component 'buff'
+2026-02-09 15:09:23 [INFO] Skill 3002 (분노): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 3003 (수비 태세): loaded component 'buff'
+2026-02-09 15:09:23 [INFO] Skill 3003 (수비 태세): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 3004 (가속): loaded component 'buff'
+2026-02-09 15:09:23 [INFO] Skill 3004 (가속): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 3005 (광폭화): loaded component 'buff'
+2026-02-09 15:09:23 [INFO] Skill 3005 (광폭화): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 3006 (무적): loaded component 'shield'
+2026-02-09 15:09:23 [INFO] Skill 3006 (무적): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 3007 (시간 가속): loaded component 'buff'
+2026-02-09 15:09:23 [INFO] Skill 3007 (시간 가속): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 3008 (초월 상태): loaded component 'buff'
+2026-02-09 15:09:23 [INFO] Skill 3008 (초월 상태): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 3009 (신의 가호): loaded component 'buff'
+2026-02-09 15:09:23 [INFO] Skill 3009 (신의 가호): loaded component 'shield'
+2026-02-09 15:09:23 [INFO] Skill 3009 (신의 가호): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 4001 (약점 노출): loaded component 'debuff'
+2026-02-09 15:09:23 [INFO] Skill 4001 (약점 노출): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 4002 (둔화): loaded component 'debuff'
+2026-02-09 15:09:23 [INFO] Skill 4002 (둔화): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 4002 (둔화): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 4003 (공포): loaded component 'debuff'
+2026-02-09 15:09:23 [INFO] Skill 4003 (공포): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 4004 (침묵): loaded component 'debuff'
+2026-02-09 15:09:23 [INFO] Skill 4004 (침묵): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 4005 (파멸의 낙인): loaded component 'debuff'
+2026-02-09 15:09:23 [INFO] Skill 4005 (파멸의 낙인): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 4005 (파멸의 낙인): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 4006 (존재 말소): loaded component 'debuff'
+2026-02-09 15:09:23 [INFO] Skill 4006 (존재 말소): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 4007 (시간 정지): loaded component 'debuff'
+2026-02-09 15:09:23 [INFO] Skill 4007 (시간 정지): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 4008 (존재의 붕괴): loaded component 'debuff'
+2026-02-09 15:09:23 [INFO] Skill 4008 (존재의 붕괴): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 4009 (신의 저주): loaded component 'debuff'
+2026-02-09 15:09:23 [INFO] Skill 4009 (신의 저주): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 5001 (오버드라이브): loaded component 'buff'
+2026-02-09 15:09:23 [INFO] Skill 5001 (오버드라이브): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 5002 (최후의 일격): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 5002 (최후의 일격): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 5003 (시간 정지 (궁)): loaded component 'debuff'
+2026-02-09 15:09:23 [INFO] Skill 5003 (시간 정지 (궁)): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 5004 (세계의 종말): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 5004 (세계의 종말): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 5005 (불사): loaded component 'shield'
+2026-02-09 15:09:23 [INFO] Skill 5005 (불사): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 5006 (시간 역전): loaded component 'heal'
+2026-02-09 15:09:23 [INFO] Skill 5006 (시간 역전): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 5007 (차원 붕괴): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 5007 (차원 붕괴): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 5008 (용신의 심판): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 5008 (용신의 심판): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 5009 (태양의 심판): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 5009 (태양의 심판): loaded component 'heal'
+2026-02-09 15:09:23 [INFO] Skill 5009 (태양의 심판): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 5010 (창세): loaded component 'heal'
+2026-02-09 15:09:23 [INFO] Skill 5010 (창세): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 6001 (날카로움): loaded component 'passive_buff'
+2026-02-09 15:09:23 [INFO] Skill 6001 (날카로움): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 6002 (마력 증폭): loaded component 'passive_buff'
+2026-02-09 15:09:23 [INFO] Skill 6002 (마력 증폭): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 6003 (강인함): loaded component 'passive_buff'
+2026-02-09 15:09:23 [INFO] Skill 6003 (강인함): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 6004 (철벽): loaded component 'passive_buff'
+2026-02-09 15:09:23 [INFO] Skill 6004 (철벽): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 6005 (신속): loaded component 'passive_buff'
+2026-02-09 15:09:23 [INFO] Skill 6005 (신속): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 6006 (예리한 눈): loaded component 'passive_buff'
+2026-02-09 15:09:23 [INFO] Skill 6006 (예리한 눈): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 6007 (민첩한 몸놀림): loaded component 'passive_buff'
+2026-02-09 15:09:23 [INFO] Skill 6007 (민첩한 몸놀림): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 6008 (맹독 체질): loaded component 'passive_buff'
+2026-02-09 15:09:23 [INFO] Skill 6008 (맹독 체질): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 6009 (동상 체질): loaded component 'passive_buff'
+2026-02-09 15:09:23 [INFO] Skill 6009 (동상 체질): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 6010 (감전 체질): loaded component 'passive_buff'
+2026-02-09 15:09:23 [INFO] Skill 6010 (감전 체질): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 6011 (처형자): loaded component 'passive_buff'
+2026-02-09 15:09:23 [INFO] Skill 6011 (처형자): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 6012 (연속 공격): loaded component 'passive_buff'
+2026-02-09 15:09:23 [INFO] Skill 6012 (연속 공격): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 6013 (재생력): loaded component 'passive_buff'
+2026-02-09 15:09:23 [INFO] Skill 6013 (재생력): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 6014 (생명력 착취): loaded component 'passive_buff'
+2026-02-09 15:09:23 [INFO] Skill 6014 (생명력 착취): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 6015 (급소 공격): loaded component 'passive_buff'
+2026-02-09 15:09:23 [INFO] Skill 6015 (급소 공격): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 6016 (상태이상 저항): loaded component 'passive_buff'
+2026-02-09 15:09:23 [INFO] Skill 6016 (상태이상 저항): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 6017 (최후의 발악): loaded component 'passive_buff'
+2026-02-09 15:09:23 [INFO] Skill 6017 (최후의 발악): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 6018 (약점 간파): loaded component 'passive_buff'
+2026-02-09 15:09:23 [INFO] Skill 6018 (약점 간파): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 6019 (불굴의 의지): loaded component 'passive_buff'
+2026-02-09 15:09:23 [INFO] Skill 6019 (불굴의 의지): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 6020 (전쟁 광기): loaded component 'passive_buff'
+2026-02-09 15:09:23 [INFO] Skill 6020 (전쟁 광기): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 6021 (원소 마스터): loaded component 'passive_buff'
+2026-02-09 15:09:23 [INFO] Skill 6021 (원소 마스터): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 6022 (확정 치명타): loaded component 'passive_buff'
+2026-02-09 15:09:23 [INFO] Skill 6022 (확정 치명타): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 6101 (행운): loaded component 'passive_buff'
+2026-02-09 15:09:23 [INFO] Skill 6101 (행운): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 6102 (대박 기원): loaded component 'passive_buff'
+2026-02-09 15:09:23 [INFO] Skill 6102 (대박 기원): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 6103 (황금 손): loaded component 'passive_buff'
+2026-02-09 15:09:23 [INFO] Skill 6103 (황금 손): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 6104 (경험의 서): loaded component 'passive_buff'
+2026-02-09 15:09:23 [INFO] Skill 6104 (경험의 서): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 6105 (보물 사냥꾼): loaded component 'passive_buff'
+2026-02-09 15:09:23 [INFO] Skill 6105 (보물 사냥꾼): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 6106 (수집가): loaded component 'passive_buff'
+2026-02-09 15:09:23 [INFO] Skill 6106 (수집가): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 6107 (대박): loaded component 'passive_buff'
+2026-02-09 15:09:23 [INFO] Skill 6107 (대박): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 6108 (잭팟): loaded component 'passive_buff'
+2026-02-09 15:09:23 [INFO] Skill 6108 (잭팟): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 6201 (함정 감지): loaded component 'passive_buff'
+2026-02-09 15:09:23 [INFO] Skill 6201 (함정 감지): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 6202 (함정 회피): loaded component 'passive_buff'
+2026-02-09 15:09:23 [INFO] Skill 6202 (함정 회피): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 6203 (비밀 탐지): loaded component 'passive_buff'
+2026-02-09 15:09:23 [INFO] Skill 6203 (비밀 탐지): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 6204 (안전한 발걸음): loaded component 'passive_buff'
+2026-02-09 15:09:23 [INFO] Skill 6204 (안전한 발걸음): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 6301 (흥정): loaded component 'passive_buff'
+2026-02-09 15:09:23 [INFO] Skill 6301 (흥정): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 6302 (능숙한 흥정): loaded component 'passive_buff'
+2026-02-09 15:09:23 [INFO] Skill 6302 (능숙한 흥정): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 6303 (VIP 고객): loaded component 'passive_buff'
+2026-02-09 15:09:23 [INFO] Skill 6303 (VIP 고객): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 6304 (강화 행운): loaded component 'passive_buff'
+2026-02-09 15:09:23 [INFO] Skill 6304 (강화 행운): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 6401 (시간 지배자): loaded component 'passive_buff'
+2026-02-09 15:09:23 [INFO] Skill 6401 (시간 지배자): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 6402 (공허의 자식): loaded component 'passive_buff'
+2026-02-09 15:09:23 [INFO] Skill 6402 (공허의 자식): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 6403 (각성자): loaded component 'passive_buff'
+2026-02-09 15:09:23 [INFO] Skill 6403 (각성자): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 6404 (차원의 눈): loaded component 'passive_buff'
+2026-02-09 15:09:23 [INFO] Skill 6404 (차원의 눈): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 6405 (초월자의 자격): loaded component 'passive_buff'
+2026-02-09 15:09:23 [INFO] Skill 6405 (초월자의 자격): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 6406 (전쟁의 화신): loaded component 'passive_buff'
+2026-02-09 15:09:23 [INFO] Skill 6406 (전쟁의 화신): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 6407 (태양의 축복): loaded component 'passive_buff'
+2026-02-09 15:09:23 [INFO] Skill 6407 (태양의 축복): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 6408 (창조신의 은총): loaded component 'passive_buff'
+2026-02-09 15:09:23 [INFO] Skill 6408 (창조신의 은총): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 6501 (새벽의 전사): loaded component 'passive_buff'
+2026-02-09 15:09:23 [INFO] Skill 6501 (새벽의 전사): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 6502 (황혼의 전사): loaded component 'passive_buff'
+2026-02-09 15:09:23 [INFO] Skill 6502 (황혼의 전사): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 6503 (고독한 늑대): loaded component 'passive_buff'
+2026-02-09 15:09:23 [INFO] Skill 6503 (고독한 늑대): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 6504 (보스 사냥꾼): loaded component 'passive_buff'
+2026-02-09 15:09:23 [INFO] Skill 6504 (보스 사냥꾼): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 6505 (역전의 용사): loaded component 'passive_buff'
+2026-02-09 15:09:23 [INFO] Skill 6505 (역전의 용사): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8001 (불씨 키우기): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 8001 (불씨 키우기): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8002 (연소 가속): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 8002 (연소 가속): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8003 (화상 폭발): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8003 (화상 폭발): loaded component 'consume'
+2026-02-09 15:09:23 [INFO] Skill 8003 (화상 폭발): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8004 (영원한 불꽃): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 8004 (영원한 불꽃): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8005 (재로 만들기): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8005 (재로 만들기): loaded component 'consume'
+2026-02-09 15:09:23 [INFO] Skill 8005 (재로 만들기): loaded component 'debuff'
+2026-02-09 15:09:23 [INFO] Skill 8005 (재로 만들기): 3 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8091 (점액 던지기): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8091 (점액 던지기): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8092 (고블린의 연타): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8092 (고블린의 연타): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 8092 (고블린의 연타): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8093 (야수의 이빨): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8093 (야수의 이빨): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 8093 (야수의 이빨): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8094 (독 포자): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8094 (독 포자): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 8094 (독 포자): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8095 (왕 슬라임의 돌진): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8095 (왕 슬라임의 돌진): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 8095 (왕 슬라임의 돌진): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8101 (서리의 포옹): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8101 (서리의 포옹): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 8101 (서리의 포옹): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8102 (빙결 분쇄): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8102 (빙결 분쇄): loaded component 'consume'
+2026-02-09 15:09:23 [INFO] Skill 8102 (빙결 분쇄): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8103 (동결 전환): loaded component 'consume'
+2026-02-09 15:09:23 [INFO] Skill 8103 (동결 전환): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 8103 (동결 전환): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8104 (냉기의 숨결): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 8104 (냉기의 숨결): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8105 (빙하의 무게): loaded component 'debuff'
+2026-02-09 15:09:23 [INFO] Skill 8105 (빙하의 무게): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9502 (화염 민첩): loaded component 'passive_buff'
+2026-02-09 15:09:23 [INFO] Skill 9502 (화염 민첩): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8106 (흡혈 송곳니): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8106 (흡혈 송곳니): loaded component 'lifesteal'
+2026-02-09 15:09:23 [INFO] Skill 8106 (흡혈 송곳니): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8107 (속사 화살): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8107 (속사 화살): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8108 (주술사의 마법진): loaded component 'debuff'
+2026-02-09 15:09:23 [INFO] Skill 8108 (주술사의 마법진): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 8108 (주술사의 마법진): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8109 (족장의 전쟁 함성): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8109 (족장의 전쟁 함성): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 8109 (족장의 전쟁 함성): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8110 (작열 돌격): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8110 (작열 돌격): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 8110 (작열 돌격): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8111 (화염 정령의 분노): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8111 (화염 정령의 분노): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 8111 (화염 정령의 분노): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8112 (임프의 소각): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8112 (임프의 소각): loaded component 'combo'
+2026-02-09 15:09:23 [INFO] Skill 8112 (임프의 소각): loaded component 'cleanse'
+2026-02-09 15:09:23 [INFO] Skill 8112 (임프의 소각): 3 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8113 (빙결 마법진): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8113 (빙결 마법진): loaded component 'combo'
+2026-02-09 15:09:23 [INFO] Skill 8113 (빙결 마법진): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8114 (서리의 일격): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8114 (서리의 일격): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 8114 (서리의 일격): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8115 (용암 폭발): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8115 (용암 폭발): loaded component 'consume'
+2026-02-09 15:09:23 [INFO] Skill 8115 (용암 폭발): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8116 (동토의 송곳니): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8116 (동토의 송곳니): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 8116 (동토의 송곳니): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8117 (빙하 파쇄): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8117 (빙하 파쇄): loaded component 'combo'
+2026-02-09 15:09:23 [INFO] Skill 8117 (빙하 파쇄): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8118 (화염 군주의 소각): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8118 (화염 군주의 소각): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 8118 (화염 군주의 소각): loaded component 'cleanse'
+2026-02-09 15:09:23 [INFO] Skill 8118 (화염 군주의 소각): 3 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8119 (서리 마녀의 빙쇄): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8119 (서리 마녀의 빙쇄): loaded component 'combo'
+2026-02-09 15:09:23 [INFO] Skill 8119 (서리 마녀의 빙쇄): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8120 (번개 유희): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8120 (번개 유희): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 8120 (번개 유희): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8121 (천둥 낙뢰): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8121 (천둥 낙뢰): loaded component 'combo'
+2026-02-09 15:09:23 [INFO] Skill 8121 (천둥 낙뢰): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8122 (전격 송곳니): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8122 (전격 송곳니): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 8122 (전격 송곳니): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8123 (잠식의 물결): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8123 (잠식의 물결): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 8123 (잠식의 물결): loaded component 'heal'
+2026-02-09 15:09:23 [INFO] Skill 8123 (잠식의 물결): 3 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8124 (폭풍의 과부하): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8124 (폭풍의 과부하): loaded component 'consume'
+2026-02-09 15:09:23 [INFO] Skill 8124 (폭풍의 과부하): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8125 (해류 물기): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8125 (해류 물기): loaded component 'combo'
+2026-02-09 15:09:23 [INFO] Skill 8125 (해류 물기): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8126 (뇌신의 심판): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8126 (뇌신의 심판): loaded component 'combo'
+2026-02-09 15:09:23 [INFO] Skill 8126 (뇌신의 심판): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8150 (공포의 파동): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8150 (공포의 파동): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 8150 (공포의 파동): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8127 (심해의 잠식): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8127 (심해의 잠식): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 8127 (심해의 잠식): loaded component 'combo'
+2026-02-09 15:09:23 [INFO] Skill 8127 (심해의 잠식): 3 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8128 (성스러운 천벌): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8128 (성스러운 천벌): loaded component 'buff'
+2026-02-09 15:09:23 [INFO] Skill 8128 (성스러운 천벌): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8129 (리치 왕의 역병): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8129 (리치 왕의 역병): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 8129 (리치 왕의 역병): loaded component 'combo'
+2026-02-09 15:09:23 [INFO] Skill 8129 (리치 왕의 역병): loaded component 'lifesteal'
+2026-02-09 15:09:23 [INFO] Skill 8129 (리치 왕의 역병): 4 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8130 (용의 화염 숨결): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8130 (용의 화염 숨결): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 8130 (용의 화염 숨결): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 8130 (용의 화염 숨결): 3 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8131 (숲의 수호): loaded component 'heal'
+2026-02-09 15:09:23 [INFO] Skill 8131 (숲의 수호): loaded component 'buff'
+2026-02-09 15:09:23 [INFO] Skill 8131 (숲의 수호): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8132 (집게 쇄도): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8132 (집게 쇄도): loaded component 'debuff'
+2026-02-09 15:09:23 [INFO] Skill 8132 (집게 쇄도): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 8132 (집게 쇄도): 3 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8133 (익사의 저주): loaded component 'debuff'
+2026-02-09 15:09:23 [INFO] Skill 8133 (익사의 저주): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8134 (성스러운 빛): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8134 (성스러운 빛): loaded component 'buff'
+2026-02-09 15:09:23 [INFO] Skill 8134 (성스러운 빛): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8135 (감염의 발톱): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8135 (감염의 발톱): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 8135 (감염의 발톱): loaded component 'debuff'
+2026-02-09 15:09:23 [INFO] Skill 8135 (감염의 발톱): 3 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8136 (정화의 빛): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8136 (정화의 빛): loaded component 'cleanse'
+2026-02-09 15:09:23 [INFO] Skill 8136 (정화의 빛): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8137 (결계의 시선): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8137 (결계의 시선): loaded component 'shield'
+2026-02-09 15:09:23 [INFO] Skill 8137 (결계의 시선): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8138 (저주받은 검): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8138 (저주받은 검): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 8138 (저주받은 검): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8139 (성스러운 참격): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8139 (성스러운 참격): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8140 (영혼 빙의): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8140 (영혼 빙의): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 8140 (영혼 빙의): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8141 (생명 착취): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8141 (생명 착취): loaded component 'lifesteal'
+2026-02-09 15:09:23 [INFO] Skill 8141 (생명 착취): loaded component 'combo'
+2026-02-09 15:09:23 [INFO] Skill 8141 (생명 착취): 3 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8142 (어린 브레스): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8142 (어린 브레스): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 8142 (어린 브레스): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 8142 (어린 브레스): 3 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8143 (화염 꼬리채찍): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8143 (화염 꼬리채찍): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 8143 (화염 꼬리채찍): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8144 (천둥 돌진): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8144 (천둥 돌진): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 8144 (천둥 돌진): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8145 (수호의 강타): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8145 (수호의 강타): loaded component 'debuff'
+2026-02-09 15:09:23 [INFO] Skill 8145 (수호의 강타): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8146 (세계수의 은총): loaded component 'heal'
+2026-02-09 15:09:23 [INFO] Skill 8146 (세계수의 은총): loaded component 'cleanse'
+2026-02-09 15:09:23 [INFO] Skill 8146 (세계수의 은총): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8147 (혼돈의 섬광): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8147 (혼돈의 섬광): loaded component 'debuff'
+2026-02-09 15:09:23 [INFO] Skill 8147 (혼돈의 섬광): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8148 (불안정한 타격): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8148 (불안정한 타격): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8149 (공허 순간이동): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8149 (공허 순간이동): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8151 (혼돈의 소용돌이): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8151 (혼돈의 소용돌이): loaded component 'debuff'
+2026-02-09 15:09:23 [INFO] Skill 8151 (혼돈의 소용돌이): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8152 (왕의 명령): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8152 (왕의 명령): loaded component 'debuff'
+2026-02-09 15:09:23 [INFO] Skill 8152 (왕의 명령): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8153 (마왕의 강림): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8153 (마왕의 강림): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 8153 (마왕의 강림): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8154 (심연의 침식): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8154 (심연의 침식): loaded component 'lifesteal'
+2026-02-09 15:09:23 [INFO] Skill 8154 (심연의 침식): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 8154 (심연의 침식): 3 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8155 (신성한 재판): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8155 (신성한 재판): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8156 (관찰자의 눈): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8156 (관찰자의 눈): loaded component 'debuff'
+2026-02-09 15:09:23 [INFO] Skill 8156 (관찰자의 눈): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8157 (시간 역행): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8157 (시간 역행): loaded component 'debuff'
+2026-02-09 15:09:23 [INFO] Skill 8157 (시간 역행): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8158 (시간 흡식): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8158 (시간 흡식): loaded component 'debuff'
+2026-02-09 15:09:23 [INFO] Skill 8158 (시간 흡식): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8159 (시간왜곡 펀치): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8159 (시간왜곡 펀치): loaded component 'debuff'
+2026-02-09 15:09:23 [INFO] Skill 8159 (시간왜곡 펀치): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8160 (역설의 모순): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8160 (역설의 모순): loaded component 'debuff'
+2026-02-09 15:09:23 [INFO] Skill 8160 (역설의 모순): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8161 (시공의 정지): loaded component 'debuff'
+2026-02-09 15:09:23 [INFO] Skill 8161 (시공의 정지): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8162 (공허의 갈라짐): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8162 (공허의 갈라짐): loaded component 'debuff'
+2026-02-09 15:09:23 [INFO] Skill 8162 (공허의 갈라짐): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8163 (무질서의 습격): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8163 (무질서의 습격): loaded component 'debuff'
+2026-02-09 15:09:23 [INFO] Skill 8163 (무질서의 습격): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8164 (존재의 부정): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8164 (존재의 부정): loaded component 'cleanse'
+2026-02-09 15:09:23 [INFO] Skill 8164 (존재의 부정): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8165 (무(無)의 일격): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8165 (무(無)의 일격): loaded component 'cleanse'
+2026-02-09 15:09:23 [INFO] Skill 8165 (무(無)의 일격): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8166 (공허의 포식): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8166 (공허의 포식): loaded component 'lifesteal'
+2026-02-09 15:09:23 [INFO] Skill 8166 (공허의 포식): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8167 (차원 분쇄): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8167 (차원 분쇄): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8168 (해연의 울부짖음): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8168 (해연의 울부짖음): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 8168 (해연의 울부짖음): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8169 (생체발광 폭발): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8169 (생체발광 폭발): loaded component 'debuff'
+2026-02-09 15:09:23 [INFO] Skill 8169 (생체발광 폭발): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8170 (촉수 난타): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8170 (촉수 난타): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8171 (압력 충격파): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8171 (압력 충격파): loaded component 'debuff'
+2026-02-09 15:09:23 [INFO] Skill 8171 (압력 충격파): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8172 (크라켄의 대포식): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8172 (크라켄의 대포식): loaded component 'lifesteal'
+2026-02-09 15:09:23 [INFO] Skill 8172 (크라켄의 대포식): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8173 (각성의 격돌): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8173 (각성의 격돌): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8174 (정수 약탈): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8174 (정수 약탈): loaded component 'lifesteal'
+2026-02-09 15:09:23 [INFO] Skill 8174 (정수 약탈): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8175 (원소의 폭발): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8175 (원소의 폭발): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8176 (원시의 충격): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8176 (원시의 충격): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 8176 (원시의 충격): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8177 (고대의 선고): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8177 (고대의 선고): loaded component 'debuff'
+2026-02-09 15:09:23 [INFO] Skill 8177 (고대의 선고): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8178 (오색 용신의 권능): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8178 (오색 용신의 권능): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8178 (오색 용신의 권능): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8178 (오색 용신의 권능): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8178 (오색 용신의 권능): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8178 (오색 용신의 권능): 5 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8179 (고대 레이저포): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8179 (고대 레이저포): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8180 (시련의 연격): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8180 (시련의 연격): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8181 (죽음의 낙인): loaded component 'debuff'
+2026-02-09 15:09:23 [INFO] Skill 8181 (죽음의 낙인): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8182 (현실 왜곡): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8182 (현실 왜곡): loaded component 'debuff'
+2026-02-09 15:09:23 [INFO] Skill 8182 (현실 왜곡): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8183 (불안정 방출): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8183 (불안정 방출): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8184 (차원의 붕괴): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8184 (차원의 붕괴): loaded component 'debuff'
+2026-02-09 15:09:23 [INFO] Skill 8184 (차원의 붕괴): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8185 (혼돈의 발현): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8185 (혼돈의 발현): loaded component 'debuff'
+2026-02-09 15:09:23 [INFO] Skill 8185 (혼돈의 발현): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8186 (차원 단절): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8186 (차원 단절): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8187 (초월의 참격): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8187 (초월의 참격): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8188 (승천의 광선): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8188 (승천의 광선): loaded component 'cleanse'
+2026-02-09 15:09:23 [INFO] Skill 8188 (승천의 광선): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8189 (한계 파괴): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8189 (한계 파괴): loaded component 'buff'
+2026-02-09 15:09:23 [INFO] Skill 8189 (한계 파괴): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8190 (한계 돌파의 일격): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8190 (한계 돌파의 일격): loaded component 'buff'
+2026-02-09 15:09:23 [INFO] Skill 8190 (한계 돌파의 일격): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8191 (초월의 종결): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8191 (초월의 종결): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8192 (태양의 화염): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8192 (태양의 화염): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 8192 (태양의 화염): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8193 (반신의 위엄): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8193 (반신의 위엄): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8194 (천상의 빛줄기): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8194 (천상의 빛줄기): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8195 (신성 검무): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8195 (신성 검무): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8196 (신성 파멸): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8196 (신성 파멸): loaded component 'cleanse'
+2026-02-09 15:09:23 [INFO] Skill 8196 (신성 파멸): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8197 (전쟁의 광란): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8197 (전쟁의 광란): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8198 (창세의 격류): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8198 (창세의 격류): loaded component 'debuff'
+2026-02-09 15:09:23 [INFO] Skill 8198 (창세의 격류): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8199 (창조의 빛): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8199 (창조의 빛): loaded component 'heal'
+2026-02-09 15:09:23 [INFO] Skill 8199 (창조의 빛): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8200 (무한의 맹독): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8200 (무한의 맹독): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 8200 (무한의 맹독): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8201 (전도체): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8201 (전도체): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 8201 (전도체): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8220 (기원의 폭풍): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8220 (기원의 폭풍): loaded component 'cleanse'
+2026-02-09 15:09:23 [INFO] Skill 8220 (기원의 폭풍): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8202 (정전기 축적): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 8202 (정전기 축적): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8221 (창세의 심판): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8221 (창세의 심판): loaded component 'cleanse'
+2026-02-09 15:09:23 [INFO] Skill 8221 (창세의 심판): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8203 (낙뢰 집중): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8203 (낙뢰 집중): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8222 (원초의 파멸): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8222 (원초의 파멸): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8204 (과부하): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8204 (과부하): loaded component 'consume'
+2026-02-09 15:09:23 [INFO] Skill 8204 (과부하): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8223 (절대 창조): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8223 (절대 창조): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8205 (뇌운 소환): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 8205 (뇌운 소환): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8224 (에너지 과부하): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8224 (에너지 과부하): loaded component 'debuff'
+2026-02-09 15:09:23 [INFO] Skill 8224 (에너지 과부하): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8206 (마법 연발): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8206 (마법 연발): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8207 (레이저 스캔): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8207 (레이저 스캔): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8208 (망각의 저주): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8208 (망각의 저주): loaded component 'debuff'
+2026-02-09 15:09:23 [INFO] Skill 8208 (망각의 저주): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8209 (시련의 타격): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8209 (시련의 타격): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8210 (감시의 눈빛): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8210 (감시의 눈빛): loaded component 'debuff'
+2026-02-09 15:09:23 [INFO] Skill 8210 (감시의 눈빛): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8211 (수호의 벽): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8211 (수호의 벽): loaded component 'buff'
+2026-02-09 15:09:23 [INFO] Skill 8211 (수호의 벽): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8212 (시련의 화염): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8212 (시련의 화염): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8301 (저주 심화): loaded component 'debuff'
+2026-02-09 15:09:23 [INFO] Skill 8301 (저주 심화): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 8301 (저주 심화): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8302 (연계: 영혼 착취): loaded component 'lifesteal'
+2026-02-09 15:09:23 [INFO] Skill 8302 (연계: 영혼 착취): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8303 (저주 수확): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8303 (저주 수확): loaded component 'consume'
+2026-02-09 15:09:23 [INFO] Skill 8303 (저주 수확): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8304 (연쇄 저주): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 8304 (연쇄 저주): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 8304 (연쇄 저주): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8305 (영혼 고리): loaded component 'lifesteal'
+2026-02-09 15:09:23 [INFO] Skill 8305 (영혼 고리): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8401 (신성 충전): loaded component 'buff'
+2026-02-09 15:09:23 [INFO] Skill 8401 (신성 충전): loaded component 'heal'
+2026-02-09 15:09:23 [INFO] Skill 8401 (신성 충전): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8402 (연계: 심판의 빛): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8402 (연계: 심판의 빛): loaded component 'cleanse'
+2026-02-09 15:09:23 [INFO] Skill 8402 (연계: 심판의 빛): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8403 (축복 전이): loaded component 'debuff'
+2026-02-09 15:09:23 [INFO] Skill 8403 (축복 전이): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8404 (연쇄 정화): loaded component 'cleanse'
+2026-02-09 15:09:23 [INFO] Skill 8404 (연쇄 정화): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8405 (성스러운 폭발): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8405 (성스러운 폭발): loaded component 'consume'
+2026-02-09 15:09:23 [INFO] Skill 8405 (성스러운 폭발): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8501 (깊은 상처): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8501 (깊은 상처): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 8501 (깊은 상처): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8502 (상처 벌리기): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8502 (상처 벌리기): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 8502 (상처 벌리기): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8503 (피의 향연): loaded component 'lifesteal'
+2026-02-09 15:09:23 [INFO] Skill 8503 (피의 향연): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8504 (출혈 폭발): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8504 (출혈 폭발): loaded component 'consume'
+2026-02-09 15:09:23 [INFO] Skill 8504 (출혈 폭발): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8505 (콤보 피니시): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8505 (콤보 피니시): loaded component 'consume'
+2026-02-09 15:09:23 [INFO] Skill 8505 (콤보 피니시): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8506 (콤보 유지): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 8506 (콤보 유지): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8507 (과다출혈): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8507 (과다출혈): loaded component 'consume'
+2026-02-09 15:09:23 [INFO] Skill 8507 (과다출혈): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8601 (잠식 강화): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 8601 (잠식 강화): loaded component 'debuff'
+2026-02-09 15:09:23 [INFO] Skill 8601 (잠식 강화): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8602 (범람): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 8602 (범람): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8603 (침수 감전): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8603 (침수 감전): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 8603 (침수 감전): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8701 (회복 증폭): loaded component 'buff'
+2026-02-09 15:09:23 [INFO] Skill 8701 (회복 증폭): loaded component 'heal'
+2026-02-09 15:09:23 [INFO] Skill 8701 (회복 증폭): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8702 (과회복): loaded component 'heal'
+2026-02-09 15:09:23 [INFO] Skill 8702 (과회복): loaded component 'shield'
+2026-02-09 15:09:23 [INFO] Skill 8702 (과회복): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8703 (생명력 폭발): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 8703 (생명력 폭발): loaded component 'consume'
+2026-02-09 15:09:23 [INFO] Skill 8703 (생명력 폭발): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8704 (고통의 전환): loaded component 'lifesteal'
+2026-02-09 15:09:23 [INFO] Skill 8704 (고통의 전환): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8705 (소각): loaded component 'combo'
+2026-02-09 15:09:23 [INFO] Skill 8705 (소각): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8706 (연소): loaded component 'combo'
+2026-02-09 15:09:23 [INFO] Skill 8706 (연소): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8707 (완전 빙결): loaded component 'combo'
+2026-02-09 15:09:23 [INFO] Skill 8707 (완전 빙결): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8708 (빙하 폭발): loaded component 'combo'
+2026-02-09 15:09:23 [INFO] Skill 8708 (빙하 폭발): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8709 (연쇄 방전): loaded component 'combo'
+2026-02-09 15:09:23 [INFO] Skill 8709 (연쇄 방전): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8710 (뇌전 폭주): loaded component 'combo'
+2026-02-09 15:09:23 [INFO] Skill 8710 (뇌전 폭주): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8711 (독성 확산): loaded component 'combo'
+2026-02-09 15:09:23 [INFO] Skill 8711 (독성 확산): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8712 (저주 증폭): loaded component 'combo'
+2026-02-09 15:09:23 [INFO] Skill 8712 (저주 증폭): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8713 (어둠의 수확): loaded component 'combo'
+2026-02-09 15:09:23 [INFO] Skill 8713 (어둠의 수확): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8714 (해류 전환): loaded component 'combo'
+2026-02-09 15:09:23 [INFO] Skill 8714 (해류 전환): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8715 (침수 동결): loaded component 'combo'
+2026-02-09 15:09:23 [INFO] Skill 8715 (침수 동결): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8716 (콤보 폭발): loaded component 'combo'
+2026-02-09 15:09:23 [INFO] Skill 8716 (콤보 폭발): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8717 (출혈 심화): loaded component 'combo'
+2026-02-09 15:09:23 [INFO] Skill 8717 (출혈 심화): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8718 (기절 추타): loaded component 'combo'
+2026-02-09 15:09:23 [INFO] Skill 8718 (기절 추타): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8719 (표식 처형): loaded component 'combo'
+2026-02-09 15:09:23 [INFO] Skill 8719 (표식 처형): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 8720 (축복 강화): loaded component 'combo'
+2026-02-09 15:09:23 [INFO] Skill 8720 (축복 강화): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9001 (점액 공격): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9001 (점액 공격): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 9001 (점액 공격): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9002 (고블린 찌르기): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9002 (고블린 찌르기): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9003 (【몬】물어뜯기): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9003 (【몬】물어뜯기): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 9003 (【몬】물어뜯기): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9004 (【몬】독 포자): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9004 (【몬】독 포자): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 9004 (【몬】독 포자): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9005 (몸통 박치기): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9005 (몸통 박치기): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 9005 (몸통 박치기): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9006 (초음파): loaded component 'debuff'
+2026-02-09 15:09:23 [INFO] Skill 9006 (초음파): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9007 (독화살): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9007 (독화살): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 9007 (독화살): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9008 (저주 주문): loaded component 'debuff'
+2026-02-09 15:09:23 [INFO] Skill 9008 (저주 주문): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 9008 (저주 주문): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9009 (지휘관의 함성): loaded component 'buff'
+2026-02-09 15:09:23 [INFO] Skill 9009 (지휘관의 함성): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9010 (대장 난타): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9010 (대장 난타): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9011 (화염 분출): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9011 (화염 분출): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 9011 (화염 분출): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9012 (용암 강타): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9012 (용암 강타): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 9012 (용암 강타): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9013 (화염 폭풍): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9013 (화염 폭풍): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 9013 (화염 폭풍): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9014 (용암 분화): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9014 (용암 분화): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 9014 (용암 분화): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9015 (냉기파): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9015 (냉기파): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 9015 (냉기파): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9016 (서리 송곳니): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9016 (서리 송곳니): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 9016 (서리 송곳니): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9017 (눈보라 (보스)): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9017 (눈보라 (보스)): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 9017 (눈보라 (보스)): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9018 (빙결의 눈): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9018 (빙결의 눈): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 9018 (빙결의 눈): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9019 (방전): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9019 (방전): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 9019 (방전): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9020 (뇌격): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9020 (뇌격): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 9020 (뇌격): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9021 (천둥 강타): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9021 (천둥 강타): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 9021 (천둥 강타): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9022 (뇌신 소환): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9022 (뇌신 소환): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 9022 (뇌신 소환): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9023 (물줄기): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9023 (물줄기): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 9023 (물줄기): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9024 (잠식의 촉수): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9024 (잠식의 촉수): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 9024 (잠식의 촉수): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 9024 (잠식의 촉수): 3 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9025 (신성 강타): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9025 (신성 강타): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9026 (심판의 망치): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9026 (심판의 망치): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 9026 (심판의 망치): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9027 (부패의 손길): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9027 (부패의 손길): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 9027 (부패의 손길): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9028 (【몬】흡혈): loaded component 'lifesteal'
+2026-02-09 15:09:23 [INFO] Skill 9028 (【몬】흡혈): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9029 (저주의 사슬): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9029 (저주의 사슬): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 9029 (저주의 사슬): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9171 (존재 소멸): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9171 (존재 소멸): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9030 (역병의 안개): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9030 (역병의 안개): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 9030 (역병의 안개): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 9030 (역병의 안개): 3 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9031 (용의 발톱): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9031 (용의 발톱): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 9031 (용의 발톱): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9032 (【몬】화염 브레스): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9032 (【몬】화염 브레스): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 9032 (【몬】화염 브레스): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9033 (번개 브레스): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9033 (번개 브레스): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 9033 (번개 브레스): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9034 (고대의 브레스): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9034 (고대의 브레스): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 9034 (고대의 브레스): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 9034 (고대의 브레스): 3 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9035 (용의 분노): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9035 (용의 분노): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9036 (혼돈의 파동): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9036 (혼돈의 파동): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 9036 (혼돈의 파동): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9037 (차원 찢기): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9037 (차원 찢기): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9038 (혼돈 분열): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9038 (혼돈 분열): loaded component 'debuff'
+2026-02-09 15:09:23 [INFO] Skill 9038 (혼돈 분열): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9039 (심연의 일격): loaded component 'lifesteal'
+2026-02-09 15:09:23 [INFO] Skill 9039 (심연의 일격): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 9039 (심연의 일격): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9040 (절대 심판): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9040 (절대 심판): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9041 (시간 왜곡): loaded component 'debuff'
+2026-02-09 15:09:23 [INFO] Skill 9041 (시간 왜곡): loaded component 'buff'
+2026-02-09 15:09:23 [INFO] Skill 9041 (시간 왜곡): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9042 (공허 침식): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9042 (공허 침식): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 9042 (공허 침식): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 9042 (공허 침식): 3 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9043 (【몬】대해일): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9043 (【몬】대해일): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 9043 (【몬】대해일): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9044 (촉수 난타): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9044 (촉수 난타): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9045 (원소 폭발): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9045 (원소 폭발): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9046 (전쟁의 함성): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9046 (전쟁의 함성): loaded component 'buff'
+2026-02-09 15:09:23 [INFO] Skill 9046 (전쟁의 함성): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9047 (창세의 모방): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9047 (창세의 모방): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9048 (【몬】죽음의 선고): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 9048 (【몬】죽음의 선고): loaded component 'debuff'
+2026-02-09 15:09:23 [INFO] Skill 9048 (【몬】죽음의 선고): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9049 (100층의 시련): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9049 (100층의 시련): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9050 (각성의 일격): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9050 (각성의 일격): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9051 (고대 레이저): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9051 (고대 레이저): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9052 (고대의 심판): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9052 (고대의 심판): loaded component 'debuff'
+2026-02-09 15:09:23 [INFO] Skill 9052 (고대의 심판): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9053 (공허 이동): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9053 (공허 이동): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9054 (공허의 균열): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9054 (공허의 균열): loaded component 'debuff'
+2026-02-09 15:09:23 [INFO] Skill 9054 (공허의 균열): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9055 (공허의 삼킴): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9055 (공허의 삼킴): loaded component 'lifesteal'
+2026-02-09 15:09:23 [INFO] Skill 9055 (공허의 삼킴): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9056 (공허의 손길): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9056 (공허의 손길): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9057 (공허의 지배자의 존재 소거): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9057 (공허의 지배자의 존재 소거): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9058 (【몬】과부하): loaded component 'attack'
+2026-02-09 15:09:23 [WARNING] Unknown component tag 'self_damage' in skill 9058
+2026-02-09 15:09:23 [INFO] Skill 9058 (【몬】과부하): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9059 (군대 소환): loaded component 'summon'
+2026-02-09 15:09:23 [INFO] Skill 9059 (군대 소환): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9060 (【몬】낙뢰): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9060 (【몬】낙뢰): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 9060 (【몬】낙뢰): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9061 (난타): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9061 (난타): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9062 (냉기 송곳니): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9062 (냉기 송곳니): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 9062 (냉기 송곳니): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9063 (뇌격 브레스): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9063 (뇌격 브레스): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 9063 (뇌격 브레스): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9064 (【몬】눈보라): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9064 (【몬】눈보라): loaded component 'status'
+2026-02-09 15:09:23 [WARNING] Unknown component tag 'dot' in skill 9064
+2026-02-09 15:09:23 [INFO] Skill 9064 (【몬】눈보라): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9065 (다차원 공격): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9065 (다차원 공격): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9066 (【몬】대해일 II): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9066 (【몬】대해일 II): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9067 (되돌리기): loaded component 'heal'
+2026-02-09 15:09:23 [INFO] Skill 9067 (되돌리기): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9068 (드래곤 클로): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9068 (드래곤 클로): loaded component 'consume'
+2026-02-09 15:09:23 [INFO] Skill 9068 (드래곤 클로): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9069 (마왕 발더스의 지옥불): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9069 (마왕 발더스의 지옥불): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 9069 (마왕 발더스의 지옥불): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9070 (마왕의 결계): loaded component 'buff'
+2026-02-09 15:09:23 [INFO] Skill 9070 (마왕의 결계): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9071 (마왕의 분노): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9071 (마왕의 분노): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9072 (마족 소환): loaded component 'summon'
+2026-02-09 15:09:23 [INFO] Skill 9072 (마족 소환): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9073 (먹물 분사): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9073 (먹물 분사): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 9073 (먹물 분사): loaded component 'debuff'
+2026-02-09 15:09:23 [INFO] Skill 9073 (먹물 분사): 3 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9074 (무작위 변이): loaded component 'debuff'
+2026-02-09 15:09:23 [INFO] Skill 9074 (무작위 변이): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9075 (무한 창조): loaded component 'summon'
+2026-02-09 15:09:23 [INFO] Skill 9075 (무한 창조): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9076 (무한의 독): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9076 (무한의 독): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 9076 (무한의 독): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9077 (【몬】물어뜯기 II): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9077 (【몬】물어뜯기 II): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 9077 (【몬】물어뜯기 II): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9078 (【몬】번개 연쇄): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9078 (【몬】번개 연쇄): loaded component 'combo'
+2026-02-09 15:09:23 [INFO] Skill 9078 (【몬】번개 연쇄): 2 components loaded
+2026-02-09 15:09:23 [WARNING] Unknown component tag 'revive' in skill 9079
+2026-02-09 15:09:23 [INFO] Skill 9079 (부활의 기적): 0 components loaded
+2026-02-09 15:09:23 [WARNING] Unknown component tag 'revive' in skill 9080
+2026-02-09 15:09:23 [INFO] Skill 9080 (부활의 빛): 0 components loaded
+2026-02-09 15:09:23 [WARNING] Unknown component tag 'revive' in skill 9081
+2026-02-09 15:09:23 [INFO] Skill 9081 (부활의 저주): 0 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9082 (분노의 일격): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9082 (분노의 일격): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 9082 (분노의 일격): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9083 (불꽃 연쇄): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9083 (불꽃 연쇄): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 9083 (불꽃 연쇄): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9084 (불멸의 불꽃): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9084 (불멸의 불꽃): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 9084 (불멸의 불꽃): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9115 (신성한 비늘): loaded component 'buff'
+2026-02-09 15:09:23 [INFO] Skill 9115 (신성한 비늘): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9085 (불멸의 전사): loaded component 'buff'
+2026-02-09 15:09:23 [INFO] Skill 9085 (불멸의 전사): loaded component 'buff'
+2026-02-09 15:09:23 [INFO] Skill 9085 (불멸의 전사): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9086 (불의 비): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9086 (불의 비): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 9086 (불의 비): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9087 (브레스): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9087 (브레스): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9088 (【몬】빙결): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9088 (【몬】빙결): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 9088 (【몬】빙결): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9089 (빙의): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9089 (빙의): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 9089 (빙의): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9090 (뼈 가르기): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9090 (뼈 가르기): loaded component 'debuff'
+2026-02-09 15:09:23 [INFO] Skill 9090 (뼈 가르기): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 9090 (뼈 가르기): 3 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9091 (뿌리 감옥): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 9091 (뿌리 감옥): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9092 (뿌리 얽기): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9092 (뿌리 얽기): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 9092 (뿌리 얽기): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9093 (생명 착취): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9093 (생명 착취): loaded component 'lifesteal'
+2026-02-09 15:09:23 [INFO] Skill 9093 (생명 착취): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9094 (생명력 약탈): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9094 (생명력 약탈): loaded component 'lifesteal'
+2026-02-09 15:09:23 [INFO] Skill 9094 (생명력 약탈): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9095 (【몬】생명력 흡수): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9095 (【몬】생명력 흡수): loaded component 'heal'
+2026-02-09 15:09:23 [INFO] Skill 9095 (【몬】생명력 흡수): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9096 (생명의 샘): loaded component 'heal'
+2026-02-09 15:09:23 [INFO] Skill 9096 (생명의 샘): loaded component 'cleanse'
+2026-02-09 15:09:23 [INFO] Skill 9096 (생명의 샘): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9097 (세계수 현현): loaded component 'heal'
+2026-02-09 15:09:23 [INFO] Skill 9097 (세계수 현현): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9098 (세계수의 가지): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9098 (세계수의 가지): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9099 (세계의 재편): loaded component 'debuff'
+2026-02-09 15:09:23 [INFO] Skill 9099 (세계의 재편): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9100 (【몬】세계의 종말): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9100 (【몬】세계의 종말): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9101 (【몬】수류탄): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9101 (【몬】수류탄): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 9101 (【몬】수류탄): loaded component 'heal'
+2026-02-09 15:09:23 [INFO] Skill 9101 (【몬】수류탄): 3 components loaded
+2026-02-09 15:09:23 [WARNING] Unknown component tag 'self_damage' in skill 9102
+2026-02-09 15:09:23 [INFO] Skill 9102 (수호자의 맹세): loaded component 'buff'
+2026-02-09 15:09:23 [INFO] Skill 9102 (수호자의 맹세): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9103 (수호자의 일격): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9103 (수호자의 일격): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 9103 (수호자의 일격): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9104 (숲의 가호): loaded component 'heal'
+2026-02-09 15:09:23 [INFO] Skill 9104 (숲의 가호): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9105 (시간 역류): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9105 (시간 역류): loaded component 'debuff'
+2026-02-09 15:09:23 [INFO] Skill 9105 (시간 역류): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9106 (【몬】시간 정지): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 9106 (【몬】시간 정지): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9107 (시간 폭발): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9107 (시간 폭발): loaded component 'consume'
+2026-02-09 15:09:23 [INFO] Skill 9107 (시간 폭발): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9108 (시간 흡수): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9108 (시간 흡수): loaded component 'debuff'
+2026-02-09 15:09:23 [INFO] Skill 9108 (시간 흡수): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9109 (시간의 수호자의 시간 정지): loaded component 'debuff'
+2026-02-09 15:09:23 [INFO] Skill 9109 (시간의 수호자의 시간 정지): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9110 (시련의 검): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9110 (시련의 검): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9111 (시련의 일격): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9111 (시련의 일격): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9112 (신격의 강림): loaded component 'buff'
+2026-02-09 15:09:23 [INFO] Skill 9112 (신격의 강림): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9113 (신성 결계): loaded component 'buff'
+2026-02-09 15:09:23 [INFO] Skill 9113 (신성 결계): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9114 (신성한 결계): loaded component 'buff'
+2026-02-09 15:09:23 [INFO] Skill 9114 (신성한 결계): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9116 (신성한 일격): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9116 (신성한 일격): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9117 (신의 경지): loaded component 'buff'
+2026-02-09 15:09:23 [INFO] Skill 9117 (신의 경지): loaded component 'debuff'
+2026-02-09 15:09:23 [INFO] Skill 9117 (신의 경지): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9118 (신의 권능): loaded component 'buff'
+2026-02-09 15:09:23 [INFO] Skill 9118 (신의 권능): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9119 (신의 분노): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9119 (신의 분노): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9120 (【몬】신의 심판): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9120 (【몬】신의 심판): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9121 (신의 영역): loaded component 'buff'
+2026-02-09 15:09:23 [INFO] Skill 9121 (신의 영역): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9122 (신의 일격): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9122 (신의 일격): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9123 (신의 축복): loaded component 'heal'
+2026-02-09 15:09:23 [INFO] Skill 9123 (신의 축복): loaded component 'cleanse'
+2026-02-09 15:09:23 [INFO] Skill 9123 (신의 축복): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9124 (심연으로의 초대): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 9124 (심연으로의 초대): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9125 (심연의 나락): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9125 (심연의 나락): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 9125 (심연의 나락): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9126 (심연의 부름): loaded component 'summon'
+2026-02-09 15:09:23 [INFO] Skill 9126 (심연의 부름): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9127 (【몬】심판의 빛): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9127 (【몬】심판의 빛): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9128 (【몬】심해의 축복): loaded component 'heal'
+2026-02-09 15:09:23 [INFO] Skill 9128 (【몬】심해의 축복): loaded component 'buff'
+2026-02-09 15:09:23 [INFO] Skill 9128 (【몬】심해의 축복): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9129 (암흑 폭발): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9129 (암흑 폭발): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9130 (어둠의 지배): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 9130 (어둠의 지배): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9131 (어둠의 칙령): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9131 (어둠의 칙령): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9132 (언데드 군단): loaded component 'summon'
+2026-02-09 15:09:23 [INFO] Skill 9132 (언데드 군단): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9133 (얼음 창): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9133 (얼음 창): loaded component 'combo'
+2026-02-09 15:09:23 [INFO] Skill 9133 (얼음 창): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9134 (에너지 장벽): loaded component 'buff'
+2026-02-09 15:09:23 [INFO] Skill 9134 (에너지 장벽): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9135 (에너지 포화): loaded component 'attack'
+2026-02-09 15:09:23 [WARNING] Unknown component tag 'self_destruct' in skill 9135
+2026-02-09 15:09:23 [INFO] Skill 9135 (에너지 포화): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9136 (역행의 파동): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9136 (역행의 파동): loaded component 'debuff'
+2026-02-09 15:09:23 [INFO] Skill 9136 (역행의 파동): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9137 (연사): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9137 (연사): 1 components loaded
+2026-02-09 15:09:23 [WARNING] Unknown component tag 'dot' in skill 9138
+2026-02-09 15:09:23 [INFO] Skill 9138 (영원한 낮): 0 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9139 (영원한 죽음): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9139 (영원한 죽음): loaded component 'debuff'
+2026-02-09 15:09:23 [INFO] Skill 9139 (영원한 죽음): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9140 (【몬】영혼 수확): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9140 (【몬】영혼 수확): loaded component 'lifesteal'
+2026-02-09 15:09:23 [INFO] Skill 9140 (【몬】영혼 수확): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9141 (오색 브레스): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9141 (오색 브레스): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9141 (오색 브레스): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9141 (오색 브레스): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9141 (오색 브레스): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9141 (오색 브레스): 5 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9142 (왕의 권능): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9142 (왕의 권능): loaded component 'debuff'
+2026-02-09 15:09:23 [INFO] Skill 9142 (왕의 권능): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9143 (【몬】용신의 심판): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9143 (【몬】용신의 심판): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9144 (용신의 포효): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 9144 (용신의 포효): loaded component 'debuff'
+2026-02-09 15:09:23 [INFO] Skill 9144 (용신의 포효): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9145 (용암 연소): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9145 (용암 연소): loaded component 'consume'
+2026-02-09 15:09:23 [INFO] Skill 9145 (용암 연소): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9146 (용의 날개): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9146 (용의 날개): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9147 (용의 포효): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 9147 (용의 포효): loaded component 'debuff'
+2026-02-09 15:09:23 [INFO] Skill 9147 (용의 포효): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9148 (원소 융합): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9148 (원소 융합): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9149 (원소 폭풍): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9149 (원소 폭풍): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9149 (원소 폭풍): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9149 (원소 폭풍): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9149 (원소 폭풍): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9149 (원소 폭풍): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9149 (원소 폭풍): 6 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9150 (원초의 권능): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9150 (원초의 권능): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9151 (원초의 빛): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9151 (원초의 빛): loaded component 'cleanse'
+2026-02-09 15:09:23 [INFO] Skill 9151 (원초의 빛): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9152 (원초의 신의 세계의 재편): loaded component 'debuff'
+2026-02-09 15:09:23 [INFO] Skill 9152 (원초의 신의 세계의 재편): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9153 (원초의 신의 창조와 파괴): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9153 (원초의 신의 창조와 파괴): loaded component 'heal'
+2026-02-09 15:09:23 [INFO] Skill 9153 (원초의 신의 창조와 파괴): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9154 (익사의 저주): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9154 (익사의 저주): loaded component 'combo'
+2026-02-09 15:09:23 [INFO] Skill 9154 (익사의 저주): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9155 (자동인형 소환): loaded component 'summon'
+2026-02-09 15:09:23 [INFO] Skill 9155 (자동인형 소환): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9156 (자연의 분노): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9156 (자연의 분노): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9157 (자연의 심판): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9157 (자연의 심판): loaded component 'debuff'
+2026-02-09 15:09:23 [INFO] Skill 9157 (자연의 심판): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9158 (재생의 힘): loaded component 'heal'
+2026-02-09 15:09:23 [INFO] Skill 9158 (재생의 힘): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9159 (【몬】저주): loaded component 'debuff'
+2026-02-09 15:09:23 [INFO] Skill 9159 (【몬】저주): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 9159 (【몬】저주): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9160 (전장의 축복): loaded component 'buff'
+2026-02-09 15:09:23 [INFO] Skill 9160 (전장의 축복): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9161 (전쟁의 광기): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9161 (전쟁의 광기): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9162 (절대 소멸): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9162 (절대 소멸): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9163 (절대 암흑): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9163 (절대 암흑): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 9163 (절대 암흑): loaded component 'debuff'
+2026-02-09 15:09:23 [INFO] Skill 9163 (절대 암흑): 3 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9164 (【몬】절대 영도): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9164 (【몬】절대 영도): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 9164 (【몬】절대 영도): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9165 (절대 영역): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9165 (절대 영역): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9166 (정화의 광선): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9166 (정화의 광선): loaded component 'cleanse'
+2026-02-09 15:09:23 [INFO] Skill 9166 (정화의 광선): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9167 (정화의 불꽃): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9167 (정화의 불꽃): loaded component 'cleanse'
+2026-02-09 15:09:23 [INFO] Skill 9167 (정화의 불꽃): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9168 (족장의 명령): loaded component 'summon'
+2026-02-09 15:09:23 [INFO] Skill 9168 (족장의 명령): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9169 (【몬】존재 말소): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9169 (【몬】존재 말소): loaded component 'cleanse'
+2026-02-09 15:09:23 [INFO] Skill 9169 (【몬】존재 말소): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9170 (존재 소거): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9170 (존재 소거): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9172 (【몬】존재의 붕괴): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9172 (【몬】존재의 붕괴): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9173 (존재의 소멸): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9173 (존재의 소멸): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9174 (존재의 창조): loaded component 'summon'
+2026-02-09 15:09:23 [INFO] Skill 9174 (존재의 창조): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9175 (존재의 파편): loaded component 'summon'
+2026-02-09 15:09:23 [INFO] Skill 9175 (존재의 파편): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9176 (종말의 선언): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9176 (종말의 선언): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9177 (종말의 시작): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9177 (종말의 시작): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9178 (【몬】죽음의 선고 II): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 9178 (【몬】죽음의 선고 II): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9179 (【몬】죽음의 손길): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9179 (【몬】죽음의 손길): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 9179 (【몬】죽음의 손길): loaded component 'debuff'
+2026-02-09 15:09:23 [INFO] Skill 9179 (【몬】죽음의 손길): 3 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9180 (죽음의 안개): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9180 (죽음의 안개): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 9180 (죽음의 안개): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9181 (죽음의 지배자의 언데드 군단): loaded component 'summon'
+2026-02-09 15:09:23 [INFO] Skill 9181 (죽음의 지배자의 언데드 군단): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9182 (죽음의 지배자의 영혼 수확): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9182 (죽음의 지배자의 영혼 수확): loaded component 'buff'
+2026-02-09 15:09:23 [INFO] Skill 9182 (죽음의 지배자의 영혼 수확): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9183 (죽음의 지배자의 죽음의 안개): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 9183 (죽음의 지배자의 죽음의 안개): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9184 (【몬】지옥불): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9184 (【몬】지옥불): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 9184 (【몬】지옥불): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9185 (차원 분열): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9185 (차원 분열): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9186 (【몬】차원 붕괴): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9186 (【몬】차원 붕괴): loaded component 'debuff'
+2026-02-09 15:09:23 [INFO] Skill 9186 (【몬】차원 붕괴): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9187 (차원 이동): loaded component 'buff'
+2026-02-09 15:09:23 [INFO] Skill 9187 (차원 이동): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9188 (【몬】차원 절단): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9188 (【몬】차원 절단): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9189 (차원 폭발): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9189 (차원 폭발): loaded component 'debuff'
+2026-02-09 15:09:23 [INFO] Skill 9189 (차원 폭발): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9190 (차원의 구현체의 차원 붕괴): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9190 (차원의 구현체의 차원 붕괴): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9191 (차원의 파괴자의 차원 절단): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9191 (차원의 파괴자의 차원 절단): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9192 (창세의 빛): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9192 (창세의 빛): loaded component 'cleanse'
+2026-02-09 15:09:23 [INFO] Skill 9192 (창세의 빛): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9193 (창세의 시선): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9193 (창세의 시선): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9194 (창세의 일격): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9194 (창세의 일격): loaded component 'debuff'
+2026-02-09 15:09:23 [INFO] Skill 9194 (창세의 일격): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9195 (창조신의 그림자의 신의 경지): loaded component 'buff'
+2026-02-09 15:09:23 [INFO] Skill 9195 (창조신의 그림자의 신의 경지): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9196 (창조신의 그림자의 창세의 빛): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9196 (창조신의 그림자의 창세의 빛): loaded component 'cleanse'
+2026-02-09 15:09:23 [INFO] Skill 9196 (창조신의 그림자의 창세의 빛): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9197 (창조신의 신의 경지): loaded component 'buff'
+2026-02-09 15:09:23 [INFO] Skill 9197 (창조신의 신의 경지): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9198 (창조신의 창세의 빛): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9198 (창조신의 창세의 빛): loaded component 'heal'
+2026-02-09 15:09:23 [INFO] Skill 9198 (창조신의 창세의 빛): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9199 (창조신의 최종 창세): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9199 (창조신의 최종 창세): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9200 (창조와 파괴): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9200 (창조와 파괴): loaded component 'heal'
+2026-02-09 15:09:23 [INFO] Skill 9200 (창조와 파괴): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9201 (창조의 빛): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9201 (창조의 빛): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9202 (【몬】천둥의 심판): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9202 (【몬】천둥의 심판): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 9202 (【몬】천둥의 심판): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9203 (천벌): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9203 (천벌): loaded component 'buff'
+2026-02-09 15:09:23 [INFO] Skill 9203 (천벌): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9204 (천상의 보호): loaded component 'buff'
+2026-02-09 15:09:23 [INFO] Skill 9204 (천상의 보호): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9205 (초월의 끝): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9205 (초월의 끝): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9206 (초월의 심판): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9206 (초월의 심판): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9207 (초월의 일격): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9207 (초월의 일격): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9208 (초월한 자의 한계 돌파): loaded component 'buff'
+2026-02-09 15:09:23 [INFO] Skill 9208 (초월한 자의 한계 돌파): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9209 (촉수 난무): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9209 (촉수 난무): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9210 (최종 붕괴): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9210 (최종 붕괴): 1 components loaded
+2026-02-09 15:09:23 [WARNING] Unknown component tag 'dot' in skill 9211
+2026-02-09 15:09:23 [INFO] Skill 9211 (최종 시련): 0 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9212 (최종 전쟁): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9212 (최종 전쟁): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9213 (최종 창세): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9213 (최종 창세): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9214 (최종 프로토콜): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9214 (최종 프로토콜): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9215 (최후의 심판): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9215 (최후의 심판): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9216 (치유의 파도): loaded component 'heal'
+2026-02-09 15:09:23 [INFO] Skill 9216 (치유의 파도): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9217 (탑의 심판): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9217 (탑의 심판): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9218 (【몬】태양 폭발): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9218 (【몬】태양 폭발): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9219 (태양신 라의 최후의 심판): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9219 (태양신 라의 최후의 심판): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9220 (【몬】태양의 심판): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9220 (【몬】태양의 심판): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9221 (포식): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9221 (포식): loaded component 'lifesteal'
+2026-02-09 15:09:23 [INFO] Skill 9221 (포식): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9222 (폭풍 과부하): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9222 (폭풍 과부하): loaded component 'consume'
+2026-02-09 15:09:23 [INFO] Skill 9222 (폭풍 과부하): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9223 (폭풍 과부하): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9223 (폭풍 과부하): loaded component 'consume'
+2026-02-09 15:09:23 [INFO] Skill 9223 (폭풍 과부하): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9224 (피의 제단): loaded component 'buff'
+2026-02-09 15:09:23 [INFO] Skill 9224 (피의 제단): loaded component 'heal'
+2026-02-09 15:09:23 [INFO] Skill 9224 (피의 제단): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9225 (한계 돌파): loaded component 'attack'
+2026-02-09 15:09:23 [WARNING] Unknown component tag 'self_damage' in skill 9225
+2026-02-09 15:09:23 [INFO] Skill 9225 (한계 돌파): loaded component 'buff'
+2026-02-09 15:09:23 [INFO] Skill 9225 (한계 돌파): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9226 (해연의 포효): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9226 (해연의 포효): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 9226 (해연의 포효): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9501 (무리 본능): loaded component 'passive_buff'
+2026-02-09 15:09:23 [INFO] Skill 9501 (무리 본능): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9227 (【몬】해일): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9227 (【몬】해일): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 9227 (【몬】해일): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9228 (허무의 영역): loaded component 'debuff'
+2026-02-09 15:09:23 [INFO] Skill 9228 (허무의 영역): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9229 (현실 붕괴): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9229 (현실 붕괴): loaded component 'debuff'
+2026-02-09 15:09:23 [INFO] Skill 9229 (현실 붕괴): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9230 (현실 왜곡): loaded component 'debuff'
+2026-02-09 15:09:23 [INFO] Skill 9230 (현실 왜곡): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9231 (현실 재편): loaded component 'debuff'
+2026-02-09 15:09:23 [INFO] Skill 9231 (현실 재편): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9232 (혼돈 폭발): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9232 (혼돈 폭발): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9233 (혼돈의 물결): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9233 (혼돈의 물결): loaded component 'debuff'
+2026-02-09 15:09:23 [INFO] Skill 9233 (혼돈의 물결): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9234 (혼돈의 일격): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9234 (혼돈의 일격): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9235 (【몬】화염 브레스 II): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9235 (【몬】화염 브레스 II): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 9235 (【몬】화염 브레스 II): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9236 (【몬】화염 폭발): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9236 (【몬】화염 폭발): loaded component 'consume'
+2026-02-09 15:09:23 [INFO] Skill 9236 (【몬】화염 폭발): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9237 (【몬】화염구): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9237 (【몬】화염구): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 9237 (【몬】화염구): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9238 (【몬】독 포자 II): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9238 (【몬】독 포자 II): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 9238 (【몬】독 포자 II): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9239 (점액 분사): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9239 (점액 분사): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9240 (【몬】흡혈 II): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9240 (【몬】흡혈 II): loaded component 'lifesteal'
+2026-02-09 15:09:23 [INFO] Skill 9240 (【몬】흡혈 II): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9241 (불꽃 돌진): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9241 (불꽃 돌진): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 9241 (불꽃 돌진): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9242 (냉기 물어뜯기): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9242 (냉기 물어뜯기): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 9242 (냉기 물어뜯기): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9243 (빙하 파쇄): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9243 (빙하 파쇄): loaded component 'combo'
+2026-02-09 15:09:23 [INFO] Skill 9243 (빙하 파쇄): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9244 (번개 장난): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9244 (번개 장난): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 9244 (번개 장난): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9245 (집게 가위): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9245 (집게 가위): loaded component 'debuff'
+2026-02-09 15:09:23 [INFO] Skill 9245 (집게 가위): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9246 (전격 물기): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9246 (전격 물기): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 9246 (전격 물기): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9247 (해류 물기): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9247 (해류 물기): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 9247 (해류 물기): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9248 (빛의 폭발): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9248 (빛의 폭발): loaded component 'buff'
+2026-02-09 15:09:23 [INFO] Skill 9248 (빛의 폭발): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9249 (감염된 발톱): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9249 (감염된 발톱): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 9249 (감염된 발톱): loaded component 'debuff'
+2026-02-09 15:09:23 [INFO] Skill 9249 (감염된 발톱): 3 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9250 (결계의 시선): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9250 (결계의 시선): loaded component 'shield'
+2026-02-09 15:09:23 [INFO] Skill 9250 (결계의 시선): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9251 (화염 꼬리): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9251 (화염 꼬리): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 9251 (화염 꼬리): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9252 (천둥 날개): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9252 (천둥 날개): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 9252 (천둥 날개): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9253 (혼돈 파동): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9253 (혼돈 파동): loaded component 'debuff'
+2026-02-09 15:09:23 [INFO] Skill 9253 (혼돈 파동): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9254 (공포의 외침): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9254 (공포의 외침): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 9254 (공포의 외침): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9255 (시간 왜곡 펀치): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9255 (시간 왜곡 펀치): loaded component 'debuff'
+2026-02-09 15:09:23 [INFO] Skill 9255 (시간 왜곡 펀치): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9256 (역설의 역전): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9256 (역설의 역전): loaded component 'debuff'
+2026-02-09 15:09:23 [INFO] Skill 9256 (역설의 역전): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9257 (무질서의 발톱): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9257 (무질서의 발톱): loaded component 'debuff'
+2026-02-09 15:09:23 [INFO] Skill 9257 (무질서의 발톱): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9258 (존재 부정): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9258 (존재 부정): loaded component 'cleanse'
+2026-02-09 15:09:23 [INFO] Skill 9258 (존재 부정): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9259 (눈부신 섬광): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9259 (눈부신 섬광): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 9259 (눈부신 섬광): loaded component 'debuff'
+2026-02-09 15:09:23 [INFO] Skill 9259 (눈부신 섬광): 3 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9260 (촉수 휩쓸기): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9260 (촉수 휩쓸기): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9261 (심해압): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9261 (심해압): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 9261 (심해압): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9262 (정수 흡수): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9262 (정수 흡수): loaded component 'lifesteal'
+2026-02-09 15:09:23 [INFO] Skill 9262 (정수 흡수): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9263 (원시의 일격): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9263 (원시의 일격): loaded component 'status'
+2026-02-09 15:09:23 [INFO] Skill 9263 (원시의 일격): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9264 (마법 미사일): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9264 (마법 미사일): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9265 (레이저 스캔): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9265 (레이저 스캔): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9266 (망각의 저주): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9266 (망각의 저주): loaded component 'debuff'
+2026-02-09 15:09:23 [INFO] Skill 9266 (망각의 저주): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9267 (감시의 시선): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9267 (감시의 시선): loaded component 'debuff'
+2026-02-09 15:09:23 [INFO] Skill 9267 (감시의 시선): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9268 (수호의 방벽): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9268 (수호의 방벽): loaded component 'buff'
+2026-02-09 15:09:23 [INFO] Skill 9268 (수호의 방벽): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9269 (시련의 불꽃): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9269 (시련의 불꽃): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9270 (불안정 폭발): loaded component 'attack'
+2026-02-09 15:09:23 [WARNING] Unknown component tag 'self_damage' in skill 9270
+2026-02-09 15:09:23 [INFO] Skill 9270 (불안정 폭발): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9271 (붕괴의 파동): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9271 (붕괴의 파동): loaded component 'debuff'
+2026-02-09 15:09:23 [INFO] Skill 9271 (붕괴의 파동): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9272 (혼돈의 화신): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9272 (혼돈의 화신): loaded component 'debuff'
+2026-02-09 15:09:23 [INFO] Skill 9272 (혼돈의 화신): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9273 (초월의 광선): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9273 (초월의 광선): loaded component 'cleanse'
+2026-02-09 15:09:23 [INFO] Skill 9273 (초월의 광선): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9274 (한계 파쇄): loaded component 'attack'
+2026-02-09 15:09:23 [WARNING] Unknown component tag 'self_damage' in skill 9274
+2026-02-09 15:09:23 [INFO] Skill 9274 (한계 파쇄): loaded component 'buff'
+2026-02-09 15:09:23 [INFO] Skill 9274 (한계 파쇄): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9275 (천상의 일격): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9275 (천상의 일격): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9276 (성스러운 검격): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9276 (성스러운 검격): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9277 (신성 파괴): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9277 (신성 파괴): loaded component 'cleanse'
+2026-02-09 15:09:23 [INFO] Skill 9277 (신성 파괴): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9278 (창조의 섬광): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9278 (창조의 섬광): loaded component 'heal'
+2026-02-09 15:09:23 [INFO] Skill 9278 (창조의 섬광): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9279 (기원의 폭발): loaded component 'attack'
+2026-02-09 15:09:23 [INFO] Skill 9279 (기원의 폭발): loaded component 'cleanse'
+2026-02-09 15:09:23 [INFO] Skill 9279 (기원의 폭발): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9503 (용암 갑옷): loaded component 'passive_buff'
+2026-02-09 15:09:23 [INFO] Skill 9503 (용암 갑옷): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9504 (질풍 비행): loaded component 'passive_buff'
+2026-02-09 15:09:23 [INFO] Skill 9504 (질풍 비행): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9505 (폭풍의 가호): loaded component 'passive_buff'
+2026-02-09 15:09:23 [INFO] Skill 9505 (폭풍의 가호): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9506 (용의 비늘): loaded component 'passive_buff'
+2026-02-09 15:09:23 [INFO] Skill 9506 (용의 비늘): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9507 (용의 지혜): loaded component 'passive_buff'
+2026-02-09 15:09:23 [INFO] Skill 9507 (용의 지혜): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9508 (신성 갑옷): loaded component 'passive_buff'
+2026-02-09 15:09:23 [INFO] Skill 9508 (신성 갑옷): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9509 (비실체화): loaded component 'passive_buff'
+2026-02-09 15:09:23 [INFO] Skill 9509 (비실체화): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9510 (원거리): loaded component 'passive_buff'
+2026-02-09 15:09:23 [INFO] Skill 9510 (원거리): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9511 (부족의 힘): loaded component 'conditional_passive'
+2026-02-09 15:09:23 [INFO] Skill 9511 (부족의 힘): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9512 (전사의 각성): loaded component 'conditional_passive'
+2026-02-09 15:09:23 [INFO] Skill 9512 (전사의 각성): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9513 (투기장의 의지): loaded component 'conditional_passive'
+2026-02-09 15:09:23 [INFO] Skill 9513 (투기장의 의지): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9514 (타락한 왕관): loaded component 'conditional_passive'
+2026-02-09 15:09:23 [INFO] Skill 9514 (타락한 왕관): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9515 (원초의 힘): loaded component 'conditional_passive'
+2026-02-09 15:09:23 [INFO] Skill 9515 (원초의 힘): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9516 (심연의 각성): loaded component 'conditional_passive'
+2026-02-09 15:09:23 [INFO] Skill 9516 (심연의 각성): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9517 (마왕의 위엄): loaded component 'conditional_passive'
+2026-02-09 15:09:23 [INFO] Skill 9517 (마왕의 위엄): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9518 (원초의 힘(약)): loaded component 'conditional_passive'
+2026-02-09 15:09:23 [INFO] Skill 9518 (원초의 힘(약)): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9521 (숲의 주인): loaded component 'passive_regen'
+2026-02-09 15:09:23 [INFO] Skill 9521 (숲의 주인): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9522 (회복의 물): loaded component 'passive_regen'
+2026-02-09 15:09:23 [INFO] Skill 9522 (회복의 물): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9523 (세계수의 축복): loaded component 'passive_regen'
+2026-02-09 15:09:23 [INFO] Skill 9523 (세계수의 축복): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9524 (잔존하는 신격): loaded component 'passive_buff'
+2026-02-09 15:09:23 [INFO] Skill 9524 (잔존하는 신격): loaded component 'passive_regen'
+2026-02-09 15:09:23 [INFO] Skill 9524 (잔존하는 신격): 2 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9525 (용신의 권능): loaded component 'passive_regen'
+2026-02-09 15:09:23 [INFO] Skill 9525 (용신의 권능): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9526 (원초의 존재): loaded component 'passive_regen'
+2026-02-09 15:09:23 [INFO] Skill 9526 (원초의 존재): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9527 (창조신의 잔재): loaded component 'passive_regen'
+2026-02-09 15:09:23 [INFO] Skill 9527 (창조신의 잔재): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9528 (창조신의 권능): loaded component 'passive_regen'
+2026-02-09 15:09:23 [INFO] Skill 9528 (창조신의 권능): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9529 (태양신의 권능): loaded component 'passive_regen'
+2026-02-09 15:09:23 [INFO] Skill 9529 (태양신의 권능): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9531 (마력 보호막): loaded component 'passive_buff'
+2026-02-09 15:09:23 [INFO] Skill 9531 (마력 보호막): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9532 (단단한 등껍질): loaded component 'passive_buff'
+2026-02-09 15:09:23 [INFO] Skill 9532 (단단한 등껍질): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9533 (원소 적응): loaded component 'passive_buff'
+2026-02-09 15:09:23 [INFO] Skill 9533 (원소 적응): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9534 (신성한 석상): loaded component 'passive_buff'
+2026-02-09 15:09:23 [INFO] Skill 9534 (신성한 석상): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9535 (신격의 잔재): loaded component 'passive_buff'
+2026-02-09 15:09:23 [INFO] Skill 9535 (신격의 잔재): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9536 (심해의 압력): loaded component 'passive_buff'
+2026-02-09 15:09:23 [INFO] Skill 9536 (심해의 압력): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9537 (한계 초월): loaded component 'conditional_passive'
+2026-02-09 15:09:23 [INFO] Skill 9537 (한계 초월): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9538 (영광의 전사): loaded component 'passive_buff'
+2026-02-09 15:09:23 [INFO] Skill 9538 (영광의 전사): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9539 (타락한 축복): loaded component 'passive_buff'
+2026-02-09 15:09:23 [INFO] Skill 9539 (타락한 축복): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9540 (성장): loaded component 'passive_buff'
+2026-02-09 15:09:23 [INFO] Skill 9540 (성장): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9541 (냉기 오라): loaded component 'passive_aura_debuff'
+2026-02-09 15:09:23 [INFO] Skill 9541 (냉기 오라): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9542 (공포의 존재): loaded component 'passive_aura_debuff'
+2026-02-09 15:09:23 [INFO] Skill 9542 (공포의 존재): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9543 (고대의 지혜): loaded component 'passive_debuff_reduction'
+2026-02-09 15:09:23 [INFO] Skill 9543 (고대의 지혜): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9544 (불사의 지배): loaded component 'passive_revive'
+2026-02-09 15:09:23 [INFO] Skill 9544 (불사의 지배): 1 components loaded
+2026-02-09 15:09:23 [INFO] Skill 9545 (분열 본능): loaded component 'on_death_summon'
+2026-02-09 15:09:23 [INFO] Skill 9545 (분열 본능): 1 components loaded
+2026-02-09 15:09:23 [INFO] Loaded 647 skills
+2026-02-09 15:09:23 [INFO] Loaded 332 equipment items into cache
+2026-02-09 15:09:23 [INFO] Loaded 228 set memberships into cache
+2026-02-09 15:09:23 [INFO] Grade cache loaded: 8 grades
+2026-02-09 15:09:23 [INFO] Loaded box drop table: 3 monster types
+2026-02-09 15:09:23 [INFO] 데이터 베이스 연결 완료
+2026-02-09 15:09:23 [ERROR] 이모지 초기화 실패: CUHAbot-Emoji 서버를 찾을 수 없습니다. 봇을 서버에 초대해주세요.
+2026-02-09 15:09:23 [INFO] Logged in as CUHA BOT#2211 (ID: 1366765825197080606)
+2026-02-09 15:55:42 [ERROR] Task exception was never retrieved
+future: <Task finished name='CommandTree-invoker' coro=<CommandTree._from_interaction.<locals>.wrapper() done, defined at /mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/tree.py:1136> exception=CommandInvokeError("Command '내정보' raised an exception: HTTPException: 400 Bad Request (error code: 40060): Interaction has already been acknowledged.")>
+Traceback (most recent call last):
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/commands.py", line 858, in _do_call
+    return await self._callback(self.binding, interaction, **params)  # type: ignore
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/cogs/dungeon_command.py", line 212, in my_info
+    await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/interactions.py", line 1051, in send_message
+    response = await adapter.create_interaction_response(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/webhook/async_.py", line 226, in request
+    raise HTTPException(response, data)
+discord.errors.HTTPException: 400 Bad Request (error code: 40060): Interaction has already been acknowledged.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/tree.py", line 1140, in wrapper
+    await self._dispatch_error(interaction, e)
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/tree.py", line 1133, in _dispatch_error
+    await self.on_error(interaction, error)
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/bot.py", line 110, in on_app_command_error
+    raise error
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/tree.py", line 1138, in wrapper
+    await self._call(interaction)
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/tree.py", line 1301, in _call
+    await self.on_error(interaction, e)
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/bot.py", line 110, in on_app_command_error
+    raise error
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/tree.py", line 1297, in _call
+    await command._invoke_with_namespace(interaction, namespace)
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/commands.py", line 884, in _invoke_with_namespace
+    return await self._do_call(interaction, transformed_values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/commands.py", line 877, in _do_call
+    raise CommandInvokeError(self, e) from e
+discord.app_commands.errors.CommandInvokeError: Command '내정보' raised an exception: HTTPException: 400 Bad Request (error code: 40060): Interaction has already been acknowledged.
+2026-02-09 15:55:48 [ERROR] Task exception was never retrieved
+future: <Task finished name='CommandTree-invoker' coro=<CommandTree._from_interaction.<locals>.wrapper() done, defined at /mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/tree.py:1136> exception=CommandInvokeError("Command '도감' raised an exception: HTTPException: 400 Bad Request (error code: 40060): Interaction has already been acknowledged.")>
+Traceback (most recent call last):
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/commands.py", line 858, in _do_call
+    return await self._callback(self.binding, interaction, **params)  # type: ignore
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/cogs/dungeon_command.py", line 168, in collection
+    await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/interactions.py", line 1051, in send_message
+    response = await adapter.create_interaction_response(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/webhook/async_.py", line 226, in request
+    raise HTTPException(response, data)
+discord.errors.HTTPException: 400 Bad Request (error code: 40060): Interaction has already been acknowledged.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/tree.py", line 1140, in wrapper
+    await self._dispatch_error(interaction, e)
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/tree.py", line 1133, in _dispatch_error
+    await self.on_error(interaction, error)
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/bot.py", line 110, in on_app_command_error
+    raise error
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/tree.py", line 1138, in wrapper
+    await self._call(interaction)
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/tree.py", line 1301, in _call
+    await self.on_error(interaction, e)
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/bot.py", line 110, in on_app_command_error
+    raise error
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/tree.py", line 1297, in _call
+    await command._invoke_with_namespace(interaction, namespace)
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/commands.py", line 884, in _invoke_with_namespace
+    return await self._do_call(interaction, transformed_values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/commands.py", line 877, in _do_call
+    raise CommandInvokeError(self, e) from e
+discord.app_commands.errors.CommandInvokeError: Command '도감' raised an exception: HTTPException: 400 Bad Request (error code: 40060): Interaction has already been acknowledged.
+2026-02-09 15:56:16 [ERROR] Task exception was never retrieved
+future: <Task finished name='CommandTree-invoker' coro=<CommandTree._from_interaction.<locals>.wrapper() done, defined at /mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/tree.py:1136> exception=CommandInvokeError("Command '도감' raised an exception: NotFound: 404 Not Found (error code: 10062): Unknown interaction")>
+Traceback (most recent call last):
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/commands.py", line 858, in _do_call
+    return await self._callback(self.binding, interaction, **params)  # type: ignore
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/cogs/dungeon_command.py", line 168, in collection
+    await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/interactions.py", line 1051, in send_message
+    response = await adapter.create_interaction_response(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/webhook/async_.py", line 224, in request
+    raise NotFound(response, data)
+discord.errors.NotFound: 404 Not Found (error code: 10062): Unknown interaction
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/tree.py", line 1140, in wrapper
+    await self._dispatch_error(interaction, e)
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/tree.py", line 1133, in _dispatch_error
+    await self.on_error(interaction, error)
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/bot.py", line 110, in on_app_command_error
+    raise error
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/tree.py", line 1138, in wrapper
+    await self._call(interaction)
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/tree.py", line 1301, in _call
+    await self.on_error(interaction, e)
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/bot.py", line 110, in on_app_command_error
+    raise error
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/tree.py", line 1297, in _call
+    await command._invoke_with_namespace(interaction, namespace)
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/commands.py", line 884, in _invoke_with_namespace
+    return await self._do_call(interaction, transformed_values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/commands.py", line 877, in _do_call
+    raise CommandInvokeError(self, e) from e
+discord.app_commands.errors.CommandInvokeError: Command '도감' raised an exception: NotFound: 404 Not Found (error code: 10062): Unknown interaction
+[2026-02-09 15:56:41] [ERROR   ] discord.app_commands.tree: Ignoring exception in autocomplete for '아이템지급'
+Traceback (most recent call last):
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/tree.py", line 1289, in _call
+    await command._invoke_autocomplete(interaction, focused, namespace)
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/commands.py", line 928, in _invoke_autocomplete
+    await interaction.response.autocomplete(choices)
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/interactions.py", line 1332, in autocomplete
+    await adapter.create_interaction_response(
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/webhook/async_.py", line 224, in request
+    raise NotFound(response, data)
+discord.errors.NotFound: 404 Not Found (error code: 10062): Unknown interaction
+2026-02-09 15:56:41 [ERROR] Ignoring exception in autocomplete for '아이템지급'
+Traceback (most recent call last):
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/tree.py", line 1289, in _call
+    await command._invoke_autocomplete(interaction, focused, namespace)
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/commands.py", line 928, in _invoke_autocomplete
+    await interaction.response.autocomplete(choices)
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/interactions.py", line 1332, in autocomplete
+    await adapter.create_interaction_response(
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/webhook/async_.py", line 224, in request
+    raise NotFound(response, data)
+discord.errors.NotFound: 404 Not Found (error code: 10062): Unknown interaction
+[2026-02-09 15:56:43] [ERROR   ] discord.app_commands.tree: Ignoring exception in autocomplete for '아이템지급'
+Traceback (most recent call last):
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/tree.py", line 1289, in _call
+    await command._invoke_autocomplete(interaction, focused, namespace)
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/commands.py", line 928, in _invoke_autocomplete
+    await interaction.response.autocomplete(choices)
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/interactions.py", line 1332, in autocomplete
+    await adapter.create_interaction_response(
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/webhook/async_.py", line 224, in request
+    raise NotFound(response, data)
+discord.errors.NotFound: 404 Not Found (error code: 10062): Unknown interaction
+2026-02-09 15:56:43 [ERROR] Ignoring exception in autocomplete for '아이템지급'
+Traceback (most recent call last):
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/tree.py", line 1289, in _call
+    await command._invoke_autocomplete(interaction, focused, namespace)
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/commands.py", line 928, in _invoke_autocomplete
+    await interaction.response.autocomplete(choices)
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/interactions.py", line 1332, in autocomplete
+    await adapter.create_interaction_response(
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/webhook/async_.py", line 224, in request
+    raise NotFound(response, data)
+discord.errors.NotFound: 404 Not Found (error code: 10062): Unknown interaction
+2026-02-09 15:56:47 [ERROR] Task exception was never retrieved
+future: <Task finished name='CommandTree-invoker' coro=<CommandTree._from_interaction.<locals>.wrapper() done, defined at /mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/tree.py:1136> exception=CommandInvokeError('Command \'아이템지급\' raised an exception: IntegrityError: duplicate key value violates unique constraint "uid_user_inven_user_id_instance_grade"\nDETAIL:  Key (user_id, item_id, enhancement_level, instance_grade)=(12, 1007, 0, 0) already exists.')>
+Traceback (most recent call last):
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/tortoise/backends/asyncpg/client.py", line 89, in _translate_exceptions
+    return await func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/tortoise/backends/asyncpg/client.py", line 112, in execute_insert
+    return await connection.fetchrow(query, *values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/asyncpg/connection.py", line 752, in fetchrow
+    data = await self._execute(
+           ^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/asyncpg/connection.py", line 1873, in _execute
+    result, _ = await self.__execute(
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/asyncpg/connection.py", line 1970, in __execute
+    result, stmt = await self._do_execute(
+                   ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/asyncpg/connection.py", line 2033, in _do_execute
+    result = await executor(stmt, None)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "asyncpg/protocol/protocol.pyx", line 205, in bind_execute
+asyncpg.exceptions.UniqueViolationError: duplicate key value violates unique constraint "uid_user_inven_user_id_instance_grade"
+DETAIL:  Key (user_id, item_id, enhancement_level, instance_grade)=(12, 1007, 0, 0) already exists.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/commands.py", line 858, in _do_call
+    return await self._callback(self.binding, interaction, **params)  # type: ignore
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/cogs/server_admin_command.py", line 207, in give_item
+    await InventoryService.add_item(
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/service/item/inventory_service.py", line 78, in add_item
+    inv_item = await UserInventory.create(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/tortoise/models.py", line 1218, in create
+    await instance.save(using_db=db, force_create=True)
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/tortoise/models.py", line 1004, in save
+    await executor.execute_insert(self)
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/tortoise/backends/base/executor.py", line 188, in execute_insert
+    insert_result = await self.db.execute_insert(self.insert_query, values)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/tortoise/backends/base_postgres/client.py", line 33, in _translate_exceptions
+    return await self._translate_exceptions(func, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/tortoise/backends/asyncpg/client.py", line 93, in _translate_exceptions
+    raise IntegrityError(exc)
+tortoise.exceptions.IntegrityError: duplicate key value violates unique constraint "uid_user_inven_user_id_instance_grade"
+DETAIL:  Key (user_id, item_id, enhancement_level, instance_grade)=(12, 1007, 0, 0) already exists.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/tree.py", line 1140, in wrapper
+    await self._dispatch_error(interaction, e)
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/tree.py", line 1133, in _dispatch_error
+    await self.on_error(interaction, error)
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/bot.py", line 110, in on_app_command_error
+    raise error
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/tree.py", line 1138, in wrapper
+    await self._call(interaction)
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/tree.py", line 1301, in _call
+    await self.on_error(interaction, e)
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/bot.py", line 110, in on_app_command_error
+    raise error
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/tree.py", line 1297, in _call
+    await command._invoke_with_namespace(interaction, namespace)
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/commands.py", line 884, in _invoke_with_namespace
+    return await self._do_call(interaction, transformed_values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/commands.py", line 877, in _do_call
+    raise CommandInvokeError(self, e) from e
+discord.app_commands.errors.CommandInvokeError: Command '아이템지급' raised an exception: IntegrityError: duplicate key value violates unique constraint "uid_user_inven_user_id_instance_grade"
+DETAIL:  Key (user_id, item_id, enhancement_level, instance_grade)=(12, 1007, 0, 0) already exists.
+2026-02-09 15:56:50 [ERROR] Task exception was never retrieved
+future: <Task finished name='CommandTree-invoker' coro=<CommandTree._from_interaction.<locals>.wrapper() done, defined at /mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/tree.py:1136> exception=CommandInvokeError("Command '인벤토리' raised an exception: NotFound: 404 Not Found (error code: 10062): Unknown interaction")>
+Traceback (most recent call last):
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/commands.py", line 858, in _do_call
+    return await self._callback(self.binding, interaction, **params)  # type: ignore
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/cogs/dungeon_command.py", line 453, in inventory
+    await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/interactions.py", line 1051, in send_message
+    response = await adapter.create_interaction_response(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/webhook/async_.py", line 224, in request
+    raise NotFound(response, data)
+discord.errors.NotFound: 404 Not Found (error code: 10062): Unknown interaction
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/tree.py", line 1140, in wrapper
+    await self._dispatch_error(interaction, e)
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/tree.py", line 1133, in _dispatch_error
+    await self.on_error(interaction, error)
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/bot.py", line 110, in on_app_command_error
+    raise error
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/tree.py", line 1138, in wrapper
+    await self._call(interaction)
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/tree.py", line 1301, in _call
+    await self.on_error(interaction, e)
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/bot.py", line 110, in on_app_command_error
+    raise error
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/tree.py", line 1297, in _call
+    await command._invoke_with_namespace(interaction, namespace)
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/commands.py", line 884, in _invoke_with_namespace
+    return await self._do_call(interaction, transformed_values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/commands.py", line 877, in _do_call
+    raise CommandInvokeError(self, e) from e
+discord.app_commands.errors.CommandInvokeError: Command '인벤토리' raised an exception: NotFound: 404 Not Found (error code: 10062): Unknown interaction
+2026-02-09 15:57:53 [ERROR] Task exception was never retrieved
+future: <Task finished name='CommandTree-invoker' coro=<CommandTree._from_interaction.<locals>.wrapper() done, defined at /mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/tree.py:1136> exception=CommandInvokeError("Command '경험치지급' raised an exception: NotFound: 404 Not Found (error code: 10062): Unknown interaction")>
+Traceback (most recent call last):
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/commands.py", line 858, in _do_call
+    return await self._callback(self.binding, interaction, **params)  # type: ignore
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/cogs/server_admin_command.py", line 433, in give_exp
+    await interaction.response.send_message(response, ephemeral=True)
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/interactions.py", line 1051, in send_message
+    response = await adapter.create_interaction_response(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/webhook/async_.py", line 224, in request
+    raise NotFound(response, data)
+discord.errors.NotFound: 404 Not Found (error code: 10062): Unknown interaction
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/tree.py", line 1140, in wrapper
+    await self._dispatch_error(interaction, e)
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/tree.py", line 1133, in _dispatch_error
+    await self.on_error(interaction, error)
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/bot.py", line 110, in on_app_command_error
+    raise error
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/tree.py", line 1138, in wrapper
+    await self._call(interaction)
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/tree.py", line 1301, in _call
+    await self.on_error(interaction, e)
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/bot.py", line 110, in on_app_command_error
+    raise error
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/tree.py", line 1297, in _call
+    await command._invoke_with_namespace(interaction, namespace)
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/commands.py", line 884, in _invoke_with_namespace
+    return await self._do_call(interaction, transformed_values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/commands.py", line 877, in _do_call
+    raise CommandInvokeError(self, e) from e
+discord.app_commands.errors.CommandInvokeError: Command '경험치지급' raised an exception: NotFound: 404 Not Found (error code: 10062): Unknown interaction
+2026-02-09 15:57:58 [ERROR] Task exception was never retrieved
+future: <Task finished name='CommandTree-invoker' coro=<CommandTree._from_interaction.<locals>.wrapper() done, defined at /mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/tree.py:1136> exception=CommandInvokeError("Command '경험치지급' raised an exception: NotFound: 404 Not Found (error code: 10062): Unknown interaction")>
+Traceback (most recent call last):
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/commands.py", line 858, in _do_call
+    return await self._callback(self.binding, interaction, **params)  # type: ignore
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/cogs/server_admin_command.py", line 433, in give_exp
+    await interaction.response.send_message(response, ephemeral=True)
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/interactions.py", line 1051, in send_message
+    response = await adapter.create_interaction_response(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/webhook/async_.py", line 224, in request
+    raise NotFound(response, data)
+discord.errors.NotFound: 404 Not Found (error code: 10062): Unknown interaction
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/tree.py", line 1140, in wrapper
+    await self._dispatch_error(interaction, e)
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/tree.py", line 1133, in _dispatch_error
+    await self.on_error(interaction, error)
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/bot.py", line 110, in on_app_command_error
+    raise error
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/tree.py", line 1138, in wrapper
+    await self._call(interaction)
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/tree.py", line 1301, in _call
+    await self.on_error(interaction, e)
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/bot.py", line 110, in on_app_command_error
+    raise error
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/tree.py", line 1297, in _call
+    await command._invoke_with_namespace(interaction, namespace)
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/commands.py", line 884, in _invoke_with_namespace
+    return await self._do_call(interaction, transformed_values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/commands.py", line 877, in _do_call
+    raise CommandInvokeError(self, e) from e
+discord.app_commands.errors.CommandInvokeError: Command '경험치지급' raised an exception: NotFound: 404 Not Found (error code: 10062): Unknown interaction
+2026-02-09 15:58:07 [ERROR] Task exception was never retrieved
+future: <Task finished name='CommandTree-invoker' coro=<CommandTree._from_interaction.<locals>.wrapper() done, defined at /mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/tree.py:1136> exception=CommandInvokeError("Command '인벤토리' raised an exception: NotFound: 404 Not Found (error code: 10062): Unknown interaction")>
+Traceback (most recent call last):
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/commands.py", line 858, in _do_call
+    return await self._callback(self.binding, interaction, **params)  # type: ignore
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/cogs/dungeon_command.py", line 453, in inventory
+    await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/interactions.py", line 1051, in send_message
+    response = await adapter.create_interaction_response(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/webhook/async_.py", line 224, in request
+    raise NotFound(response, data)
+discord.errors.NotFound: 404 Not Found (error code: 10062): Unknown interaction
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/tree.py", line 1140, in wrapper
+    await self._dispatch_error(interaction, e)
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/tree.py", line 1133, in _dispatch_error
+    await self.on_error(interaction, error)
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/bot.py", line 110, in on_app_command_error
+    raise error
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/tree.py", line 1138, in wrapper
+    await self._call(interaction)
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/tree.py", line 1301, in _call
+    await self.on_error(interaction, e)
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/bot.py", line 110, in on_app_command_error
+    raise error
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/tree.py", line 1297, in _call
+    await command._invoke_with_namespace(interaction, namespace)
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/commands.py", line 884, in _invoke_with_namespace
+    return await self._do_call(interaction, transformed_values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/commands.py", line 877, in _do_call
+    raise CommandInvokeError(self, e) from e
+discord.app_commands.errors.CommandInvokeError: Command '인벤토리' raised an exception: NotFound: 404 Not Found (error code: 10062): Unknown interaction
+2026-02-09 15:58:28 [INFO] Natural regen applied: user=725002757290852432, minutes=2, rate=1.50%, healed=17
+2026-02-09 15:58:28 [ERROR] Task exception was never retrieved
+future: <Task finished name='CommandTree-invoker' coro=<CommandTree._from_interaction.<locals>.wrapper() done, defined at /mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/tree.py:1136> exception=CommandInvokeError("Command '스탯' raised an exception: NotFound: 404 Not Found (error code: 10062): Unknown interaction")>
+Traceback (most recent call last):
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/commands.py", line 858, in _do_call
+    return await self._callback(self.binding, interaction, **params)  # type: ignore
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/cogs/dungeon_command.py", line 418, in stat_distribution
+    await interaction.response.send_message(embed=stat_embed, view=stat_view, ephemeral=True)
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/interactions.py", line 1051, in send_message
+    response = await adapter.create_interaction_response(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/webhook/async_.py", line 224, in request
+    raise NotFound(response, data)
+discord.errors.NotFound: 404 Not Found (error code: 10062): Unknown interaction
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/tree.py", line 1140, in wrapper
+    await self._dispatch_error(interaction, e)
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/tree.py", line 1133, in _dispatch_error
+    await self.on_error(interaction, error)
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/bot.py", line 110, in on_app_command_error
+    raise error
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/tree.py", line 1138, in wrapper
+    await self._call(interaction)
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/tree.py", line 1301, in _call
+    await self.on_error(interaction, e)
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/bot.py", line 110, in on_app_command_error
+    raise error
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/tree.py", line 1297, in _call
+    await command._invoke_with_namespace(interaction, namespace)
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/commands.py", line 884, in _invoke_with_namespace
+    return await self._do_call(interaction, transformed_values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/commands.py", line 877, in _do_call
+    raise CommandInvokeError(self, e) from e
+discord.app_commands.errors.CommandInvokeError: Command '스탯' raised an exception: NotFound: 404 Not Found (error code: 10062): Unknown interaction
+2026-02-09 15:58:39 [ERROR] Task exception was never retrieved
+future: <Task finished name='CommandTree-invoker' coro=<CommandTree._from_interaction.<locals>.wrapper() done, defined at /mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/tree.py:1136> exception=CommandInvokeError("Command '인벤토리' raised an exception: NotFound: 404 Not Found (error code: 10062): Unknown interaction")>
+Traceback (most recent call last):
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/commands.py", line 858, in _do_call
+    return await self._callback(self.binding, interaction, **params)  # type: ignore
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/cogs/dungeon_command.py", line 453, in inventory
+    await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/interactions.py", line 1051, in send_message
+    response = await adapter.create_interaction_response(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/webhook/async_.py", line 224, in request
+    raise NotFound(response, data)
+discord.errors.NotFound: 404 Not Found (error code: 10062): Unknown interaction
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/tree.py", line 1140, in wrapper
+    await self._dispatch_error(interaction, e)
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/tree.py", line 1133, in _dispatch_error
+    await self.on_error(interaction, error)
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/bot.py", line 110, in on_app_command_error
+    raise error
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/tree.py", line 1138, in wrapper
+    await self._call(interaction)
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/tree.py", line 1301, in _call
+    await self.on_error(interaction, e)
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/bot.py", line 110, in on_app_command_error
+    raise error
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/tree.py", line 1297, in _call
+    await command._invoke_with_namespace(interaction, namespace)
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/commands.py", line 884, in _invoke_with_namespace
+    return await self._do_call(interaction, transformed_values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/commands.py", line 877, in _do_call
+    raise CommandInvokeError(self, e) from e
+discord.app_commands.errors.CommandInvokeError: Command '인벤토리' raised an exception: NotFound: 404 Not Found (error code: 10062): Unknown interaction
+2026-02-09 15:59:15 [ERROR] Task exception was never retrieved
+future: <Task finished name='CommandTree-invoker' coro=<CommandTree._from_interaction.<locals>.wrapper() done, defined at /mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/tree.py:1136> exception=CommandInvokeError("Command '내정보' raised an exception: HTTPException: 400 Bad Request (error code: 40060): Interaction has already been acknowledged.")>
+Traceback (most recent call last):
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/commands.py", line 858, in _do_call
+    return await self._callback(self.binding, interaction, **params)  # type: ignore
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/cogs/dungeon_command.py", line 212, in my_info
+    await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/interactions.py", line 1051, in send_message
+    response = await adapter.create_interaction_response(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/webhook/async_.py", line 226, in request
+    raise HTTPException(response, data)
+discord.errors.HTTPException: 400 Bad Request (error code: 40060): Interaction has already been acknowledged.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/tree.py", line 1140, in wrapper
+    await self._dispatch_error(interaction, e)
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/tree.py", line 1133, in _dispatch_error
+    await self.on_error(interaction, error)
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/bot.py", line 110, in on_app_command_error
+    raise error
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/tree.py", line 1138, in wrapper
+    await self._call(interaction)
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/tree.py", line 1301, in _call
+    await self.on_error(interaction, e)
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/bot.py", line 110, in on_app_command_error
+    raise error
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/tree.py", line 1297, in _call
+    await command._invoke_with_namespace(interaction, namespace)
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/commands.py", line 884, in _invoke_with_namespace
+    return await self._do_call(interaction, transformed_values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/commands.py", line 877, in _do_call
+    raise CommandInvokeError(self, e) from e
+discord.app_commands.errors.CommandInvokeError: Command '내정보' raised an exception: HTTPException: 400 Bad Request (error code: 40060): Interaction has already been acknowledged.
+2026-02-09 16:04:37 [ERROR] Task exception was never retrieved
+future: <Task finished name='CommandTree-invoker' coro=<CommandTree._from_interaction.<locals>.wrapper() done, defined at /mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/tree.py:1136> exception=CommandInvokeError("Command '내정보' raised an exception: HTTPException: 400 Bad Request (error code: 40060): Interaction has already been acknowledged.")>
+Traceback (most recent call last):
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/commands.py", line 858, in _do_call
+    return await self._callback(self.binding, interaction, **params)  # type: ignore
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/cogs/dungeon_command.py", line 212, in my_info
+    await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/interactions.py", line 1051, in send_message
+    response = await adapter.create_interaction_response(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/webhook/async_.py", line 226, in request
+    raise HTTPException(response, data)
+discord.errors.HTTPException: 400 Bad Request (error code: 40060): Interaction has already been acknowledged.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/tree.py", line 1140, in wrapper
+    await self._dispatch_error(interaction, e)
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/tree.py", line 1133, in _dispatch_error
+    await self.on_error(interaction, error)
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/bot.py", line 110, in on_app_command_error
+    raise error
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/tree.py", line 1138, in wrapper
+    await self._call(interaction)
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/tree.py", line 1301, in _call
+    await self.on_error(interaction, e)
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/bot.py", line 110, in on_app_command_error
+    raise error
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/tree.py", line 1297, in _call
+    await command._invoke_with_namespace(interaction, namespace)
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/commands.py", line 884, in _invoke_with_namespace
+    return await self._do_call(interaction, transformed_values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/SSD/01_Programming/01_Project/98_Misc/CUHABot/.venv/lib/python3.12/site-packages/discord/app_commands/commands.py", line 877, in _do_call
+    raise CommandInvokeError(self, e) from e
+discord.app_commands.errors.CommandInvokeError: Command '내정보' raised an exception: HTTPException: 400 Bad Request (error code: 40060): Interaction has already been acknowledged.
+[2026-02-09 16:05:38] [INFO    ] discord.gateway: Shard ID None has successfully RESUMED session 70f710e7881d8a7c764298dcbf9c3034.
+2026-02-09 16:05:38 [INFO] Shard ID None has successfully RESUMED session 70f710e7881d8a7c764298dcbf9c3034.
+2026-02-09 16:14:30 [INFO] Natural regen applied: user=725002757290852432, minutes=9, rate=1.50%, healed=103
+2026-02-09 16:15:35 [INFO] Natural regen applied: user=725002757290852432, minutes=1, rate=1.50%, healed=11

@@ -95,7 +95,11 @@ class DamageComponent(SkillComponent):
             if target_def_mult > 0:
                 defense = int(defense * target_def_mult)
 
-        combined_mult = attr_mult * synergy_mult * damage_taken_mult * hp_dmg_bonus
+        # 장비: 스킬 데미지 증폭 (장비 패시브)
+        from service.dungeon.equipment_skill_modifier import get_equipment_skill_damage_multiplier_sync
+        equipment_skill_mult = get_equipment_skill_damage_multiplier_sync(attacker, skill=self.skill, target=target)
+
+        combined_mult = attr_mult * synergy_mult * damage_taken_mult * hp_dmg_bonus * equipment_skill_mult
 
         # 스탯 시너지: 물리 치명타 데미지 보너스 (파괴자)
         crit_mult = DAMAGE.CRITICAL_MULTIPLIER
@@ -104,17 +108,68 @@ class DamageComponent(SkillComponent):
 
         hit_logs = []
         for _ in range(self.hit_count):
-            # 명중 판정
-            if not self._roll_hit(attacker_stat, target_stat):
+            # 명중 판정 전: 이벤트 기반 컴포넌트 적용
+            from service.dungeon.combat_events import HitCalculationEvent
+
+            base_accuracy = attacker_stat.get(UserStatEnum.ACCURACY, DAMAGE.DEFAULT_ACCURACY)
+            base_evasion = target_stat.get(UserStatEnum.EVASION, DAMAGE.DEFAULT_EVASION)
+
+            hit_calc_event = HitCalculationEvent(
+                attacker=attacker,
+                defender=target,
+                base_accuracy=base_accuracy,
+                base_evasion=base_evasion,
+            )
+
+            # 장비 컴포넌트의 on_hit_calculation() 호출
+            self._call_equipment_event_hooks(attacker, 'on_hit_calculation', hit_calc_event)
+
+            # 명중 판정 (이벤트에서 수정된 값 사용)
+            final_accuracy = hit_calc_event.get_final_accuracy()
+            final_evasion = hit_calc_event.get_final_evasion()
+
+            from service.combat.damage_calculator import DamageCalculator
+            hit_success = DamageCalculator.roll_hit(final_accuracy, final_evasion) or hit_calc_event.force_hit
+
+            if not hit_success:
                 hit_logs.append(
                     f"⚔️ **{attacker.get_name()}** 「{self.skill_name}」 → "
                     f"**{target.get_name()}** **MISS!**"
                 )
                 continue
 
+            # 데미지 계산 전: 이벤트 기반 컴포넌트 적용
+            from service.dungeon.combat_events import DamageCalculationEvent, DamageDealtEvent
+
+            base_damage = attack_power  # 기본 공격력을 기준으로
+            damage_calc_event = DamageCalculationEvent(
+                attacker=attacker,
+                defender=target,
+                base_damage=base_damage,
+                skill_name=self.skill_name,
+                skill_attribute=self.skill_attribute,
+            )
+
+            # 장비 컴포넌트의 on_damage_calculation() 호출
+            self._call_equipment_event_hooks(attacker, 'on_damage_calculation', damage_calc_event)
+
+            # 기존 데미지 계산 (DamageCalculator 사용)
             result = self._calculate_hit(
                 attack_power, defense, crit_rate, combined_mult, crit_mult,
             )
+
+            # 이벤트에서 추가된 효과 적용 (방어구 관통 등)
+            if damage_calc_event.defense_ignore > 0:
+                # 방어구 관통이 추가되었다면 재계산
+                total_armor_pen = min(0.7, self.armor_penetration + damage_calc_event.defense_ignore)
+                if self.is_physical:
+                    result = DamageCalculator.calculate_physical_damage(
+                        attack=attack_power, defense=defense,
+                        skill_multiplier=1.0, armor_penetration=total_armor_pen,
+                        critical_rate=crit_rate, attribute_multiplier=combined_mult,
+                        critical_multiplier=crit_mult,
+                    )
+
             event = process_incoming_damage(
                 target, result.damage, attacker=attacker,
                 attribute=self.skill_attribute,
@@ -122,6 +177,17 @@ class DamageComponent(SkillComponent):
 
             # 파이프라인 추가 로그 (면역/보호막/저항)
             hit_logs.extend(event.extra_logs)
+
+            # 데미지 적용 후: on_deal_damage 이벤트 호출
+            deal_damage_event = DamageDealtEvent(
+                attacker=attacker,
+                defender=target,
+                damage=event.actual_damage,
+                damage_attribute=self.skill_attribute,
+                skill_name=self.skill_name,
+            )
+            self._call_equipment_event_hooks(attacker, 'on_deal_damage', deal_damage_event)
+            hit_logs.extend(deal_damage_event.logs)
 
             # 스탯 시너지: HP 조건부 흡혈 (광전사)
             lifesteal_pct = hp_bonuses.get("lifesteal_pct", 0)
@@ -133,6 +199,17 @@ class DamageComponent(SkillComponent):
                 actual = attacker.now_hp - old_hp
                 if actual > 0:
                     hit_logs.append(f"   🩸 광전사 흡혈: +{actual} HP")
+
+            # 패시브 흡혈 (장비 + 패시브 스킬의 lifesteal 스탯)
+            passive_lifesteal = self._get_passive_lifesteal(attacker)
+            if passive_lifesteal > 0 and event.actual_damage > 0:
+                max_hp = attacker_stat.get(UserStatEnum.HP, attacker.hp)
+                heal = int(event.actual_damage * passive_lifesteal / 100)
+                old_hp = attacker.now_hp
+                attacker.now_hp = min(attacker.now_hp + heal, max_hp)
+                actual = attacker.now_hp - old_hp
+                if actual > 0:
+                    hit_logs.append(f"   💚 흡혈: +{actual} HP")
 
             crit_text = " 💥" if result.is_critical else ""
             attr_text = _get_attribute_effectiveness_text(attr_mult)
@@ -153,6 +230,56 @@ class DamageComponent(SkillComponent):
                 )
 
         return "\n".join(hit_logs)
+
+    def _get_passive_lifesteal(self, attacker) -> float:
+        """
+        장비 + 패시브 스킬에서 흡혈 스탯 추출
+
+        Returns:
+            흡혈 비율 (예: 10.0 = 10%)
+        """
+        total_lifesteal = 0.0
+
+        # 1. 장비 컴포넌트에서 흡혈
+        if hasattr(attacker, '_equipment_components_cache'):
+            components = attacker._equipment_components_cache
+            for comp in components:
+                tag = getattr(comp, '_tag', '')
+                if tag == "passive_buff":
+                    lifesteal = getattr(comp, 'lifesteal', 0.0)
+                    total_lifesteal += lifesteal
+
+        # 2. 패시브 스킬에서 흡혈
+        if hasattr(attacker, 'equipped_skill'):
+            from service.dungeon.skill import get_passive_stat_bonuses
+            passive_bonuses = get_passive_stat_bonuses(attacker.equipped_skill)
+            total_lifesteal += passive_bonuses.get('lifesteal', 0.0)
+
+        return total_lifesteal
+
+    def _call_equipment_event_hooks(self, attacker, event_method_name: str, event):
+        """
+        장비 컴포넌트의 이벤트 훅 호출
+
+        Args:
+            attacker: 공격자
+            event_method_name: 호출할 메서드 이름 (예: "on_damage_calculation")
+            event: 이벤트 객체
+        """
+        if not hasattr(attacker, '_equipment_components_cache'):
+            return
+
+        components = attacker._equipment_components_cache
+        for comp in components:
+            if hasattr(comp, event_method_name):
+                method = getattr(comp, event_method_name)
+                try:
+                    method(event)
+                except Exception as e:
+                    # 에러 발생 시 로깅만 하고 계속 진행
+                    import logging
+                    logger = logging.getLogger(__name__)
+                    logger.error(f"Error calling {event_method_name} on {comp.__class__.__name__}: {e}", exc_info=True)
 
     def _get_defense(self, target_stat, target) -> int:
         if self.is_physical:
@@ -379,6 +506,62 @@ class ConsumeComponent(SkillComponent):
             return max(1, int(bonus_damage * (1 - defense * 0.005)))
         ap_defense = target.get_stat().get(UserStatEnum.AP_DEFENSE, 0)
         return max(1, int(bonus_damage * (1 - ap_defense * 0.005)))
+
+
+def _get_attribute_effectiveness_text(attr_mult: float) -> str:
+    if attr_mult > 1.0:
+        return " 🔺효과적!"
+    if attr_mult < 1.0:
+        return " 🔻비효과적..."
+    return ""
+
+
+@register_skill_with_tag("self_damage")
+class SelfDamageComponent(SkillComponent):
+    """
+    자해 컴포넌트 - 자신의 HP를 소모
+
+    공격이나 버프와 함께 사용되어 자신의 HP를 소모하는 효과입니다.
+    주로 강력한 효과의 대가로 HP를 지불합니다.
+
+    Config options:
+        hp_cost (float): 소모할 HP 비율 (예: 0.2 = 최대 HP의 20%)
+        fixed_cost (int): 고정 HP 소모량 (hp_cost와 중복 사용 가능)
+    """
+
+    def __init__(self):
+        super().__init__()
+        self.hp_cost = 0.0
+        self.fixed_cost = 0
+
+    def apply_config(self, config, skill_name, priority=0):
+        super().apply_config(config, skill_name, priority)
+        self.hp_cost = config.get("hp_cost", 0.0)
+        self.fixed_cost = config.get("fixed_cost", 0)
+
+    def on_turn(self, attacker, target):
+        max_hp = attacker.get_stat().get(UserStatEnum.HP, attacker.hp)
+
+        # HP 소모량 계산
+        hp_loss = self.fixed_cost
+        if self.hp_cost > 0:
+            hp_loss += int(max_hp * self.hp_cost)
+
+        if hp_loss == 0:
+            return ""
+
+        # HP 소모 (최소 1 HP는 남김)
+        old_hp = attacker.now_hp
+        attacker.now_hp = max(1, attacker.now_hp - hp_loss)
+        actual_loss = old_hp - attacker.now_hp
+
+        if actual_loss == 0:
+            return ""
+
+        return (
+            f"💔 **{attacker.get_name()}** 「{self.skill_name}」 HP 소모: "
+            f"-{actual_loss} (남은 HP: {attacker.now_hp}/{max_hp})"
+        )
 
 
 def _get_attribute_effectiveness_text(attr_mult: float) -> str:

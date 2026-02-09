@@ -57,5 +57,9 @@ class CombatConfig:
     PERMANENT_BUFF_DURATION: int = 999
     """영구 버프 지속시간 (패시브 등)"""
 
+    # 필드 효과
+    FIELD_EFFECT_SPAWN_RATE: float = 0.3
+    """전투 시작 시 필드 효과 발동 확률"""
+
 
 COMBAT = CombatConfig()

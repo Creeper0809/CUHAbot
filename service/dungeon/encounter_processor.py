@@ -42,9 +42,12 @@ async def process_encounter(session: DungeonSession, interaction: discord.Intera
     # 탐험 버프 처리
     buffs = session.explore_buffs
 
+    # 장비 컴포넌트에서 인카운터 확률 조정
+    encounter_weights = _get_modified_encounter_weights(session.user)
+
     # 전투 회피 버프 (몬스터 기피제)
     if buffs.get("avoid_combat", 0) > 0:
-        encounter_type = EncounterFactory.roll_encounter_type(exclude_monster=True)
+        encounter_type = EncounterFactory.roll_encounter_type(weights=encounter_weights, exclude_monster=True)
         buffs["avoid_combat"] -= 1
         if buffs["avoid_combat"] <= 0:
             del buffs["avoid_combat"]
@@ -55,7 +58,7 @@ async def process_encounter(session: DungeonSession, interaction: discord.Intera
         if buffs["force_treasure"] <= 0:
             del buffs["force_treasure"]
     else:
-        encounter_type = EncounterFactory.roll_encounter_type()
+        encounter_type = EncounterFactory.roll_encounter_type(weights=encounter_weights)
 
     logger.debug(
         f"Encounter rolled: user={session.user.discord_id}, "
@@ -76,6 +79,50 @@ async def process_encounter(session: DungeonSession, interaction: discord.Intera
     return result.message
 
 
+def _get_modified_encounter_weights(user) -> dict:
+    """
+    장비 컴포넌트에서 탐험 속도/조우율을 반영한 인카운터 확률 가져오기
+
+    Args:
+        user: 유저 엔티티
+
+    Returns:
+        수정된 인카운터 가중치
+    """
+    from models.users import User as UserClass
+    from config import ENCOUNTER
+
+    weights = {
+        EncounterType.MONSTER: ENCOUNTER.MONSTER_WEIGHT,
+        EncounterType.TREASURE: ENCOUNTER.TREASURE_WEIGHT,
+        EncounterType.TRAP: ENCOUNTER.TRAP_WEIGHT,
+        EncounterType.EVENT: ENCOUNTER.EVENT_WEIGHT,
+        EncounterType.NPC: ENCOUNTER.NPC_WEIGHT,
+        EncounterType.HIDDEN_ROOM: ENCOUNTER.HIDDEN_ROOM_WEIGHT,
+    }
+
+    if not isinstance(user, UserClass):
+        return weights
+
+    # 장비 컴포넌트 확인
+    if not hasattr(user, '_equipment_components_cache'):
+        return weights
+
+    components = user._equipment_components_cache
+
+    for comp in components:
+        tag = getattr(comp, '_tag', '')
+
+        # 탐험 속도 (몬스터 조우율 조정)
+        if tag == "exploration_speed":
+            encounter_rate_modifier = getattr(comp, 'encounter_rate', 0.0)
+            if encounter_rate_modifier != 0:
+                # 음수면 몬스터 조우 감소, 양수면 증가
+                weights[EncounterType.MONSTER] = max(1, weights[EncounterType.MONSTER] * (1 + encounter_rate_modifier))
+
+    return weights
+
+
 async def _process_monster_encounter(session: DungeonSession, interaction: discord.Interaction) -> str:
     """몬스터 인카운터 처리 (그룹 전투 지원)"""
     from service.dungeon.combat_executor import execute_combat_context
@@ -87,7 +134,7 @@ async def _process_monster_encounter(session: DungeonSession, interaction: disco
         logger.error(f"Monster spawn error: {e}")
         return "몬스터 정보를 찾을 수 없습니다."
 
-    will_fight = await _ask_fight_or_flee(interaction, monsters[0])
+    will_fight = await _ask_fight_or_flee(interaction, monsters)
 
     if will_fight is None:
         return f"{session.user.get_name()}은 아무 행동도 하지 않았다..."
@@ -96,6 +143,12 @@ async def _process_monster_encounter(session: DungeonSession, interaction: disco
         return await _attempt_flee(session, monsters[0])
 
     context = CombatContext.from_group(monsters)
+
+    # 필드 효과 랜덤 발동 (30% 확률)
+    if random.random() < COMBAT.FIELD_EFFECT_SPAWN_RATE:
+        from service.dungeon.field_effects import roll_random_field_effect
+        context.field_effect = roll_random_field_effect()
+
     return await execute_combat_context(session, interaction, context)
 
 
@@ -200,13 +253,80 @@ def _spawn_monster_group(dungeon_id: int, progress: float = 0.0) -> list[Monster
 # =============================================================================
 
 
-async def _ask_fight_or_flee(interaction: discord.Interaction, monster: Monster) -> Optional[bool]:
-    """전투/도주 선택 UI 표시"""
+async def _ask_fight_or_flee(interaction: discord.Interaction, monsters: list[Monster]) -> Optional[bool]:
+    """전투/도주 선택 UI 표시 (그룹 전투 지원)"""
     from models.repos.skill_repo import get_skill_by_id
 
+    # 그룹 전투 여부 확인
+    is_group = len(monsters) > 1
+    first_monster = monsters[0]
+
+    # 타이틀 및 설명
+    if is_group:
+        title = f"🐲 {first_monster.name} 외 {len(monsters) - 1}마리 이(가) 나타났다! [그룹 전투]"
+        description = f"**{first_monster.name}** ({len(monsters)}마리)\n{first_monster.description or '무서운 기운이 느껴진다...'}"
+    else:
+        title = f"🐲 {first_monster.name} 이(가) 나타났다!"
+        description = first_monster.description or "무서운 기운이 느껴진다..."
+
+    embed = discord.Embed(
+        title=title,
+        description=description,
+        color=EmbedColor.ERROR
+    )
+
+    # 첫 번째 몬스터 스탯 표시 (도감과 동일한 이모지 레이아웃)
+    monster_stat = first_monster.get_stat()
+    evasion = getattr(first_monster, 'evasion', 0)
+    attribute = getattr(first_monster, 'attribute', '무속성')
+
+    # 1행: 체력, 공격력
+    embed.add_field(
+        name="❤️ 체력",
+        value=f"{monster_stat[UserStatEnum.HP]:,}",
+        inline=True
+    )
+    embed.add_field(
+        name="⚔️ 공격력",
+        value=f"{monster_stat[UserStatEnum.ATTACK]}",
+        inline=True
+    )
+    embed.add_field(name="\u200b", value="\u200b", inline=True)  # 공백
+
+    # 2행: 방어력, 마방
+    embed.add_field(
+        name="🛡️ 방어력",
+        value=f"{monster_stat[UserStatEnum.DEFENSE]}",
+        inline=True
+    )
+    embed.add_field(
+        name="🌀 마방",
+        value=f"{monster_stat[UserStatEnum.AP_DEFENSE]}",
+        inline=True
+    )
+    embed.add_field(name="\u200b", value="\u200b", inline=True)  # 공백
+
+    # 3행: 마공, 속도, 회피
+    embed.add_field(
+        name="🔮 마공",
+        value=f"{monster_stat[UserStatEnum.AP_ATTACK]}",
+        inline=True
+    )
+    embed.add_field(
+        name="💨 속도",
+        value=f"{monster_stat[UserStatEnum.SPEED]}",
+        inline=True
+    )
+    embed.add_field(
+        name="💰 회피",
+        value=f"{evasion}%",
+        inline=True
+    )
+
+    # 스킬 정보 (첫 번째 몬스터 기준)
     active_skill_names = []
     passive_skill_names = []
-    monster_skill_ids = getattr(monster, 'skill_ids', [])
+    monster_skill_ids = getattr(first_monster, 'skill_ids', [])
     for sid in monster_skill_ids:
         if sid != 0:
             skill = get_skill_by_id(sid)
@@ -218,40 +338,6 @@ async def _ask_fight_or_flee(interaction: discord.Interaction, monster: Monster)
             else:
                 if skill.name not in active_skill_names:
                     active_skill_names.append(skill.name)
-
-    embed = discord.Embed(
-        title=f"🐲 {monster.name} 이(가) 나타났다!",
-        description=monster.description or "무서운 기운이 느껴진다...",
-        color=EmbedColor.ERROR
-    )
-    monster_stat = monster.get_stat()
-    evasion = getattr(monster, 'evasion', 0)
-    attribute = getattr(monster, 'attribute', '무속성')
-
-    embed.add_field(
-        name="⚔️ 전투 스탯",
-        value=(
-            f"```\n"
-            f"체력   : {monster_stat[UserStatEnum.HP]:,}\n"
-            f"공격력 : {monster_stat[UserStatEnum.ATTACK]}\n"
-            f"방어력 : {monster_stat[UserStatEnum.DEFENSE]}\n"
-            f"속도   : {monster_stat[UserStatEnum.SPEED]}\n"
-            f"```"
-        ),
-        inline=True
-    )
-    embed.add_field(
-        name="✨ 추가 스탯",
-        value=(
-            f"```\n"
-            f"마법공격: {monster_stat[UserStatEnum.AP_ATTACK]}\n"
-            f"마법방어: {monster_stat[UserStatEnum.AP_DEFENSE]}\n"
-            f"회피율 : {evasion}%\n"
-            f"속성   : {attribute}\n"
-            f"```"
-        ),
-        inline=True
-    )
 
     if active_skill_names:
         embed.add_field(name="📜 스킬", value=", ".join(active_skill_names), inline=False)

@@ -211,19 +211,17 @@ async def seed_grades():
     from models.grade import Grade
 
     grades = [
-        {"id": 1, "name": "D", "description": "일반 등급"},
-        {"id": 2, "name": "C", "description": "고급 등급"},
-        {"id": 3, "name": "B", "description": "희귀 등급"},
-        {"id": 4, "name": "A", "description": "영웅 등급"},
-        {"id": 5, "name": "S", "description": "전설 등급"},
-        {"id": 6, "name": "SS", "description": "고대 등급"},
-        {"id": 7, "name": "SSS", "description": "신화 등급"},
-        {"id": 8, "name": "Mythic", "description": "창세 등급"},
+        Grade(id=1, name="D", description="일반 등급"),
+        Grade(id=2, name="C", description="고급 등급"),
+        Grade(id=3, name="B", description="희귀 등급"),
+        Grade(id=4, name="A", description="영웅 등급"),
+        Grade(id=5, name="S", description="전설 등급"),
+        Grade(id=6, name="SS", description="고대 등급"),
+        Grade(id=7, name="SSS", description="신화 등급"),
+        Grade(id=8, name="Mythic", description="창세 등급"),
     ]
 
-    for grade in grades:
-        await Grade.create(**grade)
-
+    await Grade.bulk_create(grades)
     print(f"✓ Grade {len(grades)}개 삽입")
 
 
@@ -232,19 +230,17 @@ async def seed_equip_pos():
     from models.equip_pos import EquipPos
 
     positions = [
-        {"id": 1, "pos_name": "투구", "description": "머리 장비"},
-        {"id": 2, "pos_name": "갑옷", "description": "상체 장비"},
-        {"id": 3, "pos_name": "신발", "description": "신발 장비"},
-        {"id": 4, "pos_name": "무기", "description": "주무기"},
-        {"id": 5, "pos_name": "보조무기", "description": "보조 장비"},
-        {"id": 6, "pos_name": "장갑", "description": "손 장비"},
-        {"id": 7, "pos_name": "목걸이", "description": "목 장비"},
-        {"id": 8, "pos_name": "반지", "description": "손가락 장비"},
+        EquipPos(id=1, pos_name="투구", description="머리 장비"),
+        EquipPos(id=2, pos_name="갑옷", description="상체 장비"),
+        EquipPos(id=3, pos_name="신발", description="신발 장비"),
+        EquipPos(id=4, pos_name="무기", description="주무기"),
+        EquipPos(id=5, pos_name="보조무기", description="보조 장비"),
+        EquipPos(id=6, pos_name="장갑", description="손 장비"),
+        EquipPos(id=7, pos_name="목걸이", description="목 장비"),
+        EquipPos(id=8, pos_name="반지", description="손가락 장비"),
     ]
 
-    for pos in positions:
-        await EquipPos.create(**pos)
-
+    await EquipPos.bulk_create(positions)
     print(f"✓ EquipPos {len(positions)}개 삽입")
 
 
@@ -252,7 +248,7 @@ async def seed_item_grade_probability():
     """상자 등급 확률 데이터 삽입"""
     from models.item_grade_probability import ItemGradeProbability
 
-    probs = [
+    probs_data = [
         # 낡은 상자 (cheat_id=1) - 레거시 (사용 안 함)
         {"cheat_id": 1, "grade": "D", "probability": 55, "grade_idx": 1},
         {"cheat_id": 1, "grade": "C", "probability": 25, "grade_idx": 2},
@@ -313,9 +309,8 @@ async def seed_item_grade_probability():
         {"cheat_id": 9, "grade": "S", "probability": 30, "grade_idx": 5},
     ]
 
-    for entry in probs:
-        await ItemGradeProbability.create(**entry)
-
+    probs = [ItemGradeProbability(**entry) for entry in probs_data]
+    await ItemGradeProbability.bulk_create(probs)
     print(f"✓ ItemGradeProbability {len(probs)}개 삽입")
 
 
@@ -328,7 +323,7 @@ async def seed_skills():
     from models.skill import Skill_Model
 
     rows = read_csv("skills.csv")
-    count = 0
+    skills = []
 
     for row in rows:
         config = json.loads(row["config"])
@@ -338,7 +333,7 @@ async def seed_skills():
         obtainable_str = row.get("플레이어_획득가능", "Y").strip().upper()
         player_obtainable = (obtainable_str == "Y")
 
-        await Skill_Model.create(
+        skills.append(Skill_Model(
             id=int(row["ID"]),
             name=row["이름"],
             description=row["효과"],
@@ -347,10 +342,10 @@ async def seed_skills():
             attribute=row.get("속성", "무속성") or "무속성",
             keyword=row.get("키워드", ""),
             player_obtainable=player_obtainable,
-        )
-        count += 1
+        ))
 
-    print(f"✓ Skill {count}개 삽입 (skills.csv, 플레이어 획득가능 포함)")
+    await Skill_Model.bulk_create(skills)
+    print(f"✓ Skill {len(skills)}개 삽입 (skills.csv, 플레이어 획득가능 포함)")
 
 
 async def seed_dungeons():
@@ -358,20 +353,20 @@ async def seed_dungeons():
     from models.dungeon import Dungeon
 
     rows = read_csv("dungeons.csv")
-    count = 0
+    dungeons = []
 
     for row in rows:
         level = parse_level(row.get("권장 레벨", "1"))
 
-        await Dungeon.create(
+        dungeons.append(Dungeon(
             id=int(row["ID"]),
             name=row["이름"],
             require_level=level,
             description=row.get("설명", ""),
-        )
-        count += 1
+        ))
 
-    print(f"✓ Dungeon {count}개 삽입 (dungeons.csv)")
+    await Dungeon.bulk_create(dungeons)
+    print(f"✓ Dungeon {len(dungeons)}개 삽입 (dungeons.csv)")
 
 
 async def seed_monsters():
@@ -379,7 +374,7 @@ async def seed_monsters():
     from models.monster import Monster
 
     rows = read_csv("monsters.csv")
-    count = 0
+    monsters = []
 
     for row in rows:
         # 이름에서 영문명 제거: "슬라임 (Slime)" → "슬라임"
@@ -403,10 +398,10 @@ async def seed_monsters():
         else:
             group_ids = []
 
-        await Monster.create(
+        monsters.append(Monster(
             id=int(row["ID"]),
             name=name,
-            description=row.get("드롭", "") or "",
+            description=row.get("설명", "") or "",
             type=monster_type,
             hp=safe_int(row.get("HP", "0")),
             attack=safe_int(row.get("Attack", "0")),
@@ -416,10 +411,10 @@ async def seed_monsters():
             skill_ids=skill_ids,
             drop_skill_ids=drop_skill_ids,
             group_ids=group_ids,
-        )
-        count += 1
+        ))
 
-    print(f"✓ Monster {count}개 삽입 (monsters.csv, skill_ids/group_ids 포함)")
+    await Monster.bulk_create(monsters)
+    print(f"✓ Monster {len(monsters)}개 삽입 (monsters.csv, skill_ids/group_ids 포함)")
 
 
 async def seed_equipment_items():
@@ -429,7 +424,8 @@ async def seed_equipment_items():
     from resources.item_emoji import ItemType
 
     rows = read_csv("items_equipment.csv")
-    count = 0
+    items = []
+    equipments = []
 
     for row in rows:
         item_id = int(row["ID"])
@@ -437,16 +433,20 @@ async def seed_equipment_items():
         equip_pos = SLOT_TO_EQUIP_POS.get(slot)
         require_level = parse_level(row.get("Lv", "1"))
 
-        item = await Item.create(
+        items.append(Item(
             id=item_id,
             name=row["이름"],
             description=row.get("특수 효과", "") or "",
             cost=0,
             type=ItemType.EQUIP,
-        )
+        ))
 
-        await EquipmentItem.create(
-            item=item,
+        # config 파싱
+        config_str = row.get("config", "").strip()
+        config = json.loads(config_str) if config_str else None
+
+        equipments.append(EquipmentItem(
+            item_id=item_id,
             attack=nullable_int(row.get("Attack", "")),
             ap_attack=nullable_int(row.get("AP_Attack", "")),
             hp=nullable_int(row.get("HP", "")),
@@ -460,10 +460,12 @@ async def seed_equipment_items():
             require_dex=safe_int(row.get("Req_DEX", "0")),
             require_vit=safe_int(row.get("Req_VIT", "0")),
             require_luk=safe_int(row.get("Req_LUK", "0")),
-        )
-        count += 1
+            config=config,
+        ))
 
-    print(f"✓ 장비 아이템 {count}개 삽입 (items_equipment.csv)")
+    await Item.bulk_create(items)
+    await EquipmentItem.bulk_create(equipments)
+    print(f"✓ 장비 아이템 {len(items)}개 삽입 (items_equipment.csv)")
 
 
 async def seed_consumable_items():
@@ -473,25 +475,31 @@ async def seed_consumable_items():
     from resources.item_emoji import ItemType
 
     rows = read_csv("items_consumable.csv")
-    count = 0
+    items = []
+    consumables = []
 
     for row in rows:
         effect = row.get("효과", "")
         amount = parse_hp_amount(effect)
         cost = safe_int(row.get("가격", "0"))
+        item_id = int(row["ID"])
 
-        item = await Item.create(
-            id=int(row["ID"]),
+        items.append(Item(
+            id=item_id,
             name=row["이름"],
             description=effect,
             cost=cost,
             type=ItemType.CONSUME,
-        )
+        ))
 
-        await ConsumeItem.create(item=item, amount=amount)
-        count += 1
+        consumables.append(ConsumeItem(
+            item_id=item_id,
+            amount=amount
+        ))
 
-    print(f"✓ 소비 아이템 {count}개 삽입 (items_consumable.csv)")
+    await Item.bulk_create(items)
+    await ConsumeItem.bulk_create(consumables)
+    print(f"✓ 소비 아이템 {len(items)}개 삽입 (items_consumable.csv)")
 
 
 async def seed_enhancement_items():
@@ -501,26 +509,32 @@ async def seed_enhancement_items():
     from resources.item_emoji import ItemType
 
     rows = read_csv("items_enhancement.csv")
-    count = 0
+    items = []
+    consumables = []
 
     for row in rows:
         # 획득처에서 가격 추출: "상점 (200)" → 200
         source = row.get("획득처", "")
         cost_match = re.search(r"\((\d+)\)", source)
         cost = int(cost_match.group(1)) if cost_match else 0
+        item_id = int(row["ID"])
 
-        item = await Item.create(
-            id=int(row["ID"]),
+        items.append(Item(
+            id=item_id,
             name=row["이름"],
             description=row.get("효과", ""),
             cost=cost,
             type=ItemType.CONSUME,
-        )
+        ))
 
-        await ConsumeItem.create(item=item, amount=0)
-        count += 1
+        consumables.append(ConsumeItem(
+            item_id=item_id,
+            amount=0
+        ))
 
-    print(f"✓ 강화 아이템 {count}개 삽입 (items_enhancement.csv)")
+    await Item.bulk_create(items)
+    await ConsumeItem.bulk_create(consumables)
+    print(f"✓ 강화 아이템 {len(items)}개 삽입 (items_enhancement.csv)")
 
 
 async def seed_material_items():
@@ -529,19 +543,19 @@ async def seed_material_items():
     from resources.item_emoji import ItemType
 
     rows = read_csv("items_material.csv")
-    count = 0
+    items = []
 
     for row in rows:
-        await Item.create(
+        items.append(Item(
             id=int(row["ID"]),
             name=row["이름"],
             description=row.get("설명", "") or row.get("용도", ""),
             cost=0,
             type=ItemType.ETC,
-        )
-        count += 1
+        ))
 
-    print(f"✓ 재료 아이템 {count}개 삽입 (items_material.csv)")
+    await Item.bulk_create(items)
+    print(f"✓ 재료 아이템 {len(items)}개 삽입 (items_material.csv)")
 
 
 async def seed_dungeon_spawns():
@@ -576,7 +590,7 @@ async def seed_dungeon_spawns():
         monster_id = int(row["ID"])
         dungeon_monsters.setdefault(dungeon_id, []).append(monster_id)
 
-    count = 0
+    spawns = []
     for dungeon_id, monsters in dungeon_monsters.items():
         bosses = [m for m in monsters if m >= 101]
         mobs = [m for m in monsters if m < 101]
@@ -592,14 +606,33 @@ async def seed_dungeon_spawns():
                 # 보스 없는 던전: 100% 균등 배분
                 prob = 1.0 / len(monsters)
 
-            await DungeonSpawn.create(
+            spawns.append(DungeonSpawn(
                 dungeon_id=dungeon_id,
                 monster_id=monster_id,
                 prob=round(prob, 4),
-            )
-            count += 1
+            ))
 
-    print(f"✓ DungeonSpawn {count}개 삽입 (monsters.csv 기반)")
+    await DungeonSpawn.bulk_create(spawns)
+    print(f"✓ DungeonSpawn {len(spawns)}개 삽입 (monsters.csv 기반)")
+
+
+async def seed_droptable():
+    """드롭테이블 데이터 삽입 (data/droptable.csv)"""
+    from models.droptable import Droptable
+
+    rows = read_csv("droptable.csv")
+    droptables = []
+
+    for row in rows:
+        droptables.append(Droptable(
+            id=int(row["id"]),
+            drop_monster=nullable_int(row.get("drop_monster")),
+            probability=safe_float(row.get("probability")),
+            item_id=nullable_int(row.get("item_id")),
+        ))
+
+    await Droptable.bulk_create(droptables)
+    print(f"✓ Droptable {len(droptables)}개 삽입 (droptable.csv)")
 
 
 async def seed_sets():
@@ -611,26 +644,28 @@ async def seed_sets():
     rows = read_csv("set_effects.csv")
     seen_sets: dict[str, int] = {}  # name → auto ID
     next_id = 1
+    set_items = []
 
     for row in rows:
         name = row["세트이름"]
         if name not in seen_sets:
-            await SetItem.create(
+            set_items.append(SetItem(
                 id=next_id,
                 name=name,
                 description=row.get("설명", ""),
-            )
+            ))
             seen_sets[name] = next_id
             next_id += 1
 
-    print(f"  SetItem {len(seen_sets)}개 삽입")
+    await SetItem.bulk_create(set_items)
+    print(f"  SetItem {len(set_items)}개 삽입")
 
     # 2) items_equipment.csv '세트' 컬럼 → SetItemMember 생성
     equip_items = await EquipmentItem.all()
     item_fk_to_pk = {ei.item_id: ei.id for ei in equip_items}
 
     equip_rows = read_csv("items_equipment.csv")
-    member_count = 0
+    members = []
 
     for row in equip_rows:
         set_raw = row.get("세트", "").strip()
@@ -647,29 +682,29 @@ async def seed_sets():
         if equip_pk is None:
             continue
 
-        await SetItemMember.create(
+        members.append(SetItemMember(
             set_item_id=set_id,
             equipment_item_id=equip_pk,
-        )
-        member_count += 1
+        ))
 
-    print(f"  SetItemMember {member_count}개 삽입")
+    await SetItemMember.bulk_create(members)
+    print(f"  SetItemMember {len(members)}개 삽입")
 
     # 3) set_effects.csv → SetEffect 생성
-    effect_count = 0
+    effects = []
     for row in rows:
         set_id = seen_sets[row["세트이름"]]
         effect_config = json.loads(row["효과config"])
 
-        await SetEffect.create(
+        effects.append(SetEffect(
             set_item_id=set_id,
             pieces_required=int(row["필요수"]),
             effect_description=row["효과설명"],
             effect_config=effect_config,
-        )
-        effect_count += 1
+        ))
 
-    print(f"  SetEffect {effect_count}개 삽입")
+    await SetEffect.bulk_create(effects)
+    print(f"  SetEffect {len(effects)}개 삽입")
     print(f"✓ 세트 데이터 삽입 완료 (set_effects.csv)")
 
 
@@ -695,7 +730,7 @@ async def main():
     await seed_item_grade_probability()
 
     # 3. CSV 게임 데이터
-    print("\n[3/4] CSV 게임 데이터 삽입")
+    print("\n[3/5] CSV 게임 데이터 삽입")
     await seed_skills()
     await seed_dungeons()
     await seed_monsters()
@@ -705,8 +740,12 @@ async def main():
     await seed_material_items()
     await seed_dungeon_spawns()
 
-    # 4. 세트 데이터 (장비 데이터 의존)
-    print("\n[4/4] 세트 아이템 데이터 삽입")
+    # 4. 드롭 테이블
+    print("\n[4/5] 드롭 테이블 데이터 삽입")
+    await seed_droptable()
+
+    # 5. 세트 데이터 (장비 데이터 의존)
+    print("\n[5/5] 세트 아이템 데이터 삽입")
     await seed_sets()
 
     await Tortoise.close_connections()

@@ -6,6 +6,7 @@ PASSIVE_TAGS = {
     "passive_damage_reflection", "passive_status_immunity",
     # Phase 2 - 특수
     "passive_revive", "passive_turn_scaling", "passive_debuff_reduction",
+    "on_death_summon",  # 사망 시 소환
     # Phase 2 - 오라
     "passive_aura_buff", "passive_aura_debuff",
 }
@@ -68,6 +69,9 @@ class Skill:
     def __init__(self, skill_model, components):
         self._skill_model = skill_model
         self._components = sorted(components, key=lambda x: x.priority)
+        # 각 컴포넌트에 부모 스킬 참조 추가 (스킬 데미지 강화용)
+        for comp in self._components:
+            comp.skill = self
 
     @property
     def skill_model(self):

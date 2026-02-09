@@ -4,7 +4,7 @@ EquipmentService
 장비 착용/해제/스탯 계산을 담당합니다.
 """
 import logging
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from models import User
 from models.user_inventory import UserInventory
@@ -19,6 +19,10 @@ from exceptions import (
     StatRequirementError,
 )
 from service.session import get_session
+from service.item.equipment_component_loader import (
+    load_equipment_components,
+    get_equipment_passive_stats
+)
 
 logger = logging.getLogger(__name__)
 
@@ -207,8 +211,9 @@ class EquipmentService:
             "ap_defense": 0,
             "speed": 0
         }
-        # 퍼센트 기반 특수 효과 누적
-        special_effects_agg: Dict[str, float] = {}
+
+        # 모든 장비의 컴포넌트를 수집
+        all_components = []
 
         for eq in equipped:
             equipment = await EquipmentItem.get_or_none(
@@ -242,18 +247,30 @@ class EquipmentService:
                 for stat_key, base_val in base_stats.items():
                     total_stats[stat_key] += int(base_val * bonus_mult)
 
-            # 특수 효과 집계
-            effects = eq.inventory_item.special_effects
-            if effects:
-                for effect in effects:
-                    etype = effect.get("type", "")
-                    value = effect.get("value", 0)
-                    special_effects_agg[etype] = (
-                        special_effects_agg.get(etype, 0) + value
-                    )
+            # 베이스 아이템 컴포넌트 로드 (EquipmentItem.config에서)
+            if equipment.config:
+                components = load_equipment_components(equipment.config)
+                all_components.extend(components)
 
-        # 특수 효과 → 스탯 변환
-        _apply_special_effects_to_stats(total_stats, special_effects_agg)
+            # 랜덤 특수 효과 컴포넌트 (A등급 이상 인스턴스)
+            if eq.inventory_item.special_effects:
+                # special_effects를 components 형식으로 변환
+                special_config = _convert_effects_to_components(
+                    eq.inventory_item.special_effects
+                )
+                if special_config:
+                    components = load_equipment_components(special_config)
+                    all_components.extend(components)
+
+        # 컴포넌트에서 스탯 추출
+        passive_stats = get_equipment_passive_stats(all_components)
+
+        # 퍼센트 기반 효과 계산
+        passive_stats = _apply_percent_bonuses(passive_stats, total_stats)
+
+        # 집계된 특수 효과 스탯을 total_stats에 병합
+        for stat_key, value in passive_stats.items():
+            total_stats[stat_key] = total_stats.get(stat_key, 0) + int(value)
 
         # 세트 효과 보너스 적용
         set_bonuses = await SetDetectionService.get_set_bonus_stats(user)
@@ -276,29 +293,74 @@ class EquipmentService:
         user.equipment_stats = stats
 
 
-def _apply_special_effects_to_stats(
-    stats: Dict[str, int],
-    effects_agg: Dict[str, float]
-) -> None:
+def _convert_effects_to_components(effects: List[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
     """
-    누적된 특수 효과를 스탯에 반영
+    legacy effects 형식을 components 형식으로 변환 (special_effects 호환성)
 
-    퍼센트 기반 효과는 기존 스탯에 곱연산으로 적용합니다.
-    전투 전용 효과 (lifesteal, crit_rate 등)는 별도 딕셔너리에 보관합니다.
+    Args:
+        effects: [{"type": "crit_rate", "value": 5}, ...]
+
+    Returns:
+        {"components": [{"tag": "passive_buff", "crit_rate": 5, ...}]}
     """
+    if not effects:
+        return None
+
+    # 효과 집계
+    aggregated = {}
+    for effect in effects:
+        effect_type = effect.get("type", "")
+        value = effect.get("value", 0)
+        if effect_type:
+            aggregated[effect_type] = aggregated.get(effect_type, 0) + value
+
+    if not aggregated:
+        return None
+
+    # PassiveBuffComponent config 생성
+    component_config = {"tag": "passive_buff"}
+    component_config.update(aggregated)
+
+    return {"components": [component_config]}
+
+
+def _apply_percent_bonuses(
+    passive_stats: Dict[str, float],
+    base_stats: Dict[str, int]
+) -> Dict[str, float]:
+    """
+    퍼센트 기반 스탯 보너스 계산
+
+    Args:
+        passive_stats: 컴포넌트에서 추출한 스탯
+        base_stats: 기본 스탯 (퍼센트 계산 기준)
+
+    Returns:
+        퍼센트 효과가 적용된 스탯 보너스
+    """
+    result = dict(passive_stats)
+
     # HP 퍼센트 보너스
-    bonus_hp_pct = effects_agg.get("bonus_hp_pct", 0)
-    if bonus_hp_pct > 0 and stats["hp"] > 0:
-        stats["hp"] += int(stats["hp"] * bonus_hp_pct / 100)
+    bonus_hp_pct = result.get("bonus_hp_pct", 0)
+    if bonus_hp_pct > 0 and base_stats.get("hp", 0) > 0:
+        result["hp"] = result.get("hp", 0) + int(base_stats["hp"] * bonus_hp_pct / 100)
+        del result["bonus_hp_pct"]
 
     # 속도 퍼센트 보너스
-    bonus_speed_pct = effects_agg.get("bonus_speed_pct", 0)
-    if bonus_speed_pct > 0 and stats["speed"] > 0:
-        stats["speed"] += int(stats["speed"] * bonus_speed_pct / 100)
+    bonus_speed_pct = result.get("bonus_speed_pct", 0)
+    if bonus_speed_pct > 0 and base_stats.get("speed", 0) > 0:
+        result["speed"] = result.get("speed", 0) + int(base_stats["speed"] * bonus_speed_pct / 100)
+        del result["bonus_speed_pct"]
 
-    # 전투 전용 효과는 stats에 키로 추가 (combat에서 참조)
-    combat_effects = ["lifesteal", "crit_rate", "crit_damage", "armor_pen"]
-    for effect_type in combat_effects:
-        value = effects_agg.get(effect_type, 0)
-        if value > 0:
-            stats[effect_type] = value
+    # 모든 스탯 퍼센트 보너스
+    bonus_all_stats_pct = result.get("bonus_all_stats_pct", 0)
+    if bonus_all_stats_pct > 0:
+        for stat_key in ["hp", "attack", "ap_attack", "ad_defense", "ap_defense", "speed"]:
+            if base_stats.get(stat_key, 0) > 0:
+                result[stat_key] = (
+                    result.get(stat_key, 0) +
+                    int(base_stats[stat_key] * bonus_all_stats_pct / 100)
+                )
+        del result["bonus_all_stats_pct"]
+
+    return result

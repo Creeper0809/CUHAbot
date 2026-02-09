@@ -53,6 +53,10 @@ class EquipmentItem(BaseItem):
     require_vit = fields.IntField(default=0)
     require_luk = fields.IntField(default=0)
 
+    # 특수 효과 (JSON)
+    # 예: {"effects": [{"type": "crit_rate", "value": 5}, ...]}
+    config = fields.JSONField(null=True)
+
     class Meta:
         table = "equipment_item"
 

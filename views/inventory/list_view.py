@@ -95,6 +95,8 @@ class InventoryView(discord.ui.View):
             return [inv for inv in self.all_inventory if inv.item.type == ItemType.CONSUME]
         elif self.current_tab == ItemType.EQUIP:
             return [inv for inv in self.all_inventory if inv.item.type == ItemType.EQUIP]
+        elif self.current_tab == ItemType.ETC:
+            return [inv for inv in self.all_inventory if inv.item.type == ItemType.ETC]
         elif self.current_tab == ItemType.SKILL:
             return self.owned_skills
         return self.all_inventory
@@ -140,6 +142,7 @@ class InventoryView(discord.ui.View):
         """탭 버튼 추가"""
         self.add_item(TabButton("🧪 소모품", ItemType.CONSUME, is_active=(self.current_tab == ItemType.CONSUME)))
         self.add_item(TabButton("⚔️ 장비", ItemType.EQUIP, is_active=(self.current_tab == ItemType.EQUIP)))
+        self.add_item(TabButton("📦 기타", ItemType.ETC, is_active=(self.current_tab == ItemType.ETC)))
         self.add_item(TabButton("📜 스킬", ItemType.SKILL, is_active=(self.current_tab == ItemType.SKILL)))
 
     def _add_sort_button(self) -> None:
@@ -191,6 +194,7 @@ class InventoryView(discord.ui.View):
         tab_titles = {
             ItemType.CONSUME: "🧪 소모품",
             ItemType.EQUIP: "⚔️ 장비",
+            ItemType.ETC: "📦 기타",
             ItemType.SKILL: "📜 스킬"
         }
         tab_title = tab_titles.get(self.current_tab, "전체")

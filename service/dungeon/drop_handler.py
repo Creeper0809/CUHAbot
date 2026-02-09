@@ -116,6 +116,62 @@ async def try_drop_boss_special_item(user: User, monster: Monster) -> Optional[s
     return f"🎖️ **보스 전리품!** {grade_display} 「{item.name}」 획득!"
 
 
+async def try_drop_monster_material(user: User, monster: Monster) -> Optional[str]:
+    """
+    일반 몬스터 재료 드롭 시도 (Droptable 기반)
+
+    Args:
+        user: 플레이어
+        monster: 처치한 몬스터
+
+    Returns:
+        드롭 메시지 또는 None
+    """
+    from service.dungeon.reward_calculator import is_boss_monster
+
+    # 보스는 별도 처리
+    if is_boss_monster(monster):
+        return None
+
+    drop_rows = await Droptable.filter(drop_monster=monster.id).all()
+    if not drop_rows:
+        return None
+
+    valid_rows = [row for row in drop_rows if row.item_id]
+    if not valid_rows:
+        return None
+
+    # 각 드롭 항목마다 독립적으로 확률 체크
+    dropped_items = []
+    for row in valid_rows:
+        prob = float(row.probability or 0)
+        if prob <= 0:
+            continue
+
+        if random.random() <= prob:
+            item = await Item.get_or_none(id=row.item_id)
+            if not item:
+                continue
+
+            try:
+                await InventoryService.add_item(user, item.id, 1)
+                dropped_items.append(item.name)
+                logger.info(
+                    f"Material drop: user={user.discord_id}, monster={monster.name}, "
+                    f"item_id={item.id}, item_name={item.name}"
+                )
+            except InventoryFullError:
+                dropped_items.append(f"{item.name} (인벤 부족)")
+            except Exception as e:
+                logger.error(f"Failed to drop material: {e}")
+
+    if not dropped_items:
+        return None
+
+    items_text = ", ".join([f"「{name}」" for name in dropped_items])
+    return f"🎁 **재료 드롭!** {items_text}"
+
+
 async def try_drop_monster_skill(user: User, monster: Monster) -> Optional[str]:
     """
     몬스터 스킬 드롭 시도

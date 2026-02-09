@@ -148,8 +148,8 @@ def create_battle_embed_multi(
     # 파티 멤버 (현재 1인)
     _add_player_fields(embed, player)
 
-    # 몬스터들
-    for monster in context.monsters:
+    # 몬스터들 (살아있는 것만)
+    for monster in context.get_all_alive_monsters():
         _add_monster_field(embed, monster)
 
     # 행동 순서 예측
@@ -167,7 +167,13 @@ def create_battle_embed_multi(
 
     # Footer
     round_marker_pct = int((context.round_marker_gauge / COMBAT.ACTION_GAUGE_MAX) * 100)
-    embed.set_footer(text=f"🌟 라운드 {context.round_number} | 다음 라운드까지: {round_marker_pct}%")
+    footer_text = f"🌟 라운드 {context.round_number} | 다음 라운드까지: {round_marker_pct}%"
+
+    # 필드 효과 표시
+    if context.field_effect:
+        footer_text += f" | {context.field_effect.get_display_text()}"
+
+    embed.set_footer(text=footer_text)
 
     return embed
 

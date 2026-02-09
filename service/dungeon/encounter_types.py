@@ -181,16 +181,49 @@ class TrapEncounter(Encounter):
         """함정 작동"""
         user = session.user
 
+        # 장비 컴포넌트에서 함정 감지 확인
+        detected, damage_reduction = self._check_trap_detection(user)
+
         # 함정 피해 계산 (최대 HP 기준)
         max_hp = user.get_stat()[UserStatEnum.HP]
         damage = int(max_hp * self.damage_percent)
+
+        # 함정 감지 시 피해 감소
+        if damage_reduction > 0:
+            damage = int(damage * (1.0 - damage_reduction))
+
         actual_damage = min(damage, user.now_hp - 1)
         actual_damage = max(actual_damage, 0)
 
         trap_types = ["가시 함정", "독 가스", "함정 화살", "낙하 함정", "폭발 함정"]
         trap_name = random.choice(trap_types)
 
-        # View 표시
+        # 함정 감지 시 자동 회피
+        if detected:
+            actual_damage = actual_damage // 4  # 피해 75% 감소
+            result_embed = discord.Embed(
+                title="🔍 함정 감지!",
+                description=f"**{trap_name}**을 미리 발견했다!",
+                color=0x00FF00
+            )
+            result_embed.add_field(
+                name="피해 최소화",
+                value=f"피해 75% 감소 → **-{actual_damage}** HP",
+                inline=False
+            )
+
+            msg = await interaction.user.send(embed=result_embed)
+            user.now_hp -= actual_damage
+
+            await asyncio.sleep(2.0)
+
+            return EncounterResult(
+                encounter_type=self.encounter_type,
+                message=f"🔍 **{trap_name}** *(감지!)* → **-{actual_damage}** HP",
+                damage_taken=actual_damage
+            )
+
+        # View 표시 (일반 함정)
         view = TrapView(
             user=interaction.user,
             trap_name=trap_name,
@@ -222,12 +255,45 @@ class TrapEncounter(Encounter):
         await show_encounter_result(msg, result_embed, delay=2.0)
 
         escape_msg = " *(회피!)*" if view.escaped else ""
+        detect_msg = f" *(피해 -{int(damage_reduction*100)}%)*" if damage_reduction > 0 else ""
 
         return EncounterResult(
             encounter_type=self.encounter_type,
-            message=f"⚠️ **{trap_name}**{escape_msg} → **-{actual_damage}** HP",
+            message=f"⚠️ **{trap_name}**{escape_msg}{detect_msg} → **-{actual_damage}** HP",
             damage_taken=actual_damage
         )
+
+    def _check_trap_detection(self, user) -> tuple[bool, float]:
+        """
+        장비에서 함정 감지 효과 확인
+
+        Returns:
+            (감지 성공 여부, 피해 감소율)
+        """
+        from models.users import User as UserClass
+        if not isinstance(user, UserClass):
+            return False, 0.0
+
+        # 장비 컴포넌트 캐시에서 확인
+        if not hasattr(user, '_equipment_components_cache'):
+            return False, 0.0
+
+        components = user._equipment_components_cache
+
+        for comp in components:
+            tag = getattr(comp, '_tag', '')
+            if tag == "trap_detection":
+                # 감지 확률 체크
+                if hasattr(comp, 'can_detect_trap') and comp.can_detect_trap():
+                    # 피해 감소율 가져오기
+                    reduction = getattr(comp, 'trap_damage_reduction', 0.0)
+                    return True, reduction
+
+                # 감지 실패해도 피해 감소는 적용
+                reduction = getattr(comp, 'trap_damage_reduction', 0.0)
+                return False, reduction
+
+        return False, 0.0
 
 
 class RandomEventEncounter(Encounter):

@@ -150,6 +150,32 @@ class PassiveBuffComponent(SkillComponent):
         crit_rate (float): 치명타 확률 증가
     """
 
+    # 스탯 메타데이터 (컴포넌트가 자기 스탯 정보를 제공)
+    STAT_METADATA = {
+        "accuracy": {"label": "명중률", "suffix": "%", "prefix": "", "is_ratio": False},
+        "evasion": {"label": "회피율", "suffix": "%", "prefix": "", "is_ratio": False},
+        "crit_rate": {"label": "치명타율", "suffix": "%", "prefix": "", "is_ratio": False},
+        "crit_damage": {"label": "치명타배율", "suffix": "%", "prefix": "", "is_ratio": False},
+        "drop_rate": {"label": "드롭률", "suffix": "%", "prefix": "+", "is_ratio": True},
+        "lifesteal": {"label": "흡혈", "suffix": "%", "prefix": "", "is_ratio": True},
+        "armor_pen": {"label": "방어 관통", "suffix": "%", "prefix": "", "is_ratio": False},
+        "magic_pen": {"label": "마법 관통", "suffix": "%", "prefix": "", "is_ratio": False},
+        "fire_resist": {"label": "화염 저항", "suffix": "%", "prefix": "", "is_ratio": False},
+        "ice_resist": {"label": "냉기 저항", "suffix": "%", "prefix": "", "is_ratio": False},
+        "lightning_resist": {"label": "번개 저항", "suffix": "%", "prefix": "", "is_ratio": False},
+        "water_resist": {"label": "수속성 저항", "suffix": "%", "prefix": "", "is_ratio": False},
+        "holy_resist": {"label": "신성 저항", "suffix": "%", "prefix": "", "is_ratio": False},
+        "dark_resist": {"label": "암흑 저항", "suffix": "%", "prefix": "", "is_ratio": False},
+        "block_rate": {"label": "블록률", "suffix": "%", "prefix": "", "is_ratio": False},
+        "exp_bonus": {"label": "경험치 보너스", "suffix": "%", "prefix": "+", "is_ratio": False},
+        "fire_damage": {"label": "화염 공격력", "suffix": "%", "prefix": "+", "is_ratio": False},
+        "ice_damage": {"label": "냉기 공격력", "suffix": "%", "prefix": "+", "is_ratio": False},
+        "lightning_damage": {"label": "번개 공격력", "suffix": "%", "prefix": "+", "is_ratio": False},
+        "water_damage": {"label": "수속성 공격력", "suffix": "%", "prefix": "+", "is_ratio": False},
+        "holy_damage": {"label": "신성 공격력", "suffix": "%", "prefix": "+", "is_ratio": False},
+        "dark_damage": {"label": "암흑 공격력", "suffix": "%", "prefix": "+", "is_ratio": False},
+    }
+
     def __init__(self):
         super().__init__()
         self.attack_percent = 0.0
@@ -178,6 +204,30 @@ class PassiveBuffComponent(SkillComponent):
         self.crit_damage = config.get("crit_damage", 0.0)
         self.lifesteal = config.get("lifesteal", 0.0)
         self.drop_rate = config.get("drop_rate", 0.0)
+
+    def get_displayable_stats(self) -> dict:
+        """
+        UI에 표시할 수 있는 스탯 반환 (비지터 패턴)
+
+        컴포넌트가 자기 자신의 스탯 정보(값 + 메타데이터)를 제공합니다.
+        새로운 스탯 추가 시 STAT_METADATA에만 추가하면 UI에 자동 반영됩니다.
+
+        Returns:
+            {
+                "stat_key": {
+                    "value": float,
+                    "metadata": {"label": str, "suffix": str, ...}
+                }
+            }
+        """
+        result = {}
+        for stat_key, value in self._raw_config.items():
+            if stat_key in self.STAT_METADATA and value > 0:
+                result[stat_key] = {
+                    "value": value,
+                    "metadata": self.STAT_METADATA[stat_key]
+                }
+        return result
 
     def on_turn_start(self, attacker, target):
         """전투 시작 시 패시브 발동 로그 출력 (스탯은 get_stat()에서 이미 적용)"""

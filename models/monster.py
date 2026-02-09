@@ -56,6 +56,9 @@ class Monster(models.Model):
     attribute = fields.CharField(max_length=20, default="무속성")
     """몬스터 속성 (화염/냉기/번개/수속성/신성/암흑/무속성)"""
 
+    race = fields.CharField(max_length=30, default="미지")
+    """몬스터 종족 (슬라임/고블린/언데드/드래곤/마수/정령/골렘/인간형/수생/야수/미지)"""
+
     drop_skill_ids = fields.JSONField(default=[])
     """처치 시 드롭 가능한 스킬 ID 목록"""
 
@@ -146,6 +149,7 @@ class Monster(models.Model):
             skill_ids=getattr(self, 'skill_ids', []),
             drop_skill_ids=getattr(self, 'drop_skill_ids', []),
             attribute=getattr(self, 'attribute', '무속성'),
+            race=getattr(self, 'race', '미지'),
             group_ids=getattr(self, 'group_ids', []),
         )
         new_monster.now_hp = self.hp

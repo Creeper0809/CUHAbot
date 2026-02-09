@@ -1,4 +1,4 @@
-﻿ID,이름,타입,카테고리,속성,등급,효과,획득처,키워드,config,플레이어_획득가능
+ID,이름,타입,카테고리,속성,등급,효과,획득처,키워드,config,플레이어_획득가능
 1001,강타,active,attack,무속성,D,물리(1.0AD) 공격,기본 지급,물리,"{""components"":[{""tag"":""attack"",""ad_ratio"":1.0}]}",Y
 1002,연속 베기,active,attack,무속성,D,물리(0.6AD) 2회 공격,잊혀진 숲,물리/콤보,"{""components"":[{""tag"":""attack"",""ad_ratio"":0.6,""hit_count"":2}]}",Y
 1003,급소 찌르기,active,attack,무속성,C,물리(1.2AD) 치명타+30%,고블린 동굴,물리,"{""components"":[{""tag"":""attack"",""ad_ratio"":1.2,""crit_bonus"":0.3}]}",Y
@@ -269,15 +269,15 @@
 8199,창조의 빛,active,attack,신성,신화,마법(3.5AP) 전체 자힐(10%),창조의 아바타 드랍 (0.1%),전체/회복,"{""components"": [{""tag"": ""attack"", ""ap_ratio"": 3.5, ""target"": ""all"", ""is_physical"": false}, {""tag"": ""heal"", ""heal_percent"": 0.1, ""target"": ""self""}]}",Y
 8200,무한의 맹독,active,attack,암흑,신화,물리(5.5AD) 해제불가 독(HP 5% 영구),창세의 뱀 드랍 (0.1%),중독/감염,"{""components"": [{""tag"": ""attack"", ""ad_ratio"": 5.5}, {""tag"": ""status"", ""type"": ""poison"", ""damage"": 0.05, ""duration"": 999, ""cannot_cleanse"": true}]}",Y
 8201,전도체,active,combo,번개,C,마비적 연쇄+100% 우선타겟,번개의 제단,번개/마비/증폭,"{""components"":[{""tag"":""attack"",""ap_ratio"":0.5,""is_physical"":false},{""tag"":""status"",""type"":""shock"",""duration"":2}]}",Y
-8201,기원의 폭풍,active,attack,무속성,신화,마법(3.8AP) 전체 버프제거,기원의 정령 드랍 (0.1%),정화/전체,"{""components"": [{""tag"": ""attack"", ""ap_ratio"": 3.8, ""target"": ""all"", ""is_physical"": false}, {""tag"": ""cleanse"", ""target"": ""all_enemies""}]}",Y
+8220,기원의 폭풍,active,attack,무속성,신화,마법(3.8AP) 전체 버프제거,기원의 정령 드랍 (0.1%),정화/전체,"{""components"": [{""tag"": ""attack"", ""ap_ratio"": 3.8, ""target"": ""all"", ""is_physical"": false}, {""tag"": ""cleanse"", ""target"": ""all_enemies""}]}",Y
 8202,정전기 축적,active,combo,번개,C,번개 사용 시 스택+1 5스택시 2배,전기 연구소,번개/증폭,"{""components"":[{""tag"":""status"",""type"":""shock"",""stacks"":1}]}",Y
-8202,창세의 심판,active,attack,무속성,신화,마법(8.0AP) 전체 버프제거,창조신의 그림자 드랍 (0.1%),정화/전체,"{""components"": [{""tag"": ""attack"", ""ap_ratio"": 8.0, ""target"": ""all"", ""is_physical"": false}, {""tag"": ""cleanse"", ""target"": ""all_enemies""}]}",Y
+8221,창세의 심판,active,attack,무속성,신화,마법(8.0AP) 전체 버프제거,창조신의 그림자 드랍 (0.1%),정화/전체,"{""components"": [{""tag"": ""attack"", ""ap_ratio"": 8.0, ""target"": ""all"", ""is_physical"": false}, {""tag"": ""cleanse"", ""target"": ""all_enemies""}]}",Y
 8203,낙뢰 집중,active,combo,번개,B,마법(1.0AP) 연쇄횟수당+10%,천둥의 왕,번개/감전/피니셔,"{""components"":[{""tag"":""attack"",""ap_ratio"":1.0,""is_physical"":false}]}",Y
-8203,원초의 파멸,active,attack,무속성,신화,마법(5.0AP) 전체,원초의 신 드랍 (0.1%),전체,"{""components"": [{""tag"": ""attack"", ""ap_ratio"": 5.0, ""target"": ""all"", ""is_physical"": false}]}",Y
+8222,원초의 파멸,active,attack,무속성,신화,마법(5.0AP) 전체,원초의 신 드랍 (0.1%),전체,"{""components"": [{""tag"": ""attack"", ""ap_ratio"": 5.0, ""target"": ""all"", ""is_physical"": false}]}",Y
 8204,과부하,active,combo,번개,A,마비적 전체 마법(2.5AP+스택당0.8AP) 마비해제,뇌신의 영역,번개/과부하/피니셔/범위,"{""components"":[{""tag"":""attack"",""ap_ratio"":2.5,""is_physical"":false},{""tag"":""consume"",""consume_type"":""paralyze"",""ap_ratio"":0.8,""is_physical"":false}]}",Y
-8204,절대 창조,active,attack,무속성,신화,마법(7.0AP) 전체,창조신 드랍 (0.1%),전체,"{""components"": [{""tag"": ""attack"", ""ap_ratio"": 7.0, ""target"": ""all"", ""is_physical"": false}]}",Y
+8223,절대 창조,active,attack,무속성,신화,마법(7.0AP) 전체,창조신 드랍 (0.1%),전체,"{""components"": [{""tag"": ""attack"", ""ap_ratio"": 7.0, ""target"": ""all"", ""is_physical"": false}]}",Y
 8205,뇌운 소환,active,combo,번개,B,전체 적 턴시작 마비20%(3턴),폭풍의 봉우리,번개/마비/셋업/범위,"{""components"":[{""tag"":""status"",""type"":""paralyze"",""chance"":0.2,""duration"":3}]}",Y
-8205,에너지 과부하,active,attack,무속성,전설,마법(2.8AP) 3턴 후 자폭(4.0AP 전체),고대 자동인형 드랍 (0.1%),자폭,"{""components"": [{""tag"": ""attack"", ""ap_ratio"": 2.8, ""is_physical"": false}, {""tag"": ""debuff"", ""stat"": ""self_destruct"", ""duration"": 3, ""damage"": 4.0}]}",Y
+8224,에너지 과부하,active,attack,무속성,전설,마법(2.8AP) 3턴 후 자폭(4.0AP 전체),고대 자동인형 드랍 (0.1%),자폭,"{""components"": [{""tag"": ""attack"", ""ap_ratio"": 2.8, ""is_physical"": false}, {""tag"": ""debuff"", ""stat"": ""self_destruct"", ""duration"": 3, ""damage"": 4.0}]}",Y
 8206,마법 연발,active,attack,무속성,전설,마법(0.5AP) 5회 랜덤,마법 구조물 드랍 (0.1%),연타,"{""components"": [{""tag"": ""attack"", ""ap_ratio"": 0.5, ""hit_count"": 5, ""target"": ""random"", ""is_physical"": false}]}",Y
 8207,레이저 스캔,active,attack,무속성,전설,마법(1.5AP) 전체 회피불가,폐허의 감시자 드랍 (0.1%),관통/전체,"{""components"": [{""tag"": ""attack"", ""ap_ratio"": 1.5, ""target"": ""all"", ""is_physical"": false, ""cannot_evade"": true}]}",Y
 8208,망각의 저주,active,attack,암흑,전설,마법(1.8AP) 스킬봉인(2턴),잊힌 문명의 망령 드랍 (0.1%),저주,"{""components"": [{""tag"": ""attack"", ""ap_ratio"": 1.8, ""is_physical"": false}, {""tag"": ""debuff"", ""stat"": ""skill_seal"", ""duration"": 2}]}",Y
@@ -563,7 +563,7 @@
 9236,【몬】화염 폭발,active,monster,화염,일반,"단일 250% 마법 데미지, 화상 스택 소모 시 스택당 100% 추가",몬스터 전용,화염/연소/피니셔,"{""components"": [{""tag"": ""attack"", ""ap_ratio"": 2.5, ""is_physical"": false}, {""tag"": ""consume"", ""consume_type"": ""burn"", ""ap_ratio"": 1.0, ""is_physical"": false}]}",N
 9237,【몬】화염구,active,monster,화염,일반,"130% 마법 데미지, 화상 2턴",몬스터 전용,화상,"{""components"": [{""tag"": ""attack"", ""ap_ratio"": 1.3, ""is_physical"": false}, {""tag"": ""status"", ""type"": ""burn"", ""chance"": 0.6, ""duration"": 2}]}",N
 9238,【몬】독 포자 II,active,monster,무속성,일반,"100% 데미지, 중독 3턴 (매 턴 5% HP 감소)",몬스터 전용,중독,"{""components"": [{""tag"": ""attack"", ""ap_ratio"": 1.0, ""is_physical"": false}, {""tag"": ""status"", ""type"": ""poison"", ""chance"": 0.6, ""duration"": 3, ""stacks"": 1}]}",N
-9239,슬라임 분열,active,monster,무속성,일반,"120% 데미지, 처치 시 미니 슬라임 2마리 소환",몬스터 전용,소환,"{""components"": [{""tag"": ""attack"", ""ad_ratio"": 1.2}, {""tag"": ""on_death_summon"", ""monster_ids"": [1], ""count"": 2}]}",N
+9239,점액 분사,active,monster,무속성,일반,120% 데미지,몬스터 전용,공격,"{""components"": [{""tag"": ""attack"", ""ad_ratio"": 1.2}]}",N
 9240,【몬】흡혈 II,active,monster,무속성,일반,"90% 데미지, 피해량의 50% 회복",몬스터 전용,회복,"{""components"": [{""tag"": ""attack"", ""ad_ratio"": 0.9}, {""tag"": ""lifesteal"", ""ratio"": 0.5}]}",N
 9241,불꽃 돌진,active,monster,화염,일반,"130% 화염 데미지, 20% 확률 화상 2턴",몬스터 전용,화염/화상/셋업,"{""components"": [{""tag"": ""attack"", ""ap_ratio"": 1.3, ""is_physical"": false}, {""tag"": ""status"", ""type"": ""burn"", ""chance"": 0.5, ""duration"": 2}]}",N
 9242,냉기 물어뜯기,active,monster,냉기,일반,"110% 데미지, 둔화 2턴",몬스터 전용,둔화,"{""components"": [{""tag"": ""attack"", ""ad_ratio"": 1.1}, {""tag"": ""status"", ""type"": ""slow"", ""chance"": 0.4, ""duration"": 2}]}",N
@@ -645,3 +645,4 @@
 9542,공포의 존재,passive,monster,암흑,일반,전투 시작 시 적 공격력 -10%,몬스터 전용,패시브/오라,"{""components"":[{""tag"":""passive_aura_debuff"",""target"":""enemies"",""attack_percent"":-0.1}]}",N
 9543,고대의 지혜,passive,monster,무속성,일반,디버프 지속시간 -50%,몬스터 전용,패시브,"{""components"":[{""tag"":""passive_debuff_reduction"",""reduction_percent"":0.5}]}",N
 9544,불사의 지배,passive,monster,암흑,일반,사망 시 HP 50%로 부활 (1회),몬스터 전용,패시브,"{""components"":[{""tag"":""passive_revive"",""hp_percent"":0.5,""max_uses"":1}]}",N
+9545,분열 본능,passive,monster,무속성,일반,사망 시 미니 슬라임 2마리 소환,몬스터 전용,패시브/소환,"{""components"":[{""tag"":""on_death_summon"",""monster_ids"":[1],""count"":2}]}",N

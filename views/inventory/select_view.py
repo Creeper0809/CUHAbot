@@ -16,7 +16,14 @@ from resources.item_emoji import ItemType
 from service.item.item_use_service import ItemUseService
 from service.item.inventory_service import InventoryService
 from service.item.grade_service import GradeService
-from exceptions import CombatRestrictionError, ItemNotFoundError, ItemNotEquippableError
+from exceptions import (
+    CombatRestrictionError,
+    ItemNotFoundError,
+    ItemNotEquippableError,
+    LevelRequirementError,
+    StatRequirementError,
+    EquipmentSlotMismatchError
+)
 
 from views.inventory.components import ItemSelectDropdown
 
@@ -162,6 +169,18 @@ class InventoryUseButton(discord.ui.Button):
             await interaction.response.send_message("⚠️ 아이템을 찾을 수 없습니다.", ephemeral=True)
         except ItemNotEquippableError as e:
             await interaction.response.send_message(f"⚠️ {e.message}", ephemeral=True)
+        except LevelRequirementError as e:
+            await interaction.response.send_message(f"⚠️ {str(e)}", ephemeral=True)
+        except StatRequirementError as e:
+            await interaction.response.send_message(f"⚠️ {str(e)}", ephemeral=True)
+        except EquipmentSlotMismatchError as e:
+            await interaction.response.send_message(f"⚠️ {str(e)}", ephemeral=True)
+        except Exception as e:
+            # 모든 예외를 UI에 표시
+            error_msg = str(e) if str(e) else "알 수 없는 오류가 발생했습니다."
+            await interaction.response.send_message(f"⚠️ {error_msg}", ephemeral=True)
+            import traceback
+            traceback.print_exc()  # 로그에도 출력
 
     @staticmethod
     async def _use_items(view: InventorySelectView) -> tuple:

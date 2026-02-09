@@ -11,6 +11,7 @@ import random
 if TYPE_CHECKING:
     from models.monster import Monster
     from models.users import User
+    from service.dungeon.field_effects import FieldEffect
 
 
 class TargetingMode(Enum):
@@ -55,6 +56,9 @@ class CombatContext:
 
     user: Optional["User"] = None
     """전투 참여 유저 (오라 패시브 등에서 사용)"""
+
+    field_effect: Optional["FieldEffect"] = None
+    """전투 필드 효과 (랜덤 발동)"""
 
     def get_primary_monster(self) -> "Monster":
         """
