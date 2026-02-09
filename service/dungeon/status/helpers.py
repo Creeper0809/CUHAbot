@@ -188,7 +188,7 @@ def get_damage_taken_multiplier(entity) -> float:
         if isinstance(status, FreezeEffect):
             multiplier *= (1.0 + STATUS_EFFECT.FREEZE_DAMAGE_INCREASE)
         elif isinstance(status, MarkEffect):
-            multiplier *= 1.2
+            multiplier *= (1.0 + STATUS_EFFECT.MARK_DAMAGE_INCREASE)
     return multiplier
 
 

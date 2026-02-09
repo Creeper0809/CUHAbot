@@ -47,6 +47,10 @@ class StatusEffectConfig:
     FREEZE_DEFAULT_DURATION: int = 1
     """동결 기본 지속 턴"""
 
+    # 표식
+    MARK_DAMAGE_INCREASE: float = 0.2
+    """표식 시 받는 피해 증가 (20%)"""
+
     # 상태이상 저항
     MAX_STATUS_RESISTANCE: float = 0.8
     """최대 상태이상 저항 (80%)"""

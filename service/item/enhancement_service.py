@@ -200,10 +200,10 @@ class EnhancementService:
             raise CombatRestrictionError("강화")
 
         # 아이템 조회
-        inv_item = await UserInventory.get_or_none(
+        inv_item = await UserInventory.filter(
             id=inventory_id,
             user=user
-        ).prefetch_related("item")
+        ).prefetch_related("item").first()
 
         if not inv_item:
             raise ItemNotFoundError(inventory_id)
@@ -227,74 +227,78 @@ class EnhancementService:
         if user.gold < cost:
             raise InsufficientGoldError(cost, user.gold)
 
-        user.gold -= cost
-        await user.save()
+        # 트랜잭션 시작: 골드 차감 및 강화 시도를 원자적으로 처리
+        from tortoise import transactions
 
-        # 성공률 조회 (축복/저주 보정)
-        success_rate = EnhancementService._get_success_rate(current_level)
-        is_blessed = inv_item.is_blessed
-        is_cursed = inv_item.is_cursed
+        async with transactions.in_transaction():
+            user.gold -= cost
+            await user.save()
 
-        if is_blessed:
-            success_rate = min(1.0, success_rate + 0.10)
-        if is_cursed:
-            success_rate = max(0.0, success_rate - 0.10)
+            # 성공률 조회 (축복/저주 보정)
+            success_rate = EnhancementService._get_success_rate(current_level)
+            is_blessed = inv_item.is_blessed
+            is_cursed = inv_item.is_cursed
 
-        # 강화 시도
-        roll = random.random()
-        success = roll < success_rate
-
-        result_type = ""
-        new_level = current_level
-        item_destroyed = False
-
-        if success:
-            # 성공: +1
-            new_level = current_level + 1
-            result_type = EnhancementResult.SUCCESS
-            inv_item.enhancement_level = new_level
-            await inv_item.save()
-
-        else:
-            # 축복 상태: 실패 시 항상 유지
             if is_blessed:
-                result_type = EnhancementResult.FAIL_MAINTAIN
+                success_rate = min(1.0, success_rate + 0.10)
+            if is_cursed:
+                success_rate = max(0.0, success_rate - 0.10)
 
-            elif current_level <= 6:
-                # +0~6: 유지
-                result_type = EnhancementResult.FAIL_MAINTAIN
+            # 강화 시도
+            roll = random.random()
+            success = roll < success_rate
 
-            elif current_level <= 9:
-                # +7~9: -1
-                new_level = max(0, current_level - 1)
-                result_type = EnhancementResult.FAIL_DECREASE
-                inv_item.enhancement_level = new_level
-                await inv_item.save()
+            result_type = ""
+            new_level = current_level
+            item_destroyed = False
 
-            elif current_level <= 12:
-                # +10~12: -2
-                new_level = max(0, current_level - 2)
-                result_type = EnhancementResult.FAIL_DECREASE
+            if success:
+                # 성공: +1
+                new_level = current_level + 1
+                result_type = EnhancementResult.SUCCESS
                 inv_item.enhancement_level = new_level
                 await inv_item.save()
 
             else:
-                # +13~15: 초기화 또는 파괴
-                destroy_rate = ENHANCEMENT.DESTRUCTION_RATE
-                if is_cursed:
-                    destroy_rate *= 2  # 저주 시 파괴 확률 2배
+                # 축복 상태: 실패 시 항상 유지
+                if is_blessed:
+                    result_type = EnhancementResult.FAIL_MAINTAIN
 
-                destruction_roll = random.random()
-                if destruction_roll < destroy_rate:
-                    result_type = EnhancementResult.FAIL_DESTROY
-                    item_destroyed = True
-                    new_level = 0
-                    await inv_item.delete()
-                else:
-                    new_level = 0
-                    result_type = EnhancementResult.FAIL_RESET
-                    inv_item.enhancement_level = 0
+                elif current_level <= 6:
+                    # +0~6: 유지
+                    result_type = EnhancementResult.FAIL_MAINTAIN
+
+                elif current_level <= 9:
+                    # +7~9: -1
+                    new_level = max(0, current_level - 1)
+                    result_type = EnhancementResult.FAIL_DECREASE
+                    inv_item.enhancement_level = new_level
                     await inv_item.save()
+
+                elif current_level <= 12:
+                    # +10~12: -2
+                    new_level = max(0, current_level - 2)
+                    result_type = EnhancementResult.FAIL_DECREASE
+                    inv_item.enhancement_level = new_level
+                    await inv_item.save()
+
+                else:
+                    # +13~15: 초기화 또는 파괴
+                    destroy_rate = ENHANCEMENT.DESTRUCTION_RATE
+                    if is_cursed:
+                        destroy_rate *= 2  # 저주 시 파괴 확률 2배
+
+                    destruction_roll = random.random()
+                    if destruction_roll < destroy_rate:
+                        result_type = EnhancementResult.FAIL_DESTROY
+                        item_destroyed = True
+                        new_level = 0
+                        await inv_item.delete()
+                    else:
+                        new_level = 0
+                        result_type = EnhancementResult.FAIL_RESET
+                        inv_item.enhancement_level = 0
+                        await inv_item.save()
 
         logger.info(
             f"User {user.id} enhancement attempt: {inv_item.item.name} "

@@ -60,10 +60,10 @@ class EquipmentService:
             raise CombatRestrictionError("장비 변경")
 
         # 인벤토리 아이템 확인
-        inv_item = await UserInventory.get_or_none(
+        inv_item = await UserInventory.filter(
             id=inventory_item_id,
             user=user
-        ).prefetch_related("item")
+        ).prefetch_related("item").first()
 
         if not inv_item:
             raise ItemNotFoundError(inventory_item_id)
@@ -180,10 +180,10 @@ class EquipmentService:
         Returns:
             UserEquipment 객체 또는 None
         """
-        return await UserEquipment.get_or_none(
+        return await UserEquipment.filter(
             user=user,
             slot=slot
-        ).prefetch_related("inventory_item__item")
+        ).prefetch_related("inventory_item__item").first()
 
     @staticmethod
     async def calculate_equipment_stats(user: User) -> Dict[str, int]:

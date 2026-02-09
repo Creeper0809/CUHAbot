@@ -127,10 +127,10 @@ class InventoryService:
             ItemNotFoundError: 아이템을 찾을 수 없음
             InsufficientItemError: 아이템 수량 부족
         """
-        inv_item = await UserInventory.get_or_none(
+        inv_item = await UserInventory.filter(
             user=user,
             item_id=item_id
-        ).prefetch_related("item")
+        ).prefetch_related("item").first()
 
         if not inv_item:
             raise ItemNotFoundError(item_id)
@@ -181,10 +181,10 @@ class InventoryService:
         Returns:
             UserInventory 객체 또는 None
         """
-        return await UserInventory.get_or_none(
+        return await UserInventory.filter(
             id=inventory_id,
             user=user
-        ).prefetch_related("item")
+        ).prefetch_related("item").first()
 
     @staticmethod
     async def get_item_by_item_id(
@@ -201,10 +201,10 @@ class InventoryService:
         Returns:
             UserInventory 객체 또는 None
         """
-        return await UserInventory.get_or_none(
+        return await UserInventory.filter(
             user=user,
             item_id=item_id
-        ).prefetch_related("item")
+        ).prefetch_related("item").first()
 
     @staticmethod
     async def count_item(user: User, item_id: int) -> int:

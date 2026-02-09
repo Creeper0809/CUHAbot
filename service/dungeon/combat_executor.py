@@ -147,7 +147,7 @@ async def _process_turn_multi(
             cc_name = get_cc_effect_name(actor)
             combat_log.append(f"💫 **{actor.get_name()}** {cc_name}! 행동 불가")
             context.consume_gauge(actor)
-            _decrement_status_durations(actor)
+            # 행동하지 못할 때는 지속시간 감소하지 않음 (행동 후에만 감소)
             await combat_message.edit(embed=create_battle_embed_multi(user, context, combat_log))
             await asyncio.sleep(COMBAT.TURN_PHASE_DELAY)
 
@@ -321,6 +321,18 @@ def _apply_combat_start_passives(user: User, context: CombatContext) -> list[str
 
     logs = []
     entities = [user] + list(context.monsters)
+
+    # 패시브 컴포넌트 싱글톤 버그 방지: 전투 시작 시 모든 _applied_entities 초기화
+    for entity in entities:
+        skill_ids = getattr(entity, 'equipped_skill', None) or getattr(entity, 'use_skill', [])
+        for sid in skill_ids:
+            if sid == 0:
+                continue
+            skill = get_skill_by_id(sid)
+            if skill:
+                for comp in skill.components:
+                    if hasattr(comp, '_applied_entities'):
+                        comp._applied_entities.clear()
 
     for entity in entities:
         skill_ids = getattr(entity, 'equipped_skill', None) or getattr(entity, 'use_skill', [])

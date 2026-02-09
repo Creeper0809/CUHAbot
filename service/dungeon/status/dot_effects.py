@@ -16,7 +16,13 @@ class BurnEffect(StatusEffect):
         self.max_stacks = STATUS_EFFECT.BURN_MAX_STACKS
 
     def tick(self, entity) -> str:
-        max_hp = entity.hp
+        # User는 get_stat()으로 최대 HP 조회, Monster는 hp 필드가 최대 HP
+        from models.users import User
+        if isinstance(entity, User):
+            max_hp = entity.get_stat().get(UserStatEnum.HP, entity.hp)
+        else:
+            max_hp = entity.hp
+
         damage = int(max_hp * STATUS_EFFECT.BURN_DAMAGE_PERCENT * self.stacks)
         damage = max(1, damage)
         entity.take_damage(damage)
@@ -36,7 +42,13 @@ class PoisonEffect(StatusEffect):
         self.max_stacks = STATUS_EFFECT.POISON_MAX_STACKS
 
     def tick(self, entity) -> str:
-        max_hp = entity.hp
+        # User는 get_stat()으로 최대 HP 조회, Monster는 hp 필드가 최대 HP
+        from models.users import User
+        if isinstance(entity, User):
+            max_hp = entity.get_stat().get(UserStatEnum.HP, entity.hp)
+        else:
+            max_hp = entity.hp
+
         damage = int(max_hp * STATUS_EFFECT.POISON_DAMAGE_PERCENT * self.stacks)
         damage = max(1, damage)
         entity.take_damage(damage)
@@ -56,7 +68,13 @@ class BleedEffect(StatusEffect):
         self.max_stacks = 1
 
     def tick(self, entity) -> str:
-        max_hp = entity.hp
+        # User는 get_stat()으로 최대 HP 조회, Monster는 hp 필드가 최대 HP
+        from models.users import User
+        if isinstance(entity, User):
+            max_hp = entity.get_stat().get(UserStatEnum.HP, entity.hp)
+        else:
+            max_hp = entity.hp
+
         damage = int(max_hp * STATUS_EFFECT.BLEED_DAMAGE_PERCENT)
         damage = max(1, damage)
         entity.take_damage(damage)

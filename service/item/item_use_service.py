@@ -75,10 +75,10 @@ class ItemUseService:
             ItemNotFoundError: 아이템을 찾을 수 없음
         """
         # 인벤토리 아이템 조회
-        inv_item = await UserInventory.get_or_none(
+        inv_item = await UserInventory.filter(
             id=inventory_id,
             user=user
-        ).prefetch_related("item")
+        ).prefetch_related("item").first()
 
         if not inv_item:
             raise ItemNotFoundError(inventory_id)
