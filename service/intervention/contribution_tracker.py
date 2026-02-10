@@ -126,37 +126,73 @@ async def distribute_rewards(
                 final_exp = base_exp
                 final_gold = base_gold
 
+        # Phase 2: 근접도 보너스 적용 (난입자만)
+        if user_id != session.user_id and user_id in session.intervention_distances:
+            from service.notification.proximity_reward_calculator import get_proximity_reward_multiplier
+
+            distance = session.intervention_distances[user_id]
+            proximity_bonus = get_proximity_reward_multiplier(distance)
+            final_exp = int(final_exp * proximity_bonus)
+            final_gold = int(final_gold * proximity_bonus)
+
+            logger.debug(
+                f"Proximity bonus applied: user={user_id}, distance={distance}, "
+                f"multiplier={proximity_bonus}"
+            )
+
+        # Phase 5: 채널 레벨 보너스 적용 (+5% per level)
+        if session.voice_channel_id:
+            try:
+                from service.voice_channel.channel_level_service import ChannelLevelService
+
+                bonus = await ChannelLevelService.get_channel_bonus(session.voice_channel_id)
+                # bonus = 1.0 + (level - 1) * 0.05
+
+                final_exp = int(final_exp * bonus)
+                final_gold = int(final_gold * bonus)
+
+                logger.debug(
+                    f"Channel level bonus applied: user={user_id}, bonus={bonus}"
+                )
+            except Exception as e:
+                logger.error(f"Failed to apply channel level bonus: {e}", exc_info=True)
+
         # 최소 보상 보장 (기여도가 5% 이상이면)
         if share >= 0.05:
             final_exp = max(final_exp, 1)
             final_gold = max(final_gold, 1)
 
-        # 보상 지급
+        # 보상 지급 (트랜잭션으로 원자성 보장)
         try:
-            # User 엔티티 가져오기
-            if user_id == session.user_id:
-                user = session.user
-            else:
-                user = session.participants.get(user_id)
+            from tortoise.transactions import in_transaction
 
-            if not user:
-                user = await User.get_or_none(discord_id=user_id)
+            async with in_transaction() as conn:
+                # User 엔티티 가져오기
+                if user_id == session.user_id:
+                    user = session.user
+                else:
+                    user = session.participants.get(user_id)
 
-            if user:
-                # 경험치 및 골드 추가
-                user.exp += final_exp
-                user.gold += final_gold
-                await user.save()
+                if not user:
+                    user = await User.get_or_none(discord_id=user_id, using_db=conn)
 
-                rewards[user_id] = {"exp": final_exp, "gold": final_gold}
+                if user:
+                    # 경험치 및 골드 추가
+                    user.exp += final_exp
+                    user.gold += final_gold
+                    await user.save(using_db=conn)
 
-                logger.info(
-                    f"Reward distributed: user={user_id}, "
-                    f"exp={final_exp}, gold={final_gold}, share={share:.2%}"
-                )
-            else:
-                logger.warning(f"User not found for reward distribution: {user_id}")
+                    # DB 저장 성공 시에만 rewards에 추가
+                    rewards[user_id] = {"exp": final_exp, "gold": final_gold}
+
+                    logger.info(
+                        f"Reward distributed: user={user_id}, "
+                        f"exp={final_exp}, gold={final_gold}, share={share:.2%}"
+                    )
+                else:
+                    logger.warning(f"User not found for reward distribution: {user_id}")
         except Exception as e:
-            logger.error(f"Failed to distribute reward to {user_id}: {e}")
+            logger.error(f"Failed to distribute reward to {user_id}: {e}", exc_info=True)
+            # 트랜잭션 실패 시 자동 롤백되며, rewards에 추가되지 않음
 
     return rewards

@@ -36,6 +36,8 @@ from config.multiplayer import (
     AuctionConfig, AUCTION,
     SpectatorConfig, SPECTATOR,
 )
+from config.social_encounter import SocialEncounterConfig, SOCIAL_ENCOUNTER
+from config.notification import NotificationConfig, NOTIFICATION
 
 __all__ = [
     # combat
@@ -75,6 +77,9 @@ __all__ = [
     "WeeklyTowerConfig", "WEEKLY_TOWER",
     "AuctionConfig", "AUCTION",
     "SpectatorConfig", "SPECTATOR",
+    # social encounter (Phase 3)
+    "SocialEncounterConfig", "SOCIAL_ENCOUNTER",
+    "NotificationConfig", "NOTIFICATION",
     # grade
     "InstanceGrade", "GradeInfo", "GRADE_TABLE",
     "GRADE_DROP_WEIGHTS", "SpecialEffectDef", "SPECIAL_EFFECT_POOL",

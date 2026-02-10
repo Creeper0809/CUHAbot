@@ -7,6 +7,7 @@ import time
 import logging
 from typing import Optional
 import discord
+from tortoise.transactions import in_transaction
 
 from exceptions import (
     InterventionError,
@@ -23,8 +24,8 @@ from models import User
 
 logger = logging.getLogger(__name__)
 
-# 난입 쿨타임 저장소 (user_id → 마지막 난입 시간)
-# TODO: DB에 영구 저장
+# NOTE: 쿨타운은 User.last_intervention_time (DB)로 영속화됨
+# 레거시 인메모리 캐시 (하위 호환성 유지, 점진적 제거 예정)
 _intervention_cooldowns: dict[int, float] = {}
 
 
@@ -66,11 +67,28 @@ class InterventionService:
             target_session.user.level
         )
 
+        # Phase 2: 근접도 계산 및 저장
+        from service.session import get_session
+        from service.voice_channel.proximity_calculator import ProximityCalculator
+        from service.notification.proximity_reward_calculator import get_intervention_cost
+
+        requester_session = get_session(requester_id)
+        if requester_session and requester_session.dungeon:
+            distance = ProximityCalculator.calculate_distance(
+                target_session.exploration_step,
+                requester_session.exploration_step
+            )
+        else:
+            distance = 999  # 던전 미진입 시 최대 거리 취급
+
+        target_session.intervention_distances[requester_id] = distance
+        cost = get_intervention_cost(distance)
+
         # intervention_pending에 등록
         target_session.intervention_pending[requester_id] = time.time()
 
         # 응답 메시지
-        response_msg = "✅ 다음 라운드에 전투에 참여합니다!"
+        response_msg = f"✅ 다음 라운드에 전투에 참여합니다!\n💰 비용: {cost}G (거리: {distance}걸음)"
         if warning_msg:
             response_msg += f"\n\n{warning_msg}"
 
@@ -122,24 +140,39 @@ class InterventionService:
         if current_participants >= PARTY.MAX_COMBAT_PARTICIPANTS:
             raise CombatFullError(PARTY.MAX_COMBAT_PARTICIPANTS)
 
-        # 6. 쿨타임 체크
-        if requester_id in _intervention_cooldowns:
-            last_intervention = _intervention_cooldowns[requester_id]
-            elapsed = time.time() - last_intervention
-            if elapsed < PARTY.INTERVENTION_COOLDOWN_SECONDS:
-                remaining = int(PARTY.INTERVENTION_COOLDOWN_SECONDS - elapsed)
-                raise InterventionCooldownError(remaining)
-
-        # 7. 레벨 제한 체크
+        # 6. 쿨타임 체크 (DB 기반)
         requester_user = await User.get_or_none(discord_id=requester_id)
         if not requester_user:
             raise InterventionError("등록되지 않은 사용자입니다.")
 
+        if requester_user.last_intervention_time:
+            from datetime import datetime, timezone
+            elapsed = (datetime.now(timezone.utc) - requester_user.last_intervention_time).total_seconds()
+            if elapsed < PARTY.INTERVENTION_COOLDOWN_SECONDS:
+                remaining = int(PARTY.INTERVENTION_COOLDOWN_SECONDS - elapsed)
+                raise InterventionCooldownError(remaining)
+
+        # 7. 레벨 제한 체크 (이미 로드됨)
         if requester_user.level < session.dungeon.require_level:
             raise InsufficientLevelError(
                 session.dungeon.require_level,
                 requester_user.level
             )
+
+        # 8. 음성 채널 체크 (Phase 1: Voice Channel Shared Dungeon)
+        from service.session import get_session as get_requester_session
+
+        requester_session = get_requester_session(requester_id)
+
+        if not requester_session or not requester_session.voice_channel_id:
+            raise InterventionError("음성 채널에 접속해야 난입할 수 있습니다.")
+
+        if requester_session.voice_channel_id != session.voice_channel_id:
+            raise InterventionError("같은 음성 채널에 있어야 난입할 수 있습니다.")
+
+        # 9. 던전 체크 (Phase 1: Voice Channel Shared Dungeon)
+        if not requester_session.dungeon or requester_session.dungeon.id != session.dungeon.id:
+            raise InterventionError("같은 던전을 선택한 플레이어만 난입할 수 있습니다.")
 
     @staticmethod
     def _get_level_warning(requester_level: int, leader_level: int) -> Optional[str]:
@@ -194,51 +227,81 @@ class InterventionService:
                     del session.intervention_pending[user_id]
                     continue
 
-                # 전투 초기화 (런타임 필드 + 스킬 덱)
-                if not hasattr(user, 'status') or user.status is None:
-                    user._init_runtime_fields()
+                # Phase 2: 근접도 기반 비용 차감
+                from service.notification.proximity_reward_calculator import get_intervention_cost
 
-                # 스킬 덱 로드
-                from service.skill.skill_deck_service import SkillDeckService
-                await SkillDeckService.load_deck_to_user(user)
+                distance = session.intervention_distances.get(user_id, 999)
+                cost = get_intervention_cost(distance)
 
-                # 장비 스탯 로드
-                from service.item.equipment_service import EquipmentService
-                await EquipmentService.apply_equipment_stats(user)
+                # 트랜잭션으로 골드 차감 및 참가자 추가 원자적 처리
+                async with in_transaction() as conn:
+                    # 골드 체크 및 차감
+                    if cost > 0:
+                        # 트랜잭션 내에서 최신 데이터 재조회
+                        user = await User.get_or_none(discord_id=user_id, using_db=conn)
+                        if not user:
+                            logger.warning(f"Intervention user disappeared: {user_id}")
+                            continue
 
-                # participants에 추가
-                session.participants[user_id] = user
+                        if user.gold < cost:
+                            logs.append(f"❌ **{user.get_name()}** 골드 부족 ({cost}G)")
+                            if user_id in session.intervention_distances:
+                                del session.intervention_distances[user_id]
+                            continue
 
-                # 행동 게이지 초기화
-                context.action_gauges[id(user)] = 0
+                        user.gold -= cost
+                        await user.save(using_db=conn)
+                        logger.info(f"Intervention cost deducted: {user_id} paid {cost}G (distance={distance})")
 
-                # 기여도 초기화
-                session.contribution[user_id] = 0
+                    # 트랜잭션 성공 후 전투 초기화 (런타임 필드 + 스킬 덱)
+                    if not hasattr(user, 'status') or user.status is None:
+                        user._init_runtime_fields()
 
-                # 쿨타임 기록
-                _intervention_cooldowns[user_id] = time.time()
+                    # 스킬 덱 로드
+                    from service.skill.skill_deck_service import SkillDeckService
+                    await SkillDeckService.load_deck_to_user(user)
 
-                # 로그 추가
-                logs.append(f"💫 **{user.get_name()}** 전투에 난입!")
+                    # 장비 스탯 로드
+                    from service.item.equipment_service import EquipmentService
+                    await EquipmentService.apply_equipment_stats(user)
 
-                logger.info(
-                    f"Intervention processed: user={user_id}, "
-                    f"round={context.round_number}"
-                )
+                    # participants에 추가 (트랜잭션 성공 후에만)
+                    session.participants[user_id] = user
+
+                    # 행동 게이지 초기화
+                    context.action_gauges[id(user)] = 0
+
+                    # 기여도 초기화
+                    session.contribution[user_id] = 0
+
+                    # 쿨타임 기록 (DB 영속화)
+                    from datetime import datetime, timezone
+                    user.last_intervention_time = datetime.now(timezone.utc)
+                    await user.save(update_fields=['last_intervention_time'], using_db=conn)
+
+                    # 로그 추가
+                    logs.append(f"💫 **{user.get_name()}** 전투에 난입!")
+
+                    logger.info(
+                        f"Intervention processed: user={user_id}, "
+                        f"round={context.round_number}"
+                    )
 
             except Exception as e:
-                logger.error(f"Failed to process intervention for {user_id}: {e}")
+                logger.error(f"Failed to process intervention for {user_id}: {e}", exc_info=True)
+                # 트랜잭션 실패 시 자동 롤백됨
 
             finally:
                 # pending에서 제거
-                del session.intervention_pending[user_id]
+                if user_id in session.intervention_pending:
+                    del session.intervention_pending[user_id]
 
         return logs
 
     @staticmethod
-    def get_intervention_cooldown(user_id: int) -> Optional[int]:
+    async def get_intervention_cooldown(user_id: int) -> Optional[int]:
         """
-        남은 쿨타임 확인
+        남은 쿨타임 확인 (DB 기반)
 
         Args:
             user_id: Discord 사용자 ID
@@ -246,15 +309,15 @@ class InterventionService:
         Returns:
             남은 쿨타임 (초), 없으면 None
         """
-        if user_id not in _intervention_cooldowns:
+        user = await User.get_or_none(discord_id=user_id)
+        if not user or not user.last_intervention_time:
             return None
 
-        last_intervention = _intervention_cooldowns[user_id]
-        elapsed = time.time() - last_intervention
+        from datetime import datetime, timezone
+        elapsed = (datetime.now(timezone.utc) - user.last_intervention_time).total_seconds()
 
         if elapsed >= PARTY.INTERVENTION_COOLDOWN_SECONDS:
             # 쿨타임 만료
-            del _intervention_cooldowns[user_id]
             return None
 
         return int(PARTY.INTERVENTION_COOLDOWN_SECONDS - elapsed)

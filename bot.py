@@ -49,6 +49,7 @@ class MyBot(commands.Bot):
         intents = discord.Intents.default()
         intents.message_content = True
         intents.emojis = True  # 이모지 권한 추가
+        intents.voice_states = True  # 음성 채널 상태 추적
         super().__init__(
             command_prefix="!",
             intents=intents,
@@ -107,6 +108,45 @@ class MyBot(commands.Bot):
             logging.error(f"이벤트 시스템 초기화 실패: {e}")
 
         logging.info(f"Logged in as {self.user} (ID: {self.user.id})")
+
+    async def on_voice_state_update(
+        self,
+        member: discord.Member,
+        before: discord.VoiceState,
+        after: discord.VoiceState
+    ):
+        """
+        음성 채널 상태 변경 이벤트 핸들러
+
+        사용자가 음성 채널에 입장/퇴장/이동할 때 호출됩니다.
+        """
+        from service.voice_channel.voice_channel_service import voice_channel_service
+        from service.voice_channel.instance_events import handle_voice_state_change
+        from service.session import get_session, set_voice_channel
+
+        user_id = member.id
+
+        # Case 1: 퇴장 (before에는 있었지만 after에는 없음)
+        if before.channel and not after.channel:
+            logging.info(f"User {user_id} left voice channel {before.channel.id}")
+            await voice_channel_service.user_left_channel(user_id)
+            await handle_voice_state_change(user_id, left_channel=True)
+            set_voice_channel(user_id, None)
+
+        # Case 2: 입장 (before에는 없었지만 after에는 있음)
+        elif not before.channel and after.channel:
+            logging.info(f"User {user_id} joined voice channel {after.channel.id}")
+            await voice_channel_service.user_joined_channel(user_id, after.channel.id)
+            await handle_voice_state_change(user_id, joined_channel=after.channel.id)
+            set_voice_channel(user_id, after.channel.id)
+
+        # Case 3: 이동 (before와 after 채널이 다름)
+        elif before.channel and after.channel and before.channel.id != after.channel.id:
+            logging.info(f"User {user_id} moved from {before.channel.id} to {after.channel.id}")
+            await voice_channel_service.user_left_channel(user_id)
+            await voice_channel_service.user_joined_channel(user_id, after.channel.id)
+            await handle_voice_state_change(user_id, moved_to=after.channel.id)
+            set_voice_channel(user_id, after.channel.id)
 
 if __name__ == "__main__":
     bot = MyBot()

@@ -453,6 +453,71 @@ class DungeonCommand(commands.Cog):
         await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
         view.message = await interaction.original_response()
 
+    @app_commands.command(name="채널정보", description="현재 음성 채널의 레벨, 경험치, MVP, 통계를 확인합니다")
+    @requires_account()
+    async def channel_info(self, interaction: discord.Interaction):
+        """현재 음성 채널의 레벨, 경험치, MVP, 통계"""
+        from service.voice_channel.voice_channel_service import voice_channel_service
+        from service.voice_channel.channel_level_service import ChannelLevelService
+
+        # Guard: 음성 채널 없음
+        vc_id = voice_channel_service.get_user_channel(interaction.user.id)
+        if not vc_id:
+            await interaction.response.send_message(
+                "❌ 음성 채널에 접속해주세요.",
+                ephemeral=True
+            )
+            return
+
+        # 채널 통계 조회
+        stats = await ChannelLevelService.get_channel_stats(vc_id)
+
+        if not stats:
+            await interaction.response.send_message(
+                "📊 아직 이 채널의 기록이 없습니다.",
+                ephemeral=True
+            )
+            return
+
+        # Embed 생성
+        embed = discord.Embed(
+            title=f"📊 채널 통계",
+            description=f"레벨 **{stats.level}** (경험치: {stats.exp:,})",
+            color=discord.Color.gold()
+        )
+
+        embed.add_field(
+            name="오늘의 기록",
+            value=(
+                f"⚔️ 전투: {stats.total_combats}회\n"
+                f"💥 총 데미지: {stats.total_damage:,}"
+            ),
+            inline=False
+        )
+
+        if stats.mvp_user_id:
+            try:
+                mvp_user = await interaction.client.fetch_user(stats.mvp_user_id)
+                embed.add_field(
+                    name="🏆 오늘의 MVP",
+                    value=f"{mvp_user.name} ({stats.mvp_damage:,} 데미지)",
+                    inline=False
+                )
+            except:
+                pass  # MVP 유저 조회 실패 시 무시
+
+        # 채널 레벨 보너스
+        bonus_pct = (stats.level - 1) * 5
+        embed.add_field(
+            name="💎 채널 레벨 보너스",
+            value=f"+{bonus_pct}% 보상 (EXP, Gold)",
+            inline=False
+        )
+
+        embed.set_footer(text=f"날짜: {stats.date}")
+
+        await interaction.response.send_message(embed=embed, ephemeral=True)
+
 
 async def setup(bot):
     await bot.add_cog(DungeonCommand(bot))

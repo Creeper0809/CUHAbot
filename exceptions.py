@@ -486,3 +486,78 @@ class InterventionNotAllowedError(InterventionError):
 
     def __init__(self):
         super().__init__("이 전투는 난입이 허용되지 않습니다.")
+
+
+# =============================================================================
+# Voice Channel Shared Dungeon Exceptions
+# =============================================================================
+
+class VoiceChannelError(CUHABotError):
+    """음성 채널 시스템 기본 예외"""
+    pass
+
+
+class NotInVoiceChannelError(VoiceChannelError):
+    """사용자가 음성 채널에 없음"""
+
+    def __init__(self):
+        super().__init__("음성 채널에 접속해야 이 기능을 사용할 수 있습니다.")
+
+
+class DifferentVoiceChannelError(VoiceChannelError):
+    """사용자들이 서로 다른 음성 채널에 있음"""
+
+    def __init__(self):
+        super().__init__("같은 음성 채널에 있어야 합니다.")
+
+
+class DifferentDungeonError(VoiceChannelError):
+    """사용자들이 서로 다른 던전을 탐험 중"""
+
+    def __init__(self):
+        super().__init__("같은 던전을 탐험 중이어야 합니다.")
+
+
+class SharedInstanceError(VoiceChannelError):
+    """공유 인스턴스 관련 에러"""
+    pass
+
+
+# =============================================================================
+# Social Encounter 관련 예외 (Phase 3)
+# =============================================================================
+
+
+class SocialEncounterError(CUHABotError):
+    """멀티유저 만남 이벤트 기본 예외"""
+    pass
+
+
+class EncounterTimeoutError(SocialEncounterError):
+    """만남 이벤트 타임아웃"""
+
+    def __init__(self, timeout_seconds: int):
+        self.timeout_seconds = timeout_seconds
+        super().__init__(f"응답 시간이 초과되었습니다. ({timeout_seconds}초)")
+
+
+class EncounterCooldownError(SocialEncounterError):
+    """만남 이벤트 쿨타임 중"""
+
+    def __init__(self, remaining_steps: int):
+        self.remaining_steps = remaining_steps
+        super().__init__(f"아직 만남 이벤트를 다시 만날 수 없습니다. ({remaining_steps} 스텝 남음)")
+
+
+class NoEligiblePartnersError(SocialEncounterError):
+    """만남 가능한 플레이어 없음"""
+
+    def __init__(self):
+        super().__init__("근처에 만남 가능한 플레이어가 없습니다.")
+
+
+class EncounterAlreadyActiveError(SocialEncounterError):
+    """이미 만남 이벤트 진행 중"""
+
+    def __init__(self):
+        super().__init__("이미 만남 이벤트가 진행 중입니다.")

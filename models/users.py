@@ -81,6 +81,7 @@ class User(models.Model):
     # 상태
     now_hp = fields.IntField(default=300)
     last_regen_time = fields.DatetimeField(auto_now_add=True)  # 마지막 회복 시간
+    last_intervention_time = fields.DatetimeField(null=True)  # 마지막 난입 시간 (쿨다운 추적)
 
     # ==========================================================================
     # 런타임 필드 (DB 미저장) - __init__에서 초기화

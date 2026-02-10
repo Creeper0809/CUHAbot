@@ -2,6 +2,7 @@
 
 from .achievement import *
 from .base_item import *
+from .combat_history import *
 from .consume_item import *
 from .droptable import *
 from .dungeon import *
@@ -24,3 +25,4 @@ from .user_inventory import *
 from .user_owned_skill import *
 from .user_skill_deck import *
 from .users import *
+from .voice_channel_level import *

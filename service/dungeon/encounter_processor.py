@@ -19,7 +19,7 @@ from views.fight_or_flee import FightOrFleeView
 from service.dungeon.encounter_service import EncounterFactory
 from service.dungeon.encounter_types import EncounterType
 from service.dungeon.combat_context import CombatContext
-from service.session import DungeonSession
+from service.session import DungeonSession, get_session, set_combat_state
 
 logger = logging.getLogger(__name__)
 
@@ -38,6 +38,43 @@ async def process_encounter(session: DungeonSession, interaction: discord.Intera
         인카운터 결과 메시지
     """
     session.exploration_step += 1
+
+    # Phase 3: 멀티유저 encounter 우선 체크
+    from service.dungeon.social_encounter_checker import check_social_encounter
+    from service.dungeon.social_encounter_types import (
+        CrossroadsEncounter,
+        CampfireEncounter,
+    )
+
+    social_type = check_social_encounter(session)
+    if social_type == "crossroads":
+        encounter = CrossroadsEncounter()
+        try:
+            result = await encounter.execute(session, interaction)
+            if result:  # 조건 충족됨
+                session.encounter_event_cooldown = session.exploration_step
+                logger.info(
+                    f"Crossroads encounter completed: user={session.user.discord_id}, "
+                    f"step={session.exploration_step}"
+                )
+                return result.message
+        except Exception as e:
+            logger.error(f"Crossroads encounter error: {e}", exc_info=True)
+            # 에러 시 일반 encounter로 fallback
+    elif social_type == "campfire":
+        encounter = CampfireEncounter()
+        try:
+            result = await encounter.execute(session, interaction)
+            if result:
+                session.encounter_event_cooldown = session.exploration_step
+                logger.info(
+                    f"Campfire encounter completed: user={session.user.discord_id}, "
+                    f"step={session.exploration_step}, participants={result.message}"
+                )
+                return result.message
+        except Exception as e:
+            logger.error(f"Campfire encounter error: {e}", exc_info=True)
+            # 에러 시 일반 encounter로 fallback
 
     # 탐험 버프 처리
     buffs = session.explore_buffs
@@ -134,6 +171,29 @@ async def _process_monster_encounter(session: DungeonSession, interaction: disco
         logger.error(f"Monster spawn error: {e}")
         return "몬스터 정보를 찾을 수 없습니다."
 
+    # Phase 4: 보스방 대기실 체크
+    from service.dungeon.reward_calculator import is_boss_monster
+
+    if len(monsters) == 1 and is_boss_monster(monsters[0]) and session.voice_channel_id:
+        from service.dungeon.social_encounter_checker import check_boss_waiting_room
+        from service.dungeon.social_encounter_types import BossRoomEncounter
+
+        if check_boss_waiting_room(session.dungeon.id, progress):
+            # 보스방 대기실 모드로 전환
+            boss_encounter = BossRoomEncounter(monsters[0])
+            boss_result = await boss_encounter.execute(session, interaction)
+
+            if boss_result:
+                # 대기실에서 시작된 멀티플레이어 전투
+                if boss_result.context:
+                    return await execute_combat_context(session, interaction, boss_result.context)
+                else:
+                    # context가 없으면 메시지만 반환
+                    return boss_result.message
+            else:
+                # 대기실 취소됨 → 일반 encounter로
+                logger.info(f"Boss waiting room cancelled, falling back to normal encounter")
+
     will_fight = await _ask_fight_or_flee(interaction, monsters)
 
     if will_fight is None:
@@ -143,11 +203,42 @@ async def _process_monster_encounter(session: DungeonSession, interaction: disco
         return await _attempt_flee(session, monsters[0])
 
     context = CombatContext.from_group(monsters)
+    session.combat_context = context
+    session.in_combat = True
+
+    # Phase 4: 동시 조우 체크 (전투 시작 직후)
+    if session.voice_channel_id:
+        from service.dungeon.social_encounter_checker import check_simultaneous_encounter
+        from service.dungeon.social_encounter_types import SimultaneousEncounter
+
+        partner_session = check_simultaneous_encounter(session)
+        if partner_session:
+            # 동시 조우 발생
+            simultaneous_encounter = SimultaneousEncounter(partner_session)
+            simultaneous_result = await simultaneous_encounter.execute(session, interaction)
+
+            if simultaneous_result:
+                logger.info(f"Simultaneous encounter processed: {simultaneous_result.message}")
+                # 협력 모드면 파트너가 이미 participants에 추가됨
+                # 경쟁 모드면 race_state가 active_encounter_event에 저장됨
+            else:
+                # 독립 모드 - 각자 진행
+                logger.info(f"Simultaneous encounter: independent mode")
 
     # 필드 효과 랜덤 발동 (30% 확률)
     if random.random() < COMBAT.FIELD_EFFECT_SPAWN_RATE:
         from service.dungeon.field_effects import roll_random_field_effect
         context.field_effect = roll_random_field_effect()
+
+    # Phase 3: 교차로 만남 "같이 가기" 자동 합류
+    team_up_partner_id = session.explore_buffs.pop("team_up_partner", None)
+    if team_up_partner_id:
+        partner_session = get_session(team_up_partner_id)
+        if partner_session and not partner_session.in_combat and not partner_session.ended:
+            # 파트너 자동 합류
+            session.participants[team_up_partner_id] = partner_session.user
+            session.contribution[team_up_partner_id] = 0
+            logger.info(f"Team-up partner {team_up_partner_id} auto-joined combat for {session.user_id}")
 
     return await execute_combat_context(session, interaction, context)
 
@@ -162,6 +253,25 @@ async def _attempt_flee(session: DungeonSession, monster: Monster) -> str:
 
     if random.random() < COMBAT.FLEE_SUCCESS_RATE:
         logger.info(f"Flee success: user={session.user.discord_id}")
+
+        # Phase 5: 전투 기록 저장 (도주)
+        try:
+            from service.combat_history.history_service import HistoryService
+
+            await HistoryService.record_combat(
+                user_id=session.user.discord_id,
+                dungeon_id=session.dungeon.id,
+                step=session.exploration_step,
+                monster_name=monster.name,
+                result="fled",
+                damage=0,
+                turns=0,
+                voice_channel_id=session.voice_channel_id
+            )
+            logger.debug(f"Combat history (fled) recorded for user {session.user.discord_id}")
+        except Exception as e:
+            logger.error(f"Failed to record combat history (fled): {e}", exc_info=True)
+
         return f"🏃 **{monster.name}**에게서 도망쳤다!"
 
     damage = get_attack_stat(monster)

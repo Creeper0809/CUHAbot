@@ -100,17 +100,31 @@ async def execute_combat_context(session, interaction: discord.Interaction, cont
     session.combat_context = context
     session.discord_client = interaction.client  # Discord client 저장 (난입자 UI 전송용)
 
+    # Phase 4: 위기 목격 플래그 초기화 (전투당 1회)
+    session.crisis_event_sent = False
+
     logger.info(
         f"Combat started: user={user.discord_id}, "
         f"monsters={[m.name for m in context.monsters]}"
     )
 
+    # Phase 3: 캠프파이어 ATK 버프 적용
+    _apply_campfire_buff(session)
+
     set_combat_state(user.discord_id, True)
 
-    # 전투 알림 게시 (관전 시스템)
+    # Phase 2: 계층화된 전투 알림 게시 (근접도 기반)
     try:
-        from service.spectator.spectator_service import SpectatorService
-        notification_msg = await SpectatorService.post_combat_notification(session, interaction.channel)
+        from service.notification.notification_service import NotificationService
+        from views.combat_notification_view import CombatNotificationView
+
+        # View 생성 (거리 정보는 NotificationService가 알림 전송 시 설정)
+        view = CombatNotificationView(session, distance=0)
+
+        # 계층화된 알림 전송 (음성 채널 기반)
+        notification_msg = await NotificationService.send_tiered_combat_notifications(
+            session, interaction.channel, interaction.client, view
+        )
         session.combat_notification_message = notification_msg
     except Exception as e:
         logger.error(f"Failed to post combat notification: {e}")
@@ -155,22 +169,29 @@ async def execute_combat_context(session, interaction: discord.Interaction, cont
 
         await asyncio.sleep(COMBAT.COMBAT_END_DELAY)
 
-        # 전투 메시지 삭제 (리더 + 참가자들)
-        await combat_message.delete()
-        for participant_msg in session.participant_combat_messages.values():
-            try:
-                await participant_msg.delete()
-            except Exception as e:
-                logger.error(f"Failed to delete participant combat message: {e}")
-
         return await process_combat_result_multi(session, context, turn_count)
 
     finally:
         set_combat_state(user.discord_id, False)
         session.combat_context = None
 
-        # 참가자 전투 메시지 정리
+        # 전투 메시지 삭제 (리더 + 참가자들) - finally에서 안전하게 처리
+        try:
+            if 'combat_message' in locals():
+                await combat_message.delete()
+        except Exception as e:
+            logger.error(f"Failed to delete leader combat message: {e}")
+
+        # 참가자 전투 메시지 삭제 및 참조 제거
+        for participant_id, participant_msg in list(session.participant_combat_messages.items()):
+            try:
+                await participant_msg.delete()
+            except Exception as e:
+                logger.error(f"Failed to delete participant {participant_id} combat message: {e}")
+
+        # 메시지 참조 명확히 제거 (메모리 누수 방지)
         session.participant_combat_messages.clear()
+        combat_message = None
 
         # 관전자 및 전투 알림 메시지 정리 (전투 종료 시 항상 실행)
         if session.spectators or session.combat_notification_message:
@@ -179,6 +200,9 @@ async def execute_combat_context(session, interaction: discord.Interaction, cont
                 await SpectatorService.cleanup_spectators(session)
             except Exception as e:
                 logger.error(f"Failed to cleanup spectators in finally: {e}")
+
+        # Phase 3: 캠프파이어 버프 카운트 감소
+        _decrement_campfire_buff(session)
 
         _reset_all_skill_usage_counts()
         _reset_equipment_component_caches(user)
@@ -305,6 +329,35 @@ async def _process_turn_multi(
             if regen_log:
                 combat_log.append(regen_log)
 
+            # Phase 4: 위기 목격 체크 (유저 행동 후 HP 체크)
+            from service.dungeon.social_encounter_checker import check_crisis_witness, get_nearby_sessions, get_sessions_in_voice_channel
+
+            if check_crisis_witness(session):
+                # 근처 플레이어에게 위기 알림
+                other_sessions = get_sessions_in_voice_channel(session.voice_channel_id)
+                eligible = [
+                    s
+                    for s in other_sessions
+                    if s.user_id != session.user_id
+                    and s.dungeon
+                    and s.dungeon.id == session.dungeon.id
+                    and not s.in_combat
+                    and not s.ended
+                ]
+                nearby = get_nearby_sessions(session, eligible, 2)
+
+                if nearby:
+                    from service.dungeon.social_encounter_types import send_crisis_witness_alert
+
+                    # 비동기 알림 전송 (전투 흐름 차단 방지)
+                    client = session.discord_client or combat_message.channel.guild.get_member(user.discord_id)._state._get_client() if hasattr(combat_message.channel, 'guild') else None
+                    if client:
+                        asyncio.create_task(
+                            send_crisis_witness_alert(session, nearby, client)
+                        )
+                        session.crisis_event_sent = True
+                        logger.info(f"Crisis witness alert sent for user {session.user_id}")
+
         context.consume_gauge(actor)
 
         # 시너지: 유저 추가 행동
@@ -329,8 +382,29 @@ async def _process_turn_multi(
 
         await asyncio.sleep(COMBAT.TURN_PHASE_DELAY)
 
+        # Phase 4: 경쟁 모드 레이스 진행 업데이트
+        if session and hasattr(session, "active_encounter_event"):
+            event = session.active_encounter_event
+            if event and hasattr(event, "mode") and event.mode == "competitive":
+                await _update_race_progress(session, event, context)
+
+                # 레이스 종료 시 강제 전투 종료
+                if event.is_finished():
+                    logger.info(f"Race finished for user {session.user_id}, ending combat")
+                    return True
+
         if context.check_and_advance_round():
             combat_log.append(f"━━━ 🌟 **라운드 {context.round_number}** ━━━")
+
+            # HP 체크포인트: 5라운드마다 DB 동기화 (봇 크래시 대비)
+            if context.round_number % 5 == 0:
+                try:
+                    await user.save(update_fields=['now_hp'])
+                    for participant in session.participants.values():
+                        await participant.save(update_fields=['now_hp'])
+                    logger.debug(f"HP checkpointed at round {context.round_number}")
+                except Exception as e:
+                    logger.error(f"Failed to checkpoint HP: {e}")
 
             # 신규: 난입자 처리
             from service.intervention.intervention_service import InterventionService
@@ -506,17 +580,9 @@ def _apply_combat_start_passives(user: User, context: CombatContext) -> list[str
     logs = []
     entities = [user] + list(context.monsters)
 
-    # 패시브 컴포넌트 싱글톤 버그 방지: 전투 시작 시 모든 _applied_entities 초기화
-    for entity in entities:
-        skill_ids = getattr(entity, 'equipped_skill', None) or getattr(entity, 'use_skill', [])
-        for sid in skill_ids:
-            if sid == 0:
-                continue
-            skill = get_skill_by_id(sid)
-            if skill:
-                for comp in skill.components:
-                    if hasattr(comp, '_applied_entities'):
-                        comp._applied_entities.clear()
+    # NOTE: _applied_entities는 전투 종료 시 _reset_all_skill_usage_counts()에서 일괄 초기화됨
+    # 동시 전투 시 싱글톤 컴포넌트 공유 문제를 방지하기 위해,
+    # 각 컴포넌트는 id(entity)로 엔티티를 구분하여 중복 적용을 방지함
 
     for entity in entities:
         skill_ids = getattr(entity, 'equipped_skill', None) or getattr(entity, 'use_skill', [])
@@ -656,24 +722,29 @@ def _parse_combat_metrics_from_logs(logs: list[str]) -> tuple[int, int]:
     total_healing = 0
 
     for log in logs:
-        # 공격 데미지 파싱: "→ **대상** 150💥" 또는 "→ **대상** 150"
-        # 패턴: "→ **대상** 숫자"에서 숫자 추출
-        damage_match = re.search(r'→\s+\*\*[^*]+\*\*\s+(\d+)', log)
-        if damage_match and '⚔️' in log:
-            damage = int(damage_match.group(1))
-            total_damage += damage
-            continue
+        try:
+            # 공격 데미지 파싱: "→ **대상** 150💥" 또는 "→ **대상** 150"
+            # 패턴: "→ **대상** 숫자"에서 숫자 추출
+            damage_match = re.search(r'→\s+\*\*[^*]+\*\*\s+(\d+)', log)
+            if damage_match and '⚔️' in log:
+                damage = int(damage_match.group(1))
+                total_damage += damage
+                continue
 
-        # 치유량 파싱: "→ **+100** HP" 또는 "흡혈: +50 HP"
-        # 패턴: "+숫자 HP" 또는 "**+숫자** HP" (별표는 옵션)
-        healing_match = re.search(r'\*?\*?\+(\d+)\*?\*?\s*HP', log)
-        if healing_match and ('💚' in log or 'HP' in log):
-            healing = int(healing_match.group(1))
-            total_healing += healing
-            continue
+            # 치유량 파싱: "→ **+100** HP" 또는 "흡혈: +50 HP"
+            # 패턴: "+숫자 HP" 또는 "**+숫자** HP" (별표는 옵션)
+            healing_match = re.search(r'\*?\*?\+(\d+)\*?\*?\s*HP', log)
+            if healing_match and ('💚' in log or 'HP' in log):
+                healing = int(healing_match.group(1))
+                total_healing += healing
+                continue
 
-        # 반사 데미지는 제외 (🔄가 있으면 스킵)
-        if '🔄' in log:
+            # 반사 데미지는 제외 (🔄가 있으면 스킵)
+            if '🔄' in log:
+                continue
+
+        except (ValueError, IndexError, AttributeError) as e:
+            logger.warning(f"Failed to parse combat metric from log: {log[:50]}... Error: {e}")
             continue
 
     return total_damage, total_healing
@@ -942,3 +1013,154 @@ def _reset_equipment_component_caches(user: User) -> None:
     # 캐시 자체도 제거
     if hasattr(user, '_equipment_components_cache'):
         delattr(user, '_equipment_components_cache')
+
+
+# =============================================================================
+# Phase 3: 캠프파이어 버프 관리
+# =============================================================================
+
+
+def _apply_campfire_buff(session) -> None:
+    """
+    전투 시작 시 캠프파이어 ATK 버프 적용 (리더 + 참가자)
+
+    Args:
+        session: 던전 세션
+    """
+    campfire_buff = session.explore_buffs.get("campfire_atk_bonus")
+    if not campfire_buff:
+        return
+
+    buff_pct = campfire_buff["percent"]
+    logger.info(
+        f"Applying campfire ATK buff: user={session.user_id}, "
+        f"buff={int(buff_pct * 100)}%, remaining={campfire_buff['remaining_combats']}"
+    )
+
+    # TODO: 실제 버프 적용 로직 (기존 버프 시스템과 통합)
+    # 현재는 explore_buffs에 저장된 상태로 전투 중 적용
+    # 향후 BuffComponent와 통합 가능
+
+
+def _decrement_campfire_buff(session) -> None:
+    """
+    전투 종료 시 캠프파이어 ATK 버프 카운트 감소
+
+    Args:
+        session: 던전 세션
+    """
+    campfire_buff = session.explore_buffs.get("campfire_atk_bonus")
+    if not campfire_buff:
+        return
+
+    campfire_buff["remaining_combats"] -= 1
+    logger.debug(
+        f"Decremented campfire buff: user={session.user_id}, "
+        f"remaining={campfire_buff['remaining_combats']}"
+    )
+
+    if campfire_buff["remaining_combats"] <= 0:
+        del session.explore_buffs["campfire_atk_bonus"]
+        logger.info(f"Campfire buff expired for user={session.user_id}")
+
+
+# =============================================================================
+# Phase 4: 동시 조우 레이스 추적
+# =============================================================================
+
+
+async def _update_race_progress(session, race_state: "RaceState", context: "CombatContext") -> None:
+    """
+    경쟁 모드 레이스 진행 상태 업데이트 (Phase 4)
+
+    각 턴마다 양쪽 플레이어의 HP와 몬스터 HP를 추적하여
+    먼저 처치한 사람을 승자로 결정합니다.
+
+    Args:
+        session: 현재 세션
+        race_state: 레이스 상태
+        context: 전투 컨텍스트
+    """
+    from service.session import get_session
+
+    if not race_state or race_state.is_finished():
+        return
+
+    async with race_state.lock:
+        # 이미 다른 스레드에서 종료 처리됨
+        if race_state.is_finished():
+            return
+
+        # 현재 세션의 HP 업데이트
+        user = session.user
+        user_hp_pct = user.now_hp / user.max_hp if user.max_hp > 0 else 0.0
+
+        # 몬스터 HP 업데이트
+        if context.monsters:
+            total_hp = sum(m.max_hp for m in context.monsters)
+            current_hp = sum(m.now_hp for m in context.monsters)
+            monster_hp_pct = current_hp / total_hp if total_hp > 0 else 0.0
+        else:
+            monster_hp_pct = 0.0  # 모두 사망
+
+        # 세션 식별 및 HP 저장
+        if session.user_id == race_state.racer1_id:
+            race_state.racer1_hp_pct = user_hp_pct
+            race_state.racer1_monster_hp_pct = monster_hp_pct
+        elif session.user_id == race_state.racer2_id:
+            race_state.racer2_hp_pct = user_hp_pct
+            race_state.racer2_monster_hp_pct = monster_hp_pct
+
+        # 승자 결정: 먼저 몬스터를 처치한 사람
+        racer1_finished = race_state.racer1_monster_hp_pct <= 0.0
+        racer2_finished = race_state.racer2_monster_hp_pct <= 0.0
+
+        if racer1_finished and not racer2_finished:
+            race_state.winner_id = race_state.racer1_id
+            logger.info(f"Race finished: winner={race_state.racer1_id}")
+        elif racer2_finished and not racer1_finished:
+            race_state.winner_id = race_state.racer2_id
+            logger.info(f"Race finished: winner={race_state.racer2_id}")
+        elif racer1_finished and racer2_finished:
+            # 동시 처치 → 동점 (둘 다 정상 보상)
+            race_state.winner_id = -1  # 동점 마커
+            logger.info("Race finished: tie")
+
+
+def _apply_race_reward_multiplier(session, race_state: "RaceState", base_exp: int, base_gold: int) -> tuple[int, int]:
+    """
+    경쟁 모드 보상 배율 적용 (Phase 4)
+
+    승자: 150%, 패자: 50%, 동점: 정상 (100%)
+
+    Args:
+        session: 현재 세션
+        race_state: 레이스 상태
+        base_exp: 기본 경험치
+        base_gold: 기본 골드
+
+    Returns:
+        (최종 경험치, 최종 골드)
+    """
+    if not race_state or not race_state.is_finished():
+        return base_exp, base_gold
+
+    user_id = session.user_id
+
+    # 동점
+    if race_state.winner_id == -1:
+        multiplier = 1.0
+        logger.info(f"Race tie: user={user_id}, multiplier={multiplier}")
+    # 승자
+    elif race_state.winner_id == user_id:
+        multiplier = 1.5
+        logger.info(f"Race winner: user={user_id}, multiplier={multiplier}")
+    # 패자
+    else:
+        multiplier = 0.5
+        logger.info(f"Race loser: user={user_id}, multiplier={multiplier}")
+
+    final_exp = int(base_exp * multiplier)
+    final_gold = int(base_gold * multiplier)
+
+    return final_exp, final_gold

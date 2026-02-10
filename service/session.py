@@ -82,6 +82,10 @@ class DungeonSession:
     # 음성 채널 상태
     voice_channel_id: Optional[int] = None
 
+    # 공유 인스턴스 추적 (Phase 1: Voice Channel Shared Dungeon)
+    shared_instance_key: Optional[tuple[int, int]] = None
+    """(voice_channel_id, dungeon_id) if in shared instance"""
+
     # 전투 컨텍스트 (1:N 전투 지원)
     combat_context: Optional["CombatContext"] = None
     """현재 전투 중인 몬스터 그룹 (전투 중에만 존재)"""
@@ -94,8 +98,23 @@ class DungeonSession:
     spectators: set[int] = field(default_factory=set)
     """이 세션을 관전 중인 Discord 유저 ID 집합"""
 
+    # Phase 2: 난입자 거리 추적 (근접도 기반 비용/보상)
+    intervention_distances: dict[int, int] = field(default_factory=dict)
+    """user_id → 난입 요청 시 exploration_step 거리 (절댓값)"""
+
     spectator_messages: dict[int, "Message"] = field(default_factory=dict)
     """관전자 ID → 관전자 DM 메시지 매핑"""
+
+    # Phase 3: 멀티유저 encounter
+    active_encounter_event: Optional[object] = None
+    """현재 진행 중인 멀티유저 encounter 이벤트 (MultiUserEncounterEvent)"""
+
+    encounter_event_cooldown: float = 0.0
+    """마지막 멀티유저 encounter 발생 스텝 (쿨타임)"""
+
+    # Phase 4: 위기 목격 이벤트
+    crisis_event_sent: bool = False
+    """위기 목격 이벤트 전송 여부 (전투당 1회 제한)"""
 
     combat_notification_message: Optional["Message"] = None
     """서버 채널에 게시된 전투 알림 메시지 (관전 버튼 포함)"""
@@ -127,10 +146,10 @@ active_sessions: dict[int, DungeonSession] = {}
 
 async def create_session(user_id: int) -> Optional[DungeonSession]:
     """
-    세션 생성 (원자적 연산)
+    세션 생성 (원자적 연산 with double-check locking)
 
     이미 세션이 존재하면 None을 반환합니다.
-    Race condition을 방지하기 위해 락을 사용합니다.
+    Race condition을 방지하기 위해 double-check locking을 사용합니다.
 
     Args:
         user_id: Discord 사용자 ID
@@ -138,13 +157,26 @@ async def create_session(user_id: int) -> Optional[DungeonSession]:
     Returns:
         생성된 DungeonSession 객체 또는 None (이미 존재 시)
     """
-    async with _session_lock:
-        # 이미 세션이 존재하면 None 반환
-        if user_id in active_sessions and not active_sessions[user_id].ended:
-            logger.warning(f"Session already exists for user {user_id}")
+    # First check (without lock - fast path)
+    if user_id in active_sessions:
+        existing = active_sessions[user_id]
+        if not existing.ended:
+            logger.warning(f"Session already exists for user {user_id} (fast path)")
             return None
 
-        logger.info(f"Creating session for user {user_id}")
+    async with _session_lock:
+        # Double-check inside lock (prevents race condition)
+        if user_id in active_sessions:
+            existing = active_sessions[user_id]
+            if not existing.ended:
+                logger.warning(f"Session already exists for user {user_id} (locked path)")
+                return None
+            else:
+                # 종료된 세션은 제거
+                del active_sessions[user_id]
+                logger.info(f"Cleaned up ended session for user {user_id}")
+
+        logger.info(f"Creating new session for user {user_id}")
         session = DungeonSession(user_id=user_id)
         active_sessions[user_id] = session
         return session

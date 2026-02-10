@@ -111,6 +111,25 @@ async def process_combat_result_multi(session, context, turn_count: int) -> str:
                 break
 
     if all_players_dead:
+        # Phase 5: 전투 기록 저장 (패배)
+        try:
+            from service.combat_history.history_service import HistoryService
+
+            monster_name = context.monsters[0].name if context.monsters else "Unknown"
+            await HistoryService.record_combat(
+                user_id=user.discord_id,
+                dungeon_id=session.dungeon.id,
+                step=session.exploration_step,
+                monster_name=monster_name,
+                result="defeat",
+                damage=sum(session.contribution.values()) if session.contribution else 0,
+                turns=turn_count,
+                voice_channel_id=session.voice_channel_id
+            )
+            logger.debug(f"Combat history (defeat) recorded for user {user.discord_id}")
+        except Exception as e:
+            logger.error(f"Failed to record combat history (defeat): {e}", exc_info=True)
+
         return "💀 패배... 전원 전투불능"
 
     # 리더가 죽었으면 던전 탐험 종료 플래그 설정
@@ -244,6 +263,60 @@ async def process_combat_result_multi(session, context, turn_count: int) -> str:
 
     if result_lines:
         result_msg += "\n" + "\n".join(result_lines)
+
+    # Phase 5: 전투 기록 저장 (환영 시스템)
+    try:
+        from service.combat_history.history_service import HistoryService
+
+        monster_name = context.monsters[0].name if context.monsters else "Unknown"
+        await HistoryService.record_combat(
+            user_id=user.discord_id,
+            dungeon_id=session.dungeon.id,
+            step=session.exploration_step,
+            monster_name=monster_name,
+            result="victory",
+            damage=sum(session.contribution.values()) if session.contribution else 0,
+            turns=turn_count,
+            voice_channel_id=session.voice_channel_id
+        )
+        logger.debug(f"Combat history recorded for user {user.discord_id}")
+    except Exception as e:
+        logger.error(f"Failed to record combat history: {e}", exc_info=True)
+
+    # Phase 5: 채널 경험치 추가
+    if session.voice_channel_id:
+        try:
+            from service.voice_channel.channel_level_service import ChannelLevelService
+            from service.session import get_sessions_in_voice_channel
+
+            # 채널 경험치 추가 (기본 10 EXP)
+            total_damage = sum(session.contribution.values()) if session.contribution else 0
+            result = await ChannelLevelService.add_channel_exp(
+                voice_channel_id=session.voice_channel_id,
+                exp=10,
+                user_id=user.discord_id,
+                damage=total_damage
+            )
+
+            # 레벨업 시 같은 채널 전체에 DM 알림
+            if result["leveled_up"]:
+                other_sessions = get_sessions_in_voice_channel(session.voice_channel_id)
+                for other_session in other_sessions:
+                    try:
+                        # DM 전송
+                        from bot import bot
+                        other_user = await bot.fetch_user(other_session.user_id)
+                        await other_user.send(
+                            f"🎉 음성 채널이 레벨 **{result['new_level']}**에 도달했습니다!\n"
+                            f"💎 채널 보너스: +{(result['new_level'] - 1) * 5}% 보상"
+                        )
+                        logger.info(f"Sent level-up notification to user {other_session.user_id}")
+                    except Exception:
+                        pass  # DM 전송 실패 무시
+
+            logger.debug(f"Channel exp added for channel {session.voice_channel_id}")
+        except Exception as e:
+            logger.error(f"Failed to add channel exp: {e}", exc_info=True)
 
     return result_msg
 

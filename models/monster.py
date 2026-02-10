@@ -82,15 +82,27 @@ class Monster(models.Model):
         self.now_hp = getattr(self, 'hp', 0)
         self.status = []
 
-        # DB에서 로드한 skill_ids가 있으면 use_skill에 할당
+        # use_skill은 combat_skill_deck 프로퍼티로 대체 예정 (하위 호환성 유지)
+        self.use_skill = self.combat_skill_deck
+        self.skill_queue = []
+
+    @property
+    def combat_skill_deck(self) -> list[int]:
+        """
+        전투용 스킬 덱 (항상 10슬롯)
+
+        DB의 skill_ids를 10개 슬롯에 맞게 패딩하여 반환합니다.
+        이 프로퍼티를 사용하면 skill_ids와 use_skill의 차이를 명확히 할 수 있습니다.
+
+        Returns:
+            10개 슬롯의 스킬 ID 리스트
+        """
         db_skill_ids = getattr(self, 'skill_ids', [])
         if db_skill_ids and len(db_skill_ids) > 0:
-            # 10개 슬롯에 맞게 패딩
-            self.use_skill = (list(db_skill_ids) + [0] * 10)[:10]
+            # 10개 슬롯에 맞게 패딩 (부족하면 0으로 채움)
+            return (list(db_skill_ids) + [0] * 10)[:10]
         else:
-            self.use_skill = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-
-        self.skill_queue = []
+            return [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 
     def next_skill(self) -> Optional["Skill"]:
         """
