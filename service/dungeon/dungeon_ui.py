@@ -87,7 +87,7 @@ def create_dungeon_embed(session, event_queue: deque[str]) -> Embed:
 
     # 진행도 바
     progress = min(session.exploration_step / session.max_steps, 1.0)
-    progress_bar = create_exploration_bar(progress, 12)
+    progress_bar = create_exploration_bar(progress, 25)
     progress_pct = int(progress * 100)
 
     embed.add_field(

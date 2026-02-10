@@ -21,7 +21,19 @@ from service.player.stat_synergy_combat import (
 )
 from service.session import set_combat_state
 
+# 리팩토링된 클래스 import
+from service.dungeon.combat_ui_manager import CombatUIManager
+from service.dungeon.passive_effect_processor import PassiveEffectProcessor
+from service.dungeon.combat_metrics_recorder import CombatMetricsRecorder
+from service.dungeon.equipment_integration_manager import EquipmentIntegrationManager
+
 logger = logging.getLogger(__name__)
+
+# 싱글톤 인스턴스 생성
+_ui_manager = CombatUIManager()
+_passive_processor = PassiveEffectProcessor()
+_metrics_recorder = CombatMetricsRecorder()
+_equipment_manager = EquipmentIntegrationManager()
 
 
 def _all_players_dead(user: User, session) -> bool:
@@ -66,19 +78,7 @@ async def _update_all_combat_messages(
         context: 전투 컨텍스트
         combat_log: 전투 로그
     """
-    from service.dungeon.dungeon_ui import create_battle_embed_multi
-
-    embed = create_battle_embed_multi(user, context, combat_log, session.participants)
-
-    # 리더 메시지 업데이트
-    await combat_message.edit(embed=embed)
-
-    # 참가자 메시지 업데이트
-    for participant_msg in session.participant_combat_messages.values():
-        try:
-            await participant_msg.edit(embed=embed)
-        except Exception as e:
-            logger.error(f"Failed to update participant combat UI: {e}")
+    await _ui_manager.update_all_combat_messages(session, combat_message, user, context, combat_log)
 
 
 async def execute_combat_context(session, interaction: discord.Interaction, context: CombatContext) -> str:
@@ -130,22 +130,10 @@ async def execute_combat_context(session, interaction: discord.Interaction, cont
         logger.error(f"Failed to post combat notification: {e}")
 
     try:
-        # 전투 UI 생성
-        embed = create_battle_embed_multi(user, context, context.combat_log, session.participants)
-
-        # 리더에게 전투 UI 전송
-        combat_message = await interaction.user.send(embed=embed)
-
-        # 난입 참가자들에게도 전투 UI 전송
-        session.participant_combat_messages.clear()
-        for participant_id, participant in session.participants.items():
-            try:
-                discord_user = await interaction.client.fetch_user(participant.discord_id)
-                participant_msg = await discord_user.send(embed=embed)
-                session.participant_combat_messages[participant_id] = participant_msg
-                logger.info(f"Combat UI sent to participant: {participant.discord_id}")
-            except Exception as e:
-                logger.error(f"Failed to send combat UI to participant {participant_id}: {e}")
+        # 전투 UI 생성 및 전송 (리더 + 참가자)
+        combat_message = await _ui_manager.send_initial_combat_ui(
+            session, interaction, user, context, context.combat_log
+        )
 
         turn_count = 1
 
@@ -159,13 +147,7 @@ async def execute_combat_context(session, interaction: discord.Interaction, cont
             turn_count += 1
 
         # 최종 전투 결과 UI 업데이트 (리더 + 참가자들)
-        final_embed = create_battle_embed_multi(user, context, context.combat_log, session.participants)
-        await combat_message.edit(embed=final_embed)
-        for participant_msg in session.participant_combat_messages.values():
-            try:
-                await participant_msg.edit(embed=final_embed)
-            except Exception as e:
-                logger.error(f"Failed to update participant combat message: {e}")
+        await _ui_manager.send_final_combat_result(session, combat_message, user, context, context.combat_log)
 
         await asyncio.sleep(COMBAT.COMBAT_END_DELAY)
 
@@ -176,22 +158,10 @@ async def execute_combat_context(session, interaction: discord.Interaction, cont
         session.combat_context = None
 
         # 전투 메시지 삭제 (리더 + 참가자들) - finally에서 안전하게 처리
-        try:
-            if 'combat_message' in locals():
-                await combat_message.delete()
-        except Exception as e:
-            logger.error(f"Failed to delete leader combat message: {e}")
-
-        # 참가자 전투 메시지 삭제 및 참조 제거
-        for participant_id, participant_msg in list(session.participant_combat_messages.items()):
-            try:
-                await participant_msg.delete()
-            except Exception as e:
-                logger.error(f"Failed to delete participant {participant_id} combat message: {e}")
-
-        # 메시지 참조 명확히 제거 (메모리 누수 방지)
-        session.participant_combat_messages.clear()
-        combat_message = None
+        await _ui_manager.cleanup_combat_messages(
+            session,
+            combat_message if 'combat_message' in locals() else None
+        )
 
         # 관전자 및 전투 알림 메시지 정리 (전투 종료 시 항상 실행)
         if session.spectators or session.combat_notification_message:
@@ -204,8 +174,9 @@ async def execute_combat_context(session, interaction: discord.Interaction, cont
         # Phase 3: 캠프파이어 버프 카운트 감소
         _decrement_campfire_buff(session)
 
-        _reset_all_skill_usage_counts()
-        _reset_equipment_component_caches(user)
+        # 스킬 및 장비 컴포넌트 상태 리셋
+        _passive_processor.reset_all_skill_usage_counts()
+        _equipment_manager.reset_component_caches(user)
 
 
 # =============================================================================
@@ -252,8 +223,12 @@ async def _process_turn_multi(
             context.action_gauges[id(user)] = COMBAT.ACTION_GAUGE_MAX
             combat_log.append("💨 **선공 확정** 시너지 발동!")
         # 패시브 발동 로그
-        passive_logs = _apply_combat_start_passives(user, context)
+        passive_logs = _passive_processor.apply_combat_start_passives(user, context)
         for log in passive_logs:
+            combat_log.append(log)
+        # 장비 컴포넌트 전투 시작 훅 호출
+        equipment_logs = _equipment_manager.apply_combat_start(user, context)
+        for log in equipment_logs:
             combat_log.append(log)
         # 필드 효과 발동 메시지
         if context.field_effect:
@@ -271,7 +246,38 @@ async def _process_turn_multi(
                 combat_log.append(log)
 
     while context.action_count < COMBAT.MAX_ACTIONS_PER_LOOP:
-        if context.is_all_dead() or _all_players_dead(user, session):
+        # 플레이어 사망 시 부활 효과 먼저 체크 (전투 종료 전)
+        if _all_players_dead(user, session):
+            revived = False  # 부활 발생 여부 추적
+
+            # 부활 시도
+            if user.now_hp <= 0:
+                revive_logs = _check_player_revive(user, session)
+                for log in revive_logs:
+                    combat_log.append(log)
+                if revive_logs and user.now_hp > 0:
+                    revived = True
+
+            if session and session.participants:
+                for participant in session.participants.values():
+                    if participant.now_hp <= 0:
+                        revive_logs = _check_player_revive(participant, session)
+                        for log in revive_logs:
+                            combat_log.append(log)
+                        if revive_logs and participant.now_hp > 0:
+                            revived = True
+
+            # 부활 발생 시 UI 업데이트
+            if revived:
+                await _update_all_combat_messages(session, combat_message, user, context, combat_log)
+                await asyncio.sleep(COMBAT.TURN_PHASE_DELAY)
+
+            # 부활 후에도 모두 죽었으면 전투 종료
+            if _all_players_dead(user, session):
+                return True
+
+        # 몬스터 전멸 체크
+        if context.is_all_dead():
             return True
 
         actor = context.get_next_actor(user, session.participants)
@@ -308,10 +314,7 @@ async def _process_turn_multi(
 
         # 신규: 기여도 기록 (파티 리더 + 난입자)
         if isinstance(actor, User):
-            from service.intervention.contribution_tracker import record_contribution
-            # 로그에서 데미지/치유량 추출
-            damage, healing = _parse_combat_metrics_from_logs(action_logs)
-            record_contribution(session, actor, damage=damage, healing=healing)
+            _metrics_recorder.record_actor_contribution(session, actor, action_logs)
 
         # 사망 트리거 (on_death 컴포넌트)
         death_logs = _check_death_triggers(context, alive_before, user)
@@ -319,8 +322,12 @@ async def _process_turn_multi(
             combat_log.append(log)
 
         # 패시브: 재생/조건부 처리
-        passive_logs = _process_passive_effects(actor)
+        passive_logs = _passive_processor.process_passive_effects(actor)
         for log in passive_logs:
+            combat_log.append(log)
+        # 장비 패시브 효과 처리
+        equipment_passive_logs = _equipment_manager.apply_passives(actor)
+        for log in equipment_passive_logs:
             combat_log.append(log)
 
         # 시너지: 유저 행동 후 HP 자동회복
@@ -349,14 +356,26 @@ async def _process_turn_multi(
                 if nearby:
                     from service.dungeon.social_encounter_types import send_crisis_witness_alert
 
-                    # 비동기 알림 전송 (전투 흐름 차단 방지)
-                    client = session.discord_client or combat_message.channel.guild.get_member(user.discord_id)._state._get_client() if hasattr(combat_message.channel, 'guild') else None
+                    # Discord 클라이언트 가져오기 (안전한 fallback)
+                    client = session.discord_client
+                    if not client and hasattr(combat_message, 'channel'):
+                        try:
+                            if hasattr(combat_message.channel, 'guild') and combat_message.channel.guild:
+                                member = combat_message.channel.guild.get_member(user.discord_id)
+                                if member and hasattr(member, '_state'):
+                                    client = getattr(member._state, '_get_client', lambda: None)()
+                        except (AttributeError, TypeError) as e:
+                            logger.debug(f"Failed to get client from combat_message: {e}")
+
                     if client:
+                        # 비동기 알림 전송 (전투 흐름 차단 방지)
                         asyncio.create_task(
                             send_crisis_witness_alert(session, nearby, client)
                         )
                         session.crisis_event_sent = True
                         logger.info(f"Crisis witness alert sent for user {session.user_id}")
+                    else:
+                        logger.warning(f"Failed to get Discord client for crisis alert: user={session.user_id}")
 
         context.consume_gauge(actor)
 
@@ -382,6 +401,19 @@ async def _process_turn_multi(
 
         await asyncio.sleep(COMBAT.TURN_PHASE_DELAY)
 
+        # 유저 부활 효과 체크 (리더 + 참가자)
+        if user.now_hp <= 0:
+            revive_logs = _check_player_revive(user, session)
+            for log in revive_logs:
+                combat_log.append(log)
+
+        if session and session.participants:
+            for participant in session.participants.values():
+                if participant.now_hp <= 0:
+                    revive_logs = _check_player_revive(participant, session)
+                    for log in revive_logs:
+                        combat_log.append(log)
+
         # Phase 4: 경쟁 모드 레이스 진행 업데이트
         if session and hasattr(session, "active_encounter_event"):
             event = session.active_encounter_event
@@ -400,8 +432,9 @@ async def _process_turn_multi(
             if context.round_number % 5 == 0:
                 try:
                     await user.save(update_fields=['now_hp'])
-                    for participant in session.participants.values():
-                        await participant.save(update_fields=['now_hp'])
+                    if session.participants:
+                        for participant in session.participants.values():
+                            await participant.save(update_fields=['now_hp'])
                     logger.debug(f"HP checkpointed at round {context.round_number}")
                 except Exception as e:
                     logger.error(f"Failed to checkpoint HP: {e}")
@@ -414,19 +447,7 @@ async def _process_turn_multi(
 
             # 새로 추가된 난입자들에게 전투 UI 전송
             if intervention_logs:
-                from service.dungeon.dungeon_ui import create_battle_embed_multi
-                for participant_id, participant in session.participants.items():
-                    # 이미 UI를 받은 참가자는 건너뛰기
-                    if participant_id in session.participant_combat_messages:
-                        continue
-                    try:
-                        discord_user = await session.discord_client.fetch_user(participant.discord_id)
-                        embed = create_battle_embed_multi(user, context, combat_log, session.participants)
-                        participant_msg = await discord_user.send(embed=embed)
-                        session.participant_combat_messages[participant_id] = participant_msg
-                        logger.info(f"Combat UI sent to new intervener: {participant.discord_id}")
-                    except Exception as e:
-                        logger.error(f"Failed to send combat UI to intervener {participant_id}: {e}")
+                await _ui_manager.send_ui_to_new_participants(session, user, context, combat_log)
 
             # 필드 효과: 라운드 시작 시 처리
             if context.field_effect:
@@ -481,7 +502,7 @@ def _execute_user_action(user: User, context: CombatContext) -> list[str]:
     target = random.choice(alive_monsters)
 
     # 턴 시작 시 장비 효과 (행동 예측 등)
-    turn_start_logs = _apply_equipment_turn_start(user, target)
+    turn_start_logs = _equipment_manager.apply_turn_start(user, target)
     logs.extend(turn_start_logs)
 
     if user_skill:
@@ -491,14 +512,17 @@ def _execute_user_action(user: User, context: CombatContext) -> list[str]:
                 if log and log.strip():
                     logs.append(log)
                 # 공격 후 장비 훅 (추가 공격, 회복 봉인 등)
-                attack_logs = _apply_equipment_on_attack(user, monster, 0)  # TODO: 실제 데미지 전달
+                # 로그에서 데미지 추출
+                damage_dealt, _ = _metrics_recorder.parse_combat_metrics_from_logs([log])
+                attack_logs = _equipment_manager.apply_on_attack(user, monster, damage_dealt)
                 logs.extend(attack_logs)
         else:
             log = user_skill.on_turn(user, target)
             if log and log.strip():
                 logs.append(log)
-            # 공격 후 장비 훅
-            attack_logs = _apply_equipment_on_attack(user, target, 0)  # TODO: 실제 데미지 전달
+            # 공격 후 장비 훅 - 로그에서 데미지 추출
+            damage_dealt, _ = _metrics_recorder.parse_combat_metrics_from_logs([log])
+            attack_logs = _equipment_manager.apply_on_attack(user, target, damage_dealt)
             logs.extend(attack_logs)
     else:
         from service.dungeon.damage_pipeline import process_incoming_damage
@@ -508,7 +532,7 @@ def _execute_user_action(user: User, context: CombatContext) -> list[str]:
         logs.append(f"⚔️ **{user.get_name()}** 기본 공격 → **{target.get_name()}** {event.actual_damage} 데미지")
 
         # 공격 후 장비 훅 (반격, 추가 공격 등)
-        attack_logs = _apply_equipment_on_attack(user, target, event.actual_damage)
+        attack_logs = _equipment_manager.apply_on_attack(user, target, event.actual_damage)
         logs.extend(attack_logs)
 
         if event.reflected_damage > 0:
@@ -548,8 +572,9 @@ def _execute_monster_action(monster: Monster, user: User, context: CombatContext
         log = monster_skill.on_turn(monster, target)
         if log and log.strip():
             logs.append(log)
-        # 유저 피격 시 장비 훅 (가시 피해, 반격 등)
-        damaged_logs = _apply_equipment_on_damaged(target, monster, 0)  # TODO: 실제 데미지 전달
+        # 유저 피격 시 장비 훅 (가시 피해, 반격 등) - 로그에서 데미지 추출
+        damage_taken, _ = _metrics_recorder.parse_combat_metrics_from_logs([log])
+        damaged_logs = _equipment_manager.apply_on_damaged(target, monster, damage_taken)
         logs.extend(damaged_logs)
     else:
         damage = get_attack_stat(monster)
@@ -558,7 +583,7 @@ def _execute_monster_action(monster: Monster, user: User, context: CombatContext
         logs.append(f"⚔️ **{monster.get_name()}** 기본 공격 → **{target.get_name()}** {event.actual_damage} 데미지")
 
         # 유저 피격 시 장비 훅
-        damaged_logs = _apply_equipment_on_damaged(target, monster, event.actual_damage)
+        damaged_logs = _equipment_manager.apply_on_damaged(target, monster, event.actual_damage)
         logs.extend(damaged_logs)
 
         if event.reflected_damage > 0:
@@ -573,67 +598,14 @@ def _execute_monster_action(monster: Monster, user: User, context: CombatContext
 # =============================================================================
 
 
-def _apply_combat_start_passives(user: User, context: CombatContext) -> list[str]:
-    """전투 시작 시 모든 엔티티의 패시브 발동 로그 출력"""
-    from models.repos.skill_repo import get_skill_by_id
-
-    logs = []
-    entities = [user] + list(context.monsters)
-
-    # NOTE: _applied_entities는 전투 종료 시 _reset_all_skill_usage_counts()에서 일괄 초기화됨
-    # 동시 전투 시 싱글톤 컴포넌트 공유 문제를 방지하기 위해,
-    # 각 컴포넌트는 id(entity)로 엔티티를 구분하여 중복 적용을 방지함
-
-    for entity in entities:
-        skill_ids = getattr(entity, 'equipped_skill', None) or getattr(entity, 'use_skill', [])
-        for sid in skill_ids:
-            if sid == 0:
-                continue
-            skill = get_skill_by_id(sid)
-            if not skill or not skill.is_passive:
-                continue
-            log = skill.on_turn_start(entity, context)
-            if log and log.strip():
-                logs.append(log)
-
-    # 장비 컴포넌트 전투 시작 훅 호출
-    equipment_logs = _apply_equipment_combat_start(user, context)
-    logs.extend(equipment_logs)
-
-    return logs
-
-
-def _process_passive_effects(actor) -> list[str]:
-    """매 턴 재생/조건부/턴성장 패시브 처리"""
-    from models.repos.skill_repo import get_skill_by_id
-
-    logs = []
-    skill_ids = getattr(actor, 'equipped_skill', None) or getattr(actor, 'use_skill', [])
-
-    for sid in skill_ids:
-        if sid == 0:
-            continue
-        skill = get_skill_by_id(sid)
-        if not skill or not skill.is_passive:
-            continue
-
-        for comp in skill.components:
-            tag = getattr(comp, '_tag', '')
-            log = ""
-            if tag == "passive_regen":
-                log = comp.process_regen(actor)
-            elif tag == "conditional_passive":
-                log = comp.process_conditional(actor)
-            elif tag == "passive_turn_scaling":
-                log = comp.process_turn_scaling(actor)
-            if log and log.strip():
-                logs.append(log)
-
-    # 장비 패시브 효과 처리
-    equipment_logs = _apply_equipment_passives(actor)
-    logs.extend(equipment_logs)
-
-    return logs
+# 구형 함수들은 새로운 클래스로 대체됨:
+# - _apply_combat_start_passives() → _passive_processor.apply_combat_start_passives()
+# - _process_passive_effects() → _passive_processor.process_passive_effects()
+# - _parse_combat_metrics_from_logs() → _metrics_recorder.parse_combat_metrics_from_logs()
+# - _reset_all_skill_usage_counts() → _passive_processor.reset_all_skill_usage_counts()
+# - 모든 _apply_equipment_*() → _equipment_manager.*()
+# - _get_equipment_components_sync() → _equipment_manager.get_equipment_components()
+# - _reset_equipment_component_caches() → _equipment_manager.reset_component_caches()
 
 
 def _check_death_triggers(
@@ -641,7 +613,7 @@ def _check_death_triggers(
     alive_before: set[int],
     killer: User,
 ) -> list[str]:
-    """사망한 몬스터의 on_death 컴포넌트 트리거 + 유저 장비 부활 효과"""
+    """사망한 몬스터의 on_death 컴포넌트 트리거"""
     from models.repos.skill_repo import get_skill_by_id
 
     logs = []
@@ -675,18 +647,38 @@ def _check_death_triggers(
                     if log and log.strip():
                         logs.append(log)
 
-    # 유저 사망 시 장비 부활 효과 (revive 컴포넌트)
-    if killer.now_hp <= 0:
-        equipment_components = _get_equipment_components_sync(killer)
-        for comp in equipment_components:
-            tag = getattr(comp, '_tag', '')
-            if tag == "revive" and hasattr(comp, 'on_death'):
-                log = comp.on_death(killer, None)
-                if log and log.strip():
-                    logs.append(log)
-                    # 부활했으면 다른 부활 컴포넌트는 실행 안함
-                    if killer.now_hp > 0:
-                        break
+    return logs
+
+
+def _check_player_revive(player: User, session) -> list[str]:
+    """
+    플레이어 사망 시 부활 효과 체크 (장비 revive 컴포넌트)
+
+    Args:
+        player: 체크할 플레이어 (리더 또는 참가자)
+        session: 던전 세션
+
+    Returns:
+        부활 로그 리스트
+    """
+    logs = []
+
+    # 죽지 않았으면 스킵
+    if player.now_hp > 0:
+        return logs
+
+    # 장비 부활 효과 체크
+    equipment_components = _equipment_manager.get_equipment_components(player)
+    for comp in equipment_components:
+        tag = getattr(comp, '_tag', '')
+        if tag == "revive" and hasattr(comp, 'on_death'):
+            log = comp.on_death(player, None)
+            if log and log.strip():
+                logs.append(log)
+                # 부활했으면 다른 부활 컴포넌트는 실행 안함
+                if player.now_hp > 0:
+                    logger.info(f"Player {player.discord_id} revived with {player.now_hp} HP")
+                    break
 
     return logs
 
@@ -701,53 +693,7 @@ def _is_skill_aoe(skill) -> bool:
     return False
 
 
-def _parse_combat_metrics_from_logs(logs: list[str]) -> tuple[int, int]:
-    """
-    전투 로그에서 데미지와 치유량을 추출
-
-    로그 패턴:
-    - 공격: "⚔️ **공격자** 「스킬명」 → **대상** 150💥..."
-    - 치유: "💚 **치유자** 「스킬명」 → **+100** HP"
-    - 흡혈: "   💚 흡혈: +50 HP"
-
-    Args:
-        logs: 행동 로그 리스트
-
-    Returns:
-        (총 데미지, 총 치유량)
-    """
-    import re
-
-    total_damage = 0
-    total_healing = 0
-
-    for log in logs:
-        try:
-            # 공격 데미지 파싱: "→ **대상** 150💥" 또는 "→ **대상** 150"
-            # 패턴: "→ **대상** 숫자"에서 숫자 추출
-            damage_match = re.search(r'→\s+\*\*[^*]+\*\*\s+(\d+)', log)
-            if damage_match and '⚔️' in log:
-                damage = int(damage_match.group(1))
-                total_damage += damage
-                continue
-
-            # 치유량 파싱: "→ **+100** HP" 또는 "흡혈: +50 HP"
-            # 패턴: "+숫자 HP" 또는 "**+숫자** HP" (별표는 옵션)
-            healing_match = re.search(r'\*?\*?\+(\d+)\*?\*?\s*HP', log)
-            if healing_match and ('💚' in log or 'HP' in log):
-                healing = int(healing_match.group(1))
-                total_healing += healing
-                continue
-
-            # 반사 데미지는 제외 (🔄가 있으면 스킵)
-            if '🔄' in log:
-                continue
-
-        except (ValueError, IndexError, AttributeError) as e:
-            logger.warning(f"Failed to parse combat metric from log: {log[:50]}... Error: {e}")
-            continue
-
-    return total_damage, total_healing
+# _parse_combat_metrics_from_logs() 함수는 CombatMetricsRecorder 클래스로 이동됨
 
 
 def _apply_synergy_hp_regen(user: User) -> str:
@@ -778,241 +724,20 @@ def _decrement_status_durations(entity) -> None:
                 entity.status.remove(status)
 
 
-def _reset_all_skill_usage_counts() -> None:
-    """모든 스킬의 사용 횟수 카운터 및 패시브 적용 상태 리셋 (전투 종료 시)"""
-    from models.repos.static_cache import skill_cache_by_id
-
-    for skill in skill_cache_by_id.values():
-        for component in skill.components:
-            if hasattr(component, 'used_count'):
-                component.used_count = 0
-            if hasattr(component, '_applied_entities'):
-                component._applied_entities.clear()
-            if hasattr(component, '_turn_counts'):
-                component._turn_counts.clear()
-            if hasattr(component, '_base_stats'):
-                component._base_stats.clear()
+# _reset_all_skill_usage_counts() 함수는 PassiveEffectProcessor 클래스로 이동됨
 
 
 # =============================================================================
 # 장비 컴포넌트 통합
 # =============================================================================
-
-
-def _get_equipment_components_sync(entity) -> list:
-    """
-    엔티티의 장비 컴포넌트 가져오기 (캐시 사용)
-
-    Args:
-        entity: User 또는 Monster
-
-    Returns:
-        컴포넌트 리스트
-    """
-    # 유저만 장비 착용
-    from models.users import User as UserClass
-    if not isinstance(entity, UserClass):
-        return []
-
-    # 캐시에서 가져오기
-    if hasattr(entity, '_equipment_components_cache'):
-        return entity._equipment_components_cache
-
-    return []
-
-
-def _apply_equipment_combat_start(user: User, context: CombatContext) -> list[str]:
-    """
-    전투 시작 시 장비 컴포넌트의 on_combat_start() 호출
-
-    Args:
-        user: 유저 엔티티
-        context: 전투 컨텍스트
-
-    Returns:
-        로그 메시지 리스트
-    """
-    logs = []
-    components = _get_equipment_components_sync(user)
-
-    for comp in components:
-        if hasattr(comp, 'on_combat_start'):
-            # 대상은 첫 번째 몬스터 (없으면 None)
-            target = context.get_primary_monster() if context.monsters else None
-            log = comp.on_combat_start(user, target)
-            if log and log.strip():
-                logs.append(log)
-
-    return logs
-
-
-def _apply_equipment_turn_start(entity, target=None) -> list[str]:
-    """
-    턴 시작 시 장비 컴포넌트의 on_turn_start() 호출
-
-    Args:
-        entity: 행동하는 엔티티
-        target: 대상 엔티티
-
-    Returns:
-        로그 메시지 리스트
-    """
-    logs = []
-    components = _get_equipment_components_sync(entity)
-
-    for comp in components:
-        if hasattr(comp, 'on_turn_start'):
-            log = comp.on_turn_start(entity, target)
-            if log and log.strip():
-                logs.append(log)
-
-    return logs
-
-
-def _apply_equipment_on_attack(attacker, target, damage: int) -> list[str]:
-    """
-    공격 후 장비 컴포넌트의 on_attack() 호출
-
-    Args:
-        attacker: 공격자
-        target: 대상
-        damage: 가한 피해량
-
-    Returns:
-        로그 메시지 리스트
-    """
-    logs = []
-    components = _get_equipment_components_sync(attacker)
-
-    for comp in components:
-        if hasattr(comp, 'on_attack'):
-            log = comp.on_attack(attacker, target, damage)
-            if log and log.strip():
-                logs.append(log)
-
-    return logs
-
-
-def _apply_equipment_on_damaged(defender, attacker, damage: int) -> list[str]:
-    """
-    피격 시 장비 컴포넌트의 on_damaged() 호출
-
-    Args:
-        defender: 방어자
-        attacker: 공격자
-        damage: 받은 피해량
-
-    Returns:
-        로그 메시지 리스트
-    """
-    logs = []
-    components = _get_equipment_components_sync(defender)
-
-    for comp in components:
-        if hasattr(comp, 'on_damaged'):
-            log = comp.on_damaged(defender, attacker, damage)
-            if log and log.strip():
-                logs.append(log)
-
-    return logs
-
-
-def _apply_equipment_passives(actor) -> list[str]:
-    """
-    턴마다 장비 패시브 효과 처리 (재생, 성장 등)
-
-    Args:
-        actor: 행동하는 엔티티
-
-    Returns:
-        로그 메시지 리스트
-    """
-    logs = []
-    components = _get_equipment_components_sync(actor)
-
-    for comp in components:
-        tag = getattr(comp, '_tag', '')
-        log = ""
-
-        # 재생 효과
-        if tag == "regeneration" and hasattr(comp, 'on_turn_start'):
-            log = comp.on_turn_start(actor, None)
-
-        # 전투 성장 효과
-        elif tag == "combat_stat_growth" and hasattr(comp, 'on_turn_start'):
-            log = comp.on_turn_start(actor, None)
-
-        # 조건부 스탯 보너스
-        elif tag == "conditional_stat_bonus" and hasattr(comp, 'on_turn_start'):
-            log = comp.on_turn_start(actor, None)
-
-        # 주기적 무적
-        elif tag == "periodic_invincibility" and hasattr(comp, 'on_turn_start'):
-            log = comp.on_turn_start(actor, None)
-
-        # 아군 보호
-        elif tag == "ally_protection" and hasattr(comp, 'on_turn_start'):
-            log = comp.on_turn_start(actor, None)
-
-        if log and log.strip():
-            logs.append(log)
-
-    return logs
-
-
-def _reset_equipment_component_caches(user: User) -> None:
-    """
-    장비 컴포넌트 캐시 및 상태 리셋 (전투 종료 시)
-
-    Args:
-        user: 유저 엔티티
-    """
-    components = _get_equipment_components_sync(user)
-
-    for comp in components:
-        # 사용 횟수 리셋
-        if hasattr(comp, 'used_count'):
-            comp.used_count = 0
-
-        # 적용 대상 리셋
-        if hasattr(comp, '_applied_entities'):
-            comp._applied_entities.clear()
-
-        # 턴 카운트 리셋
-        if hasattr(comp, '_turn_count'):
-            comp._turn_count = 0
-        if hasattr(comp, '_turn_counts'):
-            comp._turn_counts.clear()
-
-        # 이연 피해 리셋
-        if hasattr(comp, '_delayed_damage'):
-            comp._delayed_damage = 0
-
-        # 무적 상태 리셋
-        if hasattr(comp, '_invincible_remaining'):
-            comp._invincible_remaining = 0
-
-        # 부활 횟수 리셋
-        if hasattr(comp, '_revives_used'):
-            comp._revives_used = 0
-
-        # 연쇄 공격 리셋
-        if hasattr(comp, '_chain_count'):
-            comp._chain_count = 0
-
-        # 예측 상태 리셋
-        if hasattr(comp, '_predicted_this_turn'):
-            comp._predicted_this_turn = False
-
-        # 보호 상태 리셋
-        if hasattr(comp, '_is_protecting'):
-            comp._is_protecting = False
-        if hasattr(comp, '_taunt_remaining'):
-            comp._taunt_remaining = 0
-
-    # 캐시 자체도 제거
-    if hasattr(user, '_equipment_components_cache'):
-        delattr(user, '_equipment_components_cache')
+# 모든 장비 관련 함수는 EquipmentIntegrationManager 클래스로 이동됨:
+# - _get_equipment_components_sync() → _equipment_manager.get_equipment_components()
+# - _apply_equipment_combat_start() → _equipment_manager.apply_combat_start()
+# - _apply_equipment_turn_start() → _equipment_manager.apply_turn_start()
+# - _apply_equipment_on_attack() → _equipment_manager.apply_on_attack()
+# - _apply_equipment_on_damaged() → _equipment_manager.apply_on_damaged()
+# - _apply_equipment_passives() → _equipment_manager.apply_passives()
+# - _reset_equipment_component_caches() → _equipment_manager.reset_component_caches()
 
 
 # =============================================================================
@@ -1027,6 +752,8 @@ def _apply_campfire_buff(session) -> None:
     Args:
         session: 던전 세션
     """
+    from service.dungeon.status import AttackBuff
+
     campfire_buff = session.explore_buffs.get("campfire_atk_bonus")
     if not campfire_buff:
         return
@@ -1037,9 +764,30 @@ def _apply_campfire_buff(session) -> None:
         f"buff={int(buff_pct * 100)}%, remaining={campfire_buff['remaining_combats']}"
     )
 
-    # TODO: 실제 버프 적용 로직 (기존 버프 시스템과 통합)
-    # 현재는 explore_buffs에 저장된 상태로 전투 중 적용
-    # 향후 BuffComponent와 통합 가능
+    # 리더에게 버프 적용
+    user = session.user
+    attack_stat = user.get_stat().get(UserStatEnum.ATTACK, user.attack)
+    buff_amount = int(attack_stat * buff_pct)
+
+    campfire_attack_buff = AttackBuff()
+    campfire_attack_buff.amount = buff_amount
+    campfire_attack_buff.duration = 999  # 전투 종료 시까지 유지 (자동 제거됨)
+    user.status.append(campfire_attack_buff)
+
+    # 참가자들에게도 버프 적용
+    if session.participants:
+        for participant in session.participants.values():
+            participant_attack = participant.get_stat().get(UserStatEnum.ATTACK, participant.attack)
+            participant_buff_amount = int(participant_attack * buff_pct)
+
+            participant_campfire_buff = AttackBuff()
+            participant_campfire_buff.amount = participant_buff_amount
+            participant_campfire_buff.duration = 999
+            participant.status.append(participant_campfire_buff)
+
+            logger.debug(
+                f"Applied campfire buff to participant {participant.discord_id}: +{participant_buff_amount} ATK"
+            )
 
 
 def _decrement_campfire_buff(session) -> None:
@@ -1091,9 +839,17 @@ async def _update_race_progress(session, race_state: "RaceState", context: "Comb
         if race_state.is_finished():
             return
 
-        # 현재 세션의 HP 업데이트
+        # 현재 세션의 HP 업데이트 (리더 + 난입자 평균)
         user = session.user
-        user_hp_pct = user.now_hp / user.max_hp if user.max_hp > 0 else 0.0
+
+        # 팀 전체 HP 계산 (리더 + 난입자)
+        all_players = [user]
+        if session.participants:
+            all_players.extend(session.participants.values())
+
+        total_current_hp = sum(p.now_hp for p in all_players)
+        total_max_hp = sum(p.get_stat().get(UserStatEnum.HP, p.hp) for p in all_players)
+        user_hp_pct = total_current_hp / total_max_hp if total_max_hp > 0 else 0.0
 
         # 몬스터 HP 업데이트
         if context.monsters:

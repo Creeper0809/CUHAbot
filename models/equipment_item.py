@@ -57,6 +57,9 @@ class EquipmentItem(BaseItem):
     # 예: {"effects": [{"type": "crit_rate", "value": 5}, ...]}
     config = fields.JSONField(null=True)
 
+    acquisition_source = fields.CharField(max_length=50, default="", null=True)
+    """획득처 (상점, 몬스터명, 던전명 등)"""
+
     class Meta:
         table = "equipment_item"
 

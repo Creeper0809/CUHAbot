@@ -483,9 +483,11 @@ class NPCEncounter(Encounter):
                 db_user=user,
                 user_gold=user_gold,
                 shop_items=await ShopService.get_shop_items_for_display(
-                    dungeon_level=session.dungeon.require_level
+                    dungeon_level=session.dungeon.require_level,
+                    dungeon_name=session.dungeon.name if session.dungeon else "",
                 ),
-                timeout=120
+                timeout=60,
+                dungeon_session=session
             )
 
             shop_embed = shop_view.create_embed()

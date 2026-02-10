@@ -305,8 +305,10 @@ class InventorySelectCloseButton(discord.ui.Button):
 class InventorySelectButton(discord.ui.Button):
     """아이템 사용 버튼 (선택 창 열기)"""
 
-    def __init__(self):
-        super().__init__(label="아이템 사용", style=discord.ButtonStyle.success, emoji="✅", row=2)
+    def __init__(self, current_tab: ItemType = ItemType.CONSUME):
+        # 장비 탭이면 "장비 장착", 아니면 "아이템 사용"
+        label = "장비 장착" if current_tab == ItemType.EQUIP else "아이템 사용"
+        super().__init__(label=label, style=discord.ButtonStyle.success, emoji="✅", row=2)
 
     async def callback(self, interaction: discord.Interaction):
         view = self.view
@@ -323,7 +325,7 @@ class EnhancementSelectButton(discord.ui.Button):
     """강화 버튼 (선택 창 열기) - 장비 탭에서만 표시"""
 
     def __init__(self):
-        super().__init__(label="강화", style=discord.ButtonStyle.primary, emoji="⚒️", row=2)
+        super().__init__(label="강화", style=discord.ButtonStyle.primary, emoji="⚒️", row=1)
 
     async def callback(self, interaction: discord.Interaction):
         from views.enhancement_view import EnhancementView

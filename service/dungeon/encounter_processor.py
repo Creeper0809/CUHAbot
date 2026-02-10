@@ -82,8 +82,11 @@ async def process_encounter(session: DungeonSession, interaction: discord.Intera
     # 장비 컴포넌트에서 인카운터 확률 조정
     encounter_weights = _get_modified_encounter_weights(session.user)
 
+    # 마지막 구역: 보스 확정 (100%)
+    if session.exploration_step >= session.max_steps:
+        encounter_type = EncounterType.MONSTER
     # 전투 회피 버프 (몬스터 기피제)
-    if buffs.get("avoid_combat", 0) > 0:
+    elif buffs.get("avoid_combat", 0) > 0:
         encounter_type = EncounterFactory.roll_encounter_type(weights=encounter_weights, exclude_monster=True)
         buffs["avoid_combat"] -= 1
         if buffs["avoid_combat"] <= 0:
@@ -259,7 +262,7 @@ async def _attempt_flee(session: DungeonSession, monster: Monster) -> str:
             from service.combat_history.history_service import HistoryService
 
             await HistoryService.record_combat(
-                user_id=session.user.discord_id,
+                user_id=session.user.id,  # User.id (PK), not discord_id
                 dungeon_id=session.dungeon.id,
                 step=session.exploration_step,
                 monster_name=monster.name,
@@ -305,11 +308,11 @@ def _spawn_random_monster(dungeon_id: int, progress: float = 0.0) -> Monster:
         else:
             normal_spawns.append(spawn)
 
-    # 진행도 90% 이상일 때만 보스 등장 가능
-    can_spawn_boss = progress >= DUNGEON.BOSS_SPAWN_PROGRESS_THRESHOLD
+    # 마지막 스텝(100%)에서만 보스 등장 가능 (10% 확률)
+    is_final_step = progress >= 1.0
     boss_roll = random.random() < DUNGEON.BOSS_SPAWN_RATE_AT_END
 
-    if boss_spawns and can_spawn_boss and boss_roll:
+    if boss_spawns and is_final_step and boss_roll:
         spawn_pool = boss_spawns
     else:
         spawn_pool = normal_spawns or monsters_spawn

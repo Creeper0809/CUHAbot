@@ -29,21 +29,23 @@ async def seed_droptable():
     await Droptable.all().delete()
     print("✅ 기존 Droptable 데이터 삭제 완료")
 
-    # CSV 읽기 및 삽입
+    # CSV 읽기
+    droptables = []
     with open(csv_path, 'r', encoding='utf-8-sig') as f:
         reader = csv.DictReader(f)
-        count = 0
-
         for row in reader:
-            await Droptable.create(
+            droptables.append(Droptable(
                 id=int(row['id']),
                 drop_monster=int(row['drop_monster']) if row['drop_monster'] else None,
                 probability=float(row['probability']) if row['probability'] else None,
                 item_id=int(row['item_id']) if row['item_id'] else None,
-            )
-            count += 1
+            ))
 
-    print(f"✅ Droptable 시드 완료: {count}개 항목")
+    # bulk 삽입
+    if droptables:
+        await Droptable.bulk_create(droptables)
+
+    print(f"✅ Droptable 시드 완료: {len(droptables)}개 항목")
 
 
 async def main():

@@ -161,7 +161,7 @@ class CloseButton(discord.ui.Button):
             label="닫기",
             style=discord.ButtonStyle.danger,
             emoji="❌",
-            row=2
+            row=0
         )
 
     async def callback(self, interaction: discord.Interaction):
@@ -195,7 +195,8 @@ class ShopView(discord.ui.View):
         db_user: User,
         user_gold: int,
         shop_items: Optional[List[ShopItem]] = None,
-        timeout: int = 120
+        timeout: int = 60,
+        dungeon_session=None
     ):
         super().__init__(timeout=timeout)
 
@@ -204,6 +205,8 @@ class ShopView(discord.ui.View):
         self.user_gold = user_gold
         self.shop_items = shop_items or []
         self.message: Optional[discord.Message] = None
+        self.dungeon_session = dungeon_session
+        self.initial_exploration_step = dungeon_session.exploration_step if dungeon_session else None
 
         # 컴포넌트 추가
         self.add_item(ShopSelectButton())
@@ -230,6 +233,26 @@ class ShopView(discord.ui.View):
                 ephemeral=True
             )
             return False
+
+        # 던전 진행 상태 체크
+        if self.dungeon_session and self.initial_exploration_step is not None:
+            if self.dungeon_session.exploration_step != self.initial_exploration_step:
+                await interaction.response.send_message(
+                    "⚠️ 던전 탐험이 진행되어 상점이 폐쇄되었습니다.",
+                    ephemeral=True
+                )
+                self.stop()
+                if self.message:
+                    try:
+                        await self.message.edit(
+                            content="🚪 상점이 폐쇄되었습니다. (던전 진행으로 인해)",
+                            embed=None,
+                            view=None
+                        )
+                    except:
+                        pass
+                return False
+
         return True
 
     def create_embed(self) -> discord.Embed:
@@ -243,6 +266,45 @@ class ShopView(discord.ui.View):
             color=EmbedColor.DEFAULT
         )
 
+        # 판매 목록 (먼저 배치 - 스킬/장비/소비가 같은 행에)
+        skill_items = [i for i in self.shop_items if i.item_type == ShopItemType.SKILL]
+        equip_items = [i for i in self.shop_items if i.item_type == ShopItemType.EQUIPMENT]
+        consumable_items = [i for i in self.shop_items if i.item_type == ShopItemType.CONSUMABLE]
+
+        if skill_items:
+            skill_text = "\n".join([
+                f"✨ **{format_skill_name(i.name, i.grade_id)}** - {i.price}G"
+                for i in skill_items[:3]
+            ])
+            embed.add_field(
+                name="📜 스킬",
+                value=skill_text or "없음",
+                inline=True
+            )
+
+        if equip_items:
+            equip_text = "\n".join([
+                f"⚔️ **{format_item_name(i.name, i.grade_id)}** - {i.price}G"
+                for i in equip_items[:3]
+            ])
+            embed.add_field(
+                name="🗡️ 장비",
+                value=equip_text or "없음",
+                inline=True
+            )
+
+        if consumable_items:
+            consumable_text = "\n".join([
+                f"🧪 **{format_item_name(i.name, i.grade_id)}** - {i.price}G"
+                for i in consumable_items[:3]
+            ])
+            embed.add_field(
+                name="🧪 소비",
+                value=consumable_text or "없음",
+                inline=True
+            )
+
+        # 보유 골드와 안내 (두 번째 행)
         embed.add_field(
             name="💵 보유 골드",
             value=f"**{self.user_gold:,}G**",
@@ -254,44 +316,6 @@ class ShopView(discord.ui.View):
             value="상품 선택 창에서 구매하세요.",
             inline=True
         )
-
-        # 판매 목록
-        skill_items = [i for i in self.shop_items if i.item_type == ShopItemType.SKILL]
-        equip_items = [i for i in self.shop_items if i.item_type == ShopItemType.EQUIPMENT]
-        consumable_items = [i for i in self.shop_items if i.item_type == ShopItemType.CONSUMABLE]
-
-        if skill_items:
-            skill_text = "\n".join([
-                f"✨ **{format_skill_name(i.name, i.grade_id)}** - {i.price}G"
-                for i in skill_items[:5]
-            ])
-            embed.add_field(
-                name="📜 스킬",
-                value=skill_text or "없음",
-                inline=False
-            )
-
-        if equip_items:
-            equip_text = "\n".join([
-                f"⚔️ **{format_item_name(i.name, i.grade_id)}** - {i.price}G"
-                for i in equip_items[:5]
-            ])
-            embed.add_field(
-                name="🗡️ 장비",
-                value=equip_text or "없음",
-                inline=True
-            )
-
-        if consumable_items:
-            consumable_text = "\n".join([
-                f"🧪 **{format_item_name(i.name, i.grade_id)}** - {i.price}G"
-                for i in consumable_items[:5]
-            ])
-            embed.add_field(
-                name="🧪 소비",
-                value=consumable_text or "없음",
-                inline=True
-            )
 
         embed.set_footer(text="상품 선택 창에서 수량/구매")
 
@@ -375,7 +399,7 @@ class ShopSelectCloseButton(discord.ui.Button):
     """선택 창 닫기"""
 
     def __init__(self):
-        super().__init__(label="닫기", style=discord.ButtonStyle.danger, emoji="❌", row=1)
+        super().__init__(label="닫기", style=discord.ButtonStyle.danger, emoji="❌", row=2)
 
     async def callback(self, interaction: discord.Interaction):
         await interaction.response.edit_message(content="선택 창을 닫았습니다.", embed=None, view=None)

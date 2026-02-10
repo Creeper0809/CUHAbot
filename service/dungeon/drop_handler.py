@@ -1,7 +1,7 @@
 """
-드롭 핸들러 - 상자/보스 아이템/스킬 드롭
+드롭 핸들러 - 상자/보스 아이템/스킬/장비 드롭
 
-전투 승리 후 아이템 및 스킬 드롭을 처리합니다.
+전투 승리 후 아이템, 스킬, 장비 드롭을 처리합니다.
 """
 import logging
 import random
@@ -9,11 +9,29 @@ from typing import Optional
 
 from config import DROP, DUNGEON
 from exceptions import InventoryFullError
-from models import Droptable, Item, Monster, User
+from models import Droptable, Item, Monster, Skill_Model, User
 from service.item.inventory_service import InventoryService
 from service.item.grade_service import GradeService
 
 logger = logging.getLogger(__name__)
+
+
+_GRADE_DROP_RATES = {
+    1: "DROP_RATE_D",
+    2: "DROP_RATE_C",
+    3: "DROP_RATE_B",
+    4: "DROP_RATE_A",
+    5: "DROP_RATE_S",
+    6: "DROP_RATE_SS",
+    7: "DROP_RATE_SSS",
+    8: "DROP_RATE_MYTHIC",
+}
+
+
+def _get_grade_drop_rate(grade_id: int) -> float:
+    """등급 ID에 따른 드롭 확률 반환"""
+    attr = _GRADE_DROP_RATES.get(grade_id, "DROP_RATE_D")
+    return getattr(DROP, attr)
 
 
 async def try_drop_monster_box(session, monster: Monster) -> Optional[str]:
@@ -225,4 +243,153 @@ async def try_drop_monster_skill(user: User, monster: Monster) -> Optional[str]:
         return f"✨ **희귀 드롭!** 「{skill_name}」 스킬 획득!"
     except Exception as e:
         logger.error(f"Failed to drop skill: {e}")
+        return None
+
+
+async def try_drop_dungeon_skill(session) -> Optional[str]:
+    """
+    던전 클리어 시 해당 던전의 스킬 드롭 시도 (등급별 확률)
+
+    Args:
+        session: 던전 세션
+
+    Returns:
+        드롭 메시지 또는 None
+    """
+    from service.skill.skill_ownership_service import SkillOwnershipService
+    from utils.grade_display import get_grade_name
+
+    if not session.dungeon:
+        return None
+
+    dungeon_name = session.dungeon.name
+    skills = await Skill_Model.filter(
+        acquisition_source=dungeon_name,
+        player_obtainable=True,
+    )
+    if not skills:
+        return None
+
+    # 각 스킬을 등급 확률로 개별 롤링
+    winners = []
+    for skill in skills:
+        rate = _get_grade_drop_rate(skill.grade or 1)
+        if random.random() <= rate:
+            winners.append(skill)
+
+    if not winners:
+        return None
+
+    chosen = random.choice(winners)
+
+    try:
+        await SkillOwnershipService.add_skill(session.user, chosen.id, 1)
+        grade_name = get_grade_name(chosen.grade) if chosen.grade else "?"
+        logger.info(
+            f"Dungeon skill drop: user={session.user.discord_id}, "
+            f"dungeon={dungeon_name}, skill={chosen.name} [{grade_name}]"
+        )
+        return f"📜 **던전 스킬 드롭!** [{grade_name}] 「{chosen.name}」 획득!"
+    except Exception as e:
+        logger.error(f"Failed to drop dungeon skill: {e}")
+        return None
+
+
+async def try_drop_monster_equipment(user: User, monster: Monster) -> Optional[str]:
+    """
+    몬스터 장비 드롭 시도 (acquisition_source 기반)
+
+    Args:
+        user: 플레이어
+        monster: 처치한 몬스터
+
+    Returns:
+        드롭 메시지 또는 None
+    """
+    from models.repos.static_cache import get_equipment_ids_by_source, item_cache
+    from service.dungeon.reward_calculator import is_boss_monster
+
+    equipment_ids = get_equipment_ids_by_source(monster.name)
+    if not equipment_ids:
+        return None
+
+    if random.random() > DROP.EQUIPMENT_DROP_RATE:
+        return None
+
+    dropped_item_id = random.choice(equipment_ids)
+    item = item_cache.get(dropped_item_id)
+    if not item:
+        return None
+
+    context = "boss" if is_boss_monster(monster) else "normal"
+    grade = GradeService.roll_grade(context)
+    effects = GradeService.roll_special_effects(grade)
+    grade_display = GradeService.get_grade_display(grade)
+
+    try:
+        await InventoryService.add_item(
+            user, dropped_item_id, 1,
+            instance_grade=grade,
+            special_effects=effects,
+        )
+        logger.info(
+            f"Equipment drop: user={user.discord_id}, monster={monster.name}, "
+            f"item_id={dropped_item_id}, item_name={item.name}, grade={grade}"
+        )
+        return f"⚔️ **장비 드롭!** {grade_display} 「{item.name}」 획득!"
+    except InventoryFullError:
+        return f"⚔️ 장비를 얻었지만 인벤토리가 가득 찼다..."
+    except Exception as e:
+        logger.error(f"Failed to drop equipment: {e}")
+        return None
+
+
+async def try_drop_dungeon_equipment(session) -> Optional[str]:
+    """
+    던전 클리어 시 해당 던전의 장비 드롭 시도
+
+    Args:
+        session: 던전 세션
+
+    Returns:
+        드롭 메시지 또는 None
+    """
+    from models.repos.static_cache import get_equipment_ids_by_source, item_cache
+
+    if not session.dungeon:
+        return None
+
+    dungeon_name = session.dungeon.name
+    equipment_ids = get_equipment_ids_by_source(dungeon_name)
+    if not equipment_ids:
+        return None
+
+    if random.random() > DROP.DUNGEON_EQUIPMENT_DROP_RATE:
+        return None
+
+    dropped_item_id = random.choice(equipment_ids)
+    item = item_cache.get(dropped_item_id)
+    if not item:
+        return None
+
+    grade = GradeService.roll_grade("boss")
+    effects = GradeService.roll_special_effects(grade)
+    grade_display = GradeService.get_grade_display(grade)
+
+    try:
+        await InventoryService.add_item(
+            session.user, dropped_item_id, 1,
+            instance_grade=grade,
+            special_effects=effects,
+        )
+        logger.info(
+            f"Dungeon equipment drop: user={session.user.discord_id}, "
+            f"dungeon={dungeon_name}, item_id={dropped_item_id}, "
+            f"item_name={item.name}, grade={grade}"
+        )
+        return f"🗡️ **던전 장비 드롭!** {grade_display} 「{item.name}」 획득!"
+    except InventoryFullError:
+        return f"🗡️ 던전 장비를 얻었지만 인벤토리가 가득 찼다..."
+    except Exception as e:
+        logger.error(f"Failed to drop dungeon equipment: {e}")
         return None

@@ -152,7 +152,7 @@ class AttackComponent(SkillComponent):
             dmg_display = event.actual_damage if not event.was_immune else 0
             hit_logs.append(
                 f"⚔️ **{attacker.get_name()}** 「{self.skill_name}」 → "
-                f"**{target.get_name()}** {dmg_display}{crit_text}{attr_text}"
+                f"**{target.get_name()}**에게 {dmg_display} 데미지! {crit_text}{attr_text}"
             )
 
             # 반사 데미지

@@ -16,6 +16,7 @@ box_drop_table = {}  # {"normal": [(box_id, weight), ...], ...}
 _dungeon_levels_sorted: list[int] = []  # 던전 require_level 정렬 리스트
 equipment_cache = {}  # item_id -> EquipmentItem
 set_name_by_item_id = {}  # item_id -> set_name (e.g. "🔥 화염")
+equipment_by_source = {}  # acquisition_source -> [item_id, ...]
 
 
 async def load_static_data():
@@ -94,7 +95,7 @@ EQUIP_POS_NAMES = {
 
 async def _load_equipment_cache():
     """장비 및 세트 캐시 로드"""
-    global equipment_cache, set_name_by_item_id
+    global equipment_cache, set_name_by_item_id, equipment_by_source
 
     from models.equipment_item import EquipmentItem
     from models.set_item import SetItem, SetItemMember
@@ -103,6 +104,14 @@ async def _load_equipment_cache():
     all_equip = await EquipmentItem.all()
     equipment_cache = {eq.item_id: eq for eq in all_equip}
     logger.info(f"Loaded {len(equipment_cache)} equipment items into cache")
+
+    # 획득처별 장비 캐시 (acquisition_source -> [item_id, ...])
+    equipment_by_source = {}
+    for eq in all_equip:
+        source = getattr(eq, 'acquisition_source', None)
+        if source:
+            equipment_by_source.setdefault(source, []).append(eq.item_id)
+    logger.info(f"Loaded equipment_by_source: {len(equipment_by_source)} sources")
 
     # SetItemMember -> SetItem: item_id -> set_name
     all_sets = await SetItem.all()
@@ -121,6 +130,11 @@ async def _load_equipment_cache():
     logger.info(f"Loaded {len(set_name_by_item_id)} set memberships into cache")
 
 
+def get_equipment_ids_by_source(source: str) -> list[int]:
+    """획득처 이름으로 장비 아이템 ID 리스트 조회"""
+    return equipment_by_source.get(source, [])
+
+
 def get_equipment_info(item_id: int) -> dict:
     """장비 아이템 캐시 정보 조회"""
     eq = equipment_cache.get(item_id)
@@ -136,6 +150,12 @@ def get_equipment_info(item_id: int) -> dict:
         "ap_defense": eq.ap_defense,
         "speed": eq.speed,
         "set_name": set_name_by_item_id.get(item_id, ""),
+        "require_str": eq.require_str or 0,
+        "require_int": eq.require_int or 0,
+        "require_dex": eq.require_dex or 0,
+        "require_vit": eq.require_vit or 0,
+        "require_luk": eq.require_luk or 0,
+        "config": eq.config,  # 특수 효과 정보
     }
 
 

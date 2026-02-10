@@ -22,6 +22,11 @@ load_dotenv()
 
 CSV_PATH = os.path.join(PROJECT_ROOT, "data", "monsters.csv")
 
+MONSTER_FIELDS = [
+    "name", "description", "type", "hp", "attack",
+    "defense", "speed", "attribute", "skill_ids", "group_ids",
+]
+
 
 def load_monsters_from_csv() -> list[dict]:
     """CSV 파일에서 몬스터 데이터 로드"""
@@ -29,10 +34,8 @@ def load_monsters_from_csv() -> list[dict]:
     with open(CSV_PATH, "r", encoding="utf-8-sig") as f:
         reader = csv.DictReader(f)
         for row in reader:
-            # skill_ids는 JSON 배열로 저장되어 있음
             skill_ids = json.loads(row.get("skill_ids", "[]"))
 
-            # group_ids 파싱 (쉼표 구분 -> 정수 리스트)
             group_str = row.get("그룹", "").strip()
             if group_str:
                 group_ids = [int(x.strip()) for x in group_str.split(",") if x.strip()]
@@ -42,7 +45,7 @@ def load_monsters_from_csv() -> list[dict]:
             monsters.append({
                 "id": int(row["ID"]),
                 "name": row["이름"],
-                "description": row.get("드롭", ""),  # 설명 필드가 없으므로 드롭 정보 사용
+                "description": row.get("드롭", ""),
                 "type": row.get("타입", "CommonMob"),
                 "hp": int(row["HP"]),
                 "attack": int(row["Attack"]),
@@ -58,7 +61,11 @@ def load_monsters_from_csv() -> list[dict]:
 
 async def init_db():
     """데이터베이스 연결 초기화"""
-    db_url = f"postgres://{os.getenv('DATABASE_USER')}:{os.getenv('DATABASE_PASSWORD')}@{os.getenv('DATABASE_URL')}:{os.getenv('DATABASE_PORT')}/{os.getenv('DATABASE_TABLE')}"
+    db_url = (
+        f"postgres://{os.getenv('DATABASE_USER')}:{os.getenv('DATABASE_PASSWORD')}"
+        f"@{os.getenv('DATABASE_URL')}:{os.getenv('DATABASE_PORT')}"
+        f"/{os.getenv('DATABASE_TABLE')}"
+    )
     await Tortoise.init(
         db_url=db_url,
         modules={"models": ["models"]}
@@ -66,68 +73,73 @@ async def init_db():
 
 
 async def seed_monsters():
-    """몬스터 데이터 시드"""
+    """몬스터 데이터 시드 (bulk 연산)"""
     from models.monster import Monster
 
     all_monsters = load_monsters_from_csv()
+    csv_map = {m["id"]: m for m in all_monsters}
+    csv_ids = set(csv_map.keys())
     print(f"몬스터 데이터 시드 시작... (CSV에서 {len(all_monsters)}개 로드)")
-    created_count = 0
-    updated_count = 0
 
-    for monster_data in all_monsters:
-        monster, created = await Monster.get_or_create(
-            id=monster_data["id"],
-            defaults={
-                "name": monster_data["name"],
-                "description": monster_data["description"],
-                "type": monster_data["type"],
-                "hp": monster_data["hp"],
-                "attack": monster_data["attack"],
-                "defense": monster_data["defense"],
-                "speed": monster_data["speed"],
-                "attribute": monster_data["attribute"],
-                "skill_ids": monster_data["skill_ids"],
-                "group_ids": monster_data["group_ids"],
-            }
-        )
+    # 1. 기존 DB 몬스터 ID 조회 (단일 쿼리)
+    existing_ids = set(
+        await Monster.all().values_list("id", flat=True)
+    )
 
-        if created:
-            created_count += 1
-            skill_count = len(monster_data["skill_ids"])
-            group_count = len(monster_data["group_ids"])
-            group_str = f", 그룹 {group_count}종" if group_count > 0 else ", 솔로 전용"
-            print(f"  [생성] {monster_data['id']}: {monster_data['name']} (Lv{monster_data['level']}, 스킬 {skill_count}개{group_str})")
-        else:
-            # 기존 몬스터 업데이트
-            monster.name = monster_data["name"]
-            monster.description = monster_data["description"]
-            monster.type = monster_data["type"]
-            monster.hp = monster_data["hp"]
-            monster.attack = monster_data["attack"]
-            monster.defense = monster_data["defense"]
-            monster.speed = monster_data["speed"]
-            monster.attribute = monster_data["attribute"]
-            monster.skill_ids = monster_data["skill_ids"]
-            monster.group_ids = monster_data["group_ids"]
-            await monster.save()
+    # 2. 신규/갱신 분리
+    new_ids = csv_ids - existing_ids
+    update_ids = csv_ids & existing_ids
 
-            updated_count += 1
-            skill_count = len(monster_data["skill_ids"])
-            group_count = len(monster_data["group_ids"])
-            group_str = f", 그룹 {group_count}종" if group_count > 0 else ", 솔로"
-            print(f"  [업데이트] {monster_data['id']}: {monster_data['name']} (스킬 {skill_count}개{group_str})")
+    # 3. 신규 몬스터 bulk_create
+    if new_ids:
+        new_monsters = [
+            Monster(
+                id=csv_map[mid]["id"],
+                name=csv_map[mid]["name"],
+                description=csv_map[mid]["description"],
+                type=csv_map[mid]["type"],
+                hp=csv_map[mid]["hp"],
+                attack=csv_map[mid]["attack"],
+                defense=csv_map[mid]["defense"],
+                speed=csv_map[mid]["speed"],
+                attribute=csv_map[mid]["attribute"],
+                skill_ids=csv_map[mid]["skill_ids"],
+                group_ids=csv_map[mid]["group_ids"],
+            )
+            for mid in new_ids
+        ]
+        await Monster.bulk_create(new_monsters)
 
-    print(f"\n✅ 몬스터 시드 완료!")
-    print(f"  - 생성: {created_count}개")
-    print(f"  - 업데이트: {updated_count}개")
-    print(f"  - 총: {created_count + updated_count}개")
+    # 4. 기존 몬스터 bulk_update
+    if update_ids:
+        existing_monsters = await Monster.filter(id__in=update_ids)
+        for monster in existing_monsters:
+            data = csv_map[monster.id]
+            monster.name = data["name"]
+            monster.description = data["description"]
+            monster.type = data["type"]
+            monster.hp = data["hp"]
+            monster.attack = data["attack"]
+            monster.defense = data["defense"]
+            monster.speed = data["speed"]
+            monster.attribute = data["attribute"]
+            monster.skill_ids = data["skill_ids"]
+            monster.group_ids = data["group_ids"]
+        await Monster.bulk_update(existing_monsters, fields=MONSTER_FIELDS)
+
+    print(f"  생성: {len(new_ids)}, 갱신: {len(update_ids)}")
 
 
 async def main():
     """메인 실행 함수"""
-    await init_db()
-    await seed_monsters()
-    await Tortoise.close_connections()
+    try:
+        await init_db()
+        await seed_monsters()
+    except Exception as e:
+        print(f"오류 발생: {e}")
+        raise
+    finally:
+        await Tortoise.close_connections()
 
 
 if __name__ == "__main__":

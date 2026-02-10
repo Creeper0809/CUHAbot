@@ -92,8 +92,8 @@ def process_incoming_damage(
             f"🛡️ **{target.get_name()}** 보호막 -{absorbed} 흡수"
         )
 
-    # 5. HP 데미지 적용
-    remaining = max(remaining, 0)
+    # 5. HP 데미지 적용 (최소 1 데미지 보장)
+    remaining = max(remaining, 1)
     event.actual_damage = target.take_damage(remaining)
 
     # 6. 반사 데미지 계산 (반사 데미지는 다시 반사하지 않음)

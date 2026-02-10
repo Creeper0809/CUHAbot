@@ -161,15 +161,27 @@ class ServerAdminCammand(commands.Cog):
         target="지급 대상 (미지정시 자신)",
         item_id="아이템 ID",
         quantity="수량",
-        enhancement_level="강화 레벨 (기본 0)"
+        enhancement_level="강화 레벨 (기본 0)",
+        grade="장비 등급 (미지정시 랜덤)"
     )
+    @app_commands.choices(grade=[
+        app_commands.Choice(name="D", value="D"),
+        app_commands.Choice(name="C", value="C"),
+        app_commands.Choice(name="B", value="B"),
+        app_commands.Choice(name="A", value="A"),
+        app_commands.Choice(name="S", value="S"),
+        app_commands.Choice(name="SS", value="SS"),
+        app_commands.Choice(name="SSS", value="SSS"),
+        app_commands.Choice(name="신화", value="신화"),
+    ])
     async def give_item(
         self,
         interaction: discord.Interaction,
         item_id: int,
         quantity: int = 1,
         enhancement_level: int = 0,
-        target: discord.Member = None
+        target: discord.Member = None,
+        grade: app_commands.Choice[str] = None,
     ):
         # 권한 체크
         if not is_admin_or_temp(interaction):
@@ -203,12 +215,31 @@ class ServerAdminCammand(commands.Cog):
             )
             return
 
+        # 장비 아이템이면 등급 부여
+        from resources.item_emoji import ItemType
+        instance_grade = 0
+        special_effects = None
+
+        if item.type == ItemType.EQUIP:
+            from config.grade import get_grade_name_map
+            from service.item.grade_service import GradeService
+
+            if grade:
+                grade_name_map = get_grade_name_map()
+                instance_grade = grade_name_map.get(grade.value, 0)
+            else:
+                instance_grade = GradeService.roll_grade("normal")
+
+            special_effects = GradeService.roll_special_effects(instance_grade)
+
         try:
             await InventoryService.add_item(
                 target_user,
                 item_id=item_id,
                 quantity=quantity,
-                enhancement_level=enhancement_level
+                enhancement_level=enhancement_level,
+                instance_grade=instance_grade,
+                special_effects=special_effects,
             )
         except InventoryFullError:
             await interaction.response.send_message(
@@ -224,8 +255,13 @@ class ServerAdminCammand(commands.Cog):
             return
 
         target_name = target.display_name if target else interaction.user.display_name
+        grade_text = ""
+        if instance_grade > 0:
+            from service.item.grade_service import GradeService
+            grade_text = f" ({GradeService.get_grade_display(instance_grade)})"
+
         await interaction.response.send_message(
-            f"✅ **{target_name}**에게 **{item.name}** x{quantity} 지급 완료",
+            f"✅ **{target_name}**에게 **{item.name}**{grade_text} x{quantity} 지급 완료",
             ephemeral=True
         )
 

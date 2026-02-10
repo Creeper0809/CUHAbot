@@ -247,21 +247,21 @@ class VoidErosionEffect(FieldEffect):
 
         # 모든 유저 버프 잠식
         for user in users:
-            if user.buffs:
-                for buff in user.buffs[:]:
+            if user.status:
+                for buff in user.status[:]:
                     if hasattr(buff, 'duration') and buff.duration > 0:
                         buff.duration = max(0, buff.duration - 1)
                         if buff.duration <= 0:
-                            user.buffs.remove(buff)
+                            user.status.remove(buff)
 
         # 몬스터 버프 잠식
         for monster in monsters:
-            if monster.buffs:
-                for buff in monster.buffs[:]:
+            if monster.status:
+                for buff in monster.status[:]:
                     if hasattr(buff, 'duration') and buff.duration > 0:
                         buff.duration = max(0, buff.duration - 1)
                         if buff.duration <= 0:
-                            monster.buffs.remove(buff)
+                            monster.status.remove(buff)
 
         if self.turn_count == 1:
             logs.append(f"🕳️ **공허의 잠식** 발동! 버프가 빠르게 사라진다...")
@@ -280,29 +280,31 @@ class WaterPressureEffect(FieldEffect):
         self.applied = False
 
     def on_round_start(self, users: list["User"], monsters: list["Monster"]) -> list[str]:
-        from service.dungeon.components.stat_components import BuffComponent
+        from service.dungeon.status import DefenseBuff
         from models import UserStatEnum
 
         logs = []
         self.turn_count += 1
 
         if not self.applied:
-            # 방어력 디버프 적용 (영구)
-            debuff = BuffComponent(
-                stat=UserStatEnum.DEFENSE,
-                value=-0.1,
-                duration=999,
-                is_percentage=True
-            )
-
-            # 모든 유저에게 적용
+            # 각 엔티티마다 개별 디버프 생성 (방어력 -10%)
+            all_entities = []
             for user in users:
                 if user.now_hp > 0:
-                    user.buffs.append(debuff)
-
-            # 몬스터들에게 적용
+                    all_entities.append(user)
             for monster in monsters:
-                monster.buffs.append(debuff)
+                all_entities.append(monster)
+
+            for entity in all_entities:
+                stat = entity.get_stat()
+                defense = stat.get(UserStatEnum.DEFENSE, getattr(entity, 'defense', 0))
+                debuff_amount = -int(defense * 0.1)  # 음수로 디버프
+
+                debuff = DefenseBuff()
+                debuff.amount = debuff_amount
+                debuff.duration = 999
+                debuff.is_debuff = True
+                entity.status.append(debuff)
 
             self.applied = True
             logs.append(f"💧 **수압 효과** 발동! 모두의 방어력 -10%")
@@ -321,29 +323,30 @@ class AwakeningAuraEffect(FieldEffect):
         self.applied = False
 
     def on_round_start(self, users: list["User"], monsters: list["Monster"]) -> list[str]:
-        from service.dungeon.components.stat_components import BuffComponent
+        from service.dungeon.status import AttackBuff
         from models import UserStatEnum
 
         logs = []
         self.turn_count += 1
 
         if not self.applied:
-            # 공격력 버프 적용 (영구)
-            buff = BuffComponent(
-                stat=UserStatEnum.ATTACK,
-                value=0.15,
-                duration=999,
-                is_percentage=True
-            )
-
-            # 모든 유저에게 적용
+            # 각 엔티티마다 개별 버프 생성 (공격력 +15%)
+            all_entities = []
             for user in users:
                 if user.now_hp > 0:
-                    user.buffs.append(buff)
-
-            # 몬스터들에게 적용
+                    all_entities.append(user)
             for monster in monsters:
-                monster.buffs.append(buff)
+                all_entities.append(monster)
+
+            for entity in all_entities:
+                stat = entity.get_stat()
+                attack = stat.get(UserStatEnum.ATTACK, getattr(entity, 'attack', 0))
+                buff_amount = int(attack * 0.15)
+
+                buff = AttackBuff()
+                buff.amount = buff_amount
+                buff.duration = 999
+                entity.status.append(buff)
 
             self.applied = True
             logs.append(f"✨ **각성의 기운** 발동! 모두의 공격력 +15%")

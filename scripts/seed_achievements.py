@@ -73,7 +73,7 @@ def load_achievements_from_csv() -> list[dict]:
 
 
 async def seed_achievements():
-    """업적 데이터 시딩"""
+    """업적 데이터 시딩 (bulk 연산)"""
     # DB 초기화
     await Tortoise.init(
         db_url=f"postgres://{DATABASE_USER}:{DATABASE_PASSWORD}@{DATABASE_URL}:{DATABASE_PORT}/{DATABASE_TABLE}",
@@ -83,29 +83,53 @@ async def seed_achievements():
     logger.info("업적 데이터 시딩 시작...")
 
     # CSV에서 업적 데이터 로드
-    achievements = load_achievements_from_csv()
+    achievements_data = load_achievements_from_csv()
 
-    # 기존 업적 삭제 (선택적)
-    # await Achievement.all().delete()
-    # logger.info("기존 업적 데이터 삭제 완료")
+    # 기존 업적 삭제
+    await Achievement.all().delete()
+    logger.info("기존 업적 데이터 삭제 완료")
 
-    # prerequisite_achievement_id 매핑을 위한 ID 맵
-    id_map = {}
+    # prerequisite 참조 인덱스 보존 (CSV 행 번호 → prerequisite 행 번호)
+    prerequisite_map = {}
+    for idx, ach_data in enumerate(achievements_data):
+        if ach_data.get("prerequisite_achievement_id"):
+            prerequisite_map[idx] = ach_data["prerequisite_achievement_id"]
 
-    for idx, ach_data in enumerate(achievements, start=1):
-        # prerequisite_achievement_id 해결
-        if "prerequisite_achievement_id" in ach_data and ach_data["prerequisite_achievement_id"]:
-            original_id = ach_data["prerequisite_achievement_id"]
-            ach_data["prerequisite_achievement_id"] = id_map.get(original_id)
+    # 1차: prerequisite 없이 bulk_create
+    new_achievements = [
+        Achievement(
+            name=d["name"],
+            category=d["category"],
+            tier=d["tier"],
+            description=d["description"],
+            objective_config=d["objective_config"],
+            reward_config=d["reward_config"],
+            prerequisite_achievement_id=None,
+            title_name=d["title_name"],
+        )
+        for d in achievements_data
+    ]
+    await Achievement.bulk_create(new_achievements)
 
-        try:
-            achievement = await Achievement.create(**ach_data)
-            id_map[idx] = achievement.id
-            logger.info(f"✅ {achievement.name} {achievement.tier_name} (ID: {achievement.id})")
-        except Exception as e:
-            logger.error(f"❌ {ach_data['name']} {ach_data['tier']} 생성 실패: {e}")
+    # 2차: 생성된 ID 조회 후 prerequisite 매핑
+    if prerequisite_map:
+        created = await Achievement.all().order_by("id")
+        # CSV 행 번호(0-based) → DB ID
+        idx_to_id = {i: ach.id for i, ach in enumerate(created)}
 
-    logger.info(f"업적 데이터 시딩 완료! 총 {len(achievements)}개 업적 생성")
+        to_update = []
+        for idx, prereq_csv_idx in prerequisite_map.items():
+            # CSV의 prerequisite_achievement_id는 1-based 행 번호
+            prereq_db_id = idx_to_id.get(prereq_csv_idx - 1)
+            if prereq_db_id:
+                created[idx].prerequisite_achievement_id = prereq_db_id
+                to_update.append(created[idx])
+
+        if to_update:
+            await Achievement.bulk_update(to_update, fields=["prerequisite_achievement_id"])
+            logger.info(f"선행 업적 매핑 완료: {len(to_update)}개")
+
+    logger.info(f"업적 데이터 시딩 완료! 총 {len(achievements_data)}개 업적 생성")
 
     await Tortoise.close_connections()
 

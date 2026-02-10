@@ -100,7 +100,7 @@ async def start_dungeon(session: DungeonSession, interaction: discord.Interactio
         if random.random() < 0.20:
             try:
                 from service.combat_history.history_service import HistoryService
-                from datetime import datetime
+                from datetime import datetime, timezone
 
                 histories = await HistoryService.get_nearby_histories(
                     session.dungeon.id,
@@ -114,7 +114,7 @@ async def start_dungeon(session: DungeonSession, interaction: discord.Interactio
                     result_emoji = {"victory": "⚔️", "defeat": "💀", "fled": "💨"}
 
                     # 시간 차이 계산
-                    time_diff = datetime.now() - history.created_at
+                    time_diff = datetime.now(timezone.utc) - history.created_at
                     if time_diff.seconds < 60:
                         time_ago = f"{time_diff.seconds}초 전"
                     else:
@@ -123,7 +123,7 @@ async def start_dungeon(session: DungeonSession, interaction: discord.Interactio
                     embed = discord.Embed(
                         title="👻 환영을 발견했다...",
                         description=(
-                            f"{result_emoji.get(history.result, '❓')} **{history.user.name}**의 흔적\n\n"
+                            f"{result_emoji.get(history.result, '❓')} **{history.user.username}**의 흔적\n\n"
                             f"몬스터: {history.monster_name}\n"
                             f"결과: {history.result}\n"
                             f"데미지: {history.total_damage:,}\n"
@@ -200,6 +200,17 @@ async def _handle_dungeon_clear(session, interaction, event_queue) -> bool:
         f"🎉 던전을 정복했다!\n"
         f"⭐ 클리어 보너스: **+{bonus_exp}** EXP, **+{bonus_gold}** G"
     )
+
+    # 던전 스킬 드롭 시도
+    from service.dungeon.drop_handler import try_drop_dungeon_skill, try_drop_dungeon_equipment
+    dungeon_skill_msg = await try_drop_dungeon_skill(session)
+    if dungeon_skill_msg:
+        event_queue.append(dungeon_skill_msg)
+
+    # 던전 장비 드롭 시도
+    dungeon_equip_msg = await try_drop_dungeon_equipment(session)
+    if dungeon_equip_msg:
+        event_queue.append(dungeon_equip_msg)
 
     await _update_dungeon_log(session, event_queue)
 

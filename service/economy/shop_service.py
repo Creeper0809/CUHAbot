@@ -162,13 +162,18 @@ class ShopService:
         return result
 
     @staticmethod
-    async def get_shop_items_for_display(dungeon_level: int = 1) -> List[ShopItem]:
+    async def get_shop_items_for_display(
+        dungeon_level: int = 1,
+        dungeon_name: str = "",
+    ) -> List[ShopItem]:
         """상점 드롭다운에 표시할 아이템 구성"""
         potions = await ShopService._build_potion_items()
         random_equipment = await ShopService._build_random_equipment_items(
             count=5, dungeon_level=dungeon_level
         )
-        random_skills = await ShopService._build_random_skill_items(count=5)
+        random_skills = await ShopService._build_random_skill_items(
+            count=5, dungeon_name=dungeon_name
+        )
         return potions + random_equipment + random_skills
 
     @staticmethod
@@ -206,6 +211,7 @@ class ShopService:
         equipment_items = await EquipmentItem.filter(
             require_level__gte=prev_level,
             require_level__lte=dungeon_level,
+            acquisition_source="상점",
         ).prefetch_related("item")
         if not equipment_items:
             return []
@@ -237,10 +243,13 @@ class ShopService:
         return selected
 
     @staticmethod
-    async def _build_random_skill_items(count: int = 5) -> List[ShopItem]:
+    async def _build_random_skill_items(
+        count: int = 5,
+        dungeon_name: str = "",
+    ) -> List[ShopItem]:
         """스킬을 등급 확률에 따라 랜덤 선택 (DB 조회)"""
         grade_map = {grade.id: grade.name for grade in await Grade.all()}
-        skills = await Skill_Model.filter(player_obtainable=True)
+        skills = await Skill_Model.filter(acquisition_source="상점")
 
         skills_by_grade: Dict[str, List[Skill_Model]] = {}
         for skill in skills:
@@ -259,9 +268,19 @@ class ShopService:
         ]
 
         selected: List[ShopItem] = []
-        selected_targets = set()
-        attempts = 0
+        selected_targets: set[int] = set()
 
+        # 던전 스킬을 등급 확률로 1개 추가 시도
+        if dungeon_name:
+            dungeon_skill = await ShopService._try_pick_dungeon_skill(
+                dungeon_name, grade_weights, grade_map, selected_targets,
+            )
+            if dungeon_skill:
+                selected.append(dungeon_skill)
+                selected_targets.add(dungeon_skill.target_id)
+
+        # 상점 스킬 채우기
+        attempts = 0
         while len(selected) < count and attempts < 100:
             attempts += 1
             grades, weights = zip(*grade_weights)
@@ -310,6 +329,55 @@ class ShopService:
                 )
 
         return selected
+
+    @staticmethod
+    async def _try_pick_dungeon_skill(
+        dungeon_name: str,
+        grade_weights: list,
+        grade_map: Dict[int, str],
+        excluded_ids: set[int],
+    ) -> Optional[ShopItem]:
+        """던전 스킬 중 등급 확률로 1개 선택 시도"""
+        dungeon_skills = await Skill_Model.filter(
+            acquisition_source=dungeon_name,
+            player_obtainable=True,
+        )
+        if not dungeon_skills:
+            return None
+
+        # 등급별 분류
+        by_grade: Dict[str, List[Skill_Model]] = {}
+        for skill in dungeon_skills:
+            grade_name = grade_map.get(skill.grade, "D") if skill.grade else "D"
+            by_grade.setdefault(grade_name, []).append(skill)
+
+        # 등급 확률로 선택
+        attempts = 0
+        while attempts < 50:
+            attempts += 1
+            grades, weights = zip(*grade_weights)
+            grade = random.choices(grades, weights=weights, k=1)[0]
+
+            candidates = by_grade.get(grade, [])
+            if not candidates:
+                continue
+
+            chosen = random.choice(candidates)
+            if chosen.id in excluded_ids:
+                continue
+
+            price = ShopService.get_grade_price(chosen.grade)
+            return ShopItem(
+                id=ShopService._build_shop_item_id("skill", chosen.id),
+                name=chosen.name,
+                description=chosen.description or "던전 스킬",
+                price=price,
+                item_type=ShopItemType.SKILL,
+                target_id=chosen.id,
+                grade_id=chosen.grade,
+            )
+
+        return None
 
     @staticmethod
     def _build_shop_item_id(prefix: str, target_id: int) -> int:

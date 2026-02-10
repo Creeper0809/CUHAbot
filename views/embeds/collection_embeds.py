@@ -223,6 +223,10 @@ def _add_skill_basic_info(embed: discord.Embed, skill) -> None:
         if keywords:
             info_lines.append(f"**키워드**: {', '.join(keywords)}")
 
+    acquisition = getattr(skill.skill_model, 'acquisition_source', None)
+    if acquisition:
+        info_lines.append(f"**획득처**: {acquisition}")
+
     embed.add_field(name="📋 기본 정보", value="\n".join(info_lines), inline=False)
 
 

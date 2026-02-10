@@ -62,7 +62,17 @@ def get_box_pool_by_monster(monster: Monster) -> list[tuple[int, float]]:
     from models.repos.static_cache import get_box_pool_by_monster_type
 
     monster_type = normalize_monster_type(monster)
-    return get_box_pool_by_monster_type(monster_type)
+
+    # Enum 값 → CSV 키 매핑 (CommonMob → normal, EliteMob → elite, BossMob → boss)
+    type_mapping = {
+        "CommonMob": "normal",
+        "EliteMob": "elite",
+        "BossMob": "boss",
+        "RadeMob": "raid",  # 레이드도 매핑 (CSV에 없으면 빈 리스트 반환)
+    }
+
+    csv_key = type_mapping.get(monster_type, monster_type)
+    return get_box_pool_by_monster_type(csv_key)
 
 
 # =============================================================================
@@ -117,7 +127,7 @@ async def process_combat_result_multi(session, context, turn_count: int) -> str:
 
             monster_name = context.monsters[0].name if context.monsters else "Unknown"
             await HistoryService.record_combat(
-                user_id=user.discord_id,
+                user_id=user.id,  # User.id (PK), not discord_id
                 dungeon_id=session.dungeon.id,
                 step=session.exploration_step,
                 monster_name=monster_name,
@@ -270,7 +280,7 @@ async def process_combat_result_multi(session, context, turn_count: int) -> str:
 
         monster_name = context.monsters[0].name if context.monsters else "Unknown"
         await HistoryService.record_combat(
-            user_id=user.discord_id,
+            user_id=user.id,  # User.id (PK), not discord_id
             dungeon_id=session.dungeon.id,
             step=session.exploration_step,
             monster_name=monster_name,
@@ -325,7 +335,7 @@ async def _try_all_drops(session, user: User, monster: Monster) -> list[str]:
     """모든 드롭 시도 후 메시지 리스트 반환"""
     from service.dungeon.drop_handler import (
         try_drop_boss_special_item, try_drop_monster_box, try_drop_monster_skill,
-        try_drop_monster_material,
+        try_drop_monster_material, try_drop_monster_equipment,
     )
 
     drops = []
@@ -349,5 +359,10 @@ async def _try_all_drops(session, user: User, monster: Monster) -> list[str]:
     skill = await try_drop_monster_skill(user, monster)
     if skill:
         drops.append(skill)
+
+    # 장비 드롭
+    equipment = await try_drop_monster_equipment(user, monster)
+    if equipment:
+        drops.append(equipment)
 
     return drops

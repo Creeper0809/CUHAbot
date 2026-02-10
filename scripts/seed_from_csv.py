@@ -211,18 +211,18 @@ async def seed_grades():
     from models.grade import Grade
 
     grades = [
-        Grade(id=1, name="D", description="일반 등급"),
-        Grade(id=2, name="C", description="고급 등급"),
-        Grade(id=3, name="B", description="희귀 등급"),
-        Grade(id=4, name="A", description="영웅 등급"),
-        Grade(id=5, name="S", description="전설 등급"),
-        Grade(id=6, name="SS", description="고대 등급"),
-        Grade(id=7, name="SSS", description="신화 등급"),
-        Grade(id=8, name="Mythic", description="창세 등급"),
+        Grade(id=1, name="D", description="일반 등급", shop_price=100),
+        Grade(id=2, name="C", description="고급 등급", shop_price=300),
+        Grade(id=3, name="B", description="희귀 등급", shop_price=800),
+        Grade(id=4, name="A", description="영웅 등급", shop_price=2000),
+        Grade(id=5, name="S", description="전설 등급", shop_price=5000),
+        Grade(id=6, name="SS", description="고대 등급", shop_price=12000),
+        Grade(id=7, name="SSS", description="신화 등급", shop_price=30000),
+        Grade(id=8, name="Mythic", description="창세 등급", shop_price=80000),
     ]
 
     await Grade.bulk_create(grades)
-    print(f"✓ Grade {len(grades)}개 삽입")
+    print(f"✓ Grade {len(grades)}개 삽입 (상점 가격 포함)")
 
 
 async def seed_equip_pos():
@@ -342,6 +342,7 @@ async def seed_skills():
             attribute=row.get("속성", "무속성") or "무속성",
             keyword=row.get("키워드", ""),
             player_obtainable=player_obtainable,
+            acquisition_source=row.get("획득처", "").strip(),
         ))
 
     await Skill_Model.bulk_create(skills)
@@ -436,7 +437,7 @@ async def seed_equipment_items():
         items.append(Item(
             id=item_id,
             name=row["이름"],
-            description=row.get("특수 효과", "") or "",
+            description=row.get("description", "") or row.get("특수 효과", "") or "",
             cost=0,
             type=ItemType.EQUIP,
         ))
@@ -461,6 +462,7 @@ async def seed_equipment_items():
             require_vit=safe_int(row.get("Req_VIT", "0")),
             require_luk=safe_int(row.get("Req_LUK", "0")),
             config=config,
+            acquisition_source=row.get("획득처", "").strip(),
         ))
 
     await Item.bulk_create(items)

@@ -68,7 +68,7 @@ class HealComponent(SkillComponent):
         attacker.now_hp = min(attacker.now_hp + total_heal, max_hp)
         actual_heal = attacker.now_hp - old_hp
 
-        return f"💚 **{attacker.get_name()}** 「{self.skill_name}」 → **+{actual_heal}** HP"
+        return f"💚 **{attacker.get_name()}** 「{self.skill_name}」 → **{attacker.get_name()}**에게 +{actual_heal} HP"
 
 
 @register_skill_with_tag("shield")

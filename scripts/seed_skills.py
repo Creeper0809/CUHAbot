@@ -27,8 +27,9 @@ CSV_PATH = os.path.join(PROJECT_ROOT, "data", "skills.csv")
 GRADE_MAP = {
     "D": 1, "C": 2, "B": 3, "A": 4,
     "S": 5, "SS": 6, "SSS": 7, "신화": 8,
-    "일반": 1, "희귀": 3, "영웅": 5, "전설": 6,
 }
+
+SKILL_FIELDS = ["name", "description", "config", "attribute", "keyword", "grade", "player_obtainable", "acquisition_source"]
 
 
 def load_skills_from_csv() -> list[dict]:
@@ -54,6 +55,7 @@ def load_skills_from_csv() -> list[dict]:
                 "keyword": row.get("키워드", ""),
                 "grade": grade,
                 "player_obtainable": player_obtainable,
+                "acquisition_source": row.get("획득처", "").strip(),
             })
     return skills
 
@@ -72,65 +74,72 @@ async def init_db():
 
 
 async def seed_skills():
-    """스킬 데이터 동기화 (CSV 기준)"""
+    """스킬 데이터 동기화 (CSV 기준, bulk 연산)"""
     from models.skill import Skill_Model
     from models.user_owned_skill import UserOwnedSkill
     from models.user_skill_deck import UserSkillDeck
 
     all_skills = load_skills_from_csv()
     csv_ids = {s["id"] for s in all_skills}
+    csv_map = {s["id"]: s for s in all_skills}
     print(f"CSV에서 {len(all_skills)}개 스킬 로드")
 
-    # 1. CSV 스킬 생성/갱신
-    created_count = 0
-    updated_count = 0
+    # 1. 기존 DB 스킬 ID 조회 (단일 쿼리)
+    existing_ids = set(
+        await Skill_Model.all().values_list("id", flat=True)
+    )
 
-    for skill_data in all_skills:
-        skill, created = await Skill_Model.get_or_create(
-            id=skill_data["id"],
-            defaults={
-                "name": skill_data["name"],
-                "description": skill_data["description"],
-                "config": skill_data["config"],
-                "attribute": skill_data["attribute"],
-                "keyword": skill_data["keyword"],
-                "grade": skill_data["grade"],
-                "player_obtainable": skill_data["player_obtainable"],
-            }
-        )
+    # 2. 신규/갱신 분리
+    new_ids = csv_ids - existing_ids
+    update_ids = csv_ids & existing_ids
 
-        if created:
-            created_count += 1
-        else:
-            skill.name = skill_data["name"]
-            skill.description = skill_data["description"]
-            skill.config = skill_data["config"]
-            skill.attribute = skill_data["attribute"]
-            skill.keyword = skill_data["keyword"]
-            skill.grade = skill_data["grade"]
-            skill.player_obtainable = skill_data["player_obtainable"]
-            await skill.save()
-            updated_count += 1
+    # 3. 신규 스킬 bulk_create
+    if new_ids:
+        new_skills = [
+            Skill_Model(
+                id=csv_map[sid]["id"],
+                name=csv_map[sid]["name"],
+                description=csv_map[sid]["description"],
+                config=csv_map[sid]["config"],
+                attribute=csv_map[sid]["attribute"],
+                keyword=csv_map[sid]["keyword"],
+                grade=csv_map[sid]["grade"],
+                player_obtainable=csv_map[sid]["player_obtainable"],
+                acquisition_source=csv_map[sid]["acquisition_source"],
+            )
+            for sid in new_ids
+        ]
+        await Skill_Model.bulk_create(new_skills)
 
-    print(f"  생성: {created_count}, 갱신: {updated_count}")
+    # 4. 기존 스킬 bulk_update
+    if update_ids:
+        existing_skills = await Skill_Model.filter(id__in=update_ids)
+        for skill in existing_skills:
+            data = csv_map[skill.id]
+            skill.name = data["name"]
+            skill.description = data["description"]
+            skill.config = data["config"]
+            skill.attribute = data["attribute"]
+            skill.keyword = data["keyword"]
+            skill.grade = data["grade"]
+            skill.player_obtainable = data["player_obtainable"]
+            skill.acquisition_source = data["acquisition_source"]
+        await Skill_Model.bulk_update(existing_skills, fields=SKILL_FIELDS)
 
-    # 2. CSV에 없는 DB 스킬 찾기
-    db_skills = await Skill_Model.all()
-    orphan_skills = [s for s in db_skills if s.id not in csv_ids]
+    print(f"  생성: {len(new_ids)}, 갱신: {len(update_ids)}")
 
-    if not orphan_skills:
+    # 5. CSV에 없는 DB 스킬 삭제
+    orphan_ids = existing_ids - csv_ids
+    if not orphan_ids:
         print("\n삭제할 고아 스킬 없음")
         return
 
-    # 3. 영향 받는 유저 정보 출력
-    print(f"\n--- CSV에 없는 DB 스킬 {len(orphan_skills)}개 발견 ---")
-    for skill in orphan_skills:
-        owned_count = await UserOwnedSkill.filter(skill_id=skill.id).count()
-        deck_count = await UserSkillDeck.filter(skill_id=skill.id).count()
-        print(f"  [{skill.id}] {skill.name} — 소유: {owned_count}명, 덱: {deck_count}건")
+    print(f"\n--- CSV에 없는 DB 스킬 {len(orphan_ids)}개 발견 ---")
+    for sid in orphan_ids:
+        owned_count = await UserOwnedSkill.filter(skill_id=sid).count()
+        deck_count = await UserSkillDeck.filter(skill_id=sid).count()
+        print(f"  [{sid}] 소유: {owned_count}명, 덱: {deck_count}건")
 
-    # 4. 삭제 (CASCADE로 user_owned_skill, user_skill_deck 자동 정리)
-    orphan_ids = [s.id for s in orphan_skills]
     deleted = await Skill_Model.filter(id__in=orphan_ids).delete()
     print(f"\n삭제 완료: {deleted}개 스킬 (연관 유저 데이터 CASCADE 정리됨)")
 

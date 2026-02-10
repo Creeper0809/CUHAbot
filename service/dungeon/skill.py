@@ -116,7 +116,13 @@ class Skill:
     def on_turn(self, attacker, target):
         logs = []
         for component in self._components:
-            logs.append(component.on_turn(attacker, target))
+            log = component.on_turn(attacker, target)
+            if log:
+                logs.append(log)
+                # 공격이 빗나가면 이후 컴포넌트 실행 중단
+                # (힐, 상태이상 등이 적용되지 않도록)
+                if "MISS" in log:
+                    break
         return "\n".join(logs)
 
     def on_turn_end(self, attacker, target):

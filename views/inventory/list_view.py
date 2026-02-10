@@ -16,7 +16,7 @@ from exceptions import CombatRestrictionError, ItemNotFoundError, ItemNotEquippa
 from utils.grade_display import format_item_name
 
 from views.inventory.components import (
-    SortType, ItemSelectDropdown, TabButton, SortButton, SearchButton,
+    SortType, ItemSelectDropdown, TabButton, SortButton, SearchButton, DescriptionButton,
 )
 
 _STAT_LABELS = {
@@ -146,14 +146,15 @@ class InventoryView(discord.ui.View):
         self.add_item(TabButton("📜 스킬", ItemType.SKILL, is_active=(self.current_tab == ItemType.SKILL)))
 
     def _add_sort_button(self) -> None:
-        """정렬 및 검색 버튼 추가"""
+        """정렬, 검색, 설명 버튼 추가"""
         self.add_item(SortButton())
         self.add_item(SearchButton())
+        self.add_item(DescriptionButton())
 
     def _add_select_button(self) -> None:
         """아이템 선택 버튼 추가"""
         from views.inventory.select_view import InventorySelectButton
-        self.add_item(InventorySelectButton())
+        self.add_item(InventorySelectButton(self.current_tab))
 
     def _add_enhancement_button(self) -> None:
         """장비 탭일 때 강화 버튼 추가"""
@@ -167,6 +168,14 @@ class InventoryView(discord.ui.View):
         to_remove = [c for c in self.children if isinstance(c, EnhancementSelectButton)]
         for c in to_remove:
             self.remove_item(c)
+
+    def _update_select_button(self) -> None:
+        """아이템 선택 버튼 업데이트 (탭에 따라 라벨 변경)"""
+        from views.inventory.select_view import InventorySelectButton
+        to_remove = [c for c in self.children if isinstance(c, InventorySelectButton)]
+        for c in to_remove:
+            self.remove_item(c)
+        self._add_select_button()
 
     def _update_tab_buttons(self) -> None:
         """탭 버튼 업데이트 (선택된 탭 강조)"""
@@ -354,41 +363,6 @@ class InventoryView(discord.ui.View):
 
         embed = self.create_embed()
         await interaction.response.edit_message(embed=embed, view=self)
-
-    @discord.ui.button(label="사용", style=discord.ButtonStyle.success, emoji="✅", row=2)
-    async def use_item(self, interaction: discord.Interaction, button: discord.ui.Button):
-        """아이템 사용"""
-        if not self.selected_item_id:
-            await interaction.response.send_message("먼저 아이템을 선택하세요!", ephemeral=True)
-            return
-
-        try:
-            result = await ItemUseService.use_item(self.db_user, self.selected_item_id)
-
-            if result.success:
-                self.inventory = await UserInventory.filter(
-                    user=self.db_user
-                ).prefetch_related("item")
-
-                self.selected_item_id = None
-                self._update_dropdown()
-
-                embed = self.create_embed()
-                embed.add_field(
-                    name="✅ 사용 완료!",
-                    value=f"**{result.item_name}**\n{result.effect_description or ''}",
-                    inline=False
-                )
-                await interaction.response.edit_message(embed=embed, view=self)
-            else:
-                await interaction.response.send_message(f"⚠️ {result.message}", ephemeral=True)
-
-        except CombatRestrictionError:
-            await interaction.response.send_message("⚠️ 전투 중에는 아이템을 사용할 수 없습니다!", ephemeral=True)
-        except ItemNotFoundError:
-            await interaction.response.send_message("⚠️ 아이템을 찾을 수 없습니다.", ephemeral=True)
-        except ItemNotEquippableError as e:
-            await interaction.response.send_message(f"⚠️ {e.message}", ephemeral=True)
 
     @discord.ui.button(label="닫기", style=discord.ButtonStyle.danger, emoji="❌", row=2)
     async def close(self, interaction: discord.Interaction, button: discord.ui.Button):
