@@ -26,7 +26,7 @@ load_dotenv()
 is_dev = os.getenv('DEV')
 FORCE_SYNC = os.getenv('FORCE_SYNC') == "TRUE"
 GUILD_ID = int(os.getenv('GUILD_ID') or 0)
-GUILD_IDS = [GUILD_ID, 1470048099379576886]
+GUILD_IDS = [GUILD_ID]
 if is_dev == "TRUE":
     APPLICATION_ID = int(os.getenv('DEV_APPLICATION_ID') or 0)
     TOKEN = os.getenv('DEV_DISCORD_TOKEN')
