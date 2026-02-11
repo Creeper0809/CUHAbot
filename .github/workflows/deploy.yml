@@ -45,8 +45,18 @@ jobs:
             --service-token-secret "${{ secrets.CF_ACCESS_CLIENT_SECRET }}" \
             --url "127.0.0.1:$LOCAL_PORT" \
             >/tmp/cloudflared.log 2>&1 &
-          sleep 2
-          ssh -p $LOCAL_PORT -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ${{ secrets.SSH_USER }}@127.0.0.1 <<'EOF'
+          for i in {1..10}; do
+            if nc -z 127.0.0.1 $LOCAL_PORT; then
+              break
+            fi
+            sleep 1
+          done
+          if ! nc -z 127.0.0.1 $LOCAL_PORT; then
+            echo "cloudflared did not open local port"
+            tail -n 200 /tmp/cloudflared.log || true
+            exit 1
+          fi
+          ssh -p $LOCAL_PORT -o ConnectTimeout=10 -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ${{ secrets.SSH_USER }}@127.0.0.1 <<'EOF'
           cd /mnt/CUHA_BOT
           git pull
           docker compose up -d --build
