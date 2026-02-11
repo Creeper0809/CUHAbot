@@ -14,15 +14,20 @@ jobs:
 
       - name: Configure SSH
         run: |
+          HOST=$(echo "${{ secrets.SSH_HOST }}" | sed -E 's#^https?://##; s#/.*$##')
+          if [[ -z "$HOST" ]]; then
+            echo "SSH_HOST is empty or invalid"
+            exit 1
+          fi
           mkdir -p ~/.ssh
           echo "${{ secrets.SSH_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
           cat >> ~/.ssh/config <<EOF
           Host tunnel-host
-            HostName ${{ secrets.SSH_HOST }}
+            HostName $HOST
             User ${{ secrets.SSH_USER }}
             IdentityFile ~/.ssh/id_rsa
-            ProxyCommand cloudflared access ssh --hostname %h --service-token-id ${{ secrets.CF_ACCESS_CLIENT_ID }} --service-token-secret ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
+            ProxyCommand cloudflared access ssh --hostname $HOST --service-token-id ${{ secrets.CF_ACCESS_CLIENT_ID }} --service-token-secret ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
             StrictHostKeyChecking no
           EOF
 
