@@ -10,8 +10,8 @@ class UserInventory(models.Model):
     """
     사용자 인벤토리 모델
 
-    - 소비 아이템은 quantity로 스택 (grade=0)
-    - 장비 아이템은 인스턴스 등급별 개별 관리
+    - 장비 아이템: 모두 유니크 인스턴스 (스택하지 않음)
+    - 소비/기타 아이템: quantity로 스택 가능
     """
 
     id = fields.BigIntField(pk=True)
@@ -38,8 +38,10 @@ class UserInventory(models.Model):
     # 예: [{"type": "lifesteal", "value": 3}, {"type": "crit_rate", "value": 5}]
     special_effects = fields.JSONField(null=True)
 
+    # 경매 에스크로: 경매 등록 시 잠금
+    is_locked = fields.BooleanField(default=False)
+
     created_at = fields.DatetimeField(auto_now_add=True)
 
     class Meta:
         table = "user_inventory"
-        unique_together = [("user", "item", "enhancement_level", "instance_grade")]

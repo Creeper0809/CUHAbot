@@ -13,9 +13,11 @@ from decorator.account import requires_account
 from models.repos import find_account_by_discordid
 from service.mail import MailService, MailNotFoundError, NoRewardError, AlreadyClaimedError
 from service.achievement import AchievementProgressTracker
+from service.ranking_service import RankingService
 from models.achievement import Achievement, AchievementCategory
 from models.user_achievement import UserAchievement
 from models.mail import Mail
+from views.ranking_view import RankingView
 
 logger = logging.getLogger(__name__)
 
@@ -318,6 +320,33 @@ class UserCommand(commands.Cog):
         embed.set_footer(text="💡 카테고리를 지정하면 해당 카테고리의 업적만 볼 수 있습니다")
 
         await interaction.response.send_message(embed=embed, ephemeral=True)
+
+    # ==================== 랭킹 명령어 ====================
+
+    @app_commands.command(name="랭킹", description="🏆 플레이어 랭킹을 확인합니다")
+    @app_commands.guilds(*GUILD_IDS)
+    @requires_account()
+    async def ranking(self, interaction: discord.Interaction):
+        """랭킹 조회 명령어"""
+        # Defer response (데이터 로딩 시간 고려)
+        await interaction.response.defer(ephemeral=True)
+
+        # 사용자 조회
+        user = await find_account_by_discordid(interaction.user.id)
+        if not user:
+            await interaction.followup.send("❌ 유저를 찾을 수 없습니다.", ephemeral=True)
+            return
+
+        # View 생성 및 데이터 로딩
+        view = RankingView(interaction.user, user)
+        await view.load_data()
+
+        # 초기 Embed 생성
+        embed = view.create_embed()
+
+        # 메시지 전송 및 View에 메시지 참조 저장
+        message = await interaction.followup.send(embed=embed, view=view, ephemeral=True)
+        view.message = message
 
 
 async def setup(bot: commands.Bot):

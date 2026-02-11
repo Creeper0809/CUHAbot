@@ -122,25 +122,50 @@ class EnhancementService:
         if inv_item.item.type != ItemType.EQUIP:
             return {
                 "can_enhance": False,
-                "reason": "장비 아이템만 강화할 수 있습니다."
+                "current_level": inv_item.enhancement_level,
+                "success_rate": 0.0,
+                "cost": 0,
+                "current_gold": user.gold,
+                "item_name": inv_item.item.name,
+                "grade_id": getattr(inv_item.item, 'grade_id', 3),
+                "reason": "장비 아이템만 강화할 수 있습니다.",
+                "is_blessed": inv_item.is_blessed,
+                "is_cursed": inv_item.is_cursed,
             }
 
         equipment = await EquipmentItem.get_or_none(item=inv_item.item)
         if not equipment:
             return {
                 "can_enhance": False,
-                "reason": "장비 정보를 찾을 수 없습니다."
+                "current_level": inv_item.enhancement_level,
+                "success_rate": 0.0,
+                "cost": 0,
+                "current_gold": user.gold,
+                "item_name": inv_item.item.name,
+                "grade_id": getattr(inv_item.item, 'grade_id', 3),
+                "reason": "장비 정보를 찾을 수 없습니다.",
+                "is_blessed": inv_item.is_blessed,
+                "is_cursed": inv_item.is_cursed,
             }
 
         current_level = inv_item.enhancement_level
+        grade_id = getattr(inv_item.item, 'grade_id', 3)
+
         if current_level >= ENHANCEMENT.MAX_LEVEL:
             return {
                 "can_enhance": False,
-                "reason": f"최대 강화 레벨입니다 (+{ENHANCEMENT.MAX_LEVEL})"
+                "current_level": current_level,
+                "success_rate": 0.0,
+                "cost": 0,
+                "current_gold": user.gold,
+                "item_name": inv_item.item.name,
+                "grade_id": grade_id,
+                "reason": f"최대 강화 레벨입니다 (+{ENHANCEMENT.MAX_LEVEL})",
+                "is_blessed": inv_item.is_blessed,
+                "is_cursed": inv_item.is_cursed,
             }
 
         # 강화 비용 계산
-        grade_id = getattr(inv_item.item, 'grade_id', 3)
         cost = EnhancementService._calculate_cost(grade_id, current_level)
 
         # 성공률 조회 (축복/저주 보정)

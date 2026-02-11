@@ -2,7 +2,7 @@
 import os
 import discord
 from discord.app_commands import CommandSignatureMismatch
-from discord.ext import commands
+from discord.ext import commands, tasks
 from dotenv import load_dotenv
 from tortoise import Tortoise
 
@@ -84,8 +84,38 @@ class MyBot(commands.Bot):
             db_url=f"postgres://{DATABASE_USER}:{DATABASE_PASSWORD}@{DATABASE_URL}:{DATABASE_PORT}/{DATABASE_TABLE}",
             modules={"models": ["models"]}
         )
-        await Tortoise.generate_schemas()
+
+        # NOTE: generate_schemas() 제거됨
+        # 모든 테이블은 마이그레이션 스크립트로 생성됨
+        # generate_schemas()는 기존 테이블을 재생성하여 수동 추가한 컬럼을 날림
+
         await load_static_data()
+
+    @tasks.loop(minutes=5)
+    async def process_auction_expirations(self):
+        """
+        5분마다 만료된 경매/구매 주문 처리
+
+        - 만료된 경매: 입찰 있으면 최고 입찰자에게 낙찰, 없으면 EXPIRED 처리
+        - 만료된 구매 주문: 에스크로 골드 환불
+        """
+        try:
+            from service.auction.auction_service import AuctionService
+
+            expired_listings = await AuctionService.process_expired_listings()
+            expired_orders = await AuctionService.process_expired_buy_orders()
+
+            if expired_listings > 0 or expired_orders > 0:
+                logging.info(
+                    f"경매 만료 처리 완료: 리스팅 {expired_listings}건, 구매 주문 {expired_orders}건"
+                )
+        except Exception as e:
+            logging.error(f"경매 만료 처리 중 오류: {e}", exc_info=True)
+
+    @process_auction_expirations.before_loop
+    async def before_auction_expiration_loop(self):
+        """루프 시작 전 봇이 준비될 때까지 대기"""
+        await self.wait_until_ready()
 
     async def on_ready(self):
         logging.info("데이터 베이스 연결 시작")
@@ -106,6 +136,11 @@ class MyBot(commands.Bot):
             logging.info("이벤트 시스템 및 업적 추적기 초기화 완료")
         except Exception as e:
             logging.error(f"이벤트 시스템 초기화 실패: {e}")
+
+        # 경매 만료 처리 루프 시작
+        if not self.process_auction_expirations.is_running():
+            self.process_auction_expirations.start()
+            logging.info("경매 만료 처리 루프 시작 (5분 간격)")
 
         logging.info(f"Logged in as {self.user} (ID: {self.user.id})")
 

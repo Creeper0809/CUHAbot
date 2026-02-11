@@ -561,3 +561,62 @@ class EncounterAlreadyActiveError(SocialEncounterError):
 
     def __init__(self):
         super().__init__("이미 만남 이벤트가 진행 중입니다.")
+
+
+# =============================================================================
+# 경매 관련 예외
+# =============================================================================
+
+
+class AuctionError(CUHABotError):
+    """경매 시스템 기본 예외"""
+    pass
+
+
+class AuctionListingNotFoundError(AuctionError):
+    """경매 물품을 찾을 수 없음"""
+
+    def __init__(self, listing_id: int):
+        self.listing_id = listing_id
+        super().__init__(f"경매 물품을 찾을 수 없습니다: {listing_id}")
+
+
+class AuctionAlreadyEndedError(AuctionError):
+    """경매가 이미 종료됨"""
+
+    def __init__(self):
+        super().__init__("이미 종료된 경매입니다")
+
+
+class AuctionBidTooLowError(AuctionError):
+    """입찰가가 너무 낮음"""
+
+    def __init__(self, current_price: int, bid_amount: int):
+        self.current_price = current_price
+        self.bid_amount = bid_amount
+        super().__init__(
+            f"현재가({current_price}G)보다 높게 입찰해야 합니다 (입찰액: {bid_amount}G)"
+        )
+
+
+class AuctionSelfBidError(AuctionError):
+    """본인 물품 입찰 시도"""
+
+    def __init__(self):
+        super().__init__("본인이 등록한 물품에는 입찰할 수 없습니다")
+
+
+class AuctionCannotCancelError(AuctionError):
+    """경매 취소 불가"""
+
+    def __init__(self, reason: str):
+        self.reason = reason
+        super().__init__(f"경매를 취소할 수 없습니다: {reason}")
+
+
+class BuyOrderNotFoundError(AuctionError):
+    """구매 주문을 찾을 수 없음"""
+
+    def __init__(self, order_id: int):
+        self.order_id = order_id
+        super().__init__(f"구매 주문을 찾을 수 없습니다: {order_id}")

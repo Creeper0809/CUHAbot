@@ -49,7 +49,7 @@ async def get_inventory_by_id(inventory_id: int) -> Optional[UserInventory]:
     Returns:
         UserInventory 객체 또는 None
     """
-    return await UserInventory.get_or_none(id=inventory_id).prefetch_related("item")
+    return await UserInventory.filter(id=inventory_id).prefetch_related("item").first()
 
 
 async def count_item(user: User, item_id: int) -> int:

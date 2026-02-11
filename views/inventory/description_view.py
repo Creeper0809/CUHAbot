@@ -331,27 +331,6 @@ class ItemDescriptionView(discord.ui.View):
                 inline=False
             )
 
-        # === 인스턴스 등급 정보 (상세) ===
-        if instance_grade > 0:
-            grade_info_data = get_grade_info(instance_grade)
-            if grade_info_data:
-                grade_display = GradeService.get_grade_display(instance_grade)
-                grade_mult = grade_info_data.stat_multiplier
-
-                grade_desc = f"{grade_display}\n"
-                grade_desc += f"• 기본 스탯 **{grade_mult}배** 증폭\n"
-
-                if grade_info_data.effect_slots_max > 0:
-                    grade_desc += f"• 특수 효과 {grade_info_data.effect_slots_min}~{grade_info_data.effect_slots_max}개 부여"
-                else:
-                    grade_desc += "• 특수 효과 없음"
-
-                embed.add_field(
-                    name="🎲 인스턴스 등급",
-                    value=grade_desc,
-                    inline=False
-                )
-
         # === 축복/저주 상태 ===
         if is_blessed or is_cursed:
             if is_blessed:

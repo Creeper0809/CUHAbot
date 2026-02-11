@@ -3,7 +3,9 @@ Users Repository
 
 사용자 데이터 접근 레이어입니다.
 """
-from typing import Optional
+from typing import List, Optional
+
+from tortoise.expressions import Q
 
 from models import User, SkillEquip
 from models.user_skill_deck import UserSkillDeck
@@ -71,3 +73,77 @@ async def exists_account_by_username(username: str) -> bool:
         존재하면 True
     """
     return await User.exists(username=username)
+
+
+# ==================== Ranking Queries ====================
+
+
+async def get_top_users_by_level(limit: int = 100) -> List[User]:
+    """
+    레벨 기준 상위 유저 조회
+
+    레벨 내림차순 정렬, 레벨이 같으면 경험치 내림차순
+
+    Args:
+        limit: 조회할 최대 유저 수 (기본: 100)
+
+    Returns:
+        User 목록
+    """
+    return await User.all().order_by('-level', '-exp').limit(limit)
+
+
+async def get_top_users_by_gold(limit: int = 100) -> List[User]:
+    """
+    골드 기준 상위 유저 조회
+
+    골드 내림차순 정렬
+
+    Args:
+        limit: 조회할 최대 유저 수 (기본: 100)
+
+    Returns:
+        User 목록
+    """
+    return await User.all().order_by('-gold').limit(limit)
+
+
+async def get_user_rank_by_level(user_id: int) -> int:
+    """
+    특정 유저의 레벨 순위 조회
+
+    Args:
+        user_id: 유저 ID
+
+    Returns:
+        순위 (1-based)
+
+    Raises:
+        DoesNotExist: 유저를 찾을 수 없음
+    """
+    user = await User.get(id=user_id)
+
+    # user보다 레벨이 높거나, 레벨 같은데 경험치가 더 많은 유저 수 + 1
+    higher_count = await User.filter(
+        Q(level__gt=user.level) | Q(level=user.level, exp__gt=user.exp)
+    ).count()
+
+    return higher_count + 1
+
+
+async def get_user_rank_by_gold(user_id: int) -> int:
+    """
+    특정 유저의 골드 순위 조회
+
+    Args:
+        user_id: 유저 ID
+
+    Returns:
+        순위 (1-based)
+
+    Raises:
+        DoesNotExist: 유저를 찾을 수 없음
+    """
+    user = await User.get(id=user_id)
+    higher_count = await User.filter(gold__gt=user.gold).count()
+    return higher_count + 1
