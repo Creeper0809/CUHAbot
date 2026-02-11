@@ -37,17 +37,22 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
 
       - name: Deploy via SSH (Cloudflare Tunnel)
+        env:
+          CF_ACCESS_CLIENT_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
+          CF_ACCESS_CLIENT_SECRET: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
         run: |
           set -euo pipefail
-          if [[ -z "${{ secrets.CF_ACCESS_CLIENT_ID }}" || -z "${{ secrets.CF_ACCESS_CLIENT_SECRET }}" ]]; then
+          echo "CF_ACCESS_CLIENT_ID length: ${#CF_ACCESS_CLIENT_ID}"
+          echo "CF_ACCESS_CLIENT_SECRET length: ${#CF_ACCESS_CLIENT_SECRET}"
+          if [[ -z "$CF_ACCESS_CLIENT_ID" || -z "$CF_ACCESS_CLIENT_SECRET" ]]; then
             echo "CF_ACCESS_CLIENT_ID/CF_ACCESS_CLIENT_SECRET are required to avoid browser-based Access login in CI."
             exit 1
           fi
           LOCAL_PORT=2222
           cloudflared access tcp \
             --hostname "$SSH_HOST_RESOLVED" \
-            --service-token-id "${{ secrets.CF_ACCESS_CLIENT_ID }}" \
-            --service-token-secret "${{ secrets.CF_ACCESS_CLIENT_SECRET }}" \
+            --service-token-id "$CF_ACCESS_CLIENT_ID" \
+            --service-token-secret "$CF_ACCESS_CLIENT_SECRET" \
             --url "127.0.0.1:$LOCAL_PORT" \
             --loglevel info \
             >/tmp/cloudflared.log 2>&1 &
