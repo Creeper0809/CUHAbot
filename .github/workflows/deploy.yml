@@ -30,6 +30,11 @@ jobs:
           fi
           echo "Resolved SSH host: $HOST"
           echo "Resolved SSH port: $PORT"
+          if [[ "$HOST" == *"gongsim.xyz"* ]]; then
+            echo "Resolved SSH host matches gongsim.xyz: yes"
+          else
+            echo "Resolved SSH host matches gongsim.xyz: no"
+          fi
           echo "SSH_HOST_RESOLVED=$HOST" >> $GITHUB_ENV
           echo "SSH_PORT_RESOLVED=$PORT" >> $GITHUB_ENV
           mkdir -p ~/.ssh
@@ -75,6 +80,10 @@ jobs:
           then
             echo "SSH failed; cloudflared log:"
             tail -n 200 /tmp/cloudflared.log || true
+            AUD=$(grep -oE 'aud=[0-9a-f]{64}' /tmp/cloudflared.log | head -n 1 | cut -d= -f2 || true)
+            if [[ -n "$AUD" ]]; then
+              echo "Access AUD from log: $AUD"
+            fi
             if grep -q "access/cli" /tmp/cloudflared.log; then
               echo "Cloudflare Access is prompting for browser login. Ensure the Access app allows the service token and the secrets are correct."
             fi
