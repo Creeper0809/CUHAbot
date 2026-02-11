@@ -24,8 +24,8 @@ jobs:
           if [[ -z "$PORT" ]]; then
             PORT="22"
           fi
-          if [[ -z "$HOST" || "$HOST" == *"access"* ]]; then
-            echo "SSH_HOST must be a plain hostname like ssh.example.com"
+          if [[ -z "$HOST" ]]; then
+            echo "SSH_HOST must be a hostname like ssh.example.com"
             exit 1
           fi
           echo "Resolved SSH host: $HOST"
@@ -38,6 +38,11 @@ jobs:
 
       - name: Deploy via SSH (Cloudflare Tunnel)
         run: |
+          set -euo pipefail
+          if [[ -z "${{ secrets.CF_ACCESS_CLIENT_ID }}" || -z "${{ secrets.CF_ACCESS_CLIENT_SECRET }}" ]]; then
+            echo "CF_ACCESS_CLIENT_ID/CF_ACCESS_CLIENT_SECRET are required to avoid browser-based Access login in CI."
+            exit 1
+          fi
           LOCAL_PORT=2222
           cloudflared access tcp \
             --hostname "$SSH_HOST_RESOLVED" \
@@ -65,5 +70,8 @@ jobs:
           then
             echo "SSH failed; cloudflared log:"
             tail -n 200 /tmp/cloudflared.log || true
+            if grep -q "access/cli" /tmp/cloudflared.log; then
+              echo "Cloudflare Access is prompting for browser login. Ensure the Access app allows the service token and the secrets are correct."
+            fi
             exit 1
           fi
