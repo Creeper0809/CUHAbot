@@ -24,27 +24,68 @@ jobs:
           if [[ -z "$PORT" ]]; then
             PORT="22"
           fi
-          if [[ -z "$HOST" || "$HOST" == *"access"* ]]; then
-            echo "SSH_HOST must be a plain hostname like ssh.example.com"
+          if [[ -z "$HOST" ]]; then
+            echo "SSH_HOST must be a hostname like ssh.example.com"
             exit 1
           fi
+          echo "Resolved SSH host: $HOST"
+          echo "Resolved SSH port: $PORT"
+          if [[ "$HOST" == *"gongsim.xyz"* ]]; then
+            echo "Resolved SSH host matches gongsim.xyz: yes"
+          else
+            echo "Resolved SSH host matches gongsim.xyz: no"
+          fi
+          echo "SSH_HOST_RESOLVED=$HOST" >> $GITHUB_ENV
+          echo "SSH_PORT_RESOLVED=$PORT" >> $GITHUB_ENV
           mkdir -p ~/.ssh
           echo "${{ secrets.SSH_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          cat >> ~/.ssh/config <<EOF
-          Host tunnel-host
-            HostName $HOST
-            Port $PORT
-            User ${{ secrets.SSH_USER }}
-            IdentityFile ~/.ssh/id_rsa
-            ProxyCommand cloudflared access ssh --hostname $HOST --service-token-id ${{ secrets.CF_ACCESS_CLIENT_ID }} --service-token-secret ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
-            StrictHostKeyChecking no
-          EOF
 
       - name: Deploy via SSH (Cloudflare Tunnel)
+        env:
+          CF_ACCESS_CLIENT_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
+          CF_ACCESS_CLIENT_SECRET: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
         run: |
-          ssh tunnel-host <<'EOF'
+          set -euo pipefail
+          echo "CF_ACCESS_CLIENT_ID length: ${#CF_ACCESS_CLIENT_ID}"
+          echo "CF_ACCESS_CLIENT_SECRET length: ${#CF_ACCESS_CLIENT_SECRET}"
+          if [[ -z "$CF_ACCESS_CLIENT_ID" || -z "$CF_ACCESS_CLIENT_SECRET" ]]; then
+            echo "CF_ACCESS_CLIENT_ID/CF_ACCESS_CLIENT_SECRET are required to avoid browser-based Access login in CI."
+            exit 1
+          fi
+          LOCAL_PORT=2222
+          cloudflared access tcp \
+            --hostname "$SSH_HOST_RESOLVED" \
+            --service-token-id "$CF_ACCESS_CLIENT_ID" \
+            --service-token-secret "$CF_ACCESS_CLIENT_SECRET" \
+            --url "127.0.0.1:$LOCAL_PORT" \
+            --loglevel info \
+            >/tmp/cloudflared.log 2>&1 &
+          for i in {1..10}; do
+            if nc -z 127.0.0.1 $LOCAL_PORT; then
+              break
+            fi
+            sleep 1
+          done
+          if ! nc -z 127.0.0.1 $LOCAL_PORT; then
+            echo "cloudflared did not open local port"
+            tail -n 200 /tmp/cloudflared.log || true
+            exit 1
+          fi
+          if ! ssh -p $LOCAL_PORT -o ConnectTimeout=10 -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ${{ secrets.SSH_USER }}@127.0.0.1 <<'EOF'
           cd /mnt/CUHA_BOT
           git pull
           docker compose up -d --build
           EOF
+          then
+            echo "SSH failed; cloudflared log:"
+            tail -n 200 /tmp/cloudflared.log || true
+            AUD=$(grep -oE 'aud=[0-9a-f]{64}' /tmp/cloudflared.log | head -n 1 | cut -d= -f2 || true)
+            if [[ -n "$AUD" ]]; then
+              echo "Access AUD from log: $AUD"
+            fi
+            if grep -q "access/cli" /tmp/cloudflared.log; then
+              echo "Cloudflare Access is prompting for browser login. Ensure the Access app allows the service token and the secrets are correct."
+            fi
+            exit 1
+          fi
