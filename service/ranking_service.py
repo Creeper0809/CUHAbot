@@ -12,6 +12,8 @@ from models.repos.users_repo import (
     get_user_rank_by_level,
     get_user_rank_by_gold,
 )
+from models import UserTowerProgress
+from service.tower.tower_season_service import get_current_season
 
 logger = logging.getLogger(__name__)
 
@@ -86,6 +88,22 @@ class RankingService:
         ]
 
     @staticmethod
+    async def get_tower_ranking(season_id: int, limit: int = 100) -> List[Dict]:
+        progresses = await UserTowerProgress.filter(
+            season_id=season_id
+        ).order_by('-highest_floor_reached').limit(limit).prefetch_related('user')
+
+        return [
+            {
+                "rank": idx + 1,
+                "username": p.user.username,
+                "discord_id": p.user.discord_id,
+                "highest_floor": p.highest_floor_reached,
+            }
+            for idx, p in enumerate(progresses)
+        ]
+
+    @staticmethod
     async def get_user_rankings(user_id: int) -> Dict:
         """
         특정 유저의 모든 순위 조회
@@ -100,7 +118,22 @@ class RankingService:
                 "gold_rank": 5,
             }
         """
+        current_season = get_current_season()
+        tower_rank = await RankingService.get_user_tower_rank(user_id, current_season)
+
         return {
             "level_rank": await get_user_rank_by_level(user_id),
             "gold_rank": await get_user_rank_by_gold(user_id),
+            "tower_rank": tower_rank,
         }
+
+    @staticmethod
+    async def get_user_tower_rank(user_id: int, season_id: int) -> int:
+        progresses = await UserTowerProgress.filter(
+            season_id=season_id
+        ).order_by('-highest_floor_reached', 'user_id')
+
+        for idx, progress in enumerate(progresses):
+            if progress.user_id == user_id:
+                return idx + 1
+        return 0

@@ -12,6 +12,7 @@ from models.repos.static_cache import load_static_data
 from resources.item_emoji import ItemEmoji  # 이모지 매니저 임포트
 from service.event import EventBus
 from service.achievement import AchievementProgressTracker
+from service.tower.tower_season_service import start_season_reset_task
 
 # 로그 기본 설정
 logging.basicConfig(
@@ -141,6 +142,9 @@ class MyBot(commands.Bot):
         if not self.process_auction_expirations.is_running():
             self.process_auction_expirations.start()
             logging.info("경매 만료 처리 루프 시작 (5분 간격)")
+
+        await start_season_reset_task()
+        logging.info("주간 타워 시즌 리셋 태스크 시작")
 
         logging.info(f"Logged in as {self.user} (ID: {self.user.id})")
 

@@ -8,6 +8,7 @@ from typing import Optional
 
 from config import DUNGEON, DROP
 from models import Monster, MonsterTypeEnum, User, UserStatEnum
+from service.session import ContentType
 from service.collection_service import CollectionService
 from service.event import EventBus, GameEvent, GameEventType
 
@@ -147,6 +148,8 @@ async def process_combat_result_multi(session, context, turn_count: int) -> str:
     if leader_died:
         session.pending_exit = True
 
+    is_tower = session.content_type == ContentType.WEEKLY_TOWER
+
     # 승리 - 각 몬스터별 보상 합산
     monster_level = session.dungeon.require_level if session.dungeon else 1
     total_exp = 0
@@ -192,8 +195,26 @@ async def process_combat_result_multi(session, context, turn_count: int) -> str:
 
     session.monsters_defeated += len(context.monsters)
 
+    # 주간 타워는 층 클리어 보상으로 대체
+    if is_tower:
+        await event_bus.publish(GameEvent(
+            type=GameEventType.COMBAT_WON,
+            user_id=user.id,
+            data={
+                "is_flawless": user.now_hp == user.get_stat()[UserStatEnum.HP],
+                "is_fast": turn_count <= 3,
+                "turns": turn_count,
+            }
+        ))
+
+        monster_names = ", ".join([m.name for m in context.monsters])
+        result_msg = (
+            f"🏆 **{monster_names}** 처치! ({turn_count}턴)\n"
+            "   🗼 타워 전투 보상은 층 클리어 시 지급됩니다."
+        )
+
     # 멀티플레이어 보상 분배
-    if session.participants:
+    elif session.participants:
         from service.intervention.contribution_tracker import distribute_rewards
 
         participant_rewards = await distribute_rewards(session, total_exp, total_gold)

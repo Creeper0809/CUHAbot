@@ -11,7 +11,7 @@ import discord
 from discord import Embed
 
 from config import COMBAT, DUNGEON, EmbedColor
-from exceptions import MonsterNotFoundError, MonsterSpawnNotFoundError
+from exceptions import MonsterNotFoundError, MonsterSpawnNotFoundError, WeeklyTowerRestrictionError
 from models import Monster, UserStatEnum
 from models.repos.dungeon_repo import find_all_dungeon_spawn_monster_by
 from models.repos.monster_repo import find_monster_by_id
@@ -19,7 +19,8 @@ from views.fight_or_flee import FightOrFleeView
 from service.dungeon.encounter_service import EncounterFactory
 from service.dungeon.encounter_types import EncounterType
 from service.dungeon.combat_context import CombatContext
-from service.session import DungeonSession, get_session, set_combat_state
+from service.session import DungeonSession, ContentType, get_session, set_combat_state
+from service.tower.tower_restriction import enforce_flee_restriction
 
 logger = logging.getLogger(__name__)
 
@@ -100,6 +101,9 @@ async def process_encounter(session: DungeonSession, interaction: discord.Intera
     else:
         encounter_type = EncounterFactory.roll_encounter_type(weights=encounter_weights)
 
+    if session.content_type == ContentType.WEEKLY_TOWER:
+        encounter_type = EncounterType.MONSTER
+
     logger.debug(
         f"Encounter rolled: user={session.user.discord_id}, "
         f"step={session.exploration_step}, type={encounter_type.value}"
@@ -167,9 +171,14 @@ async def _process_monster_encounter(session: DungeonSession, interaction: disco
     """몬스터 인카운터 처리 (그룹 전투 지원)"""
     from service.dungeon.combat_executor import execute_combat_context
 
+    progress = session.exploration_step / session.max_steps if session.max_steps > 0 else 0.0
+
     try:
-        progress = session.exploration_step / session.max_steps if session.max_steps > 0 else 0.0
-        monsters = _spawn_monster_group(session.dungeon.id, progress)
+        if session.content_type == ContentType.WEEKLY_TOWER:
+            from service.tower.tower_service import get_floor_monster
+            monsters = [await get_floor_monster(session.current_floor)]
+        else:
+            monsters = _spawn_monster_group(session.dungeon.id, progress)
     except (MonsterNotFoundError, MonsterSpawnNotFoundError) as e:
         logger.error(f"Monster spawn error: {e}")
         return "몬스터 정보를 찾을 수 없습니다."
@@ -197,13 +206,16 @@ async def _process_monster_encounter(session: DungeonSession, interaction: disco
                 # 대기실 취소됨 → 일반 encounter로
                 logger.info(f"Boss waiting room cancelled, falling back to normal encounter")
 
-    will_fight = await _ask_fight_or_flee(interaction, monsters)
+    will_fight = await _ask_fight_or_flee(session, interaction, monsters)
 
     if will_fight is None:
         return f"{session.user.get_name()}은 아무 행동도 하지 않았다..."
 
     if not will_fight:
-        return await _attempt_flee(session, monsters[0])
+        try:
+            return await _attempt_flee(session, monsters[0])
+        except WeeklyTowerRestrictionError as e:
+            return f"⚠️ {e}"
 
     context = CombatContext.from_group(monsters)
     session.combat_context = context
@@ -248,6 +260,7 @@ async def _process_monster_encounter(session: DungeonSession, interaction: disco
 
 async def _attempt_flee(session: DungeonSession, monster: Monster) -> str:
     """도주 시도"""
+    enforce_flee_restriction(session)
     from service.dungeon.reward_calculator import is_boss_monster, get_attack_stat
 
     if is_boss_monster(monster):
@@ -366,9 +379,16 @@ def _spawn_monster_group(dungeon_id: int, progress: float = 0.0) -> list[Monster
 # =============================================================================
 
 
-async def _ask_fight_or_flee(interaction: discord.Interaction, monsters: list[Monster]) -> Optional[bool]:
+async def _ask_fight_or_flee(
+    session: DungeonSession,
+    interaction: discord.Interaction,
+    monsters: list[Monster]
+) -> Optional[bool]:
     """전투/도주 선택 UI 표시 (그룹 전투 지원)"""
     from models.repos.skill_repo import get_skill_by_id
+
+    if session.content_type == ContentType.WEEKLY_TOWER:
+        return True
 
     # 그룹 전투 여부 확인
     is_group = len(monsters) > 1

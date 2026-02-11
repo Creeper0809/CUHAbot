@@ -13,7 +13,7 @@ from config import COMBAT, DUNGEON
 from models import UserStatEnum
 from views.dungeon_control import DungeonControlView
 from service.economy.reward_service import RewardService
-from service.session import DungeonSession, SessionType
+from service.session import DungeonSession, SessionType, ContentType
 from service.event import EventBus, GameEvent, GameEventType
 
 logger = logging.getLogger(__name__)
@@ -54,6 +54,8 @@ async def start_dungeon(session: DungeonSession, interaction: discord.Interactio
         session.user.now_hp = 1
 
     session.max_steps = _calculate_dungeon_steps(session.dungeon)
+    if session.content_type == ContentType.WEEKLY_TOWER:
+        session.max_steps = 1
 
     # 음성 채널에 있으면 공유 인스턴스 참여
     if session.voice_channel_id and session.dungeon:
@@ -173,6 +175,13 @@ def _calculate_dungeon_steps(dungeon) -> int:
 
 async def _handle_dungeon_clear(session, interaction, event_queue) -> bool:
     """던전 클리어 처리"""
+    if session.content_type == ContentType.WEEKLY_TOWER:
+        from service.tower.tower_service import handle_floor_clear
+        event_queue.append(f"✅ {session.current_floor}층 클리어!")
+        await _update_dungeon_log(session, event_queue)
+        await handle_floor_clear(session, interaction)
+        return True
+
     logger.info(f"Dungeon cleared: user={session.user.discord_id}")
 
     # 공유 인스턴스 탈퇴
@@ -234,6 +243,11 @@ async def _handle_dungeon_clear(session, interaction, event_queue) -> bool:
 
 async def _handle_player_death(session, interaction, event_queue) -> bool:
     """플레이어 사망 처리"""
+    if session.content_type == ContentType.WEEKLY_TOWER:
+        from service.tower.tower_service import handle_tower_death
+        await handle_tower_death(session, interaction)
+        return False
+
     logger.info(f"Player death: user={session.user.discord_id}")
 
     # 공유 인스턴스 탈퇴
@@ -283,6 +297,11 @@ async def _handle_player_death(session, interaction, event_queue) -> bool:
 
 async def _handle_dungeon_return(session, interaction, event_queue) -> bool:
     """던전 귀환 처리"""
+    if session.content_type == ContentType.WEEKLY_TOWER:
+        session.tower_result = "return"
+        session.ended = True
+        return True
+
     logger.info(f"Dungeon return: user={session.user.discord_id}")
 
     # 공유 인스턴스 탈퇴

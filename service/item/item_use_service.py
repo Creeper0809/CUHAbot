@@ -24,6 +24,7 @@ from service.session import get_session
 from service.item.equipment_service import EquipmentService
 from service.item.inventory_service import InventoryService
 from service.item.grade_service import GradeService
+from service.tower.tower_restriction import enforce_item_usage_restriction
 
 if TYPE_CHECKING:
     from service.session import DungeonSession
@@ -98,6 +99,9 @@ class ItemUseService:
 
         item = inv_item.item
         item_type = item.type
+
+        if item_type == ItemType.CONSUME:
+            enforce_item_usage_restriction(session)
 
         # 타입별 처리
         if item_type == ItemType.EQUIP:

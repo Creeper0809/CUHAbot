@@ -19,6 +19,7 @@ from exceptions import (
     StatRequirementError,
 )
 from service.session import get_session
+from service.tower.tower_restriction import enforce_equipment_change_restriction
 from service.item.equipment_component_loader import (
     load_equipment_components,
     get_equipment_passive_stats
@@ -58,6 +59,7 @@ class EquipmentService:
         session = get_session(user.discord_id)
         if session and session.in_combat:
             raise CombatRestrictionError("장비 변경")
+        enforce_equipment_change_restriction(session)
 
         # 인벤토리 아이템 확인
         inv_item = await UserInventory.filter(
@@ -143,6 +145,7 @@ class EquipmentService:
         session = get_session(user.discord_id)
         if session and session.in_combat:
             raise CombatRestrictionError("장비 변경")
+        enforce_equipment_change_restriction(session)
 
         deleted = await UserEquipment.filter(user=user, slot=slot).delete()
         if deleted:

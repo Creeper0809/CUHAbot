@@ -12,6 +12,7 @@ from models.repos.static_cache import skill_cache_by_id
 from models.user_deck_preset import UserDeckPreset
 from models.user_owned_skill import UserOwnedSkill
 from service.session import get_session
+from service.tower.tower_restriction import enforce_skill_change_restriction
 from utils.grade_display import format_skill_name
 
 from views.skill_deck.dropdowns import CustomPresetDropdown, SkillSelectDropdown
@@ -139,6 +140,12 @@ class SkillDeckView(discord.ui.View):
                 "⚠️ 전투 중에는 덱을 변경할 수 없습니다!",
                 ephemeral=True
             )
+            return False
+
+        try:
+            enforce_skill_change_restriction(session)
+        except Exception as e:
+            await interaction.response.send_message(f"⚠️ {e}", ephemeral=True)
             return False
 
         return True

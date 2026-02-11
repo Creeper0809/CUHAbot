@@ -9,6 +9,7 @@ import discord
 
 from models import User
 from service.ranking_service import RankingService
+from service.tower.tower_season_service import get_current_season
 
 
 class RankingView(discord.ui.View):
@@ -26,16 +27,18 @@ class RankingView(discord.ui.View):
 
         self.user = user
         self.db_user = db_user
-        self.current_tab = "level"  # "level" or "gold"
+        self.current_tab = "level"  # "level" | "gold" | "tower"
         self.current_page = 0
         self.level_rankings = []
         self.gold_rankings = []
+        self.tower_rankings = []
         self.user_ranks = {}
         self.message: Optional[discord.Message] = None
 
         # 탭 버튼 (Row 0)
         self.add_item(TabButton("🎖️ 레벨", "level", is_active=True))
         self.add_item(TabButton("💰 골드", "gold", is_active=False))
+        self.add_item(TabButton("🗼 타워", "tower", is_active=False))
 
         # 페이지 버튼 (Row 1)
         self.add_item(PrevPageButton())
@@ -46,14 +49,17 @@ class RankingView(discord.ui.View):
         """데이터 로딩"""
         self.level_rankings = await RankingService.get_level_ranking(100)
         self.gold_rankings = await RankingService.get_gold_ranking(100)
+        self.tower_rankings = await RankingService.get_tower_ranking(get_current_season(), 100)
         self.user_ranks = await RankingService.get_user_rankings(self.db_user.id)
 
     def create_embed(self) -> discord.Embed:
         """현재 탭/페이지에 맞는 Embed 생성"""
         if self.current_tab == "level":
             return self._create_level_embed()
-        else:
+        elif self.current_tab == "gold":
             return self._create_gold_embed()
+        else:
+            return self._create_tower_embed()
 
     def _create_level_embed(self) -> discord.Embed:
         """레벨 랭킹 Embed"""
@@ -143,6 +149,49 @@ class RankingView(discord.ui.View):
 
         return embed
 
+    def _create_tower_embed(self) -> discord.Embed:
+        """타워 랭킹 Embed"""
+        rankings = self.tower_rankings
+        start = self.current_page * self.ITEMS_PER_PAGE
+        end = start + self.ITEMS_PER_PAGE
+        page_data = rankings[start:end]
+
+        embed = discord.Embed(
+            title="🏆 주간 타워 랭킹",
+            description=f"📊 당신의 순위: **#{self.user_ranks.get('tower_rank', 0)}**",
+            color=discord.Color.gold()
+        )
+
+        if not page_data:
+            embed.add_field(
+                name="랭킹 없음",
+                value="아직 랭킹 데이터가 없습니다.",
+                inline=False
+            )
+        else:
+            ranking_text = []
+            for entry in page_data:
+                rank_emoji = self._get_rank_emoji(entry["rank"])
+                is_me = entry["discord_id"] == self.user.id
+                highlight = "**" if is_me else ""
+                me_indicator = " 👈 YOU" if is_me else ""
+
+                ranking_text.append(
+                    f"{rank_emoji} {highlight}{entry['rank']}. {entry['username']}{highlight}{me_indicator}\n"
+                    f"   🗼 최고 {entry['highest_floor']}층"
+                )
+
+            embed.add_field(
+                name=f"순위 ({start+1}-{min(end, len(rankings))})",
+                value="\n\n".join(ranking_text),
+                inline=False
+            )
+
+        total_pages = max(1, (len(rankings) + self.ITEMS_PER_PAGE - 1) // self.ITEMS_PER_PAGE)
+        embed.set_footer(text=f"📄 페이지 {self.current_page + 1}/{total_pages}")
+
+        return embed
+
     @staticmethod
     def _get_rank_emoji(rank: int) -> str:
         """순위별 이모지"""
@@ -170,6 +219,10 @@ class RankingView(discord.ui.View):
         gold_btn = TabButton("💰 골드", "gold", is_active=(self.current_tab == "gold"))
         gold_btn.row = 0
         self.add_item(gold_btn)
+
+        tower_btn = TabButton("🗼 타워", "tower", is_active=(self.current_tab == "tower"))
+        tower_btn.row = 0
+        self.add_item(tower_btn)
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         """본인만 사용 가능"""
@@ -218,7 +271,12 @@ class PrevPageButton(discord.ui.Button):
     async def callback(self, interaction: discord.Interaction):
         view: RankingView = self.view
 
-        rankings = view.level_rankings if view.current_tab == "level" else view.gold_rankings
+        if view.current_tab == "level":
+            rankings = view.level_rankings
+        elif view.current_tab == "gold":
+            rankings = view.gold_rankings
+        else:
+            rankings = view.tower_rankings
         total_pages = max(1, (len(rankings) + view.ITEMS_PER_PAGE - 1) // view.ITEMS_PER_PAGE)
 
         if view.current_page > 0:
@@ -239,7 +297,12 @@ class NextPageButton(discord.ui.Button):
     async def callback(self, interaction: discord.Interaction):
         view: RankingView = self.view
 
-        rankings = view.level_rankings if view.current_tab == "level" else view.gold_rankings
+        if view.current_tab == "level":
+            rankings = view.level_rankings
+        elif view.current_tab == "gold":
+            rankings = view.gold_rankings
+        else:
+            rankings = view.tower_rankings
         total_pages = max(1, (len(rankings) + view.ITEMS_PER_PAGE - 1) // view.ITEMS_PER_PAGE)
 
         if view.current_page < total_pages - 1:
