@@ -56,7 +56,11 @@ jobs:
             tail -n 200 /tmp/cloudflared.log || true
             exit 1
           fi
-          ssh -p $LOCAL_PORT -o ConnectTimeout=10 -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ${{ secrets.SSH_USER }}@127.0.0.1 <<'EOF'
+          ssh -p $LOCAL_PORT -o ConnectTimeout=10 -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ${{ secrets.SSH_USER }}@127.0.0.1 <<'EOF' || {
+            echo "SSH failed; cloudflared log:";
+            tail -n 200 /tmp/cloudflared.log || true;
+            exit 1;
+          }
           cd /mnt/CUHA_BOT
           git pull
           docker compose up -d --build
