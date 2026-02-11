@@ -41,9 +41,10 @@ jobs:
           LOCAL_PORT=2222
           cloudflared access tcp \
             --hostname "$SSH_HOST_RESOLVED" \
-            --access-client-id "${{ secrets.CF_ACCESS_CLIENT_ID }}" \
-            --access-client-secret "${{ secrets.CF_ACCESS_CLIENT_SECRET }}" \
+            --service-token-id "${{ secrets.CF_ACCESS_CLIENT_ID }}" \
+            --service-token-secret "${{ secrets.CF_ACCESS_CLIENT_SECRET }}" \
             --url "127.0.0.1:$LOCAL_PORT" \
+            --loglevel info \
             >/tmp/cloudflared.log 2>&1 &
           for i in {1..10}; do
             if nc -z 127.0.0.1 $LOCAL_PORT; then
