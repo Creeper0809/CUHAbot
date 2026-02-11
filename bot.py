@@ -69,9 +69,14 @@ class MyBot(commands.Bot):
         for gid in [gid for gid in GUILD_IDS if gid]:
             try:
                 self.tree.clear_commands(guild=discord.Object(id=gid))
-            except discord.Forbidden:
+            except (discord.Forbidden, discord.NotFound, discord.HTTPException) as e:
                 logging.warning(
-                    f"길드 {gid}에 대한 접근 권한이 없어 커맨드 삭제를 건너뜁니다."
+                    f"길드 {gid} 커맨드 삭제 실패: {e}"
+                )
+            except Exception as e:
+                logging.error(
+                    f"길드 {gid} 커맨드 삭제 중 예외 발생: {e}",
+                    exc_info=True
                 )
         logging.info("길드 커맨드 삭제 완료")
 
@@ -84,9 +89,14 @@ class MyBot(commands.Bot):
             try:
                 guild_synced = await self.tree.sync(guild=discord.Object(id=gid))
                 logging.info(f"길드 {gid}: {len(guild_synced)}개 synced")
-            except discord.Forbidden:
+            except (discord.Forbidden, discord.NotFound, discord.HTTPException) as e:
                 logging.warning(
-                    f"길드 {gid}에 대한 접근 권한이 없어 커맨드 동기화를 건너뜁니다."
+                    f"길드 {gid} 커맨드 동기화 실패: {e}"
+                )
+            except Exception as e:
+                logging.error(
+                    f"길드 {gid} 커맨드 동기화 중 예외 발생: {e}",
+                    exc_info=True
                 )
 
 
