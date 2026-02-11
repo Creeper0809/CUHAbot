@@ -66,8 +66,13 @@ class MyBot(commands.Bot):
         self.tree.clear_commands(guild=None)
         logging.info("전역 커맨드 삭제 완료")
 
-        for gid in GUILD_IDS:
-            self.tree.clear_commands(guild=discord.Object(id=gid))
+        for gid in [gid for gid in GUILD_IDS if gid]:
+            try:
+                self.tree.clear_commands(guild=discord.Object(id=gid))
+            except discord.Forbidden:
+                logging.warning(
+                    f"길드 {gid}에 대한 접근 권한이 없어 커맨드 삭제를 건너뜁니다."
+                )
         logging.info("길드 커맨드 삭제 완료")
 
         for fn in os.listdir("./cogs"):
@@ -75,9 +80,14 @@ class MyBot(commands.Bot):
                 await self.load_extension(f"cogs.{fn[:-3]}")
                 logging.info(f"Loaded cogs.{fn[:-3]}")
 
-        for gid in GUILD_IDS:
-            guild_synced = await self.tree.sync(guild=discord.Object(id=gid))
-            logging.info(f"길드 {gid}: {len(guild_synced)}개 synced")
+        for gid in [gid for gid in GUILD_IDS if gid]:
+            try:
+                guild_synced = await self.tree.sync(guild=discord.Object(id=gid))
+                logging.info(f"길드 {gid}: {len(guild_synced)}개 synced")
+            except discord.Forbidden:
+                logging.warning(
+                    f"길드 {gid}에 대한 접근 권한이 없어 커맨드 동기화를 건너뜁니다."
+                )
 
 
     async def init_db(self):
