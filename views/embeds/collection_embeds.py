@@ -8,13 +8,68 @@ from typing import Optional
 import discord
 
 from models import Item, Monster
+from resources.item_emoji import ItemType
 
 
 async def create_item_embed(item: Item, is_collected: bool) -> discord.Embed:
     """아이템 Embed 생성"""
     embed = await item.get_description_embed()
+
+    if item.type == ItemType.EQUIP:
+        if embed.description == "설명 없음":
+            from models.repos.static_cache import get_equipment_info
+            info = get_equipment_info(item.id)
+            if info:
+                parts = []
+                pos = info.get("equip_pos")
+                if pos:
+                    parts.append(f"**{pos}** 장비")
+                set_name = info.get("set_name")
+                if set_name:
+                    parts.append(f"**{set_name}** 세트")
+                embed.description = " · ".join(parts) if parts else ""
+        await _add_equipment_set_info(embed, item.id)
+
     _add_collection_status(embed, is_collected)
     return embed
+
+
+async def _add_equipment_set_info(embed: discord.Embed, item_id: int) -> None:
+    """장비 세트 정보를 embed에 추가"""
+    from models.repos.static_cache import set_name_by_item_id, item_cache
+    from models.set_item import SetItem, SetEffect
+
+    set_name = set_name_by_item_id.get(item_id)
+    if not set_name:
+        return
+
+    # 같은 세트 구성원 (캐시에서 조회)
+    member_names = []
+    for iid, sname in set_name_by_item_id.items():
+        if sname != set_name:
+            continue
+        cached_item = item_cache.get(iid)
+        if not cached_item:
+            continue
+        marker = " ◀" if iid == item_id else ""
+        member_names.append(f"• {cached_item.name}{marker}")
+
+    set_text = f"**{set_name}** 세트\n" + "\n".join(member_names)
+    embed.add_field(name="🔗 세트 정보", value=set_text, inline=False)
+
+    # 세트 효과 조회
+    set_item = await SetItem.filter(name=set_name).first()
+    if not set_item:
+        return
+
+    effects = await SetEffect.filter(set_item=set_item).order_by('pieces_required')
+    if not effects:
+        return
+
+    effect_lines = [
+        f"**{e.pieces_required}세트**: {e.effect_description}" for e in effects
+    ]
+    embed.add_field(name="✨ 세트 효과", value="\n".join(effect_lines), inline=False)
 
 
 def create_skill_embed(skill, is_collected: bool) -> discord.Embed:
@@ -35,11 +90,19 @@ def create_skill_embed(skill, is_collected: bool) -> discord.Embed:
     return embed
 
 
-def create_monster_embed(monster: Monster, is_collected: bool) -> discord.Embed:
+async def create_monster_embed(monster: Monster, is_collected: bool, user=None) -> discord.Embed:
     """몬스터 Embed 생성"""
     from models.repos.skill_repo import get_skill_by_id
 
-    monster_type = getattr(monster, 'monster_type', 'normal')
+    # 몬스터 타입 변환 (BossMob/EliteMob/CommonMob → boss/elite/normal)
+    raw_type = getattr(monster, 'type', 'CommonMob')
+    type_mapping = {
+        'BossMob': 'boss',
+        'EliteMob': 'elite',
+        'CommonMob': 'normal'
+    }
+    monster_type = type_mapping.get(raw_type, 'normal')
+
     color = _get_monster_type_color(monster_type)
     emoji = _get_monster_type_emoji(monster_type)
 
@@ -56,7 +119,7 @@ def create_monster_embed(monster: Monster, is_collected: bool) -> discord.Embed:
     _add_monster_reward_fields(embed, monster)
     _add_monster_stat_fields(embed, monster)
     _add_monster_skill_fields(embed, monster, get_skill_by_id)
-    _add_monster_drop_fields(embed, monster_type)
+    await _add_monster_drop_fields(embed, monster, monster_type, user)
 
     _add_collection_status(embed, is_collected)
     return embed
@@ -159,6 +222,10 @@ def _add_skill_basic_info(embed: discord.Embed, skill) -> None:
         keywords = SynergyService.parse_keywords(skill.skill_model.keyword)
         if keywords:
             info_lines.append(f"**키워드**: {', '.join(keywords)}")
+
+    acquisition = getattr(skill.skill_model, 'acquisition_source', None)
+    if acquisition:
+        info_lines.append(f"**획득처**: {acquisition}")
 
     embed.add_field(name="📋 기본 정보", value="\n".join(info_lines), inline=False)
 
@@ -286,44 +353,191 @@ def _add_monster_reward_fields(embed: discord.Embed, monster: Monster) -> None:
 
 
 def _add_monster_stat_fields(embed: discord.Embed, monster: Monster) -> None:
-    """몬스터 스탯 필드"""
-    embed.add_field(name="❤️ 체력", value=f"{monster.hp:,}", inline=True)
-    embed.add_field(name="⚔️ 공격력", value=f"{monster.attack}", inline=True)
-    embed.add_field(name="🔮 마공", value=f"{getattr(monster, 'ap_attack', 0)}", inline=True)
-    embed.add_field(name="🛡️ 방어력", value=f"{getattr(monster, 'defense', 0)}", inline=True)
-    embed.add_field(name="🌀 마방", value=f"{getattr(monster, 'ap_defense', 0)}", inline=True)
-    embed.add_field(name="💨 속도", value=f"{getattr(monster, 'speed', 10)}", inline=True)
-    embed.add_field(name="💫 회피", value=f"{getattr(monster, 'evasion', 0)}%", inline=True)
+    """몬스터 스탯 필드 (2열 이모지 레이아웃)"""
+    ap_attack = getattr(monster, 'ap_attack', 0)
+    ap_defense = getattr(monster, 'ap_defense', 0)
+    speed = getattr(monster, 'speed', 10)
+    evasion = getattr(monster, 'evasion', 0)
+
+    # 1행: 체력, 공격력
+    embed.add_field(
+        name="❤️ 체력",
+        value=f"{monster.hp:,}",
+        inline=True
+    )
+    embed.add_field(
+        name="⚔️ 공격력",
+        value=f"{monster.attack}",
+        inline=True
+    )
+    embed.add_field(name="\u200b", value="\u200b", inline=True)  # 공백
+
+    # 2행: 방어력, 마방
+    embed.add_field(
+        name="🛡️ 방어력",
+        value=f"{getattr(monster, 'defense', 0)}",
+        inline=True
+    )
+    embed.add_field(
+        name="🌀 마방",
+        value=f"{ap_defense}",
+        inline=True
+    )
+    embed.add_field(name="\u200b", value="\u200b", inline=True)  # 공백
+
+    # 3행: 마공, 속도
+    embed.add_field(
+        name="🔮 마공",
+        value=f"{ap_attack}",
+        inline=True
+    )
+    embed.add_field(
+        name="💨 속도",
+        value=f"{speed}",
+        inline=True
+    )
+    embed.add_field(
+        name="💰 회피",
+        value=f"{evasion}%",
+        inline=True
+    )
 
 
 def _add_monster_skill_fields(embed: discord.Embed, monster: Monster, get_skill_by_id) -> None:
-    """몬스터 스킬 필드"""
+    """몬스터 스킬 필드 (중복 합산 + 패시브 분리)"""
     monster_skill_ids = getattr(monster, 'skill_ids', [])
-    skill_lines = []
-    for i, sid in enumerate(monster_skill_ids, 1):
-        if sid != 0:
-            skill = get_skill_by_id(sid)
-            if skill:
-                skill_desc = skill.description or "설명 없음"
-                skill_lines.append(f"**스킬 {i}**: {skill.name}\n└ {skill_desc}")
 
-    if skill_lines:
+    # 스킬 카운트 및 패시브 분리
+    active_counts: dict[int, int] = {}
+    passive_ids: list[int] = []
+    basic_attack_count = 0
+    active_total = 0
+
+    for sid in monster_skill_ids:
+        if sid == 0:
+            # 0 = 기본 공격
+            basic_attack_count += 1
+            active_total += 1
+            continue
+        skill = get_skill_by_id(sid)
+        if not skill:
+            continue
+        if skill.is_passive:
+            if sid not in passive_ids:
+                passive_ids.append(sid)
+        else:
+            active_counts[sid] = active_counts.get(sid, 0) + 1
+            active_total += 1
+
+    # 액티브 스킬: 확률 + 설명
+    if active_counts or basic_attack_count > 0:
+        skill_lines = []
+
+        # 일반 스킬
+        for sid, count in sorted(active_counts.items(), key=lambda x: -x[1]):
+            skill = get_skill_by_id(sid)
+            if not skill:
+                continue
+            prob = int(count / active_total * 100) if active_total > 0 else 0
+            desc = skill.description or ""
+            if desc:
+                skill_lines.append(f"• **{skill.name}** ({prob}%)\n  └ {desc}")
+            else:
+                skill_lines.append(f"• **{skill.name}** ({prob}%)")
+
+        # 기본 공격
+        if basic_attack_count > 0:
+            prob = int(basic_attack_count / active_total * 100) if active_total > 0 else 0
+            skill_lines.append(f"• **기본 공격** ({prob}%)\n  └ 기본 타격")
+
         embed.add_field(
-            name="⚔️ 사용 스킬",
-            value="\n\n".join(skill_lines),
+            name=f"⚔️ 사용 스킬 ({active_total}슬롯)",
+            value="\n".join(skill_lines),
             inline=False
         )
 
+    # 패시브 스킬
+    if passive_ids:
+        passive_lines = []
+        for sid in passive_ids:
+            skill = get_skill_by_id(sid)
+            if not skill:
+                continue
+            desc = skill.description or ""
+            if desc:
+                passive_lines.append(f"• **{skill.name}**\n  └ {desc}")
+            else:
+                passive_lines.append(f"• **{skill.name}**")
 
-def _add_monster_drop_fields(embed: discord.Embed, monster_type: str) -> None:
+        embed.add_field(
+            name="🌟 패시브",
+            value="\n".join(passive_lines),
+            inline=False
+        )
+
+    if not active_counts and not passive_ids:
+        embed.add_field(name="⚔️ 사용 스킬", value="기본 공격만 사용", inline=False)
+
+
+async def _add_monster_drop_fields(embed: discord.Embed, monster: Monster, monster_type: str, user=None) -> None:
     """몬스터 드랍 정보 필드"""
-    drop_info_map = {
+    from models import Droptable
+    from models.repos import collection_repo
+    from models.user_collection import CollectionType
+
+    drop_lines = []
+
+    # 1. 재료 드롭 정보 (Droptable에서 조회)
+    material_drops = await Droptable.filter(drop_monster=monster.id).prefetch_related('item').all()
+    if material_drops:
+        for drop in material_drops:
+            item = await drop.item
+            if item:
+                prob_percent = int(drop.probability * 100)
+
+                # 도감 등록 여부 확인
+                if user:
+                    is_collected = await collection_repo.has_collection(
+                        user, CollectionType.ITEM, item.id
+                    )
+                    item_display = item.name if is_collected else "???"
+                else:
+                    item_display = item.name
+
+                drop_lines.append(f"🎁 **재료**: {item_display} ({prob_percent}%)")
+
+    # 2. 상자 드롭 정보
+    box_info_map = {
         "boss": "📦 **상자**: 상급/최상급 혼합 상자, A~S등급 장비/스킬 상자",
         "elite": "📦 **상자**: 중급 혼합 상자, B~A등급 장비/스킬 상자",
     }
-    drop_info = drop_info_map.get(
+    box_info = box_info_map.get(
         monster_type, "📦 **상자**: 하급 혼합 상자, D~C등급 장비/스킬 상자"
     )
+    drop_lines.append(box_info)
+
+    # 3. 스킬 드롭 정보
+    drop_skill_ids = getattr(monster, 'drop_skill_ids', [])
+    if drop_skill_ids and any(sid != 0 for sid in drop_skill_ids):
+        from models.repos.skill_repo import get_skill_by_id
+        skill_names = []
+        for sid in drop_skill_ids:
+            if sid != 0:
+                skill = get_skill_by_id(sid)
+                if skill and getattr(skill.skill_model, 'player_obtainable', True):
+                    # 도감 등록 여부 확인
+                    if user:
+                        is_collected = await collection_repo.has_collection(
+                            user, CollectionType.SKILL, skill.id
+                        )
+                        skill_display = skill.name if is_collected else "???"
+                    else:
+                        skill_display = skill.name
+                    skill_names.append(skill_display)
+        if skill_names:
+            drop_lines.append(f"✨ **스킬**: {', '.join(skill_names[:3])}{'...' if len(skill_names) > 3 else ''} (5%)")
+
+    drop_info = "\n".join(drop_lines)
     embed.add_field(name="🎁 드랍 아이템", value=drop_info, inline=False)
 
 

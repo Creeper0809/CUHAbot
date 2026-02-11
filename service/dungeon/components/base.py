@@ -42,3 +42,13 @@ class SkillComponent(TurnConfig):
         ap = attacker_stat.get(UserStatEnum.AP_ATTACK, 0)
         total = int(ad * self.ad_ratio + ap * self.ap_ratio)
         return max(1, total)
+
+    @staticmethod
+    def _roll_hit(attacker_stat: dict, target_stat: dict) -> bool:
+        """공격자 명중률 vs 대상 회피율로 명중 판정"""
+        from config import DAMAGE
+        from service.combat.damage_calculator import DamageCalculator
+
+        accuracy = attacker_stat.get(UserStatEnum.ACCURACY, DAMAGE.DEFAULT_ACCURACY)
+        evasion = target_stat.get(UserStatEnum.EVASION, DAMAGE.DEFAULT_EVASION)
+        return DamageCalculator.roll_hit(accuracy, evasion)

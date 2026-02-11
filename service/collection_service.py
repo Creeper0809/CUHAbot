@@ -281,7 +281,7 @@ class CollectionService:
                 )
             if not is_collected:
                 raise EntryNotFoundError(f"'{name}'을(를) 도감에서 찾을 수 없습니다.")
-            embed = create_monster_embed(monster, is_collected)
+            embed = await create_monster_embed(monster, is_collected, user)
             return CollectionType.MONSTER, embed
 
         # 4. 키워드 검색

@@ -15,7 +15,15 @@ from models.user_inventory import UserInventory
 from resources.item_emoji import ItemType
 from service.item.item_use_service import ItemUseService
 from service.item.inventory_service import InventoryService
-from exceptions import CombatRestrictionError, ItemNotFoundError, ItemNotEquippableError
+from service.item.grade_service import GradeService
+from exceptions import (
+    CombatRestrictionError,
+    ItemNotFoundError,
+    ItemNotEquippableError,
+    LevelRequirementError,
+    StatRequirementError,
+    EquipmentSlotMismatchError
+)
 
 from views.inventory.components import ItemSelectDropdown
 
@@ -69,10 +77,23 @@ class InventorySelectView(discord.ui.View):
             max_quantity = self.selected_inventory_item.quantity if item.type == ItemType.CONSUME else 1
             self.use_quantity = max(1, min(self.use_quantity, max_quantity))
 
+            # 인스턴스 등급 표시 (장비만)
+            grade_info = ""
+            instance_grade = getattr(self.selected_inventory_item, 'instance_grade', 0)
+            if instance_grade > 0:
+                grade_display = GradeService.get_grade_display(instance_grade)
+                grade_info = f"**등급**: {grade_display}\n"
+                effects_text = GradeService.format_special_effects(
+                    self.selected_inventory_item.special_effects
+                )
+                if effects_text:
+                    grade_info += f"**특수 효과**:\n{effects_text}\n"
+
             embed.add_field(
                 name=f"✅ 선택됨: {item.name}",
                 value=(
                     f"**종류**: {item_type}\n"
+                    f"{grade_info}"
                     f"**설명**: {item.description or '없음'}\n"
                     f"**보유 수량**: {self.selected_inventory_item.quantity}\n"
                     f"**사용 수량**: {self.use_quantity}\n"
@@ -148,6 +169,18 @@ class InventoryUseButton(discord.ui.Button):
             await interaction.response.send_message("⚠️ 아이템을 찾을 수 없습니다.", ephemeral=True)
         except ItemNotEquippableError as e:
             await interaction.response.send_message(f"⚠️ {e.message}", ephemeral=True)
+        except LevelRequirementError as e:
+            await interaction.response.send_message(f"⚠️ {str(e)}", ephemeral=True)
+        except StatRequirementError as e:
+            await interaction.response.send_message(f"⚠️ {str(e)}", ephemeral=True)
+        except EquipmentSlotMismatchError as e:
+            await interaction.response.send_message(f"⚠️ {str(e)}", ephemeral=True)
+        except Exception as e:
+            # 모든 예외를 UI에 표시
+            error_msg = str(e) if str(e) else "알 수 없는 오류가 발생했습니다."
+            await interaction.response.send_message(f"⚠️ {error_msg}", ephemeral=True)
+            import traceback
+            traceback.print_exc()  # 로그에도 출력
 
     @staticmethod
     async def _use_items(view: InventorySelectView) -> tuple:
@@ -272,8 +305,10 @@ class InventorySelectCloseButton(discord.ui.Button):
 class InventorySelectButton(discord.ui.Button):
     """아이템 사용 버튼 (선택 창 열기)"""
 
-    def __init__(self):
-        super().__init__(label="아이템 사용", style=discord.ButtonStyle.success, emoji="✅", row=1)
+    def __init__(self, current_tab: ItemType = ItemType.CONSUME):
+        # 장비 탭이면 "장비 장착", 아니면 "아이템 사용"
+        label = "장비 장착" if current_tab == ItemType.EQUIP else "아이템 사용"
+        super().__init__(label=label, style=discord.ButtonStyle.success, emoji="✅", row=2)
 
     async def callback(self, interaction: discord.Interaction):
         view = self.view
@@ -284,3 +319,25 @@ class InventorySelectButton(discord.ui.Button):
         )
         embed = select_view.create_embed()
         await interaction.response.send_message(embed=embed, view=select_view, ephemeral=True)
+
+
+class EnhancementSelectButton(discord.ui.Button):
+    """강화 버튼 (선택 창 열기) - 장비 탭에서만 표시"""
+
+    def __init__(self):
+        super().__init__(label="강화", style=discord.ButtonStyle.primary, emoji="⚒️", row=1)
+
+    async def callback(self, interaction: discord.Interaction):
+        from views.enhancement_view import EnhancementView
+
+        view = self.view
+        equipment_items = [inv for inv in view.inventory if inv.item.type == ItemType.EQUIP]
+
+        enhance_view = EnhancementView(
+            user=interaction.user,
+            db_user=view.db_user,
+            equipment_items=equipment_items,
+            list_view=view,
+        )
+        embed = enhance_view.create_default_embed()
+        await interaction.response.send_message(embed=embed, view=enhance_view, ephemeral=True)

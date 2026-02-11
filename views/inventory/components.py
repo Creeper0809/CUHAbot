@@ -41,8 +41,15 @@ class ItemSelectDropdown(discord.ui.Select):
             enhance = f" +{inv.enhancement_level}" if inv.enhancement_level > 0 else ""
             qty = f" x{inv.quantity}" if inv.quantity > 1 else ""
 
-            grade_id = getattr(inv.item, 'grade_id', None)
-            formatted_name = format_item_name(inv.item.name, grade_id)
+            instance_grade = getattr(inv, 'instance_grade', 0)
+            formatted_name = format_item_name(inv.item.name, instance_grade if instance_grade > 0 else None)
+
+            # 상자 아이템이면 저장된 던전 레벨 범위 표시
+            from config import BOX_CONFIGS
+            if inv.item.id in BOX_CONFIGS and instance_grade > 0:
+                from models.repos.static_cache import get_previous_dungeon_level
+                prev_level = get_previous_dungeon_level(instance_grade)
+                formatted_name = f"{formatted_name}({prev_level}~{instance_grade}Lv)"
 
             options.append(
                 discord.SelectOption(
@@ -113,6 +120,9 @@ class TabButton(discord.ui.Button):
         view.total_pages = max(1, (len(view.inventory) + view.items_per_page - 1) // view.items_per_page)
 
         view._update_tab_buttons()
+        view._update_select_button()  # 탭 변경 시 select 버튼 라벨 업데이트
+        view._remove_enhancement_button()
+        view._add_enhancement_button()
 
         embed = view.create_embed()
         await interaction.response.edit_message(embed=embed, view=view)
@@ -126,7 +136,7 @@ class SortButton(discord.ui.Button):
             label="정렬: 기본",
             style=discord.ButtonStyle.secondary,
             emoji="🔄",
-            row=0
+            row=1
         )
 
     async def callback(self, interaction: discord.Interaction):
@@ -155,7 +165,7 @@ class SearchButton(discord.ui.Button):
             label="검색",
             style=discord.ButtonStyle.secondary,
             emoji="🔍",
-            row=0
+            row=1
         )
 
     async def callback(self, interaction: discord.Interaction):
@@ -191,3 +201,36 @@ class SearchModal(discord.ui.Modal, title="아이템 검색"):
         if query:
             embed.set_footer(text=f"🔍 검색: '{query}' | 아이템 사용 버튼 → 선택 창에서 사용")
         await interaction.response.edit_message(embed=embed, view=self.view)
+
+
+class DescriptionButton(discord.ui.Button):
+    """설명 보기 버튼"""
+
+    def __init__(self):
+        super().__init__(
+            label="설명",
+            style=discord.ButtonStyle.secondary,
+            emoji="📖",
+            row=1
+        )
+
+    async def callback(self, interaction: discord.Interaction):
+        from views.inventory.description_view import ItemDescriptionView
+
+        view: InventoryView = self.view
+        page_items = view._get_page_items()
+
+        if not page_items:
+            await interaction.response.send_message(
+                "현재 페이지에 아이템이 없습니다.",
+                ephemeral=True
+            )
+            return
+
+        description_view = ItemDescriptionView(
+            user=interaction.user,
+            page_items=page_items,
+            current_tab=view.current_tab
+        )
+        embed = description_view.create_embed()
+        await interaction.response.send_message(embed=embed, view=description_view, ephemeral=True)

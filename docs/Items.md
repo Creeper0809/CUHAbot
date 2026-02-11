@@ -47,6 +47,163 @@
 
 ---
 
+## 장비 착용 조건
+
+장비 착용에는 **레벨 제한**과 **능력치 요구**가 모두 적용됩니다.
+능력치 요구는 5대 기본 능력치(STR/INT/DEX/VIT/LUK) 기준입니다. ([Stats.md](Stats.md) 참조)
+
+### 장비 계열과 요구 능력치
+
+장비는 **계열**에 따라 주요 요구 능력치가 결정됩니다.
+
+#### 무기 (Weapon)
+
+| 계열 | 예시 | 주요 요구 | 보조 요구 |
+|------|------|----------|----------|
+| 대검/도끼/둔기 | 나무 검, 철검, 전투 도끼 | **STR** | — |
+| 지팡이/완드 | 나무 지팡이, 마법봉 | **INT** | — |
+| 단검/쌍검 | 단검, 비수 | **DEX** | LUK |
+| 활/석궁 | 사냥꾼의 활 | **DEX** | STR |
+| 마검/혼합무기 | 마법 검, 룬블레이드 | **STR** | INT |
+
+#### 방어구 (Armor)
+
+| 계열 | 예시 | 주요 요구 | 보조 요구 |
+|------|------|----------|----------|
+| 중갑 (판금) | 철갑옷, 기사의 갑옷 | **STR** | VIT |
+| 경갑 (가죽) | 가죽 갑옷, 사냥꾼의 경갑 | **DEX** | VIT |
+| 로브 (천) | 마법사의 로브, 현자의 옷 | **INT** | VIT |
+
+> 투구, 갑옷, 장갑, 신발 모두 같은 계열 규칙 적용
+
+#### 보조무기 (Sub Weapon)
+
+| 계열 | 예시 | 주요 요구 | 보조 요구 |
+|------|------|----------|----------|
+| 방패 | 나무 방패, 철벽 | **VIT** | STR |
+| 오브/마도서 | 수정 오브, 마도서 | **INT** | — |
+| 보조 단검 | 보조 비수, 암살 단검 | **DEX** | — |
+
+#### 악세서리 (Necklace / Ring)
+
+| 계열 | 예시 | 주요 요구 | 보조 요구 |
+|------|------|----------|----------|
+| 전사형 | 힘의 목걸이, 전투 반지 | **STR** | — |
+| 마법형 | 지혜의 목걸이, 마력 반지 | **INT** | — |
+| 민첩형 | 바람의 목걸이, 속도 반지 | **DEX** | — |
+| 생존형 | 생명의 목걸이, 수호 반지 | **VIT** | — |
+| 행운형 | 행운의 부적, 도박사의 반지 | **LUK** | — |
+| 범용 | 초보자의 부적 | — | — |
+
+### 등급별 요구 능력치 기준
+
+등급이 높을수록 요구 능력치가 상승합니다.
+아래는 **주요 요구** 능력치 기준이며, **보조 요구**는 주요의 **절반(반올림)**입니다.
+
+| 등급 | 주요 요구 | 보조 요구 | 예시 (대검 기준) |
+|------|----------|----------|-----------------|
+| D | 0 | 0 | 요구 없음 |
+| C | 10 | 5 | STR 10 |
+| B | 20 | 10 | STR 20 |
+| A | 30 | 15 | STR 30 |
+| S | 40 | 20 | STR 40 |
+| SS | 55 | 28 | STR 55 |
+| SSS | 70 | 35 | STR 70 |
+| 신화 | 90 | 45 | STR 90 |
+
+> D등급은 초보자용으로 능력치 제한 없음.
+> 레벨 제한과 능력치 제한은 **둘 다** 충족해야 착용 가능.
+
+### 복합 요구 예시
+
+```
+전투 도끼 (A등급, Lv.30)
+  요구: Lv.30, STR 30
+  스탯: Attack +45
+
+마법 검 (A등급, Lv.30)
+  요구: Lv.30, STR 30, INT 15
+  스탯: Attack +30, AP_Attack +20
+
+기사의 판금갑옷 (S등급, Lv.40)
+  요구: Lv.40, STR 40, VIT 20
+  스탯: HP +200, AD_Defense +35
+
+사냥꾼의 경갑 (A등급, Lv.30)
+  요구: Lv.30, DEX 30, VIT 15
+  스탯: HP +100, AD_Defense +20, Speed +5
+
+현자의 로브 (S등급, Lv.40)
+  요구: Lv.40, INT 40, VIT 20
+  스탯: HP +120, AP_Defense +30, AP_Attack +10
+
+행운의 반지 (B등급, Lv.15)
+  요구: Lv.15, LUK 20
+  스탯: Critical Rate +3%, Drop Rate +5%
+```
+
+### 빌드와 장비의 연관성
+
+능력치 요구 시스템은 **빌드 선택에 의미**를 부여합니다:
+
+```
+STR 전사 빌드
+  → 중갑 + 대검 착용 가능
+  → 경갑/로브/지팡이 착용 불가 (DEX/INT 부족)
+
+INT 마법사 빌드
+  → 로브 + 지팡이 착용 가능
+  → 중갑/대검 착용 불가 (STR 부족)
+
+DEX 암살자 빌드
+  → 경갑 + 단검 착용 가능
+  → 중갑/지팡이 착용 불가
+
+STR+INT 마법검사 빌드
+  → 중갑 OR 로브 + 마법 검 착용 가능
+  → 듀얼 투자로 양쪽 장비 접근 가능 (단, 최고 등급은 어려움)
+
+균형형 빌드
+  → 대부분 A등급까지 착용 가능 (각 30 전후)
+  → S등급 이상은 특화 투자 필요
+```
+
+### DB 스키마
+
+```python
+# EquipmentItem 모델 (변경)
+class EquipmentItem(BaseItem):
+    # 기존 필드
+    require_level = fields.IntField(null=True, default=1)
+
+    # 추가 필드
+    require_str = fields.IntField(null=True, default=0)  # STR 요구치
+    require_int = fields.IntField(null=True, default=0)  # INT 요구치
+    require_dex = fields.IntField(null=True, default=0)  # DEX 요구치
+    require_vit = fields.IntField(null=True, default=0)  # VIT 요구치
+    require_luk = fields.IntField(null=True, default=0)  # LUK 요구치
+```
+
+```python
+# 착용 가능 여부 체크
+def can_equip(user: User, item: EquipmentItem) -> bool:
+    if user.level < item.require_level:
+        return False
+    if user.bonus_str < (item.require_str or 0):
+        return False
+    if user.bonus_int < (item.require_int or 0):
+        return False
+    if user.bonus_dex < (item.require_dex or 0):
+        return False
+    if user.bonus_vit < (item.require_vit or 0):
+        return False
+    if user.bonus_luk < (item.require_luk or 0):
+        return False
+    return True
+```
+
+---
+
 > 장비/소비/강화/재료/특수 아이템 데이터는 `data/items_*.csv` 참조
 
 ---

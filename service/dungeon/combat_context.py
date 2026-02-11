@@ -3,6 +3,7 @@
 
 1:1과 1:N 전투를 통합 처리하는 CombatContext 클래스를 제공합니다.
 """
+from collections import deque
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import TYPE_CHECKING, Dict, Optional, Union
@@ -11,6 +12,7 @@ import random
 if TYPE_CHECKING:
     from models.monster import Monster
     from models.users import User
+    from service.dungeon.field_effects import FieldEffect
 
 
 class TargetingMode(Enum):
@@ -52,6 +54,15 @@ class CombatContext:
 
     round_marker_gauge: int = 0
     """라운드 마커 게이지 (속도 10 기준 더미)"""
+
+    user: Optional["User"] = None
+    """전투 참여 유저 (오라 패시브 등에서 사용)"""
+
+    field_effect: Optional["FieldEffect"] = None
+    """전투 필드 효과 (랜덤 발동)"""
+
+    combat_log: deque = field(default_factory=lambda: deque(maxlen=10))
+    """전투 로그 (관전자에게 표시)"""
 
     def get_primary_monster(self) -> "Monster":
         """
@@ -145,7 +156,7 @@ class CombatContext:
         for monster in self.monsters:
             self.action_gauges[id(monster)] = 0
 
-    def fill_gauges(self, user: "User") -> None:
+    def fill_gauges(self, user: "User", participants: dict = None) -> None:
         """
         모든 전투원의 행동 게이지 충전
 
@@ -153,7 +164,8 @@ class CombatContext:
         충전량 = 속도 × SPEED_MULTIPLIER
 
         Args:
-            user: 유저 엔티티
+            user: 유저 엔티티 (파티 리더)
+            participants: 추가 참가자 딕셔너리 (user_id → User)
         """
         from config import COMBAT
 
@@ -161,6 +173,15 @@ class CombatContext:
         user_speed = self._get_entity_speed(user)
         user_id = id(user)
         self.action_gauges[user_id] = self.action_gauges.get(user_id, 0) + int(user_speed * COMBAT.ACTION_GAUGE_SPEED_MULTIPLIER)
+
+        # 신규: 추가 참가자 게이지 충전
+        if participants:
+            for participant in participants.values():
+                if id(participant) == user_id:
+                    continue  # 이미 충전됨
+                p_speed = self._get_entity_speed(participant)
+                p_id = id(participant)
+                self.action_gauges[p_id] = self.action_gauges.get(p_id, 0) + int(p_speed * COMBAT.ACTION_GAUGE_SPEED_MULTIPLIER)
 
         # 몬스터들 게이지 충전 (새로 추가된 몬스터도 안전하게 처리)
         for monster in self.get_all_alive_monsters():
@@ -189,7 +210,7 @@ class CombatContext:
             return True
         return False
 
-    def get_next_actor(self, user: "User") -> Optional[Union["User", "Monster"]]:
+    def get_next_actor(self, user: "User", participants: dict = None) -> Optional[Union["User", "Monster"]]:
         """
         다음 행동할 전투원 반환 (게이지 10 이상)
 
@@ -197,7 +218,8 @@ class CombatContext:
         동점일 경우 랜덤으로 선택합니다.
 
         Args:
-            user: 유저 엔티티
+            user: 유저 엔티티 (파티 리더)
+            participants: 추가 참가자 딕셔너리 (user_id → User)
 
         Returns:
             다음 행동할 엔티티 (없으면 None)
@@ -207,10 +229,19 @@ class CombatContext:
         # 행동 가능한 전투원 수집 (게이지 >= 10, 살아있음, 행동 가능)
         ready_entities = []
 
-        # 유저 체크
+        # 유저 체크 (파티 리더)
         user_gauge = self.action_gauges.get(id(user), 0)
         if user_gauge >= COMBAT.ACTION_GAUGE_MAX and user.now_hp > 0:
             ready_entities.append((user, user_gauge))
+
+        # 신규: 추가 참가자 체크
+        if participants:
+            for participant in participants.values():
+                if id(participant) == id(user):
+                    continue  # 이미 체크함
+                p_gauge = self.action_gauges.get(id(participant), 0)
+                if p_gauge >= COMBAT.ACTION_GAUGE_MAX and participant.now_hp > 0:
+                    ready_entities.append((participant, p_gauge))
 
         # 몬스터들 체크
         for monster in self.get_all_alive_monsters():

@@ -369,6 +369,18 @@ class LevelRequirementError(CUHABotError):
         )
 
 
+class StatRequirementError(CUHABotError):
+    """능력치 요구사항 미충족"""
+
+    def __init__(self, stat_name: str, required: int, current: int):
+        self.stat_name = stat_name
+        self.required = required
+        self.current = current
+        super().__init__(
+            f"{stat_name}이(가) 부족합니다. (필요: {required}, 현재: {current})"
+        )
+
+
 # =============================================================================
 # 출석 관련 예외
 # =============================================================================
@@ -379,3 +391,232 @@ class AlreadyAttendedError(CUHABotError):
 
     def __init__(self):
         super().__init__("오늘은 이미 출석했습니다.")
+
+
+# =============================================================================
+# 관전 시스템 관련 예외
+# =============================================================================
+
+
+class SpectatorError(CUHABotError):
+    """관전 시스템 기본 예외"""
+    pass
+
+
+class SpectatorTargetNotInDungeonError(SpectatorError):
+    """관전 대상이 던전에 없음"""
+
+    def __init__(self, user_name: str = None):
+        if user_name:
+            super().__init__(f"{user_name}님은 현재 던전에 있지 않습니다.")
+        else:
+            super().__init__("관전 대상이 던전에 있지 않습니다.")
+
+
+class SpectatorDMFailedError(SpectatorError):
+    """DM 전송 실패"""
+
+    def __init__(self):
+        super().__init__("DM을 보낼 수 없습니다. DM 설정을 확인해주세요.")
+
+
+# =============================================================================
+# 난입 시스템 관련 예외
+# =============================================================================
+
+
+class InterventionError(CUHABotError):
+    """난입 시스템 기본 예외"""
+    pass
+
+
+class InterventionWindowClosedError(InterventionError):
+    """난입 가능 시간 종료"""
+
+    def __init__(self, current_round: int):
+        from config.multiplayer import PARTY
+        self.current_round = current_round
+        super().__init__(
+            f"난입 가능 시간이 지났습니다. (현재 {current_round}라운드, {PARTY.INTERVENTION_WINDOW_TURNS}턴 이내만 가능)"
+        )
+
+
+class InterventionCooldownError(InterventionError):
+    """난입 쿨타임 중"""
+
+    def __init__(self, remaining_seconds: int):
+        self.remaining_seconds = remaining_seconds
+        minutes = remaining_seconds // 60
+        seconds = remaining_seconds % 60
+        super().__init__(
+            f"난입 쿨타임 중입니다. (남은 시간: {minutes}분 {seconds}초)"
+        )
+
+
+class CombatFullError(InterventionError):
+    """전투 인원 초과 (최대 3명, 리더 포함)"""
+
+    def __init__(self, max_participants: int = 3):
+        self.max_participants = max_participants
+        super().__init__(
+            f"전투 인원이 가득 찼습니다. (최대 {max_participants}명)"
+        )
+
+
+class AlreadyParticipatingError(InterventionError):
+    """이미 참여 중"""
+
+    def __init__(self):
+        super().__init__("이미 이 전투에 참여 중입니다.")
+
+
+class InsufficientLevelError(InterventionError):
+    """레벨 부족 (던전 입장 레벨 미달)"""
+
+    def __init__(self, required_level: int, current_level: int):
+        self.required_level = required_level
+        self.current_level = current_level
+        super().__init__(
+            f"레벨이 부족합니다. (필요: {required_level}, 현재: {current_level})"
+        )
+
+
+class InterventionNotAllowedError(InterventionError):
+    """난입이 허용되지 않음 (호스트가 차단)"""
+
+    def __init__(self):
+        super().__init__("이 전투는 난입이 허용되지 않습니다.")
+
+
+# =============================================================================
+# Voice Channel Shared Dungeon Exceptions
+# =============================================================================
+
+class VoiceChannelError(CUHABotError):
+    """음성 채널 시스템 기본 예외"""
+    pass
+
+
+class NotInVoiceChannelError(VoiceChannelError):
+    """사용자가 음성 채널에 없음"""
+
+    def __init__(self):
+        super().__init__("음성 채널에 접속해야 이 기능을 사용할 수 있습니다.")
+
+
+class DifferentVoiceChannelError(VoiceChannelError):
+    """사용자들이 서로 다른 음성 채널에 있음"""
+
+    def __init__(self):
+        super().__init__("같은 음성 채널에 있어야 합니다.")
+
+
+class DifferentDungeonError(VoiceChannelError):
+    """사용자들이 서로 다른 던전을 탐험 중"""
+
+    def __init__(self):
+        super().__init__("같은 던전을 탐험 중이어야 합니다.")
+
+
+class SharedInstanceError(VoiceChannelError):
+    """공유 인스턴스 관련 에러"""
+    pass
+
+
+# =============================================================================
+# Social Encounter 관련 예외 (Phase 3)
+# =============================================================================
+
+
+class SocialEncounterError(CUHABotError):
+    """멀티유저 만남 이벤트 기본 예외"""
+    pass
+
+
+class EncounterTimeoutError(SocialEncounterError):
+    """만남 이벤트 타임아웃"""
+
+    def __init__(self, timeout_seconds: int):
+        self.timeout_seconds = timeout_seconds
+        super().__init__(f"응답 시간이 초과되었습니다. ({timeout_seconds}초)")
+
+
+class EncounterCooldownError(SocialEncounterError):
+    """만남 이벤트 쿨타임 중"""
+
+    def __init__(self, remaining_steps: int):
+        self.remaining_steps = remaining_steps
+        super().__init__(f"아직 만남 이벤트를 다시 만날 수 없습니다. ({remaining_steps} 스텝 남음)")
+
+
+class NoEligiblePartnersError(SocialEncounterError):
+    """만남 가능한 플레이어 없음"""
+
+    def __init__(self):
+        super().__init__("근처에 만남 가능한 플레이어가 없습니다.")
+
+
+class EncounterAlreadyActiveError(SocialEncounterError):
+    """이미 만남 이벤트 진행 중"""
+
+    def __init__(self):
+        super().__init__("이미 만남 이벤트가 진행 중입니다.")
+
+
+# =============================================================================
+# 경매 관련 예외
+# =============================================================================
+
+
+class AuctionError(CUHABotError):
+    """경매 시스템 기본 예외"""
+    pass
+
+
+class AuctionListingNotFoundError(AuctionError):
+    """경매 물품을 찾을 수 없음"""
+
+    def __init__(self, listing_id: int):
+        self.listing_id = listing_id
+        super().__init__(f"경매 물품을 찾을 수 없습니다: {listing_id}")
+
+
+class AuctionAlreadyEndedError(AuctionError):
+    """경매가 이미 종료됨"""
+
+    def __init__(self):
+        super().__init__("이미 종료된 경매입니다")
+
+
+class AuctionBidTooLowError(AuctionError):
+    """입찰가가 너무 낮음"""
+
+    def __init__(self, current_price: int, bid_amount: int):
+        self.current_price = current_price
+        self.bid_amount = bid_amount
+        super().__init__(
+            f"현재가({current_price}G)보다 높게 입찰해야 합니다 (입찰액: {bid_amount}G)"
+        )
+
+
+class AuctionSelfBidError(AuctionError):
+    """본인 물품 입찰 시도"""
+
+    def __init__(self):
+        super().__init__("본인이 등록한 물품에는 입찰할 수 없습니다")
+
+
+class AuctionCannotCancelError(AuctionError):
+    """경매 취소 불가"""
+
+    def __init__(self, reason: str):
+        self.reason = reason
+        super().__init__(f"경매를 취소할 수 없습니다: {reason}")
+
+
+class BuyOrderNotFoundError(AuctionError):
+    """구매 주문을 찾을 수 없음"""
+
+    def __init__(self, order_id: int):
+        self.order_id = order_id
+        super().__init__(f"구매 주문을 찾을 수 없습니다: {order_id}")

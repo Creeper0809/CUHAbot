@@ -57,6 +57,7 @@ class DungeonSession:
     content_type: ContentType = ContentType.NORMAL_DUNGEON
     in_combat: bool = False
     ended: bool = False
+    pending_exit: bool = False  # 이벤트 종료 후 던전 종료 대기
 
     # 진행 정보
     current_floor: int = 1          # 타워용 현재 층
@@ -73,6 +74,7 @@ class DungeonSession:
     ui_message: Optional["Message"] = None   # 공개 채널 메시지
     dm_message: Optional["Message"] = None   # DM 컨트롤 메시지
     message: Optional["Message"] = None      # 레거시 호환용
+    discord_client: Optional[object] = None  # Discord client (난입자 UI 전송용)
 
     # 시간 정보
     start_time: float = field(default_factory=lambda: asyncio.get_event_loop().time())
@@ -80,9 +82,58 @@ class DungeonSession:
     # 음성 채널 상태
     voice_channel_id: Optional[int] = None
 
+    # 공유 인스턴스 추적 (Phase 1: Voice Channel Shared Dungeon)
+    shared_instance_key: Optional[tuple[int, int]] = None
+    """(voice_channel_id, dungeon_id) if in shared instance"""
+
     # 전투 컨텍스트 (1:N 전투 지원)
     combat_context: Optional["CombatContext"] = None
     """현재 전투 중인 몬스터 그룹 (전투 중에만 존재)"""
+
+    # 탐험 버프 (아이템으로 부여)
+    explore_buffs: dict = field(default_factory=dict)
+    """활성 탐험 버프: {"drop_bonus": 50, "avoid_combat": 1, "force_treasure": 1, ...}"""
+
+    # 관전자 추적 (관전 시스템)
+    spectators: set[int] = field(default_factory=set)
+    """이 세션을 관전 중인 Discord 유저 ID 집합"""
+
+    # Phase 2: 난입자 거리 추적 (근접도 기반 비용/보상)
+    intervention_distances: dict[int, int] = field(default_factory=dict)
+    """user_id → 난입 요청 시 exploration_step 거리 (절댓값)"""
+
+    spectator_messages: dict[int, "Message"] = field(default_factory=dict)
+    """관전자 ID → 관전자 DM 메시지 매핑"""
+
+    # Phase 3: 멀티유저 encounter
+    active_encounter_event: Optional[object] = None
+    """현재 진행 중인 멀티유저 encounter 이벤트 (MultiUserEncounterEvent)"""
+
+    encounter_event_cooldown: float = 0.0
+    """마지막 멀티유저 encounter 발생 스텝 (쿨타임)"""
+
+    # Phase 4: 위기 목격 이벤트
+    crisis_event_sent: bool = False
+    """위기 목격 이벤트 전송 여부 (전투당 1회 제한)"""
+
+    combat_notification_message: Optional["Message"] = None
+    """서버 채널에 게시된 전투 알림 메시지 (관전 버튼 포함)"""
+
+    # 난입 시스템 (멀티플레이어 전투)
+    participants: dict[int, "User"] = field(default_factory=dict)
+    """파티 참가자 (user_id → User 엔티티). 리더는 user 필드에 별도 보관"""
+
+    participant_combat_messages: dict[int, "Message"] = field(default_factory=dict)
+    """참가자별 전투 UI 메시지 (user_id → DM 메시지). 리더는 별도 관리"""
+
+    intervention_pending: dict[int, float] = field(default_factory=dict)
+    """난입 대기 중인 유저 (user_id → 요청 시간 timestamp)"""
+
+    contribution: dict[int, int] = field(default_factory=dict)
+    """기여도 추적 (user_id → 누적 데미지+치유)"""
+
+    allow_intervention: bool = True
+    """난입 허용 여부 (유저가 설정)"""
 
     def is_dungeon_cleared(self) -> bool:
         """던전 클리어 조건 확인"""
@@ -95,10 +146,10 @@ active_sessions: dict[int, DungeonSession] = {}
 
 async def create_session(user_id: int) -> Optional[DungeonSession]:
     """
-    세션 생성 (원자적 연산)
+    세션 생성 (원자적 연산 with double-check locking)
 
     이미 세션이 존재하면 None을 반환합니다.
-    Race condition을 방지하기 위해 락을 사용합니다.
+    Race condition을 방지하기 위해 double-check locking을 사용합니다.
 
     Args:
         user_id: Discord 사용자 ID
@@ -106,13 +157,26 @@ async def create_session(user_id: int) -> Optional[DungeonSession]:
     Returns:
         생성된 DungeonSession 객체 또는 None (이미 존재 시)
     """
-    async with _session_lock:
-        # 이미 세션이 존재하면 None 반환
-        if user_id in active_sessions and not active_sessions[user_id].ended:
-            logger.warning(f"Session already exists for user {user_id}")
+    # First check (without lock - fast path)
+    if user_id in active_sessions:
+        existing = active_sessions[user_id]
+        if not existing.ended:
+            logger.warning(f"Session already exists for user {user_id} (fast path)")
             return None
 
-        logger.info(f"Creating session for user {user_id}")
+    async with _session_lock:
+        # Double-check inside lock (prevents race condition)
+        if user_id in active_sessions:
+            existing = active_sessions[user_id]
+            if not existing.ended:
+                logger.warning(f"Session already exists for user {user_id} (locked path)")
+                return None
+            else:
+                # 종료된 세션은 제거
+                del active_sessions[user_id]
+                logger.info(f"Cleaned up ended session for user {user_id}")
+
+        logger.info(f"Creating new session for user {user_id}")
         session = DungeonSession(user_id=user_id)
         active_sessions[user_id] = session
         return session
@@ -149,6 +213,14 @@ async def end_session(user_id: int) -> None:
         # 전투 상태 강제 해제 (리소스 정리)
         session.in_combat = False
         session.status = SessionType.IDLE
+
+        # 관전자 정리
+        if session.spectators:
+            try:
+                from service.spectator.spectator_service import SpectatorService
+                await SpectatorService.cleanup_spectators(session)
+            except Exception as e:
+                logger.error(f"Failed to cleanup spectators on session end: {e}")
 
         # 사용자 데이터 저장
         if session.user:

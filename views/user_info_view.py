@@ -72,75 +72,12 @@ class UserInfoView(discord.ui.View):
         total_ap_attack = stat[UserStatEnum.AP_ATTACK]
         total_ap_defense = stat[UserStatEnum.AP_DEFENSE]
 
-        # HP 바
+        # HP 바 + 경험치 바 표시 (1행 전체)
         hp_ratio = self.user.now_hp / max_hp if max_hp > 0 else 0
         hp_bar = self._create_bar(hp_ratio, 20)
-
-        # 기본 전투 스탯
-        embed.add_field(
-            name="⚔️ 물리 스탯",
-            value=(
-                f"```\n"
-                f"레벨     : Lv.{self.user.level}\n"
-                f"체력     : {self.user.now_hp}/{max_hp}\n"
-                f"공격력   : {total_attack}\n"
-                f"방어력   : {total_defense}\n"
-                f"속도     : {total_speed}\n"
-                f"```"
-            ),
-            inline=True
-        )
-
-        # 마법 스탯
-        embed.add_field(
-            name="✨ 마법 스탯",
-            value=(
-                f"```\n"
-                f"마법공격력: {total_ap_attack}\n"
-                f"마법방어력: {total_ap_defense}\n"
-                f"```"
-            ),
-            inline=True
-        )
-
-        # 보조 전투 스탯 (User에서 직접 가져오기)
-        # Balance.md 기준 기본값: 명중 90%, 회피 5%, 치명타율 5%, 치명타 배율 150%
-        accuracy = self.user.accuracy
-        evasion = self.user.evasion
-        crit_rate = self.user.critical_rate
-        crit_damage = self.user.critical_damage
-
-        embed.add_field(
-            name="🎯 전투 보조",
-            value=(
-                f"```\n"
-                f"명중률   : {accuracy}%\n"
-                f"회피율   : {evasion}%\n"
-                f"치명타율 : {crit_rate}%\n"
-                f"치명타배율: {crit_damage}%\n"
-                f"```"
-            ),
-            inline=True
-        )
-
-        # 회복 및 재화
-        embed.add_field(
-            name="💚 회복 / 💰 재화",
-            value=(
-                f"```\n"
-                f"자연회복 : {self.user.hp_regen} HP/분\n"
-                f"골드     : {self.user.gold:,}G\n"
-                f"스탯 P   : {self.user.stat_points}P\n"
-                f"```"
-            ),
-            inline=True
-        )
-
-        # 경험치 바 계산
         level_progress = RewardService.get_level_progress(self.user)
         exp_bar = self._create_bar(level_progress["progress"], 20)
 
-        # HP 바 + 경험치 바 표시
         embed.add_field(
             name="❤️ 체력 / ⭐ 경험치",
             value=(
@@ -149,6 +86,83 @@ class UserInfoView(discord.ui.View):
             ),
             inline=False
         )
+
+        # 능력치 (각 스탯을 별도 행으로 표시) - 2행
+        embed.add_field(
+            name="⚔️ 능력치",
+            value=(
+                f"```\n"
+                f"Lv.{self.user.level}\n"
+                f"HP      : {self.user.now_hp}/{max_hp}\n"
+                f"AD      : {total_attack}\n"
+                f"AP      : {total_ap_attack}\n"
+                f"AD DEF  : {total_defense}\n"
+                f"AP DEF  : {total_ap_defense}\n"
+                f"SPD     : {total_speed}\n"
+                f"```"
+            ),
+            inline=True
+        )
+
+        # 5대 스탯 - 2행
+        embed.add_field(
+            name="📊 스탯",
+            value=(
+                f"```\n"
+                f"STR : {self.user.bonus_str}\n"
+                f"INT : {self.user.bonus_int}\n"
+                f"DEX : {self.user.bonus_dex}\n"
+                f"VIT : {self.user.bonus_vit}\n"
+                f"LUK : {self.user.bonus_luk}\n"
+                f"```"
+            ),
+            inline=True
+        )
+
+        # 줄바꿈을 위한 빈 필드
+        embed.add_field(name="\u200b", value="\u200b", inline=False)
+
+        # 전투 보조 스탯 자동 수집 (컴포넌트 위임 방식)
+        combat_stats = self._collect_combat_stats(stat)
+
+        # 스탯이 하나도 없으면 기본 메시지
+        if not combat_stats:
+            combat_stats = ["보조 스탯 없음"]
+
+        embed.add_field(
+            name="🎯 전투 보조",
+            value=f"```\n{chr(10).join(combat_stats)}\n```",
+            inline=True
+        )
+
+        # 회복 및 재화
+        regen_rate = self.user.get_hp_regen_rate()
+        regen_per_min = max(1, int(max_hp * regen_rate))
+        embed.add_field(
+            name="💚 회복 / 💰 재화",
+            value=(
+                f"```\n"
+                f"자연회복 : {regen_per_min} HP/분 ({regen_rate:.1%})\n"
+                f"골드     : {self.user.gold:,}G\n"
+                f"스탯 P   : {self.user.stat_points}P\n"
+                f"```"
+            ),
+            inline=True
+        )
+
+        # 시너지 표시
+        from service.player.synergy_service import SynergyService
+        active_synergies = SynergyService.evaluate_synergies(
+            self.user.bonus_str, self.user.bonus_int,
+            self.user.bonus_dex, self.user.bonus_vit, self.user.bonus_luk
+        )
+        if active_synergies:
+            synergy_text = SynergyService.format_synergies_display(active_synergies)
+            embed.add_field(
+                name="✨ 시너지",
+                value=synergy_text,
+                inline=False
+            )
 
         embed.set_footer(text="⬇️ 아래 버튼으로 장비/스킬 정보를 확인하세요")
         return embed
@@ -282,22 +296,27 @@ class UserInfoView(discord.ui.View):
             inline=True
         )
 
-        # 스킬 발동 확률 계산
+        # 스킬 발동 확률 계산 (패시브 제외 - 백에서 셔플 안 됨)
         skill_counts = {}
+        active_slot_count = 0
         for skill_id in self.skill_deck:
-            if skill_id:
-                skill_counts[skill_id] = skill_counts.get(skill_id, 0) + 1
+            if not skill_id:
+                continue
+            skill = skill_cache_by_id.get(skill_id)
+            if skill and skill.is_passive:
+                continue
+            skill_counts[skill_id] = skill_counts.get(skill_id, 0) + 1
+            active_slot_count += 1
 
         if skill_counts:
             prob_lines = []
             for skill_id, count in sorted(skill_counts.items(), key=lambda x: -x[1]):
                 if skill_id in skill_cache_by_id:
                     skill = skill_cache_by_id[skill_id]
-                    # 등급별 색상 적용
                     grade_id = skill.skill_model.grade
                     formatted_name = format_skill_name(skill.name, grade_id)
-                    prob = count * 10  # 슬롯당 10%
-                    prob_lines.append(f"• {formatted_name}: {prob}%")
+                    prob = (count / active_slot_count * 100) if active_slot_count > 0 else 0
+                    prob_lines.append(f"• {formatted_name}: {prob:.0f}%")
 
             embed.add_field(
                 name="🎲 발동 확률",
@@ -319,6 +338,68 @@ class UserInfoView(discord.ui.View):
 
         embed.set_footer(text="💡 /덱 명령어로 스킬을 변경할 수 있고, /설명 명령어로 시너지 상세 정보를 확인하세요")
         return embed
+
+    def _collect_combat_stats(self, stat: dict) -> list:
+        """
+        전투 보조 스탯을 자동으로 수집 (비지터 패턴)
+
+        컴포넌트가 자기 스탯 정보(값 + 메타데이터)를 제공합니다.
+        새로운 스탯 추가 시 PassiveBuffComponent.STAT_METADATA만 수정하면 자동 반영됩니다.
+        """
+        from service.dungeon.components.stat_components import PassiveBuffComponent
+
+        # 스탯 값 수집
+        collected_stats = {}
+
+        # 1. User 기본 스탯 (하드코딩 필요 - Enum 기반)
+        user_stat_mapping = {
+            UserStatEnum.ACCURACY: "accuracy",
+            UserStatEnum.EVASION: "evasion",
+            UserStatEnum.CRITICAL_RATE: "crit_rate",
+            UserStatEnum.CRITICAL_DAMAGE: "crit_damage",
+        }
+        for enum_key, stat_key in user_stat_mapping.items():
+            value = stat.get(enum_key, getattr(self.user, stat_key.replace("_", ""), 0))
+            if value > 0:
+                collected_stats[stat_key] = value
+
+        # 2. Equipment stats (장비 특수 효과)
+        equipment_stats_dict = getattr(self.user, "equipment_stats", {})
+        for stat_key, value in equipment_stats_dict.items():
+            if value > 0 and stat_key in PassiveBuffComponent.STAT_METADATA:
+                collected_stats[stat_key] = collected_stats.get(stat_key, 0) + value
+
+        # 3. Passive skill bonuses (비율 → 퍼센트 변환)
+        from service.dungeon.skill import get_passive_stat_bonuses
+        passive_bonuses = get_passive_stat_bonuses(self.skill_deck)
+
+        for key, value in passive_bonuses.items():
+            if key in PassiveBuffComponent.STAT_METADATA and value > 0:
+                metadata = PassiveBuffComponent.STAT_METADATA[key]
+                is_ratio = metadata["is_ratio"]
+                bonus_value = value * 100 if is_ratio else value
+                collected_stats[key] = collected_stats.get(key, 0) + bonus_value
+
+        # 4. Drop rate 특수 처리
+        drop_rate = self.user.get_drop_rate_bonus()
+        if drop_rate > 0:
+            collected_stats["drop_rate"] = drop_rate
+
+        # 포맷팅 (컴포넌트의 메타데이터 사용)
+        formatted_stats = []
+        for stat_key, value in collected_stats.items():
+            if stat_key in PassiveBuffComponent.STAT_METADATA:
+                metadata = PassiveBuffComponent.STAT_METADATA[stat_key]
+                label = metadata["label"]
+                suffix = metadata["suffix"]
+                prefix = metadata["prefix"]
+
+                if isinstance(value, float):
+                    formatted_stats.append(f"{label:10s}: {prefix}{value:.1f}{suffix}")
+                else:
+                    formatted_stats.append(f"{label:10s}: {prefix}{value}{suffix}")
+
+        return formatted_stats
 
     def _create_bar(self, ratio: float, length: int = 10) -> str:
         """프로그레스 바 생성"""

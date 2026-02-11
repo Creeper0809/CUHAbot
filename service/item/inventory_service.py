@@ -16,6 +16,7 @@ from exceptions import (
 )
 from config import INVENTORY
 from service.collection_service import CollectionService
+from service.event import EventBus, GameEvent, GameEventType
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +29,11 @@ class InventoryService:
         user: User,
         item_id: int,
         quantity: int = 1,
-        enhancement_level: int = 0
+        enhancement_level: int = 0,
+        instance_grade: int = 0,
+        is_blessed: bool = False,
+        is_cursed: bool = False,
+        special_effects: Optional[list] = None,
     ) -> UserInventory:
         """
         아이템 추가
@@ -38,6 +43,10 @@ class InventoryService:
             item_id: 아이템 ID
             quantity: 수량
             enhancement_level: 강화 레벨 (장비만 해당)
+            instance_grade: 인스턴스 등급 (0=없음, 1=D ~ 8=신화)
+            is_blessed: 축복 여부
+            is_cursed: 저주 여부
+            special_effects: 특수 효과 리스트 (A등급 이상 장비)
 
         Returns:
             UserInventory 객체
@@ -50,19 +59,25 @@ class InventoryService:
         if not item:
             raise ItemNotFoundError(item_id)
 
-        # 동일 아이템/강화 레벨이 있으면 스택 처리
-        existing = await UserInventory.get_or_none(
-            user=user,
-            item=item,
-            enhancement_level=enhancement_level
-        )
-        if existing:
-            existing.quantity += quantity
-            await existing.save()
-            logger.debug(f"Stacked item {item_id} x{quantity} for user {user.id}")
-            # 도감에 등록 (이미 등록된 경우 무시됨)
-            await CollectionService.register_item(user, item_id)
-            return existing
+        # 장비 아이템은 전부 유니크 인스턴스로 취급 (스택하지 않음)
+        # 소모품/기타 아이템만 스택 허용
+        if item.type != ItemType.EQUIP:
+            # 소모품/기타: 특수 효과/축복/저주가 없으면 스택 가능
+            if not special_effects and not is_blessed and not is_cursed:
+                existing = await UserInventory.get_or_none(
+                    user=user,
+                    item=item,
+                    enhancement_level=enhancement_level,
+                    instance_grade=instance_grade,
+                    is_blessed=False,
+                    is_cursed=False,
+                )
+                if existing:
+                    existing.quantity += quantity
+                    await existing.save()
+                    logger.debug(f"Stacked item {item_id} x{quantity} for user {user.id}")
+                    await CollectionService.register_item(user, item_id)
+                    return existing
 
         # 인벤토리 슬롯 체크 (새 슬롯 생성 시만)
         current_slots = await UserInventory.filter(user=user).count()
@@ -74,12 +89,31 @@ class InventoryService:
             user=user,
             item=item,
             quantity=quantity,
-            enhancement_level=enhancement_level
+            enhancement_level=enhancement_level,
+            instance_grade=instance_grade,
+            is_blessed=is_blessed,
+            is_cursed=is_cursed,
+            special_effects=special_effects,
         )
-        logger.info(f"Added item {item_id} x{quantity} to user {user.id}")
+        logger.info(
+            f"Added item {item_id} x{quantity} (grade={instance_grade}) to user {user.id}"
+        )
 
         # 도감에 등록
         await CollectionService.register_item(user, item_id)
+
+        # 이벤트 발행: 아이템 획득
+        event_bus = EventBus()
+        await event_bus.publish(GameEvent(
+            type=GameEventType.ITEM_OBTAINED,
+            user_id=user.id,
+            data={
+                "item_id": item_id,
+                "item_name": item.name,
+                "item_type": item.type.value if hasattr(item, "type") else None,
+                "quantity": quantity
+            }
+        ))
 
         return inv_item
 
@@ -104,10 +138,10 @@ class InventoryService:
             ItemNotFoundError: 아이템을 찾을 수 없음
             InsufficientItemError: 아이템 수량 부족
         """
-        inv_item = await UserInventory.get_or_none(
+        inv_item = await UserInventory.filter(
             user=user,
             item_id=item_id
-        ).prefetch_related("item")
+        ).prefetch_related("item").first()
 
         if not inv_item:
             raise ItemNotFoundError(item_id)
@@ -158,10 +192,10 @@ class InventoryService:
         Returns:
             UserInventory 객체 또는 None
         """
-        return await UserInventory.get_or_none(
+        return await UserInventory.filter(
             id=inventory_id,
             user=user
-        ).prefetch_related("item")
+        ).prefetch_related("item").first()
 
     @staticmethod
     async def get_item_by_item_id(
@@ -178,10 +212,10 @@ class InventoryService:
         Returns:
             UserInventory 객체 또는 None
         """
-        return await UserInventory.get_or_none(
+        return await UserInventory.filter(
             user=user,
             item_id=item_id
-        ).prefetch_related("item")
+        ).prefetch_related("item").first()
 
     @staticmethod
     async def count_item(user: User, item_id: int) -> int:

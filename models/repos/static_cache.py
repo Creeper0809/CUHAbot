@@ -13,16 +13,21 @@ item_cache = {}
 spawn_info = {}
 skill_cache_by_id = {}
 box_drop_table = {}  # {"normal": [(box_id, weight), ...], ...}
+_dungeon_levels_sorted: list[int] = []  # 던전 require_level 정렬 리스트
+equipment_cache = {}  # item_id -> EquipmentItem
+set_name_by_item_id = {}  # item_id -> set_name (e.g. "🔥 화염")
+equipment_by_source = {}  # acquisition_source -> [item_id, ...]
 
 
 async def load_static_data():
     """정적 데이터 로드 (봇 시작 시 호출)"""
-    global dungeon_cache, monster_cache_by_id, item_cache, spawn_info, skill_cache_by_id, box_drop_table
+    global dungeon_cache, monster_cache_by_id, item_cache, spawn_info, skill_cache_by_id, box_drop_table, _dungeon_levels_sorted
     logger.info("Loading static data...")
 
     # 던전 로딩
     dungeons = await Dungeon.all()
     dungeon_cache = {d.id: d for d in dungeons}
+    _dungeon_levels_sorted = sorted(set(d.require_level for d in dungeons))
     logger.info(f"Loaded {len(dungeon_cache)} dungeons")
 
     # 몬스터 로딩
@@ -59,6 +64,7 @@ async def load_static_data():
                 continue
             try:
                 component = get_component_by_tag(tag)
+                component._tag = tag
                 component.apply_config(comp_config, skill.name)
                 component.skill_attribute = getattr(skill, 'attribute', '무속성')
                 components.append(component)
@@ -71,11 +77,86 @@ async def load_static_data():
 
     logger.info(f"Loaded {len(skill_cache_by_id)} skills")
 
+    # 장비 캐시 로딩
+    await _load_equipment_cache()
+
     # Grade 캐시 로딩 (상점 가격 등)
     await ShopService.load_grade_cache()
 
     # 상자 드랍 테이블 로딩
     await load_box_drop_table()
+
+
+EQUIP_POS_NAMES = {
+    1: "투구", 2: "갑옷", 3: "신발", 4: "무기",
+    5: "보조무기", 6: "장갑", 7: "목걸이", 8: "반지",
+}
+
+
+async def _load_equipment_cache():
+    """장비 및 세트 캐시 로드"""
+    global equipment_cache, set_name_by_item_id, equipment_by_source
+
+    from models.equipment_item import EquipmentItem
+    from models.set_item import SetItem, SetItemMember
+
+    # EquipmentItem: item_id -> EquipmentItem
+    all_equip = await EquipmentItem.all()
+    equipment_cache = {eq.item_id: eq for eq in all_equip}
+    logger.info(f"Loaded {len(equipment_cache)} equipment items into cache")
+
+    # 획득처별 장비 캐시 (acquisition_source -> [item_id, ...])
+    equipment_by_source = {}
+    for eq in all_equip:
+        source = getattr(eq, 'acquisition_source', None)
+        if source:
+            equipment_by_source.setdefault(source, []).append(eq.item_id)
+    logger.info(f"Loaded equipment_by_source: {len(equipment_by_source)} sources")
+
+    # SetItemMember -> SetItem: item_id -> set_name
+    all_sets = await SetItem.all()
+    set_name_map = {s.id: s.name for s in all_sets}
+
+    all_members = await SetItemMember.all()
+    # equipment_item_id(PK) -> item_id 역매핑
+    equip_pk_to_item_id = {eq.id: eq.item_id for eq in all_equip}
+
+    for member in all_members:
+        item_id = equip_pk_to_item_id.get(member.equipment_item_id)
+        set_name = set_name_map.get(member.set_item_id)
+        if item_id and set_name:
+            set_name_by_item_id[item_id] = set_name
+
+    logger.info(f"Loaded {len(set_name_by_item_id)} set memberships into cache")
+
+
+def get_equipment_ids_by_source(source: str) -> list[int]:
+    """획득처 이름으로 장비 아이템 ID 리스트 조회"""
+    return equipment_by_source.get(source, [])
+
+
+def get_equipment_info(item_id: int) -> dict:
+    """장비 아이템 캐시 정보 조회"""
+    eq = equipment_cache.get(item_id)
+    if not eq:
+        return {}
+    return {
+        "require_level": eq.require_level or 1,
+        "equip_pos": EQUIP_POS_NAMES.get(eq.equip_pos, ""),
+        "attack": eq.attack,
+        "ap_attack": eq.ap_attack,
+        "hp": eq.hp,
+        "ad_defense": eq.ad_defense,
+        "ap_defense": eq.ap_defense,
+        "speed": eq.speed,
+        "set_name": set_name_by_item_id.get(item_id, ""),
+        "require_str": eq.require_str or 0,
+        "require_int": eq.require_int or 0,
+        "require_dex": eq.require_dex or 0,
+        "require_vit": eq.require_vit or 0,
+        "require_luk": eq.require_luk or 0,
+        "config": eq.config,  # 특수 효과 정보
+    }
 
 
 async def load_box_drop_table():
@@ -130,3 +211,11 @@ def _resolve_skill_components(skill_config):
 
 def get_dungeons():
     return dungeon_cache
+
+
+def get_previous_dungeon_level(current_level: int) -> int:
+    """현재 던전 렙제의 바로 이전 단계 던전 렙제 반환"""
+    for i, lvl in enumerate(_dungeon_levels_sorted):
+        if lvl >= current_level:
+            return _dungeon_levels_sorted[i - 1] if i > 0 else 0
+    return _dungeon_levels_sorted[-1] if _dungeon_levels_sorted else 0

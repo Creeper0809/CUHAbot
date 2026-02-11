@@ -38,9 +38,12 @@ class PartyConfig:
     """파티 설정"""
 
     MAX_PARTY_SIZE: int = 5
-    """파티 최대 인원"""
+    """파티 최대 인원 (일반 파티, 음성 채널 파티 등)"""
 
-    INTERVENTION_WINDOW_TURNS: int = 3
+    MAX_COMBAT_PARTICIPANTS: int = 3
+    """전투 참여 최대 인원 (리더 포함)"""
+
+    INTERVENTION_WINDOW_TURNS: int = 10
     """전투 난입 가능 턴 수"""
 
     INTERVENTION_COOLDOWN_SECONDS: int = 300
@@ -78,3 +81,21 @@ class AuctionConfig:
 
 
 AUCTION = AuctionConfig()
+
+
+# =============================================================================
+# 관전 시스템
+# =============================================================================
+
+@dataclass(frozen=True)
+class SpectatorConfig:
+    """관전 시스템 설정"""
+
+    MAX_SPECTATORS_PER_SESSION: int = 50
+    """세션당 최대 관전자 수"""
+
+    NOTIFICATION_TIMEOUT: int = 300
+    """전투 알림 메시지 타임아웃 (초, 5분)"""
+
+
+SPECTATOR = SpectatorConfig()

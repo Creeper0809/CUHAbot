@@ -6,6 +6,7 @@ from service.dungeon.components.base import SkillComponent, register_skill_with_
 from service.dungeon.status import (
     ShieldBuff, has_curse_effect, remove_status_effects,
 )
+from service.player.stat_synergy_combat import get_heal_bonus_pct, get_buff_duration_bonus
 
 
 @register_skill_with_tag("heal")
@@ -54,6 +55,11 @@ class HealComponent(SkillComponent):
             synergy_mult = SynergyService.calculate_heal_multiplier(attacker.equipped_skill)
             total_heal = int(total_heal * synergy_mult)
 
+        # 스탯 시너지: 회복량 보너스 (현자)
+        heal_bonus = get_heal_bonus_pct(attacker)
+        if heal_bonus > 0:
+            total_heal = int(total_heal * (1 + heal_bonus / 100))
+
         # 저주 효과 시 회복량 50% 감소
         if has_curse_effect(attacker):
             total_heal = total_heal // 2
@@ -62,7 +68,7 @@ class HealComponent(SkillComponent):
         attacker.now_hp = min(attacker.now_hp + total_heal, max_hp)
         actual_heal = attacker.now_hp - old_hp
 
-        return f"💚 **{attacker.get_name()}** 「{self.skill_name}」 → **+{actual_heal}** HP"
+        return f"💚 **{attacker.get_name()}** 「{self.skill_name}」 → **{attacker.get_name()}**에게 +{actual_heal} HP"
 
 
 @register_skill_with_tag("shield")
@@ -92,9 +98,12 @@ class ShieldComponent(SkillComponent):
         max_hp = attacker.hp
         shield_amount = max(1, int(max_hp * self.percent) + self.flat)
 
+        # 스탯 시너지: 버프 지속 +N턴 (균형의 달인)
+        duration = self.shield_duration + get_buff_duration_bonus(attacker)
+
         shield = ShieldBuff()
         shield.shield_hp = shield_amount
-        shield.duration = self.shield_duration
+        shield.duration = duration
         attacker.status.append(shield)
 
         return f"🛡️ **{attacker.get_name()}** 「{self.skill_name}」 → 보호막 **{shield_amount}**!"

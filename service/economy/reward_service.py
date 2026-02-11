@@ -182,16 +182,17 @@ class RewardService:
         """
         current_level_exp = get_exp_for_level(user.level)
         next_level_exp = get_exp_for_level(user.level + 1)
-        exp_in_current_level = user.exp - current_level_exp
+        exp_in_current_level = max(0, user.exp - current_level_exp)  # 음수 방지
         exp_needed_for_next = next_level_exp - current_level_exp
 
         progress = exp_in_current_level / exp_needed_for_next if exp_needed_for_next > 0 else 1.0
+        progress = max(0.0, min(progress, 1.0))  # 0~1 사이로 클램핑
 
         return {
             "level": user.level,
             "current_exp": user.exp,
             "exp_in_level": exp_in_current_level,
             "exp_needed": exp_needed_for_next,
-            "progress": min(progress, 1.0),
+            "progress": progress,
             "exp_to_next": max(0, exp_needed_for_next - exp_in_current_level)
         }

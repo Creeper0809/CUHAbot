@@ -24,11 +24,18 @@ class EnhancementItemDropdown(discord.ui.Select):
             item = inv.item
             enhance_text = f"+{inv.enhancement_level}" if inv.enhancement_level > 0 else ""
 
+            # 축복/저주 상태 표시
+            status_icon = ""
+            if inv.is_blessed:
+                status_icon = "✨"
+            elif inv.is_cursed:
+                status_icon = "💀"
+
             # 등급별 색상 적용
             grade_id = getattr(item, 'grade_id', None)
             formatted_name = format_item_name(item.name, grade_id)
 
-            label = f"{formatted_name} {enhance_text}".strip()
+            label = f"{status_icon}{formatted_name} {enhance_text}".strip()
             if len(label) > 100:
                 label = label[:97] + "..."
 
@@ -177,7 +184,8 @@ class EnhancementView(discord.ui.View):
         user: discord.User,
         db_user: User,
         equipment_items: List[UserInventory],
-        timeout: int = 180
+        timeout: int = 180,
+        list_view=None,
     ):
         super().__init__(timeout=timeout)
 
@@ -185,6 +193,7 @@ class EnhancementView(discord.ui.View):
         self.db_user = db_user
         self.equipment_items = equipment_items
         self.selected_inventory_id: Optional[int] = None
+        self.list_view = list_view
 
         # 드롭다운 및 버튼 추가 (장비가 없어도 드롭다운 표시)
         self.add_item(EnhancementItemDropdown(equipment_items))
@@ -215,6 +224,10 @@ class EnhancementView(discord.ui.View):
 
         # 장비가 없어도 드롭다운 표시
         self.add_item(EnhancementItemDropdown(self.equipment_items))
+
+        # 부모 인벤토리 뷰도 갱신
+        if self.list_view:
+            await self.list_view.refresh_message()
 
     def create_default_embed(self) -> discord.Embed:
         """기본 임베드 (선택 전)"""
@@ -321,9 +334,16 @@ class EnhancementView(discord.ui.View):
             inline=True
         )
 
+        # 축복/저주 상태 표시
+        status_text = ""
+        if info.get("is_blessed"):
+            status_text = "✨ 축복 (성공률 +10%, 실패 시 유지)\n"
+        elif info.get("is_cursed"):
+            status_text = "💀 저주 (성공률 -10%, 파괴 확률 2배)\n"
+
         embed.add_field(
             name="🎲 성공률",
-            value=f"```\n{rate_desc}\n```",
+            value=f"{status_text}```\n{rate_desc}\n```",
             inline=False
         )
 

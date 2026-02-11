@@ -17,6 +17,7 @@ from exceptions import (
 )
 from service.collection_service import CollectionService
 from service.session import get_session
+from service.tower.tower_restriction import enforce_skill_change_restriction
 
 logger = logging.getLogger(__name__)
 
@@ -50,6 +51,7 @@ class SkillDeckService:
         session = get_session(user.discord_id)
         if session and session.in_combat:
             raise CombatRestrictionError("스킬 변경")
+        enforce_skill_change_restriction(session)
 
         # 슬롯 범위 체크
         if not 0 <= slot_index < SKILL_DECK_SIZE:
@@ -155,6 +157,7 @@ class SkillDeckService:
         session = get_session(user.discord_id)
         if session and session.in_combat:
             raise CombatRestrictionError("스킬 변경")
+        enforce_skill_change_restriction(session)
 
         deleted = await UserSkillDeck.filter(user=user).delete()
         logger.info(f"Cleared deck for user {user.id}: {deleted} slots")
@@ -189,6 +192,7 @@ class SkillDeckService:
         session = get_session(target_user.discord_id)
         if session and session.in_combat:
             raise CombatRestrictionError("스킬 변경")
+        enforce_skill_change_restriction(session)
 
         # 대상 덱 초기화
         await UserSkillDeck.filter(user=target_user).delete()

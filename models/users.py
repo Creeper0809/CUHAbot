@@ -22,6 +22,10 @@ class UserStatEnum(str, Enum):
     SPEED = "SPEED"
     AP_ATTACK = "AP_ATTACK"
     AP_DEFENSE = "AP_DEFENSE"
+    ACCURACY = "ACCURACY"
+    EVASION = "EVASION"
+    CRITICAL_RATE = "CRITICAL_RATE"
+    CRITICAL_DAMAGE = "CRITICAL_DAMAGE"
 
 
 class User(models.Model):
@@ -42,7 +46,7 @@ class User(models.Model):
     created_at = fields.DatetimeField(auto_now_add=True)
     user_role = fields.CharField(max_length=255, default="user")
 
-    # 기본 스탯 (분배 가능)
+    # 기본 전투 스탯 (레벨에 따라 고정 성장)
     hp = fields.IntField(default=300)  # 기본 HP
     attack = fields.IntField(default=10)  # 물리 공격력
     defense = fields.IntField(default=5)  # 물리 방어력
@@ -57,22 +61,18 @@ class User(models.Model):
     exp = fields.BigIntField(default=0)  # 현재 경험치
     stat_points = fields.IntField(default=0)  # 분배 가능한 스탯 포인트
 
-    # 보너스 스탯 (스탯 분배로 얻은 영구 스탯)
-    bonus_hp = fields.IntField(default=0)
-    bonus_attack = fields.IntField(default=0)
-    bonus_ap_attack = fields.IntField(default=0)
-    bonus_ad_defense = fields.IntField(default=0)
-    bonus_ap_defense = fields.IntField(default=0)
-    bonus_speed = fields.IntField(default=0)
+    # 5대 능력치 (스탯 포인트로 분배)
+    bonus_str = fields.IntField(default=0)  # 힘
+    bonus_int = fields.IntField(default=0)  # 지능
+    bonus_dex = fields.IntField(default=0)  # 민첩
+    bonus_vit = fields.IntField(default=0)  # 활력
+    bonus_luk = fields.IntField(default=0)  # 행운
 
-    # 보조 스탯 (퍼센트 기반)
+    # 보조 스탯 (퍼센트 기반, 레벨 기본값)
     accuracy = fields.IntField(default=90)  # 명중률 (100 = 100%)
     evasion = fields.IntField(default=5)  # 회피율
     critical_rate = fields.IntField(default=5)  # 치명타 확률
     critical_damage = fields.IntField(default=150)  # 치명타 데미지 (150 = 150%)
-
-    # 재화
-    gold = fields.BigIntField(default=0)
 
     # 출석 관련
     last_attendance = fields.DateField(null=True)
@@ -80,8 +80,8 @@ class User(models.Model):
 
     # 상태
     now_hp = fields.IntField(default=300)
-    hp_regen = fields.IntField(default=5)  # 분당 HP 회복량
     last_regen_time = fields.DatetimeField(auto_now_add=True)  # 마지막 회복 시간
+    last_intervention_time = fields.DatetimeField(null=True)  # 마지막 난입 시간 (쿨다운 추적)
 
     # ==========================================================================
     # 런타임 필드 (DB 미저장) - __init__에서 초기화
@@ -110,21 +110,29 @@ class User(models.Model):
 
     def next_skill(self) -> Optional["Skill"]:
         """
-        덱에서 다음 스킬을 랜덤하게 선택하여 반환
+        덱에서 다음 액티브 스킬을 랜덤하게 선택하여 반환
+        (패시브 스킬은 덱 셔플에서 제외)
 
         Returns:
             선택된 스킬 객체, 스킬이 없으면 None
         """
         from models.repos.skill_repo import get_skill_by_id
+        from service.dungeon.skill import is_passive_skill
 
         if not self.skill_queue:
-            self.skill_queue = self.equipped_skill[:]
+            active_ids = [
+                sid for sid in self.equipped_skill
+                if sid != 0 and not is_passive_skill(sid)
+            ]
+            if not active_ids:
+                return None
+            self.skill_queue = active_ids[:]
             random.shuffle(self.skill_queue)
 
-        skill_id = self.skill_queue.pop()
-        if skill_id == 0:
+        if not self.skill_queue:
             return None
 
+        skill_id = self.skill_queue.pop()
         return get_skill_by_id(skill_id)
 
     def get_name(self) -> str:
@@ -141,20 +149,49 @@ class User(models.Model):
 
     def get_stat(self) -> dict[UserStatEnum, int]:
         """
-        현재 스탯 반환 (버프 적용 포함)
+        현재 스탯 반환 (능력치 변환 + 장비 + 버프 적용)
 
         Returns:
             스탯 열거형을 키로 하는 스탯 딕셔너리
         """
+        from service.player.stat_conversion import convert_abilities_to_combat_stats
+        from service.dungeon.skill import get_passive_stat_bonuses
+
         equipment_stats = getattr(self, "equipment_stats", {})
+
+        # 능력치 → 전투 스탯 변환
+        ability_bonus = convert_abilities_to_combat_stats(
+            self.bonus_str, self.bonus_int, self.bonus_dex,
+            self.bonus_vit, self.bonus_luk
+        )
+
         stat: dict[UserStatEnum, int] = {
-            UserStatEnum.HP: self.hp + equipment_stats.get("hp", 0),
-            UserStatEnum.ATTACK: self.attack + equipment_stats.get("attack", 0),
-            UserStatEnum.DEFENSE: self.defense + equipment_stats.get("ad_defense", 0),
-            UserStatEnum.SPEED: self.speed + equipment_stats.get("speed", 0),
-            UserStatEnum.AP_ATTACK: self.ap_attack + equipment_stats.get("ap_attack", 0),
-            UserStatEnum.AP_DEFENSE: self.ap_defense + equipment_stats.get("ap_defense", 0),
+            UserStatEnum.HP: self.hp + ability_bonus.hp + equipment_stats.get("hp", 0),
+            UserStatEnum.ATTACK: self.attack + ability_bonus.attack + equipment_stats.get("attack", 0),
+            UserStatEnum.DEFENSE: self.defense + ability_bonus.ad_defense + equipment_stats.get("ad_defense", 0),
+            UserStatEnum.SPEED: self.speed + ability_bonus.speed + equipment_stats.get("speed", 0),
+            UserStatEnum.AP_ATTACK: self.ap_attack + ability_bonus.ap_attack + equipment_stats.get("ap_attack", 0),
+            UserStatEnum.AP_DEFENSE: self.ap_defense + ability_bonus.ap_defense + equipment_stats.get("ap_defense", 0),
+            UserStatEnum.ACCURACY: int(self.accuracy + ability_bonus.accuracy),
+            UserStatEnum.EVASION: int(self.evasion + ability_bonus.evasion),
+            UserStatEnum.CRITICAL_RATE: int(self.critical_rate + ability_bonus.crit_rate),
+            UserStatEnum.CRITICAL_DAMAGE: int(self.critical_damage + ability_bonus.crit_damage),
         }
+
+        # 장비 전투 효과 (crit_rate, crit_damage 등)
+        stat[UserStatEnum.CRITICAL_RATE] += int(equipment_stats.get("crit_rate", 0))
+        stat[UserStatEnum.CRITICAL_DAMAGE] += int(equipment_stats.get("crit_damage", 0))
+
+        # 패시브 스킬 스탯 보너스 적용
+        passive = get_passive_stat_bonuses(getattr(self, 'equipped_skill', []))
+        stat[UserStatEnum.ATTACK] = int(stat[UserStatEnum.ATTACK] * (1 + passive["attack_percent"]))
+        stat[UserStatEnum.DEFENSE] = int(stat[UserStatEnum.DEFENSE] * (1 + passive["defense_percent"]))
+        stat[UserStatEnum.SPEED] = int(stat[UserStatEnum.SPEED] * (1 + passive["speed_percent"]))
+        stat[UserStatEnum.HP] = int(stat[UserStatEnum.HP] * (1 + passive["hp_percent"]))
+        stat[UserStatEnum.EVASION] = int(stat[UserStatEnum.EVASION] + passive["evasion_percent"] * 100)
+        stat[UserStatEnum.AP_ATTACK] = int(stat[UserStatEnum.AP_ATTACK] * (1 + passive["ap_attack_percent"]))
+        stat[UserStatEnum.CRITICAL_RATE] = int(stat[UserStatEnum.CRITICAL_RATE] + passive["crit_rate"] * 100)
+        stat[UserStatEnum.CRITICAL_DAMAGE] = int(stat[UserStatEnum.CRITICAL_DAMAGE] + passive["crit_damage"] * 100)
 
         for buff in self.status:
             buff.apply_stat(stat)
@@ -163,25 +200,48 @@ class User(models.Model):
 
     def get_luck(self) -> int:
         """
-        행운 스탯 반환 (장비 + 패시브 스킬)
+        행운 스탯 반환 (능력치 + 장비)
 
         Returns:
-            행운 스탯 (기본 0)
-
-        TODO: 추후 장비 및 패시브 스킬에서 행운 값 계산
-        - 행운의 부적 (악세서리): +5
-        - 행운 패시브: +10
-        - 보물 사냥꾼 패시브: +30
+            행운 스탯
         """
-        luck = 0
+        from service.player.stat_conversion import convert_abilities_to_combat_stats
 
-        # TODO: 장비에서 luck 스탯 가져오기
+        ability_bonus = convert_abilities_to_combat_stats(
+            self.bonus_str, self.bonus_int, self.bonus_dex,
+            self.bonus_vit, self.bonus_luk
+        )
+        luck = self.bonus_luk
+
         equipment_stats = getattr(self, "equipment_stats", {})
         luck += equipment_stats.get("luck", 0)
 
-        # TODO: 패시브 스킬에서 luck 보너스 가져오기
-
         return luck
+
+    def get_drop_rate_bonus(self) -> float:
+        """
+        드롭률 보너스 반환 (%)
+
+        Returns:
+            드롭률 보너스 (예: 15.0 = +15%)
+        """
+        from service.player.stat_conversion import convert_abilities_to_combat_stats
+
+        ability_bonus = convert_abilities_to_combat_stats(
+            self.bonus_str, self.bonus_int, self.bonus_dex,
+            self.bonus_vit, self.bonus_luk
+        )
+        return ability_bonus.drop_rate
+
+    def get_hp_regen_rate(self) -> float:
+        """
+        HP 자연회복률 반환 (최대 HP 대비 %/분)
+
+        Returns:
+            분당 회복률 (예: 0.02 = 2%/분)
+        """
+        from service.player.stat_conversion import calculate_hp_regen_rate
+        return calculate_hp_regen_rate(self.bonus_vit)
 
     def is_dead(self) -> bool:
         """사망 여부 확인"""
@@ -211,8 +271,7 @@ class User(models.Model):
         Returns:
             실제로 회복된 HP량
         """
-        equipment_stats = getattr(self, "equipment_stats", {})
-        max_hp = self.hp + equipment_stats.get("hp", 0)
+        max_hp = self.get_stat()[UserStatEnum.HP]
         actual_heal = min(amount, max_hp - self.now_hp)
         self.now_hp += actual_heal
         return actual_heal
@@ -228,4 +287,3 @@ class SkillEquip(models.Model):
 
     class Meta:
         table = "skill_equip"
-

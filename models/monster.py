@@ -56,6 +56,12 @@ class Monster(models.Model):
     attribute = fields.CharField(max_length=20, default="무속성")
     """몬스터 속성 (화염/냉기/번개/수속성/신성/암흑/무속성)"""
 
+    race = fields.CharField(max_length=30, default="미지")
+    """몬스터 종족 (슬라임/고블린/언데드/드래곤/마수/정령/골렘/인간형/수생/야수/미지)"""
+
+    drop_skill_ids = fields.JSONField(default=[])
+    """처치 시 드롭 가능한 스킬 ID 목록"""
+
     group_ids = fields.JSONField(default=[])
     """그룹 스폰 가능한 몬스터 ID 목록 (빈 리스트면 솔로 전용)"""
 
@@ -76,33 +82,53 @@ class Monster(models.Model):
         self.now_hp = getattr(self, 'hp', 0)
         self.status = []
 
-        # DB에서 로드한 skill_ids가 있으면 use_skill에 할당
+        # use_skill은 combat_skill_deck 프로퍼티로 대체 예정 (하위 호환성 유지)
+        self.use_skill = self.combat_skill_deck
+        self.skill_queue = []
+
+    @property
+    def combat_skill_deck(self) -> list[int]:
+        """
+        전투용 스킬 덱 (항상 10슬롯)
+
+        DB의 skill_ids를 10개 슬롯에 맞게 패딩하여 반환합니다.
+        이 프로퍼티를 사용하면 skill_ids와 use_skill의 차이를 명확히 할 수 있습니다.
+
+        Returns:
+            10개 슬롯의 스킬 ID 리스트
+        """
         db_skill_ids = getattr(self, 'skill_ids', [])
         if db_skill_ids and len(db_skill_ids) > 0:
-            # 10개 슬롯에 맞게 패딩
-            self.use_skill = (list(db_skill_ids) + [0] * 10)[:10]
+            # 10개 슬롯에 맞게 패딩 (부족하면 0으로 채움)
+            return (list(db_skill_ids) + [0] * 10)[:10]
         else:
-            self.use_skill = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-
-        self.skill_queue = []
+            return [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 
     def next_skill(self) -> Optional["Skill"]:
         """
-        덱에서 다음 스킬을 랜덤하게 선택하여 반환
+        덱에서 다음 액티브 스킬을 랜덤하게 선택하여 반환
+        (패시브 스킬은 덱 셔플에서 제외)
 
         Returns:
             선택된 스킬 객체, 스킬이 없으면 None
         """
         from models.repos.skill_repo import get_skill_by_id
+        from service.dungeon.skill import is_passive_skill
 
         if not self.skill_queue:
-            self.skill_queue = self.use_skill[:]
+            active_ids = [
+                sid for sid in self.use_skill
+                if sid != 0 and not is_passive_skill(sid)
+            ]
+            if not active_ids:
+                return None
+            self.skill_queue = active_ids[:]
             random.shuffle(self.skill_queue)
 
-        skill_id = self.skill_queue.pop()
-        if skill_id == 0:
+        if not self.skill_queue:
             return None
 
+        skill_id = self.skill_queue.pop()
         return get_skill_by_id(skill_id)
 
     def get_name(self) -> str:
@@ -133,7 +159,9 @@ class Monster(models.Model):
             speed=getattr(self, 'speed', 10),
             evasion=getattr(self, 'evasion', 0),
             skill_ids=getattr(self, 'skill_ids', []),
+            drop_skill_ids=getattr(self, 'drop_skill_ids', []),
             attribute=getattr(self, 'attribute', '무속성'),
+            race=getattr(self, 'race', '미지'),
             group_ids=getattr(self, 'group_ids', []),
         )
         new_monster.now_hp = self.hp
@@ -152,12 +180,14 @@ class Monster(models.Model):
 
     def get_stat(self) -> dict:
         """
-        현재 스탯 반환 (버프 적용 포함)
+        현재 스탯 반환 (패시브 + 버프 적용 포함)
 
         Returns:
             스탯 열거형을 키로 하는 스탯 딕셔너리
         """
+        from config import DAMAGE
         from models import UserStatEnum
+        from service.dungeon.skill import get_passive_stat_bonuses
 
         stat = {
             UserStatEnum.HP: self.hp,
@@ -166,7 +196,17 @@ class Monster(models.Model):
             UserStatEnum.DEFENSE: getattr(self, 'defense', 0),
             UserStatEnum.AP_ATTACK: getattr(self, 'ap_attack', 0),
             UserStatEnum.AP_DEFENSE: getattr(self, 'ap_defense', 0),
+            UserStatEnum.ACCURACY: DAMAGE.DEFAULT_ACCURACY,
+            UserStatEnum.EVASION: getattr(self, 'evasion', 0),
         }
+
+        # 패시브 스킬 스탯 보너스 적용
+        passive = get_passive_stat_bonuses(getattr(self, 'use_skill', []))
+        stat[UserStatEnum.ATTACK] = int(stat[UserStatEnum.ATTACK] * (1 + passive["attack_percent"]))
+        stat[UserStatEnum.DEFENSE] = int(stat[UserStatEnum.DEFENSE] * (1 + passive["defense_percent"]))
+        stat[UserStatEnum.SPEED] = int(stat[UserStatEnum.SPEED] * (1 + passive["speed_percent"]))
+        stat[UserStatEnum.HP] = int(stat[UserStatEnum.HP] * (1 + passive["hp_percent"]))
+        stat[UserStatEnum.AP_ATTACK] = int(stat[UserStatEnum.AP_ATTACK] * (1 + passive["ap_attack_percent"]))
 
         for buff in self.status:
             buff.apply_stat(stat)

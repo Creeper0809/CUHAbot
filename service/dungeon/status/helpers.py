@@ -4,6 +4,7 @@
 엔티티에 상태이상을 적용/제거/조회하는 유틸리티 함수들입니다.
 """
 import logging
+import random
 from typing import Optional
 
 from config import STATUS_EFFECT
@@ -36,6 +37,23 @@ def apply_status_effect(
     if effect_type not in status_effect_register:
         logger.warning(f"Unknown status effect type: {effect_type}")
         return ""
+
+    # 패시브: 상태이상 면역 체크
+    from service.dungeon.damage_pipeline import get_status_immunities, get_debuff_reduction
+    immunities = get_status_immunities(entity)
+    if immunities["all"] or effect_type in immunities["types"]:
+        return f"🛡️ **{entity.get_name()}** {effect_type} 면역!"
+
+    # 스탯 시너지: 상태이상 저항 (유령)
+    from service.player.stat_synergy_combat import get_status_resist_pct
+    resist_pct = get_status_resist_pct(entity)
+    if resist_pct > 0 and random.random() < resist_pct / 100:
+        return f"🛡️ **{entity.get_name()}** 상태이상 저항!"
+
+    # 패시브: 디버프 지속시간 감소
+    debuff_reduction = get_debuff_reduction(entity)
+    if debuff_reduction > 0 and duration > 0:
+        duration = max(1, int(duration * (1 - debuff_reduction)))
 
     existing = _find_status_effect(entity, effect_type)
     if existing:
@@ -170,7 +188,7 @@ def get_damage_taken_multiplier(entity) -> float:
         if isinstance(status, FreezeEffect):
             multiplier *= (1.0 + STATUS_EFFECT.FREEZE_DAMAGE_INCREASE)
         elif isinstance(status, MarkEffect):
-            multiplier *= 1.2
+            multiplier *= (1.0 + STATUS_EFFECT.MARK_DAMAGE_INCREASE)
     return multiplier
 
 

@@ -50,7 +50,7 @@ class ConsumeItem(models.Model):
 
     async def apply_to_embed(self, embed) -> None:
         from resources.item_emoji import ItemEmoji
-        
+
         stats = {k: v for k, v in self.raw_stats.items() if v is not None and v != 0}
         for stat_key, stat_value in stats.items():
             emoji = ItemEmoji.get_stat_emoji(stat_key.key)
@@ -58,6 +58,22 @@ class ConsumeItem(models.Model):
                 name=f"{stat_key.display} {emoji}",
                 value=f"```      {stat_value}      ```",
                 inline=True
+            )
+
+        # 추가 효과 표시
+        extra = []
+        if self.cleanse_debuff:
+            extra.append("🧹 디버프 정화")
+        if self.buff_type and self.buff_amount:
+            duration = f" ({self.buff_duration}턴)" if self.buff_duration else ""
+            extra.append(f"⬆️ {self.buff_type} +{self.buff_amount}{duration}")
+        if self.throwable_damage:
+            extra.append(f"💣 투척 데미지: {self.throwable_damage}")
+        if extra:
+            embed.add_field(
+                name="특수 효과",
+                value="\n".join(extra),
+                inline=False
             )
 
     def __str__(self):

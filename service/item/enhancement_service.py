@@ -122,29 +122,61 @@ class EnhancementService:
         if inv_item.item.type != ItemType.EQUIP:
             return {
                 "can_enhance": False,
-                "reason": "장비 아이템만 강화할 수 있습니다."
+                "current_level": inv_item.enhancement_level,
+                "success_rate": 0.0,
+                "cost": 0,
+                "current_gold": user.gold,
+                "item_name": inv_item.item.name,
+                "grade_id": getattr(inv_item.item, 'grade_id', 3),
+                "reason": "장비 아이템만 강화할 수 있습니다.",
+                "is_blessed": inv_item.is_blessed,
+                "is_cursed": inv_item.is_cursed,
             }
 
         equipment = await EquipmentItem.get_or_none(item=inv_item.item)
         if not equipment:
             return {
                 "can_enhance": False,
-                "reason": "장비 정보를 찾을 수 없습니다."
+                "current_level": inv_item.enhancement_level,
+                "success_rate": 0.0,
+                "cost": 0,
+                "current_gold": user.gold,
+                "item_name": inv_item.item.name,
+                "grade_id": getattr(inv_item.item, 'grade_id', 3),
+                "reason": "장비 정보를 찾을 수 없습니다.",
+                "is_blessed": inv_item.is_blessed,
+                "is_cursed": inv_item.is_cursed,
             }
 
         current_level = inv_item.enhancement_level
+        grade_id = getattr(inv_item.item, 'grade_id', 3)
+
         if current_level >= ENHANCEMENT.MAX_LEVEL:
             return {
                 "can_enhance": False,
-                "reason": f"최대 강화 레벨입니다 (+{ENHANCEMENT.MAX_LEVEL})"
+                "current_level": current_level,
+                "success_rate": 0.0,
+                "cost": 0,
+                "current_gold": user.gold,
+                "item_name": inv_item.item.name,
+                "grade_id": grade_id,
+                "reason": f"최대 강화 레벨입니다 (+{ENHANCEMENT.MAX_LEVEL})",
+                "is_blessed": inv_item.is_blessed,
+                "is_cursed": inv_item.is_cursed,
             }
 
         # 강화 비용 계산
-        grade_id = getattr(inv_item.item, 'grade_id', 3)
         cost = EnhancementService._calculate_cost(grade_id, current_level)
 
-        # 성공률 조회
+        # 성공률 조회 (축복/저주 보정)
         success_rate = EnhancementService._get_success_rate(current_level)
+        is_blessed = inv_item.is_blessed
+        is_cursed = inv_item.is_cursed
+
+        if is_blessed:
+            success_rate = min(1.0, success_rate + 0.10)
+        if is_cursed:
+            success_rate = max(0.0, success_rate - 0.10)
 
         # 골드 확인
         current_gold = user.gold
@@ -163,6 +195,8 @@ class EnhancementService:
             "item_name": inv_item.item.name,
             "grade_id": grade_id,
             "reason": reason,
+            "is_blessed": is_blessed,
+            "is_cursed": is_cursed,
         }
 
     @staticmethod
@@ -191,10 +225,10 @@ class EnhancementService:
             raise CombatRestrictionError("강화")
 
         # 아이템 조회
-        inv_item = await UserInventory.get_or_none(
+        inv_item = await UserInventory.filter(
             id=inventory_id,
             user=user
-        ).prefetch_related("item")
+        ).prefetch_related("item").first()
 
         if not inv_item:
             raise ItemNotFoundError(inventory_id)
@@ -218,66 +252,78 @@ class EnhancementService:
         if user.gold < cost:
             raise InsufficientGoldError(cost, user.gold)
 
-        user.gold -= cost
-        await user.save()
+        # 트랜잭션 시작: 골드 차감 및 강화 시도를 원자적으로 처리
+        from tortoise import transactions
 
-        # 성공률 조회
-        success_rate = EnhancementService._get_success_rate(current_level)
+        async with transactions.in_transaction():
+            user.gold -= cost
+            await user.save()
 
-        # 강화 시도
-        roll = random.random()
-        success = roll < success_rate
+            # 성공률 조회 (축복/저주 보정)
+            success_rate = EnhancementService._get_success_rate(current_level)
+            is_blessed = inv_item.is_blessed
+            is_cursed = inv_item.is_cursed
 
-        result_type = ""
-        new_level = current_level
-        item_destroyed = False
+            if is_blessed:
+                success_rate = min(1.0, success_rate + 0.10)
+            if is_cursed:
+                success_rate = max(0.0, success_rate - 0.10)
 
-        if success:
-            # 성공: +1
-            new_level = current_level + 1
-            result_type = EnhancementResult.SUCCESS
-            inv_item.enhancement_level = new_level
-            await inv_item.save()
+            # 강화 시도
+            roll = random.random()
+            success = roll < success_rate
 
-        else:
-            # 실패: 레벨 범위별 패널티
-            if current_level <= 3:
-                # +0~3: 유지
-                result_type = EnhancementResult.FAIL_MAINTAIN
+            result_type = ""
+            new_level = current_level
+            item_destroyed = False
 
-            elif current_level <= 6:
-                # +4~6: 유지
-                result_type = EnhancementResult.FAIL_MAINTAIN
-
-            elif current_level <= 9:
-                # +7~9: -1
-                new_level = max(0, current_level - 1)
-                result_type = EnhancementResult.FAIL_DECREASE
-                inv_item.enhancement_level = new_level
-                await inv_item.save()
-
-            elif current_level <= 12:
-                # +10~12: -2
-                new_level = max(0, current_level - 2)
-                result_type = EnhancementResult.FAIL_DECREASE
+            if success:
+                # 성공: +1
+                new_level = current_level + 1
+                result_type = EnhancementResult.SUCCESS
                 inv_item.enhancement_level = new_level
                 await inv_item.save()
 
             else:
-                # +13~15: 초기화 또는 파괴
-                destruction_roll = random.random()
-                if destruction_roll < ENHANCEMENT.DESTRUCTION_RATE:
-                    # 파괴 (20%)
-                    result_type = EnhancementResult.FAIL_DESTROY
-                    item_destroyed = True
-                    new_level = 0
-                    await inv_item.delete()
-                else:
-                    # 초기화 (80%)
-                    new_level = 0
-                    result_type = EnhancementResult.FAIL_RESET
-                    inv_item.enhancement_level = 0
+                # 축복 상태: 실패 시 항상 유지
+                if is_blessed:
+                    result_type = EnhancementResult.FAIL_MAINTAIN
+
+                elif current_level <= 6:
+                    # +0~6: 유지
+                    result_type = EnhancementResult.FAIL_MAINTAIN
+
+                elif current_level <= 9:
+                    # +7~9: -1
+                    new_level = max(0, current_level - 1)
+                    result_type = EnhancementResult.FAIL_DECREASE
+                    inv_item.enhancement_level = new_level
                     await inv_item.save()
+
+                elif current_level <= 12:
+                    # +10~12: -2
+                    new_level = max(0, current_level - 2)
+                    result_type = EnhancementResult.FAIL_DECREASE
+                    inv_item.enhancement_level = new_level
+                    await inv_item.save()
+
+                else:
+                    # +13~15: 초기화 또는 파괴
+                    destroy_rate = ENHANCEMENT.DESTRUCTION_RATE
+                    if is_cursed:
+                        destroy_rate *= 2  # 저주 시 파괴 확률 2배
+
+                    destruction_roll = random.random()
+                    if destruction_roll < destroy_rate:
+                        result_type = EnhancementResult.FAIL_DESTROY
+                        item_destroyed = True
+                        new_level = 0
+                        await inv_item.delete()
+                    else:
+                        new_level = 0
+                        result_type = EnhancementResult.FAIL_RESET
+                        inv_item.enhancement_level = 0
+                        await inv_item.save()
 
         logger.info(
             f"User {user.id} enhancement attempt: {inv_item.item.name} "

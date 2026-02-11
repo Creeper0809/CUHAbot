@@ -8,7 +8,7 @@ from typing import List
 
 from models import User
 from service.collection_service import CollectionService, CollectionEntry, CollectionStats
-from utils.grade_display import format_item_name, format_skill_name
+from utils.grade_display import format_item_with_ansi, format_skill_with_ansi
 
 
 class CollectionView(discord.ui.View):
@@ -134,12 +134,13 @@ class CollectionView(discord.ui.View):
             lines = []
             for i, entry in enumerate(page_entries):
                 idx = start_idx + i + 1
-                # 등급별 색상 적용 및 아이콘
+
+                # 타입별 아이콘 + ANSI 색상 적용
                 if title == "아이템":
-                    display_name = format_item_name(entry.name, entry.grade_id)
+                    display_name = format_item_with_ansi(entry.name, entry.grade_id)
                     icon = "📦"
                 elif title == "스킬":
-                    display_name = format_skill_name(entry.name, entry.grade_id)
+                    display_name = format_skill_with_ansi(entry.name, entry.grade_id)
                     icon = "✨"
                 else:
                     display_name = entry.name
@@ -150,11 +151,11 @@ class CollectionView(discord.ui.View):
                     desc = entry.description.strip()
                     if len(desc) > 45:
                         desc = desc[:42] + "..."
-                    lines.append(f"`{idx:2d}` {icon} **{display_name}**\n      └ `{desc}`")
+                    lines.append(f"{idx:2d} {icon} {display_name}\n      └ {desc}")
                 else:
-                    lines.append(f"`{idx:2d}` {icon} **{display_name}**")
+                    lines.append(f"{idx:2d} {icon} {display_name}")
 
-            embed.description = "\n".join(lines)
+            embed.description = "```ansi\n" + "\n".join(lines) + "\n```"
 
         embed.set_footer(text=f"페이지 {self.current_page + 1} / {total_pages} | 총 {len(entries)}개")
         return embed

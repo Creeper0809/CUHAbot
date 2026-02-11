@@ -12,8 +12,8 @@
 | Phase 0: 코드 품질 | ✅ 완료 | 100% |
 | Phase 1: 핵심 기반 | ✅ 완료 | 100% |
 | Phase 2: 게임 루프 | ✅ 완료 | 100% |
-| Phase 3: 전투 확장 | ⏳ 대기 | 0% |
-| Phase 4: 콘텐츠 확장 | ⏳ 대기 | 0% |
+| Phase 3: 전투 확장 | ✅ 완료 | 100% |
+| Phase 4: 콘텐츠 확장 | 🔄 진행 중 | ~80% |
 | Phase 5: 소셜/멀티 | ⏳ 대기 | 0% |
 | Phase 6: 엔드게임 | ⏳ 대기 | 0% |
 
@@ -161,8 +161,8 @@
 - [x] 속성 상성표 구현 - `config.ATTRIBUTE_ADVANTAGE`
 - [x] 속성 데미지 배율 (+50%/-50%) - `config.get_attribute_multiplier()`
 - [x] DB 마이그레이션 - `skill.attribute`, `monster.attribute` 컬럼 추가
-- [ ] 속성 저항 시스템 (최대 75%) - 향후 확장
-- [ ] 속성 면역 처리 - 향후 확장
+- [x] 속성 저항 시스템 (최대 75%) - `ElementResistanceComponent`, `damage_pipeline.py`
+- [x] 속성 면역 처리 - `ElementImmunityComponent`, `damage_pipeline.py`
 
 ### 3.2 속성별 스킬 구현 ✅
 - [x] 화염 스킬 9개 (1101-1109)
@@ -191,7 +191,7 @@
 - [x] 스택형 상태이상 (화상/중독/출혈/잠식/콤보 등) - `StatusEffect.stacks`, `max_stacks`
 - [x] 상태이상 아이콘/이모지 - `get_status_icons()`
 - [x] 전투 루프 통합 - `process_status_ticks()`, `can_entity_act()`, `decay_all_durations()`
-- [ ] 상태이상 저항 계산 - 향후 확장
+- [x] 상태이상 저항/면역 - `StatusImmunityComponent`, `helpers.py` 면역 체크
 - [x] 피니셔 효과 (파쇄/소각/연소/과부하) - ConsumeComponent, ComboComponent
 
 ### 3.5 키워드 콤보 체인 ✅
@@ -248,74 +248,107 @@
 
 > 게임의 볼륨을 늘리는 콘텐츠
 
-### 4.1 던전 환경 효과
-- [ ] 화상 지대 (불타는 광산)
-- [ ] 동결 확률 (얼어붙은 호수)
-- [ ] 감전 연쇄 (폭풍의 봉우리)
-- [ ] 익사 타이머 (수몰된 신전)
-- [ ] 차원 불안정 (혼돈의 균열)
-- [ ] 시간 왜곡 (시공의 틈새)
-- [ ] 공허의 잠식 (공허의 심연)
-- [ ] 수압 효과 (깊은 심해)
-- [ ] 각성의 기운 (각성의 제단)
-- [ ] 고대의 저주 (잊혀진 문명)
+### 4.1 던전 환경 효과 ✅
+- [x] 화상 지대 (불타는 광산) - 매 라운드 최대 HP의 2% 데미지
+- [x] 동결 확률 (얼어붙은 호수) - 매 행동마다 15% 확률로 1턴 동결
+- [x] 감전 연쇄 (폭풍의 봉우리) - 데미지 연쇄 확률 증가
+- [x] 익사 타이머 (수몰된 신전) - 3라운드마다 최대 HP의 5% 데미지
+- [x] 차원 불안정 (혼돈의 균열) - 매 행동마다 20% 확률로 랜덤 상태이상
+- [x] 시간 왜곡 (시공의 틈새) - 모든 속도가 불안정하게 변동
+- [x] 공허의 잠식 (공허의 심연) - 모든 버프 지속시간 2배 감소
+- [x] 수압 효과 (깊은 심해) - 모든 방어력 -10%
+- [x] 각성의 기운 (각성의 제단) - 모든 공격력 +15%
+- [x] 고대의 저주 (잊혀진 문명) - 매 행동마다 3% 즉사 확률
+- [x] 필드 효과 시스템 구현 - `service/dungeon/field_effects.py`
+- [x] 전투 시작 시 30% 확률로 랜덤 필드 효과 발동
+- [x] UI에 필드 효과 표시 (Footer + 전투 로그)
+- [x] 라운드/턴 기반 효과 처리
 
-### 4.2 인벤토리 시스템
-- [ ] 인벤토리 조회 UI
-- [ ] 페이지네이션
-- [ ] 아이템 정렬 (등급/타입/이름)
-- [ ] 아이템 검색
-- [ ] 아이템 삭제/판매
+### 4.2 인벤토리 시스템 ✅
+- [x] 인벤토리 조회 UI - `views/inventory/`
+- [x] 페이지네이션 (10개 아이템/페이지)
+- [x] 아이템 정렬 (등급/이름/수량) - `SortType`, `_apply_sort()`
+- [x] 아이템 검색 - `SearchModal`, `_apply_search_filter()`
+- [x] 아이템 삭제/판매 - `InventoryService.delete_inventory_item()`
 
-### 4.3 장비 시스템
-- [ ] 8개 장비 슬롯 (무기/투구/갑옷/장갑/신발/목걸이/반지×2/보조무기)
-- [ ] 장비 착용/해제
-- [ ] 장비 교체 UI
-- [ ] 레벨 제한 체크
-- [ ] 장비 스탯 합산
+> 구현: `views/inventory/list_view.py`, `views/inventory/components.py`, `service/item/inventory_service.py`
 
-### 4.4 세트 아이템 시스템
-- [ ] 세트 효과 정의 (2/3/4/5/6/8세트)
-- [ ] 세트 착용 감지
-- [ ] 세트 보너스 적용
-- [ ] 세트 효과 UI 표시
+### 4.3 장비 시스템 ✅
+- [x] 9개 장비 슬롯 (무기/투구/갑옷/장갑/신발/목걸이/반지×2/보조무기)
+- [x] 장비 착용/해제 - `EquipmentService.equip_item()`, `unequip_item()`
+- [x] 장비 교체 UI
+- [x] 레벨 제한 체크 - `LevelRequirementError`
+- [x] 장비 스탯 합산 - `calculate_equipment_stats()` (장비 + 강화 + 세트)
+- [x] **장비 능력치 요구 시스템** - `docs/Items.md`
+  - [x] DB 필드 추가 (`require_str/int/dex/vit/luk`)
+  - [x] 착용 시 능력치 요구 체크 (`StatRequirementError`)
+  - [x] 장비 정보 UI에 요구 능력치 표시
+  - [x] 기존 장비 데이터에 요구치 설정
 
-### 4.5 아이템 강화 시스템
-- [ ] 강화 UI
-- [ ] 강화 단계 (+0 ~ +15)
-- [ ] 강화 성공률 (단계별 차등)
-- [ ] 강화 실패 처리 (유지/감소/파괴)
-- [ ] 강화 비용 (골드)
-- [ ] 축복/저주 시스템
+> 구현: `models/user_equipment.py` (9 slots), `service/item/equipment_service.py`
 
-### 4.6 소비 아이템 시스템
-- [ ] HP 포션 (등급별)
-- [ ] 버프 포션
-- [ ] 상태이상 해제 아이템
-- [ ] 투척 아이템 (전투용)
-- [ ] 탐험 보조 아이템
-- [ ] 스킬북 사용
+### 4.4 세트 아이템 시스템 ✅
+- [x] 세트 효과 정의 (2/3/4/5/6/8세트) - `models/set_item.py`
+- [x] 세트 착용 감지 - `SetDetectionService.detect_active_sets()`
+- [x] 세트 보너스 적용 - `get_set_bonus_stats()`
+- [x] 세트 효과 UI 표시 - `get_set_summary()`
 
-### 4.7 드롭 시스템
-- [ ] 몬스터별 드롭 테이블
-- [ ] 등급별 드롭 확률
-- [ ] 타입별 배율 (일반/엘리트/보스)
-- [ ] 행운 스탯 반영
-- [ ] 드롭 결과 UI
+> 구현: `models/set_item.py`, `service/item/set_detection_service.py`
 
-### 4.8 스탯 포인트 분배
-- [ ] 6개 스탯 (STR/INT/AGI/VIT/WIS/LUK)
-- [ ] 레벨업 시 포인트 획득
-- [ ] 스탯 포인트 분배 UI
-- [ ] 스탯 시너지 효과
-- [ ] 스탯 리셋 기능
+### 4.5 아이템 강화 시스템 ✅
+- [x] 강화 UI - `views/enhancement_view.py`
+- [x] 강화 단계 (+0 ~ +15)
+- [x] 강화 성공률 (단계별 차등: 100%→80%→60%→40%→20%)
+- [x] 강화 실패 처리 (유지/-1/-2/reset/파괴)
+- [x] 강화 비용 (골드) - 등급별/레벨별 계산
+- [x] 축복/저주 시스템 - 축복(+10% 성공률, 실패 시 유지), 저주(-10%, 파괴 2배)
 
-### 4.9 경험치/레벨 시스템
-- [ ] 경험치 획득 공식
-- [ ] 레벨업 처리
-- [ ] 레벨별 필요 경험치 테이블 (1-100)
-- [ ] 고레벨 성장 공식 (51+)
-- [ ] 레벨업 보상
+> 구현: `views/enhancement_view.py`, `service/item/enhancement_service.py`
+
+### 4.6 소비 아이템 시스템 ✅
+- [x] HP 포션 (등급별) - `ConsumeItem` 모델
+- [x] 버프 포션 - buff_type, buff_amount, buff_duration
+- [x] 상태이상 해제 아이템 - debuff_cleanse 필드, `apply_to_embed()` 표시
+- [x] 투척 아이템 (전투용) - throwable_damage 필드
+- [x] 탐험 보조 아이템 - 몬스터 기피제, 보물 지도, 드롭률 버프, 귀환 스크롤
+
+> 구현: `models/consume_item.py`, `service/item/item_use_service.py`
+
+### 4.7 드롭 시스템 ✅
+- [x] 몬스터별 드롭 테이블 - `models/droptable.py`
+- [x] 등급별 드롭 확률 - `DROP.DROP_RATE_D/C/B/A/S/SS/SSS/MYTHIC`
+- [x] 타입별 배율 (일반/엘리트/보스) - `ELITE_DROP_MULTIPLIER`, `BOSS_DROP_MULTIPLIER`
+- [x] 행운 스탯 반영 - `LUCK_DROP_BONUS_PER_POINT`
+- [x] 드롭 결과 UI - `views/drop_result_view.py`
+
+> 구현: `service/dungeon/drop_handler.py`, `models/droptable.py`, `config/drops.py`
+
+### 4.8 능력치 시스템 ✅
+- [x] 레벨업 시 포인트 획득 (레벨당 3포인트)
+- [x] 스탯 포인트 분배 UI - `views/stat_distribution_view.py`
+- [x] **5대 능력치 시스템으로 전환** (STR/INT/DEX/VIT/LUK → 전투 스탯 변환) - `docs/Stats.md`
+  - [x] DB 스키마 변경 (`bonus_str/int/dex/vit/luk`)
+  - [x] 능력치 → 전투 스탯 변환 로직 (`stat_conversion.py`, `get_stat()` 수정)
+  - [x] 스탯 분배 UI 변경 (5대 능력치 + 변환 미리보기)
+  - [x] HP 자연회복 %방식 전환 (최대HP × (1% + VIT×0.04%))
+- [x] 스탯 시너지 효과 (Tier 1/2/3, 총 18종) - `docs/Stats.md`
+  - [x] 시너지 조건 판정 시스템 (`config/stat_synergies.py`)
+  - [x] 시너지 효과 전투 스탯 적용 (`synergy_service.py`)
+  - [x] 시너지 발동 UI 표시 (`user_info_view.py`)
+- [x] 스탯 리셋 기능 (`service/player/stat_service.py`)
+- [x] 기존 유저 마이그레이션 (`scripts/migrate_stat_rework.py`)
+
+> 기획: `docs/Stats.md`
+> 구현: `views/stat_distribution_view.py`, `models/users.py`, `service/player/stat_conversion.py`, `service/player/synergy_service.py`
+
+### 4.9 경험치/레벨 시스템 ✅
+- [x] 경험치 획득 공식 - `RewardService`, `add_experience()`
+- [x] 레벨업 처리 - `UserService.add_experience()` 통합
+- [x] 레벨별 필요 경험치 테이블 (1-100) - `config/leveling.py`
+- [x] 고레벨 성장 공식 (51+) - `UserService.calculate_base_stats()`
+- [x] 레벨업 보상 (스탯 포인트 +3, HP 비율 유지 재계산)
+
+> 구현: `service/player/user_service.py`, `config/leveling.py`, `config/user_stats.py`
 
 ---
 
@@ -330,44 +363,39 @@
 - [ ] 파티 UI
 
 ### 5.2 전투 난입 시스템
-- [ ] 난입 알림
-- [ ] 난입 조건 체크 (3턴 이내)
-- [ ] 난입 효과 (즉시 공격, 어그로 분산)
-- [ ] 난입 보상 분배 (기여도 비례)
-- [ ] 난입 쿨타임 (5분)
-
-### 5.3 구조 요청 시스템
-- [ ] HP 30% 이하 시 구조 요청
-- [ ] 긴급 요청 (HP 10% 이하)
-- [ ] 구조 보상
+- [x] 난입 알림 (전투 알림 메시지에 버튼 포함)
+- [x] 난입 조건 체크 (10라운드 이내, 최대 3인 파티)
+- [x] 난입 효과 (다음 라운드 참여, 어그로 분산)
+- [x] 난입 보상 분배 (기여도 비례, 캐리 방지 페널티)
+- [x] 난입 쿨타임 (5분)
+- [x] 멀티플레이어 UI (플레이어 1행, 몬스터 2행)
+- [x] 난입자 전투 UI 실시간 업데이트
+- [x] 몬스터/플레이어 공격 대상 랜덤 선택
+- [x] 필드 효과 난입자 적용
+- [x] 리더 사망 시 처리 (전투 계속, 승리 후 탐험 종료)
 
 ### 5.4 관전 시스템
-- [ ] 실시간 전투 관전
-- [ ] 응원 보내기 (버프 효과)
-- [ ] 관전자 UI
+- [x] 실시간 전투 관전
+- [x] 관전자 UI
 
 ### 5.5 옥션 시스템
-- [ ] 경매 등록 (입찰/즉시구매)
-- [ ] 구매 주문 (역경매)
-- [ ] 수수료 시스템
-- [ ] 가격 히스토리
-- [ ] 사기 방지 (에스크로)
-- [ ] 검색/필터
+- [x] 경매 등록 (입찰/즉시구매)
+- [x] 구매 주문 (역경매)
+- [x] 수수료 시스템
+- [x] 가격 히스토리
+- [x] 사기 방지 (에스크로)
+- [x] 검색/필터
 
 ### 5.6 실시간 협동 퀘스트
 - [ ] 긴급 보스 출현 (음성 채널 전용)
 - [ ] 협동 보상 분배
 
-### 5.7 친구 시스템
-- [ ] 친구 추가/제거
-- [ ] 친구 목록
-- [ ] 온라인 상태 표시
-
 ### 5.8 랭킹 시스템
-- [ ] 레벨 랭킹
-- [ ] 주간 경험치 랭킹
-- [ ] 보스 처치 랭킹
-- [ ] 자산 랭킹
+- [x] 레벨 랭킹
+- [x] 골드 랭킹
+- [ ] 주간 경험치 랭킹 (보류)
+- [ ] 보스 처치 랭킹 (보류)
+- [ ] 자산 랭킹 (보류)
 
 ---
 
@@ -385,7 +413,7 @@
 - [ ] 타워 보상 (층별)
 - [ ] 타워 상점
 
-### 6.2 레이드 던전 (4인)
+### 6.2 레이드 던전 (3인)
 - [ ] 파티 매칭
 - [ ] 레이드 페이즈 시스템
 - [ ] 8개 레이드 던전 구현
@@ -419,12 +447,16 @@
 - [ ] Lv.6 키워드별 초월 효과 해금 (공격 효과 18종 + 보조 효과 7종)
 
 ### 6.6 패시브 스킬 시스템
-- [ ] 전투 패시브 (공격/방어/속도/치명타/상태이상)
+- [x] 전투 패시브 (공격/방어/속도/치명타/상태이상) - `PassiveBuffComponent`, `passive_regen`, `passive_turn_scaling`
 - [ ] 파밍 패시브 (경험치/드롭/골드)
 - [ ] 탐험 패시브 (이동속도/함정감지/숨겨진방)
 - [ ] 소셜 패시브 (파티 버프)
-- [ ] 특수 패시브 (부활/피흡)
-- [ ] 조건부 패시브 (HP 조건 등)
+- [x] 특수 패시브 (부활/피흡) - `OnDeathReviveComponent`, `DamageReflectionComponent`
+- [x] 조건부 패시브 (HP 조건 등) - `ConditionalPassiveComponent`
+- [x] 방어 패시브 (면역/저항/반사/상태면역) - `defensive_passive_components.py`
+- [x] 오라 패시브 (아군 버프/적 디버프) - `aura_passive_components.py`
+- [x] 디버프 감소 패시브 - `DebuffReductionComponent`
+- [x] 데미지 파이프라인 (면역→저항→보호막→반사) - `damage_pipeline.py`
 
 ### 6.7 N:M 파티 전투
 - [x] 파티 전투 UI 레이아웃 (중앙 정렬, 1-3명 지원)
@@ -574,4 +606,4 @@
 
 ---
 
-*최종 업데이트: 2026-02-07 (Phase 2 완료, 기획 문서 키워드 시스템 반영)*
+*최종 업데이트: 2026-02-09 (Phase 3 완료, Phase 4 80% 완료, 패시브 Phase 2 완료 - 데미지 파이프라인/방어패시브/오라/부활/턴성장/디버프감소)*

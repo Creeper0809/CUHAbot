@@ -20,6 +20,8 @@ class EmbedColor(IntEnum):
     ITEM_SS = 0xE74C3C  # SS등급 빨간색
     ITEM_SSS = 0xE91E63  # SSS등급 핑크색
     ITEM_MYTHIC = 0xFF6B6B  # 신화등급
+    SPECTATOR = 0x9B59B6  # 관전 모드 보라색
+    COMBAT_NOTIFICATION = 0xFF5733  # 전투 알림 주황색
 
 
 @dataclass(frozen=True)

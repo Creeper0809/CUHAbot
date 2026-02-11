@@ -2,3 +2,4 @@
 
 from .users_repo import *
 from .skill_repo import *
+from .tower_progress_repo import *

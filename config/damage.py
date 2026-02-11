@@ -31,5 +31,18 @@ class DamageConfig:
     DEFAULT_CRITICAL_RATE: float = 0.05
     """기본 치명타 확률 (5%)"""
 
+    # 명중/회피
+    DEFAULT_ACCURACY: int = 90
+    """기본 명중률 (%)"""
+
+    DEFAULT_EVASION: int = 5
+    """기본 회피율 (%)"""
+
+    MIN_HIT_RATE: int = 5
+    """최소 명중률 (%) - 아무리 회피가 높아도 이 확률은 보장"""
+
+    MAX_HIT_RATE: int = 100
+    """최대 명중률 (%)"""
+
 
 DAMAGE = DamageConfig()

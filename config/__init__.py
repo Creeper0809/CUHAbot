@@ -12,7 +12,7 @@ from config.attributes import (
     get_attribute_multiplier,
 )
 from config.status_effects import StatusEffectConfig, STATUS_EFFECT
-from config.user_stats import UserStatsConfig, USER_STATS
+from config.user_stats import UserStatsConfig, USER_STATS, StatConversionConfig, STAT_CONVERSION
 from config.dungeon import DungeonConfig, DUNGEON
 from config.drops import (
     DropConfig, DROP,
@@ -25,11 +25,19 @@ from config.skills import SKILL_DECK_SIZE, DEFAULT_SKILL_SLOT, SkillIdConfig, SK
 from config.shop import ShopConfig, SHOP, InventoryConfig, INVENTORY
 from config.leveling import LEVELING_EXP_TABLE, LEVELING_EXP_DEFAULT
 from config.synergies import SynergyTier, ATTRIBUTE_SYNERGIES, ComboSynergy, COMBO_SYNERGIES
+from config.grade import (
+    InstanceGrade, GradeInfo, GRADE_TABLE,
+    GRADE_DROP_WEIGHTS, SpecialEffectDef, SPECIAL_EFFECT_POOL,
+    get_grade_info, get_grade_name_map,
+)
 from config.multiplayer import (
     PartyConfig, PARTY,
     WeeklyTowerConfig, WEEKLY_TOWER,
     AuctionConfig, AUCTION,
+    SpectatorConfig, SPECTATOR,
 )
+from config.social_encounter import SocialEncounterConfig, SOCIAL_ENCOUNTER
+from config.notification import NotificationConfig, NOTIFICATION
 
 __all__ = [
     # combat
@@ -44,6 +52,7 @@ __all__ = [
     "StatusEffectConfig", "STATUS_EFFECT",
     # user stats
     "UserStatsConfig", "USER_STATS",
+    "StatConversionConfig", "STAT_CONVERSION",
     # dungeon
     "DungeonConfig", "DUNGEON",
     # drops & boxes
@@ -67,4 +76,12 @@ __all__ = [
     "PartyConfig", "PARTY",
     "WeeklyTowerConfig", "WEEKLY_TOWER",
     "AuctionConfig", "AUCTION",
+    "SpectatorConfig", "SPECTATOR",
+    # social encounter (Phase 3)
+    "SocialEncounterConfig", "SOCIAL_ENCOUNTER",
+    "NotificationConfig", "NOTIFICATION",
+    # grade
+    "InstanceGrade", "GradeInfo", "GRADE_TABLE",
+    "GRADE_DROP_WEIGHTS", "SpecialEffectDef", "SPECIAL_EFFECT_POOL",
+    "get_grade_info", "get_grade_name_map",
 ]

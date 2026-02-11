@@ -12,6 +12,7 @@ from models.repos.static_cache import skill_cache_by_id
 from models.user_deck_preset import UserDeckPreset
 from models.user_owned_skill import UserOwnedSkill
 from service.session import get_session
+from service.tower.tower_restriction import enforce_skill_change_restriction
 from utils.grade_display import format_skill_name
 
 from views.skill_deck.dropdowns import CustomPresetDropdown, SkillSelectDropdown
@@ -141,6 +142,12 @@ class SkillDeckView(discord.ui.View):
             )
             return False
 
+        try:
+            enforce_skill_change_restriction(session)
+        except Exception as e:
+            await interaction.response.send_message(f"⚠️ {e}", ephemeral=True)
+            return False
+
         return True
 
     def create_embed(self) -> discord.Embed:
@@ -190,10 +197,11 @@ class SkillDeckView(discord.ui.View):
             embed.add_field(name="\u200b", value="\u200b", inline=True)
 
     def _add_deck_visualization(self, embed: discord.Embed) -> None:
-        """덱 시각화 + 발동 확률"""
+        """덱 시각화 + 발동 확률 (패시브 제외)"""
         left_deck = []
         right_deck = []
         skill_counts = {}
+        active_slot_count = 0
 
         for i, skill_id in enumerate(self.current_deck):
             skill_name = self._get_skill_name(skill_id)
@@ -206,7 +214,11 @@ class SkillDeckView(discord.ui.View):
                 right_deck.append(line)
 
             if skill_id != 0:
+                skill = skill_cache_by_id.get(skill_id)
+                if skill and skill.is_passive:
+                    continue
                 skill_counts[skill_name] = skill_counts.get(skill_name, 0) + 1
+                active_slot_count += 1
 
         embed.add_field(name="슬롯 1-5", value="\n".join(left_deck), inline=True)
         embed.add_field(name="슬롯 6-10", value="\n".join(right_deck), inline=True)
@@ -214,9 +226,10 @@ class SkillDeckView(discord.ui.View):
         if skill_counts:
             prob_display = []
             for name, count in sorted(skill_counts.items(), key=lambda x: -x[1]):
-                prob = count * 10
-                bar = "█" * count + "░" * (10 - count)
-                prob_display.append(f"{bar} {name}: **{prob}%**")
+                prob = (count / active_slot_count * 100) if active_slot_count > 0 else 0
+                bar_filled = round(count / active_slot_count * 10) if active_slot_count > 0 else 0
+                bar = "█" * bar_filled + "░" * (10 - bar_filled)
+                prob_display.append(f"{bar} {name}: **{prob:.0f}%**")
 
             embed.add_field(
                 name="🎲 발동 확률",

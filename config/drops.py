@@ -33,6 +33,13 @@ class DropConfig:
     SKILL_DROP_RATE: float = 0.001
     """몬스터 스킬 드롭 확률 (0.1%)"""
 
+    # 장비 드롭
+    EQUIPMENT_DROP_RATE: float = 0.005
+    """몬스터 장비 드롭 확률 (0.5%)"""
+
+    DUNGEON_EQUIPMENT_DROP_RATE: float = 0.10
+    """던전 클리어 장비 드롭 확률 (10%)"""
+
     # 보물상자 골드
     CHEST_BASE_GOLD: int = 20
     """보물상자 기본 골드"""

@@ -13,7 +13,8 @@ from config import COMBAT, DUNGEON
 from models import UserStatEnum
 from views.dungeon_control import DungeonControlView
 from service.economy.reward_service import RewardService
-from service.session import DungeonSession, SessionType
+from service.session import DungeonSession, SessionType, ContentType
+from service.event import EventBus, GameEvent, GameEventType
 
 logger = logging.getLogger(__name__)
 
@@ -34,14 +35,51 @@ async def start_dungeon(session: DungeonSession, interaction: discord.Interactio
 
     logger.info(f"Dungeon started: user={session.user.discord_id}, dungeon={session.dungeon.id}")
 
+    # 이벤트 발행: 던전 탐험
+    event_bus = EventBus()
+    await event_bus.publish(GameEvent(
+        type=GameEventType.DUNGEON_EXPLORED,
+        user_id=session.user.id,
+        data={
+            "dungeon_id": session.dungeon.id,
+            "dungeon_name": session.dungeon.name
+        }
+    ))
+
     event_queue: deque[str] = deque(maxlen=COMBAT.EVENT_QUEUE_MAX_LENGTH)
-    event_queue.append(f"━━━ 🏰 **탐험 시작** ━━━")
-    event_queue.append(f"🚪 {session.dungeon.name}에 입장했다...")
+    if session.content_type == ContentType.WEEKLY_TOWER:
+        event_queue.append("━━━ 🗼 **타워 시작** ━━━")
+        event_queue.append(f"🧱 {session.current_floor}층에 도전한다...")
+    else:
+        event_queue.append(f"━━━ 🏰 **탐험 시작** ━━━")
+        event_queue.append(f"🚪 {session.dungeon.name}에 입장했다...")
 
     if session.user.now_hp <= 0:
         session.user.now_hp = 1
 
     session.max_steps = _calculate_dungeon_steps(session.dungeon)
+    if session.content_type == ContentType.WEEKLY_TOWER:
+        session.max_steps = 1
+
+    # 음성 채널에 있으면 공유 인스턴스 참여
+    if session.voice_channel_id and session.dungeon:
+        from service.voice_channel.shared_instance_manager import shared_instance_manager
+        from service.voice_channel.instance_events import _send_join_notification
+
+        try:
+            instance = await shared_instance_manager.join_instance(
+                session.user_id,
+                session.voice_channel_id,
+                session.dungeon.id
+            )
+            session.shared_instance_key = (session.voice_channel_id, session.dungeon.id)
+            await _send_join_notification(session, instance)
+            logger.info(
+                f"User {session.user_id} joined shared instance: "
+                f"vc={session.voice_channel_id}, dungeon={session.dungeon.id}"
+            )
+        except Exception as e:
+            logger.error(f"Failed to join shared instance: {e}")
 
     # 공개 메시지 전송
     public_embed = create_dungeon_embed(session, event_queue)
@@ -63,6 +101,61 @@ async def start_dungeon(session: DungeonSession, interaction: discord.Interactio
         session.status = SessionType.IDLE
         event_queue.append(event_result)
 
+        # Phase 5: 환영 발견 (20% 확률, 자동 이벤트)
+        import random
+        if random.random() < 0.20:
+            try:
+                from service.combat_history.history_service import HistoryService
+                from datetime import datetime, timezone
+
+                histories = await HistoryService.get_nearby_histories(
+                    session.dungeon.id,
+                    session.exploration_step,
+                    range=3  # ±3 스텝
+                )
+
+                if histories:
+                    # 최신 환영 1개 DM 전송
+                    history = histories[0]
+                    result_emoji = {"victory": "⚔️", "defeat": "💀", "fled": "💨"}
+
+                    # 시간 차이 계산
+                    time_diff = datetime.now(timezone.utc) - history.created_at
+                    if time_diff.seconds < 60:
+                        time_ago = f"{time_diff.seconds}초 전"
+                    else:
+                        time_ago = f"{time_diff.seconds // 60}분 전"
+
+                    embed = discord.Embed(
+                        title="👻 환영을 발견했다...",
+                        description=(
+                            f"{result_emoji.get(history.result, '❓')} **{history.user.username}**의 흔적\n\n"
+                            f"몬스터: {history.monster_name}\n"
+                            f"결과: {history.result}\n"
+                            f"데미지: {history.total_damage:,}\n"
+                            f"턴 수: {history.turns_lasted}\n"
+                            f"시간: {time_ago}"
+                        ),
+                        color=discord.Color.dark_grey()
+                    )
+
+                    try:
+                        await interaction.user.send(embed=embed)
+                        logger.info(f"Sent phantom discovery to user {session.user_id}")
+                    except discord.Forbidden:
+                        pass  # DM 비활성 사용자
+
+            except Exception as e:
+                logger.error(f"Failed to process phantom discovery: {e}", exc_info=True)
+
+        # 이벤트 완료 후 종료 대기 확인
+        if session.pending_exit:
+            session.ended = True
+            event_queue.append("🚶 파티 리더 전투불능으로 던전에서 귀환합니다...")
+            await _update_dungeon_log(session, event_queue)
+            # 리더가 죽었지만 승리했으므로 귀환 처리 (골드 패널티 없음)
+            return await _handle_dungeon_return(session, interaction, event_queue)
+
         await _update_dungeon_log(session, event_queue)
         await asyncio.sleep(COMBAT.MAIN_LOOP_DELAY)
 
@@ -75,7 +168,7 @@ async def start_dungeon(session: DungeonSession, interaction: discord.Interactio
 def _calculate_dungeon_steps(dungeon) -> int:
     """던전 스텝 수 계산"""
     base_steps = DUNGEON.BASE_STEPS
-    level_bonus = (dungeon.require_level // 10) * 5 if dungeon else 0
+    level_bonus = (dungeon.require_level // DUNGEON.LEVEL_BONUS_INTERVAL) * DUNGEON.LEVEL_BONUS_PER_INTERVAL if dungeon else 0
     return base_steps + level_bonus
 
 
@@ -86,7 +179,28 @@ def _calculate_dungeon_steps(dungeon) -> int:
 
 async def _handle_dungeon_clear(session, interaction, event_queue) -> bool:
     """던전 클리어 처리"""
+    if session.content_type == ContentType.WEEKLY_TOWER:
+        from service.tower.tower_service import handle_floor_clear
+        event_queue.append(f"✅ {session.current_floor}층 클리어!")
+        await _update_dungeon_log(session, event_queue)
+        await handle_floor_clear(session, interaction)
+        return True
+
     logger.info(f"Dungeon cleared: user={session.user.discord_id}")
+
+    # 공유 인스턴스 탈퇴
+    if session.shared_instance_key:
+        from service.voice_channel.shared_instance_manager import shared_instance_manager
+        from service.voice_channel.instance_events import _send_leave_notification
+
+        try:
+            instance = await shared_instance_manager.leave_instance(session.user_id)
+            if instance:
+                await _send_leave_notification(session, instance)
+            session.shared_instance_key = None
+            logger.info(f"User {session.user_id} left shared instance on dungeon clear")
+        except Exception as e:
+            logger.error(f"Failed to leave shared instance: {e}")
 
     bonus_exp = int(session.total_exp * DUNGEON.CLEAR_BONUS_MULTIPLIER)
     bonus_gold = int(session.total_gold * DUNGEON.CLEAR_BONUS_MULTIPLIER)
@@ -100,9 +214,31 @@ async def _handle_dungeon_clear(session, interaction, event_queue) -> bool:
         f"⭐ 클리어 보너스: **+{bonus_exp}** EXP, **+{bonus_gold}** G"
     )
 
+    # 던전 스킬 드롭 시도
+    from service.dungeon.drop_handler import try_drop_dungeon_skill, try_drop_dungeon_equipment
+    dungeon_skill_msg = await try_drop_dungeon_skill(session)
+    if dungeon_skill_msg:
+        event_queue.append(dungeon_skill_msg)
+
+    # 던전 장비 드롭 시도
+    dungeon_equip_msg = await try_drop_dungeon_equipment(session)
+    if dungeon_equip_msg:
+        event_queue.append(dungeon_equip_msg)
+
     await _update_dungeon_log(session, event_queue)
 
-    reward_result = await RewardService.apply_rewards(session.user, session.total_exp, session.total_gold)
+    # Phase 4: 경쟁 모드 레이스 보상 배율 적용
+    final_exp = session.total_exp
+    final_gold = session.total_gold
+
+    if hasattr(session, "active_encounter_event") and session.active_encounter_event:
+        event = session.active_encounter_event
+        if hasattr(event, "mode") and event.mode == "competitive" and hasattr(event, "is_finished") and event.is_finished():
+            from service.dungeon.combat_executor import _apply_race_reward_multiplier
+            final_exp, final_gold = _apply_race_reward_multiplier(session, event, session.total_exp, session.total_gold)
+            logger.info(f"Applied race reward multiplier: user={session.user_id}, exp={final_exp}, gold={final_gold}")
+
+    reward_result = await RewardService.apply_rewards(session.user, final_exp, final_gold)
     await _send_dungeon_summary(session, interaction, "클리어", reward_result)
 
     session.ended = True
@@ -111,7 +247,26 @@ async def _handle_dungeon_clear(session, interaction, event_queue) -> bool:
 
 async def _handle_player_death(session, interaction, event_queue) -> bool:
     """플레이어 사망 처리"""
+    if session.content_type == ContentType.WEEKLY_TOWER:
+        from service.tower.tower_service import handle_tower_death
+        await handle_tower_death(session, interaction)
+        return False
+
     logger.info(f"Player death: user={session.user.discord_id}")
+
+    # 공유 인스턴스 탈퇴
+    if session.shared_instance_key:
+        from service.voice_channel.shared_instance_manager import shared_instance_manager
+        from service.voice_channel.instance_events import _send_leave_notification
+
+        try:
+            instance = await shared_instance_manager.leave_instance(session.user_id)
+            if instance:
+                await _send_leave_notification(session, instance)
+            session.shared_instance_key = None
+            logger.info(f"User {session.user_id} left shared instance on death")
+        except Exception as e:
+            logger.error(f"Failed to leave shared instance: {e}")
 
     gold_lost = int(session.total_gold * DUNGEON.DEATH_GOLD_LOSS)
     session.total_gold = max(0, session.total_gold - gold_lost)
@@ -126,7 +281,18 @@ async def _handle_player_death(session, interaction, event_queue) -> bool:
 
     await _update_dungeon_log(session, event_queue)
 
-    reward_result = await RewardService.apply_rewards(session.user, session.total_exp, session.total_gold)
+    # Phase 4: 경쟁 모드 레이스 보상 배율 적용
+    final_exp = session.total_exp
+    final_gold = session.total_gold
+
+    if hasattr(session, "active_encounter_event") and session.active_encounter_event:
+        event = session.active_encounter_event
+        if hasattr(event, "mode") and event.mode == "competitive" and hasattr(event, "is_finished") and event.is_finished():
+            from service.dungeon.combat_executor import _apply_race_reward_multiplier
+            final_exp, final_gold = _apply_race_reward_multiplier(session, event, session.total_exp, session.total_gold)
+            logger.info(f"Applied race reward multiplier on death: user={session.user_id}, exp={final_exp}, gold={final_gold}")
+
+    reward_result = await RewardService.apply_rewards(session.user, final_exp, final_gold)
     await _send_dungeon_summary(session, interaction, "사망", reward_result)
 
     session.ended = True
@@ -135,14 +301,44 @@ async def _handle_player_death(session, interaction, event_queue) -> bool:
 
 async def _handle_dungeon_return(session, interaction, event_queue) -> bool:
     """던전 귀환 처리"""
+    if session.content_type == ContentType.WEEKLY_TOWER:
+        session.tower_result = "return"
+        session.ended = True
+        return True
+
     logger.info(f"Dungeon return: user={session.user.discord_id}")
+
+    # 공유 인스턴스 탈퇴
+    if session.shared_instance_key:
+        from service.voice_channel.shared_instance_manager import shared_instance_manager
+        from service.voice_channel.instance_events import _send_leave_notification
+
+        try:
+            instance = await shared_instance_manager.leave_instance(session.user_id)
+            if instance:
+                await _send_leave_notification(session, instance)
+            session.shared_instance_key = None
+            logger.info(f"User {session.user_id} left shared instance on return")
+        except Exception as e:
+            logger.error(f"Failed to leave shared instance: {e}")
 
     event_queue.append("━━━ 🚶 **귀환** ━━━")
     event_queue.append("🚶 던전에서 안전하게 귀환했다...")
 
     await _update_dungeon_log(session, event_queue)
 
-    reward_result = await RewardService.apply_rewards(session.user, session.total_exp, session.total_gold)
+    # Phase 4: 경쟁 모드 레이스 보상 배율 적용
+    final_exp = session.total_exp
+    final_gold = session.total_gold
+
+    if hasattr(session, "active_encounter_event") and session.active_encounter_event:
+        event = session.active_encounter_event
+        if hasattr(event, "mode") and event.mode == "competitive" and hasattr(event, "is_finished") and event.is_finished():
+            from service.dungeon.combat_executor import _apply_race_reward_multiplier
+            final_exp, final_gold = _apply_race_reward_multiplier(session, event, session.total_exp, session.total_gold)
+            logger.info(f"Applied race reward multiplier on return: user={session.user_id}, exp={final_exp}, gold={final_gold}")
+
+    reward_result = await RewardService.apply_rewards(session.user, final_exp, final_gold)
     await _send_dungeon_summary(session, interaction, "귀환", reward_result)
 
     return True

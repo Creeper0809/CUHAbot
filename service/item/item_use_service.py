@@ -23,6 +23,8 @@ from exceptions import (
 from service.session import get_session
 from service.item.equipment_service import EquipmentService
 from service.item.inventory_service import InventoryService
+from service.item.grade_service import GradeService
+from service.tower.tower_restriction import enforce_item_usage_restriction
 
 if TYPE_CHECKING:
     from service.session import DungeonSession
@@ -74,10 +76,10 @@ class ItemUseService:
             ItemNotFoundError: 아이템을 찾을 수 없음
         """
         # 인벤토리 아이템 조회
-        inv_item = await UserInventory.get_or_none(
+        inv_item = await UserInventory.filter(
             id=inventory_id,
             user=user
-        ).prefetch_related("item")
+        ).prefetch_related("item").first()
 
         if not inv_item:
             raise ItemNotFoundError(inventory_id)
@@ -97,6 +99,9 @@ class ItemUseService:
 
         item = inv_item.item
         item_type = item.type
+
+        if item_type == ItemType.CONSUME:
+            enforce_item_usage_restriction(session)
 
         # 타입별 처리
         if item_type == ItemType.EQUIP:
@@ -169,11 +174,45 @@ class ItemUseService:
                 item_name=item.name
             )
 
+        # 귀환 스크롤: 던전 즉시 탈출 (보상 유지)
+        if item.id == 5701:
+            session = get_session(user.discord_id)
+            if not session:
+                return ItemUseResult(
+                    success=False,
+                    message="던전 밖에서는 사용할 수 없습니다.",
+                    item_name=item.name,
+                )
+            session.ended = True
+            inv_item.quantity -= 1
+            if inv_item.quantity <= 0:
+                await inv_item.delete()
+            else:
+                await inv_item.save()
+            return ItemUseResult(
+                success=True,
+                message=f"'{item.name}'을(를) 사용했습니다!",
+                item_name=item.name,
+                effect_description="던전에서 즉시 탈출합니다. 현재 보상이 유지됩니다.",
+            )
+
+        # 축복/저주 주문서는 대상 선택이 필요
+        if item.id in (ItemUseService.BLESS_SCROLL_ID, ItemUseService.CURSE_REMOVE_SCROLL_ID):
+            return ItemUseResult(
+                success=False,
+                message="이 주문서는 강화 메뉴에서 대상 장비를 선택하여 사용하세요.",
+                item_name=item.name,
+            )
+
         # 새 박스 시스템 체크
         from config import BOX_CONFIGS
         box_config = BOX_CONFIGS.get(item.id)
         if box_config:
-            return await ItemUseService._use_box_consumable(user, inv_item, box_config)
+            # 상자에 저장된 던전 레벨 사용 (instance_grade에 저장됨)
+            dungeon_level = inv_item.instance_grade if inv_item.instance_grade > 0 else None
+            return await ItemUseService._use_box_consumable(
+                user, inv_item, box_config, dungeon_level=dungeon_level
+            )
 
         # 투척 아이템 전투 중 사용
         session = get_session(user.discord_id)
@@ -204,12 +243,31 @@ class ItemUseService:
             effect_description=effect_desc
         )
 
+    # 탐험 보조 아이템 ID 매핑
+    EXPLORE_BUFF_ITEMS = {
+        5710: ("avoid_combat", 3, "전투 회피 3회"),     # 투명 망토
+        5711: ("force_treasure", 1, "보물 확정 1회"),   # 행운의 주사위
+        5803: ("drop_bonus", 50, "드롭률 +50%"),       # 드롭률 부스터
+    }
+
     @staticmethod
     async def _apply_consume_effect(user: User, consume: ConsumeItem) -> str:
-        """소모품 효과 적용 (버프, 회복, 정화)"""
+        """소모품 효과 적용 (버프, 회복, 정화, 탐험 버프)"""
         from service.dungeon.status import get_buff_by_tag, remove_status_effects
 
         effects = []
+
+        # 탐험 보조 아이템 체크
+        item_id = consume.item_id
+        if item_id in ItemUseService.EXPLORE_BUFF_ITEMS:
+            buff_key, buff_val, desc = ItemUseService.EXPLORE_BUFF_ITEMS[item_id]
+            session = get_session(user.discord_id)
+            if session:
+                current = session.explore_buffs.get(buff_key, 0)
+                session.explore_buffs[buff_key] = current + buff_val
+                effects.append(desc)
+            else:
+                effects.append("던전 밖에서는 효과가 없습니다")
 
         # HP 회복
         if consume.amount and consume.amount > 0:
@@ -344,11 +402,19 @@ class ItemUseService:
         return random.choices(grades, weights=weights, k=1)[0]
 
     @staticmethod
-    async def _pick_equipment_by_grade(grade_name: str) -> Optional[EquipmentItem]:
-        grade = await Grade.get_or_none(name=grade_name)
-        if not grade:
-            return None
-        candidates = await EquipmentItem.filter(grade=grade.id).prefetch_related("item")
+    async def _pick_random_equipment(
+        dungeon_level: Optional[int] = None
+    ) -> Optional[EquipmentItem]:
+        """장비 풀에서 랜덤 선택 (던전 레벨 범위 필터링)"""
+        if dungeon_level is not None:
+            from models.repos.static_cache import get_previous_dungeon_level
+            prev_level = get_previous_dungeon_level(dungeon_level)
+            candidates = await EquipmentItem.filter(
+                require_level__gte=prev_level,
+                require_level__lte=dungeon_level,
+            ).prefetch_related("item")
+        else:
+            candidates = await EquipmentItem.all().prefetch_related("item")
         if not candidates:
             return None
         return random.choice(candidates)
@@ -411,7 +477,8 @@ class ItemUseService:
     async def _use_box_consumable(
         user: User,
         inv_item: UserInventory,
-        box_config: "BoxConfig"
+        box_config: "BoxConfig",
+        dungeon_level: Optional[int] = None
     ) -> ItemUseResult:
         """
         상자 아이템 사용 (새로운 박스 시스템)
@@ -459,25 +526,8 @@ class ItemUseService:
             effect_desc = f"골드 +{gold_gained}"
 
         elif selected_type == BoxRewardType.EQUIPMENT:
-            # 등급 결정
-            if reward_config.guaranteed_grade:
-                grade_name = reward_config.guaranteed_grade
-            elif reward_config.grade_table_id:
-                grade_name = await ItemUseService._roll_item_grade_by_table(
-                    reward_config.grade_table_id
-                )
-            else:
-                grade_name = await ItemUseService._roll_item_grade("normal")
-
-            if not grade_name:
-                return ItemUseResult(
-                    success=False,
-                    message="등급 판정에 실패했습니다.",
-                    item_name=item.name
-                )
-
-            # 장비 선택
-            equipment = await ItemUseService._pick_equipment_by_grade(grade_name)
+            # 장비 랜덤 선택 (던전 레벨 필터링)
+            equipment = await ItemUseService._pick_random_equipment(dungeon_level)
             if not equipment or not equipment.item:
                 return ItemUseResult(
                     success=False,
@@ -485,9 +535,19 @@ class ItemUseService:
                     item_name=item.name
                 )
 
+            # 인스턴스 등급 롤링 (상자 컨텍스트)
+            grade_context = _get_box_grade_context(box_config.box_id)
+            instance_grade = GradeService.roll_grade(grade_context)
+            special_effects = GradeService.roll_special_effects(instance_grade)
+            grade_display = GradeService.get_grade_display(instance_grade)
+
             # 인벤토리 추가
             try:
-                await InventoryService.add_item(user, equipment.item.id, 1)
+                await InventoryService.add_item(
+                    user, equipment.item.id, 1,
+                    instance_grade=instance_grade,
+                    special_effects=special_effects,
+                )
             except InventoryFullError:
                 return ItemUseResult(
                     success=False,
@@ -495,7 +555,9 @@ class ItemUseService:
                     item_name=item.name
                 )
 
-            effect_desc = f"장비 '{equipment.item.name}' ({grade_name}등급) 획득"
+            effect_desc = (
+                f"{grade_display} 장비 '{equipment.item.name}' 획득"
+            )
 
         elif selected_type == BoxRewardType.SKILL:
             # 등급 결정
@@ -546,3 +608,112 @@ class ItemUseService:
             item_name=item.name,
             effect_description=effect_desc
         )
+
+
+    # 축복/저주 주문서 아이템 ID
+    BLESS_SCROLL_ID = 6301
+    CURSE_REMOVE_SCROLL_ID = 6302
+
+    @staticmethod
+    async def use_scroll_on_target(
+        user: User,
+        scroll_inventory_id: int,
+        target_inventory_id: int,
+    ) -> ItemUseResult:
+        """
+        축복/저주 주문서를 대상 장비에 사용
+
+        Args:
+            user: 사용자
+            scroll_inventory_id: 주문서 인벤토리 ID
+            target_inventory_id: 대상 장비 인벤토리 ID
+
+        Returns:
+            사용 결과
+        """
+        # 주문서 조회
+        scroll_inv = await UserInventory.get_or_none(
+            id=scroll_inventory_id, user=user
+        ).prefetch_related("item")
+        if not scroll_inv:
+            raise ItemNotFoundError(scroll_inventory_id)
+
+        # 대상 장비 조회
+        target_inv = await UserInventory.get_or_none(
+            id=target_inventory_id, user=user
+        ).prefetch_related("item")
+        if not target_inv:
+            raise ItemNotFoundError(target_inventory_id)
+
+        if target_inv.item.type != ItemType.EQUIP:
+            return ItemUseResult(
+                success=False,
+                message="장비 아이템에만 사용할 수 있습니다.",
+                item_name=scroll_inv.item.name,
+            )
+
+        item_id = scroll_inv.item.id
+        effect_desc = ""
+
+        if item_id == ItemUseService.BLESS_SCROLL_ID:
+            if target_inv.is_blessed:
+                return ItemUseResult(
+                    success=False,
+                    message="이미 축복된 장비입니다.",
+                    item_name=scroll_inv.item.name,
+                )
+            target_inv.is_blessed = True
+            target_inv.is_cursed = False  # 축복 시 저주 해제
+            await target_inv.save()
+            effect_desc = f"'{target_inv.item.name}'에 축복 부여"
+
+        elif item_id == ItemUseService.CURSE_REMOVE_SCROLL_ID:
+            if not target_inv.is_cursed:
+                return ItemUseResult(
+                    success=False,
+                    message="저주되지 않은 장비입니다.",
+                    item_name=scroll_inv.item.name,
+                )
+            target_inv.is_cursed = False
+            await target_inv.save()
+            effect_desc = f"'{target_inv.item.name}'의 저주 해제"
+
+        else:
+            return ItemUseResult(
+                success=False,
+                message="이 아이템은 대상에게 사용할 수 없습니다.",
+                item_name=scroll_inv.item.name,
+            )
+
+        # 주문서 소모
+        scroll_inv.quantity -= 1
+        if scroll_inv.quantity <= 0:
+            await scroll_inv.delete()
+        else:
+            await scroll_inv.save()
+
+        logger.info(
+            f"User {user.id} used scroll {item_id} on "
+            f"target {target_inventory_id}: {effect_desc}"
+        )
+
+        return ItemUseResult(
+            success=True,
+            message=f"'{scroll_inv.item.name}'을(를) 사용했습니다!",
+            item_name=scroll_inv.item.name,
+            effect_description=effect_desc,
+        )
+
+
+def _get_box_grade_context(box_id: int) -> str:
+    """상자 ID에 따른 인스턴스 등급 드롭 컨텍스트 반환"""
+    context_map = {
+        5940: "box_low",
+        5941: "box_mid",
+        5942: "box_high",
+        5943: "box_best",
+        5945: "box_high",   # 럭키 박스
+        5946: "box_best",   # 신비한 상자
+        5947: "box_high",   # 마스터 상자
+    }
+    return context_map.get(box_id, "box_low")
