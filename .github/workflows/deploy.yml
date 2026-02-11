@@ -1,7 +1,7 @@
 name: Deploy
 on:
   push:
-    branches: ["master","refactor/apply-guidelines"]
+    branches: ["master"]
 
 jobs:
   deploy:
