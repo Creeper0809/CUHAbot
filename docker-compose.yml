@@ -1,0 +1,7 @@
+services:
+  cuhabot:
+    build: .
+    container_name: cuhabot
+    env_file:
+      - .env
+    restart: unless-stopped
