@@ -24,6 +24,7 @@ logging.basicConfig(
 load_dotenv()
 
 is_dev = os.getenv('DEV')
+FORCE_SYNC = os.getenv('FORCE_SYNC') == "TRUE"
 GUILD_ID = int(os.getenv('GUILD_ID') or 0)
 GUILD_IDS = [GUILD_ID, 1470048099379576886]
 if is_dev == "TRUE":
@@ -62,42 +63,47 @@ class MyBot(commands.Bot):
         self.achievement_tracker = None
 
     async def setup_hook(self):
+        should_sync = is_dev == "TRUE" or FORCE_SYNC
 
-        self.tree.clear_commands(guild=None)
-        logging.info("전역 커맨드 삭제 완료")
+        if should_sync:
+            self.tree.clear_commands(guild=None)
+            logging.info("전역 커맨드 삭제 완료")
 
-        for gid in [gid for gid in GUILD_IDS if gid]:
-            try:
-                self.tree.clear_commands(guild=discord.Object(id=gid))
-            except (discord.Forbidden, discord.NotFound, discord.HTTPException) as e:
-                logging.warning(
-                    f"길드 {gid} 커맨드 삭제 실패: {e}"
-                )
-            except Exception as e:
-                logging.error(
-                    f"길드 {gid} 커맨드 삭제 중 예외 발생: {e}",
-                    exc_info=True
-                )
-        logging.info("길드 커맨드 삭제 완료")
+            for gid in [gid for gid in GUILD_IDS if gid]:
+                try:
+                    self.tree.clear_commands(guild=discord.Object(id=gid))
+                except (discord.Forbidden, discord.NotFound, discord.HTTPException) as e:
+                    logging.warning(
+                        f"길드 {gid} 커맨드 삭제 실패: {e}"
+                    )
+                except Exception as e:
+                    logging.error(
+                        f"길드 {gid} 커맨드 삭제 중 예외 발생: {e}",
+                        exc_info=True
+                    )
+            logging.info("길드 커맨드 삭제 완료")
+        else:
+            logging.info("커맨드 삭제/동기화를 건너뜁니다 (FORCE_SYNC=TRUE 또는 DEV=TRUE에서만 수행)")
 
         for fn in os.listdir("./cogs"):
             if fn.endswith(".py"):
                 await self.load_extension(f"cogs.{fn[:-3]}")
                 logging.info(f"Loaded cogs.{fn[:-3]}")
 
-        for gid in [gid for gid in GUILD_IDS if gid]:
-            try:
-                guild_synced = await self.tree.sync(guild=discord.Object(id=gid))
-                logging.info(f"길드 {gid}: {len(guild_synced)}개 synced")
-            except (discord.Forbidden, discord.NotFound, discord.HTTPException) as e:
-                logging.warning(
-                    f"길드 {gid} 커맨드 동기화 실패: {e}"
-                )
-            except Exception as e:
-                logging.error(
-                    f"길드 {gid} 커맨드 동기화 중 예외 발생: {e}",
-                    exc_info=True
-                )
+        if should_sync:
+            for gid in [gid for gid in GUILD_IDS if gid]:
+                try:
+                    guild_synced = await self.tree.sync(guild=discord.Object(id=gid))
+                    logging.info(f"길드 {gid}: {len(guild_synced)}개 synced")
+                except (discord.Forbidden, discord.NotFound, discord.HTTPException) as e:
+                    logging.warning(
+                        f"길드 {gid} 커맨드 동기화 실패: {e}"
+                    )
+                except Exception as e:
+                    logging.error(
+                        f"길드 {gid} 커맨드 동기화 중 예외 발생: {e}",
+                        exc_info=True
+                    )
 
 
     async def init_db(self):
