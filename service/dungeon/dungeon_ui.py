@@ -8,10 +8,11 @@ from typing import Union
 
 from discord import Embed
 
-from config import COMBAT, EmbedColor
+from config import COMBAT, EmbedColor, WEEKLY_TOWER
 from models import UserStatEnum, User, Monster
 from service.dungeon.status import get_status_icons
 from service.dungeon.combat_context import CombatContext
+from service.session import ContentType
 
 
 # =============================================================================
@@ -75,24 +76,39 @@ def create_dungeon_embed(session, event_queue: deque[str]) -> Embed:
     import discord
 
     user_name = session.user.get_name()
-    description = f"**{user_name}**의 탐험"
-    if session.dungeon.description:
-        description += f"\n*{session.dungeon.description}*"
+    if session.content_type == ContentType.WEEKLY_TOWER:
+        description = f"**{user_name}**의 주간 타워 도전"
+        embed = discord.Embed(
+            title=f"🗼 주간 타워 {session.current_floor}층",
+            description=description,
+            color=EmbedColor.DUNGEON
+        )
+        embed.add_field(
+            name="🧱 현재 층",
+            value=f"{session.current_floor} / {WEEKLY_TOWER.TOTAL_FLOORS}",
+            inline=True
+        )
+    else:
+        description = f"**{user_name}**의 탐험"
+        if session.dungeon.description:
+            description += f"\n*{session.dungeon.description}*"
 
-    embed = discord.Embed(
-        title=f"🏰 {session.dungeon.name}",
-        description=description,
-        color=EmbedColor.DUNGEON
-    )
+        embed = discord.Embed(
+            title=f"🏰 {session.dungeon.name}",
+            description=description,
+            color=EmbedColor.DUNGEON
+        )
 
     # 진행도 바
     progress = min(session.exploration_step / session.max_steps, 1.0)
     progress_bar = create_exploration_bar(progress, 25)
     progress_pct = int(progress * 100)
 
+    progress_title = "🗺️ 탐험 진행도" if session.content_type != ContentType.WEEKLY_TOWER else "🧭 층 진행도"
+    progress_unit = "구역" if session.content_type != ContentType.WEEKLY_TOWER else "전투"
     embed.add_field(
-        name="🗺️ 탐험 진행도",
-        value=f"{progress_bar}\n**{session.exploration_step}** / {session.max_steps} 구역 ({progress_pct}%)",
+        name=progress_title,
+        value=f"{progress_bar}\n**{session.exploration_step}** / {session.max_steps} {progress_unit} ({progress_pct}%)",
         inline=False
     )
 

@@ -185,8 +185,9 @@ async def process_combat_result_multi(session, context, turn_count: int) -> str:
         ))
 
         # 드롭 시도 (각 몬스터 독립)
-        for drop_msg in await _try_all_drops(session, user, monster):
-            result_lines.append(f"   {drop_msg}")
+        if not is_tower:
+            for drop_msg in await _try_all_drops(session, user, monster):
+                result_lines.append(f"   {drop_msg}")
 
     # 그룹 보너스 (2마리 이상)
     if len(context.monsters) >= 2:
@@ -354,6 +355,8 @@ async def process_combat_result_multi(session, context, turn_count: int) -> str:
 
 async def _try_all_drops(session, user: User, monster: Monster) -> list[str]:
     """모든 드롭 시도 후 메시지 리스트 반환"""
+    if session.content_type == ContentType.WEEKLY_TOWER:
+        return []
     from service.dungeon.drop_handler import (
         try_drop_boss_special_item, try_drop_monster_box, try_drop_monster_skill,
         try_drop_monster_material, try_drop_monster_equipment,

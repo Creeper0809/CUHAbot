@@ -47,8 +47,12 @@ async def start_dungeon(session: DungeonSession, interaction: discord.Interactio
     ))
 
     event_queue: deque[str] = deque(maxlen=COMBAT.EVENT_QUEUE_MAX_LENGTH)
-    event_queue.append(f"━━━ 🏰 **탐험 시작** ━━━")
-    event_queue.append(f"🚪 {session.dungeon.name}에 입장했다...")
+    if session.content_type == ContentType.WEEKLY_TOWER:
+        event_queue.append("━━━ 🗼 **타워 시작** ━━━")
+        event_queue.append(f"🧱 {session.current_floor}층에 도전한다...")
+    else:
+        event_queue.append(f"━━━ 🏰 **탐험 시작** ━━━")
+        event_queue.append(f"🚪 {session.dungeon.name}에 입장했다...")
 
     if session.user.now_hp <= 0:
         session.user.now_hp = 1

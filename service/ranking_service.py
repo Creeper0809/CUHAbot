@@ -6,6 +6,8 @@ RankingService
 import logging
 from typing import Dict, List
 
+from tortoise.exceptions import OperationalError
+
 from models.repos.users_repo import (
     get_top_users_by_level,
     get_top_users_by_gold,
@@ -89,9 +91,13 @@ class RankingService:
 
     @staticmethod
     async def get_tower_ranking(season_id: int, limit: int = 100) -> List[Dict]:
-        progresses = await UserTowerProgress.filter(
-            season_id=season_id
-        ).order_by('-highest_floor_reached').limit(limit).prefetch_related('user')
+        try:
+            progresses = await UserTowerProgress.filter(
+                season_id=season_id
+            ).order_by('-highest_floor_reached').limit(limit).prefetch_related('user')
+        except OperationalError:
+            logger.warning("Tower ranking table not found; returning empty rankings")
+            return []
 
         return [
             {
@@ -129,9 +135,13 @@ class RankingService:
 
     @staticmethod
     async def get_user_tower_rank(user_id: int, season_id: int) -> int:
-        progresses = await UserTowerProgress.filter(
-            season_id=season_id
-        ).order_by('-highest_floor_reached', 'user_id')
+        try:
+            progresses = await UserTowerProgress.filter(
+                season_id=season_id
+            ).order_by('-highest_floor_reached', 'user_id')
+        except OperationalError:
+            logger.warning("Tower ranking table not found; returning rank 0")
+            return 0
 
         for idx, progress in enumerate(progresses):
             if progress.user_id == user_id:

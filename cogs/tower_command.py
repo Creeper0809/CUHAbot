@@ -43,7 +43,15 @@ class TowerCommand(commands.Cog):
         await SkillDeckService.load_deck_to_user(user)
         await EquipmentService.apply_equipment_stats(user)
 
-        progress = await initialize_tower_session(user, session)
+        try:
+            progress = await initialize_tower_session(user, session)
+        except RuntimeError as e:
+            await interaction.response.send_message(
+                f"⚠️ {e}",
+                ephemeral=True
+            )
+            await end_session(interaction.user.id)
+            return
         season_id = get_current_season()
 
         entry_view = TowerEntryView(interaction.user)

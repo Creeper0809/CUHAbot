@@ -8,7 +8,7 @@ import random
 from typing import Optional
 
 from config import DROP, DUNGEON
-from exceptions import InventoryFullError
+from exceptions import InventoryFullError, ItemNotFoundError
 from models import Droptable, Item, Monster, Skill_Model, User
 from service.item.inventory_service import InventoryService
 from service.item.grade_service import GradeService
@@ -87,6 +87,9 @@ async def try_drop_monster_box(session, monster: Monster) -> Optional[str]:
         )
     except InventoryFullError:
         return "📦 상자를 얻었지만 인벤토리가 가득 찼다..."
+    except ItemNotFoundError:
+        logger.warning(f"Box item not found: {box_id}")
+        return None
 
     item = await Item.get_or_none(id=box_id)
     item_name = item.name if item else "상자"
@@ -180,6 +183,8 @@ async def try_drop_monster_material(user: User, monster: Monster) -> Optional[st
                 )
             except InventoryFullError:
                 dropped_items.append(f"{item.name} (인벤 부족)")
+            except ItemNotFoundError:
+                logger.warning(f"Material item not found: {item.id}")
             except Exception as e:
                 logger.error(f"Failed to drop material: {e}")
 
@@ -339,6 +344,9 @@ async def try_drop_monster_equipment(user: User, monster: Monster) -> Optional[s
         return f"⚔️ **장비 드롭!** {grade_display} 「{item.name}」 획득!"
     except InventoryFullError:
         return f"⚔️ 장비를 얻었지만 인벤토리가 가득 찼다..."
+    except ItemNotFoundError:
+        logger.warning(f"Equipment item not found: {dropped_item_id}")
+        return None
     except Exception as e:
         logger.error(f"Failed to drop equipment: {e}")
         return None
@@ -390,6 +398,9 @@ async def try_drop_dungeon_equipment(session) -> Optional[str]:
         return f"🗡️ **던전 장비 드롭!** {grade_display} 「{item.name}」 획득!"
     except InventoryFullError:
         return f"🗡️ 던전 장비를 얻었지만 인벤토리가 가득 찼다..."
+    except ItemNotFoundError:
+        logger.warning(f"Dungeon equipment item not found: {dropped_item_id}")
+        return None
     except Exception as e:
         logger.error(f"Failed to drop dungeon equipment: {e}")
         return None
