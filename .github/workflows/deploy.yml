@@ -39,7 +39,7 @@ jobs:
             Port $PORT
             User ${{ secrets.SSH_USER }}
             IdentityFile ~/.ssh/id_rsa
-            ProxyCommand cloudflared access ssh --hostname $HOST --service-token-id ${{ secrets.CF_ACCESS_CLIENT_ID }} --service-token-secret ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
+            ProxyCommand cloudflared access ssh --hostname $HOST:$PORT --service-token-id ${{ secrets.CF_ACCESS_CLIENT_ID }} --service-token-secret ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
             StrictHostKeyChecking no
           EOF
 
