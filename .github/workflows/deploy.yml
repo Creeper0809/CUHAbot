@@ -14,9 +14,18 @@ jobs:
 
       - name: Configure SSH
         run: |
-          HOST=$(echo "${{ secrets.SSH_HOST }}" | sed -E 's#^https?://##; s#/.*$##')
-          if [[ -z "$HOST" ]]; then
-            echo "SSH_HOST is empty or invalid"
+          RAW_HOST="${{ secrets.SSH_HOST }}"
+          HOST=$(echo "$RAW_HOST" | sed -E 's#^https?://##; s#/.*$##')
+          PORT=$(echo "$HOST" | sed -E 's#^[^:]+:([0-9]+)$#\1#')
+          HOST=$(echo "$HOST" | sed -E 's#:.*$##')
+          if [[ -z "$PORT" || "$PORT" == "$HOST" ]]; then
+            PORT="${{ secrets.SSH_PORT }}"
+          fi
+          if [[ -z "$PORT" ]]; then
+            PORT="22"
+          fi
+          if [[ -z "$HOST" || "$HOST" == *"access"* ]]; then
+            echo "SSH_HOST must be a plain hostname like ssh.example.com"
             exit 1
           fi
           mkdir -p ~/.ssh
@@ -25,6 +34,7 @@ jobs:
           cat >> ~/.ssh/config <<EOF
           Host tunnel-host
             HostName $HOST
+            Port $PORT
             User ${{ secrets.SSH_USER }}
             IdentityFile ~/.ssh/id_rsa
             ProxyCommand cloudflared access ssh --hostname $HOST --service-token-id ${{ secrets.CF_ACCESS_CLIENT_ID }} --service-token-secret ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
