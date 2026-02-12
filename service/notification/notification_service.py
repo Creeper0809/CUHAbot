@@ -165,6 +165,8 @@ class NotificationService:
             distance: 거리
         """
         try:
+            if target_user_id == session.user_id:
+                return
             target_user = await client.fetch_user(target_user_id)
             if not target_user:
                 return

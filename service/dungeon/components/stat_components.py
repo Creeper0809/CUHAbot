@@ -236,6 +236,10 @@ class PassiveBuffComponent(SkillComponent):
             return ""
         self._applied_entities.add(entity_id)
 
+        def _format_percent(value: float) -> int:
+            """퍼센트 표기용 값 정규화 (0~1 범위는 비율, 1 초과는 이미 퍼센트)"""
+            return int(value * 100) if abs(value) <= 1 else int(value)
+
         effects = []
         if self.attack_percent != 0:
             effects.append(f"공격력 +{int(self.attack_percent * 100)}%")
@@ -254,7 +258,7 @@ class PassiveBuffComponent(SkillComponent):
         if self.crit_damage != 0:
             effects.append(f"치명타배율 +{int(self.crit_damage * 100)}%")
         if self.lifesteal != 0:
-            effects.append(f"흡혈 +{int(self.lifesteal * 100)}%")
+            effects.append(f"흡혈 +{_format_percent(self.lifesteal)}%")
         if self.drop_rate != 0:
             effects.append(f"드롭률 +{int(self.drop_rate * 100)}%")
 

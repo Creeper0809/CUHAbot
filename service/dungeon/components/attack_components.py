@@ -108,6 +108,7 @@ class DamageComponent(SkillComponent):
 
         hit_logs = []
         for _ in range(self.hit_count):
+            lifesteal_total = 0
             # 명중 판정 전: 이벤트 기반 컴포넌트 적용
             from service.dungeon.combat_events import HitCalculationEvent
 
@@ -198,7 +199,7 @@ class DamageComponent(SkillComponent):
                 attacker.now_hp = min(attacker.now_hp + heal, max_hp)
                 actual = attacker.now_hp - old_hp
                 if actual > 0:
-                    hit_logs.append(f"   🩸 광전사 흡혈: +{actual} HP")
+                    lifesteal_total += actual
 
             # 패시브 흡혈 (장비 + 패시브 스킬의 lifesteal 스탯)
             passive_lifesteal = self._get_passive_lifesteal(attacker)
@@ -209,15 +210,16 @@ class DamageComponent(SkillComponent):
                 attacker.now_hp = min(attacker.now_hp + heal, max_hp)
                 actual = attacker.now_hp - old_hp
                 if actual > 0:
-                    hit_logs.append(f"   💚 흡혈: +{actual} HP")
+                    lifesteal_total += actual
 
             crit_text = " 💥" if result.is_critical else ""
             attr_text = _get_attribute_effectiveness_text(attr_mult)
             dmg_type_text = _get_damage_type_text(self.is_physical, self.skill_attribute)
             dmg_display = event.actual_damage if not event.was_immune else 0
+            lifesteal_text = f" 💚흡혈 +{lifesteal_total}HP" if lifesteal_total > 0 else ""
             hit_logs.append(
                 f"⚔️ **{attacker.get_name()}** 「{self.skill_name}」 → "
-                f"**{target.get_name()}** {dmg_display}💥{crit_text}{attr_text}{dmg_type_text}"
+                f"**{target.get_name()}** {dmg_display}💥{crit_text}{attr_text}{dmg_type_text}{lifesteal_text}"
             )
 
             # 반사 데미지 처리
@@ -394,7 +396,10 @@ class LifestealComponent(SkillComponent):
 
         actual_heal = self._apply_lifesteal(attacker, total_damage, max_hp)
         if actual_heal > 0:
-            hit_logs.append(f"   💚 흡혈 회복: **+{actual_heal}** HP")
+            if hit_logs:
+                hit_logs[-1] += f" 💚흡혈 +{actual_heal}HP"
+            else:
+                hit_logs.append(f"💚 흡혈 회복: **+{actual_heal}** HP")
 
         return "\n".join(hit_logs)
 

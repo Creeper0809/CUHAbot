@@ -406,6 +406,7 @@ async def seed_monsters():
             type=monster_type,
             hp=safe_int(row.get("HP", "0")),
             attack=safe_int(row.get("Attack", "0")),
+            ap_attack=safe_int(row.get("AP_Attack", "0")),
             defense=safe_int(row.get("Defense", "0")),
             speed=safe_int(row.get("Speed", "10"), 10),
             attribute=row.get("속성", "무속성") or "무속성",
