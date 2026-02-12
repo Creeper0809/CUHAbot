@@ -27,7 +27,10 @@ from config.skills import (
 )
 from config.shop import ShopConfig, SHOP, InventoryConfig, INVENTORY
 from config.leveling import LEVELING_EXP_TABLE, LEVELING_EXP_DEFAULT
-from config.synergies import SynergyTier, ATTRIBUTE_SYNERGIES, ComboSynergy, COMBO_SYNERGIES
+from config.synergies import (
+    SynergyTier, ATTRIBUTE_SYNERGIES, EFFECT_SYNERGIES,
+    ComboSynergy, COMBO_SYNERGIES,
+)
 from config.grade import (
     InstanceGrade, GradeInfo, GRADE_TABLE,
     GRADE_DROP_WEIGHTS, SpecialEffectDef, SPECIAL_EFFECT_POOL,
@@ -75,7 +78,7 @@ __all__ = [
     # leveling
     "LEVELING_EXP_TABLE", "LEVELING_EXP_DEFAULT",
     # synergies
-    "SynergyTier", "ATTRIBUTE_SYNERGIES", "ComboSynergy", "COMBO_SYNERGIES",
+    "SynergyTier", "ATTRIBUTE_SYNERGIES", "EFFECT_SYNERGIES", "ComboSynergy", "COMBO_SYNERGIES",
     # multiplayer
     "PartyConfig", "PARTY",
     "WeeklyTowerConfig", "WEEKLY_TOWER",

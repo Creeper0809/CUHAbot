@@ -83,6 +83,8 @@ class DamageComponent(SkillComponent):
 
         # 받는 피해 배율 (동결, 표식 등)
         damage_taken_mult = get_damage_taken_multiplier(target)
+        synergy_taken_mult = self._get_target_synergy_damage_taken_multiplier(target)
+        damage_taken_mult *= synergy_taken_mult
 
         # 스탯 시너지: HP 조건부 보너스 (광전사 등)
         hp_bonuses = get_hp_conditional_bonuses(attacker)
@@ -258,8 +260,10 @@ class DamageComponent(SkillComponent):
         # 2. 패시브 스킬에서 흡혈
         if hasattr(attacker, 'equipped_skill'):
             from service.dungeon.skill import get_passive_stat_bonuses
+            from service.skill.synergy_service import SynergyService
             passive_bonuses = get_passive_stat_bonuses(attacker.equipped_skill)
             total_lifesteal += passive_bonuses.get('lifesteal', 0.0)
+            total_lifesteal += SynergyService.calculate_lifesteal_bonus(attacker.equipped_skill)
 
         return total_lifesteal
 
@@ -297,8 +301,14 @@ class DamageComponent(SkillComponent):
             return 1.0
         from service.skill.synergy_service import SynergyService
         return SynergyService.calculate_damage_multiplier(
-            attacker.equipped_skill, self.skill_attribute
+            attacker.equipped_skill, self.skill_attribute, actor=attacker, current_skill=self.skill
         )
+
+    def _get_target_synergy_damage_taken_multiplier(self, target) -> float:
+        if not hasattr(target, 'equipped_skill'):
+            return 1.0
+        from service.skill.synergy_service import SynergyService
+        return SynergyService.calculate_damage_taken_multiplier(target.equipped_skill)
 
     def _calculate_hit(
         self, attack_power, defense, crit_rate, attribute_multiplier,

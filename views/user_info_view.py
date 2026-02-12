@@ -325,14 +325,45 @@ class UserInfoView(discord.ui.View):
             )
 
         # 활성화된 시너지 (이름만 간단히)
+        from config import ATTRIBUTE_SYNERGIES, EFFECT_SYNERGIES
         from service.skill.synergy_service import SynergyService
         active_synergies = SynergyService.get_active_synergies(self.skill_deck)
 
         if active_synergies:
-            synergy_names = [s.name for s in active_synergies]
+            attr_keys = set(ATTRIBUTE_SYNERGIES.keys())
+            effect_keys = set(EFFECT_SYNERGIES.keys())
+            attr_lines = []
+            effect_lines = []
+            combo_lines = []
+
+            for synergy in active_synergies:
+                if synergy.combo:
+                    combo_lines.append(f"• {synergy.name}: {synergy.description}")
+                    continue
+
+                key = synergy.name.split(" ×", 1)[0]
+                line = f"• {synergy.name}: {synergy.description}"
+                if key in attr_keys:
+                    attr_lines.append(line)
+                elif key in effect_keys:
+                    effect_lines.append(line)
+                else:
+                    combo_lines.append(line)
+
+            blocks = []
+            if attr_lines:
+                blocks.append("**속성 밀도**")
+                blocks.extend(attr_lines[:6])
+            if effect_lines:
+                blocks.append("**효과 밀도**")
+                blocks.extend(effect_lines[:6])
+            if combo_lines:
+                blocks.append("**조합 시너지**")
+                blocks.extend(combo_lines[:6])
+
             embed.add_field(
-                name=f"🔮 시너지 ({len(synergy_names)}개)",
-                value=", ".join(synergy_names),
+                name=f"🔮 시너지 ({len(active_synergies)}개)",
+                value="\n".join(blocks[:20]),
                 inline=False
             )
 

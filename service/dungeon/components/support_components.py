@@ -52,7 +52,9 @@ class HealComponent(SkillComponent):
         # 시너지 배율 (덱 기반)
         if hasattr(attacker, 'equipped_skill'):
             from service.skill.synergy_service import SynergyService
-            synergy_mult = SynergyService.calculate_heal_multiplier(attacker.equipped_skill)
+            synergy_mult = SynergyService.calculate_heal_multiplier(
+                attacker.equipped_skill, actor=attacker, current_skill=self.skill
+            )
             total_heal = int(total_heal * synergy_mult)
 
         # 스탯 시너지: 회복량 보너스 (현자)
