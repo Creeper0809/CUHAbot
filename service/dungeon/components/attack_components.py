@@ -101,6 +101,10 @@ class DamageComponent(SkillComponent):
 
         combined_mult = attr_mult * synergy_mult * damage_taken_mult * hp_dmg_bonus * equipment_skill_mult
 
+        # 궁극기 자동 발동 페널티(수동 대비 약화) 적용
+        ultimate_scale = float(getattr(attacker, "_ultimate_damage_scale", 1.0) or 1.0)
+        combined_mult *= ultimate_scale
+
         # 스탯 시너지: 물리 치명타 데미지 보너스 (파괴자)
         crit_mult = DAMAGE.CRITICAL_MULTIPLIER
         if self.is_physical:

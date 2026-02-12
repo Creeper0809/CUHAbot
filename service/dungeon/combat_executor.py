@@ -20,6 +20,12 @@ from service.player.stat_synergy_combat import (
     has_first_strike, roll_extra_action, get_hp_regen_per_turn_pct,
 )
 from service.session import set_combat_state
+from service.skill.ultimate_service import (
+    add_ultimate_gauge,
+    reset_ultimate_combat_state,
+    select_skill_for_user_turn,
+    tick_ultimate_cooldown,
+)
 
 # 리팩토링된 클래스 import
 from service.dungeon.combat_ui_manager import CombatUIManager
@@ -110,6 +116,7 @@ async def execute_combat_context(session, interaction: discord.Interaction, cont
 
     # Phase 3: 캠프파이어 ATK 버프 적용
     _apply_campfire_buff(session)
+    reset_ultimate_combat_state(user)
 
     set_combat_state(user.discord_id, True)
 
@@ -493,12 +500,16 @@ def _execute_user_action(user: User, context: CombatContext) -> list[str]:
     from service.dungeon.reward_calculator import get_attack_stat
 
     logs = []
-    user_skill = user.next_skill()
+    tick_ultimate_cooldown(user)
 
     # 랜덤으로 몬스터 선택 (살아있는 몬스터 중)
     alive_monsters = context.get_all_alive_monsters()
     if not alive_monsters:
         return []
+
+    user_skill, ultimate_log, ultimate_scale = select_skill_for_user_turn(user, alive_monsters)
+    if ultimate_log:
+        logs.append(ultimate_log)
     target = random.choice(alive_monsters)
 
     # 턴 시작 시 장비 효과 (행동 예측 등)
@@ -506,24 +517,31 @@ def _execute_user_action(user: User, context: CombatContext) -> list[str]:
     logs.extend(turn_start_logs)
 
     if user_skill:
-        if _is_skill_aoe(user_skill):
-            for monster in alive_monsters:
-                log = user_skill.on_turn(user, monster)
+        # 궁극기 자동 발동 시 이번 행동의 공격 계수만 약화한다.
+        user._ultimate_damage_scale = ultimate_scale
+        try:
+            if _is_skill_aoe(user_skill):
+                for monster in alive_monsters:
+                    log = user_skill.on_turn(user, monster)
+                    if log and log.strip():
+                        logs.append(log)
+                    # 공격 후 장비 훅 (추가 공격, 회복 봉인 등)
+                    # 로그에서 데미지 추출
+                    damage_dealt, _ = _metrics_recorder.parse_combat_metrics_from_logs([log])
+                    add_ultimate_gauge(user, dealt_damage=damage_dealt)
+                    attack_logs = _equipment_manager.apply_on_attack(user, monster, damage_dealt)
+                    logs.extend(attack_logs)
+            else:
+                log = user_skill.on_turn(user, target)
                 if log and log.strip():
                     logs.append(log)
-                # 공격 후 장비 훅 (추가 공격, 회복 봉인 등)
-                # 로그에서 데미지 추출
+                # 공격 후 장비 훅 - 로그에서 데미지 추출
                 damage_dealt, _ = _metrics_recorder.parse_combat_metrics_from_logs([log])
-                attack_logs = _equipment_manager.apply_on_attack(user, monster, damage_dealt)
+                add_ultimate_gauge(user, dealt_damage=damage_dealt)
+                attack_logs = _equipment_manager.apply_on_attack(user, target, damage_dealt)
                 logs.extend(attack_logs)
-        else:
-            log = user_skill.on_turn(user, target)
-            if log and log.strip():
-                logs.append(log)
-            # 공격 후 장비 훅 - 로그에서 데미지 추출
-            damage_dealt, _ = _metrics_recorder.parse_combat_metrics_from_logs([log])
-            attack_logs = _equipment_manager.apply_on_attack(user, target, damage_dealt)
-            logs.extend(attack_logs)
+        finally:
+            user._ultimate_damage_scale = 1.0
     else:
         from service.dungeon.damage_pipeline import process_incoming_damage
         damage = get_attack_stat(user)
@@ -534,11 +552,13 @@ def _execute_user_action(user: User, context: CombatContext) -> list[str]:
         # 공격 후 장비 훅 (반격, 추가 공격 등)
         attack_logs = _equipment_manager.apply_on_attack(user, target, event.actual_damage)
         logs.extend(attack_logs)
+        add_ultimate_gauge(user, dealt_damage=event.actual_damage)
 
         if event.reflected_damage > 0:
             reflect_event = process_incoming_damage(user, event.reflected_damage, is_reflected=True)
             logs.append(f"   🔄 반사 데미지 → **{user.get_name()}** {reflect_event.actual_damage}")
 
+    add_ultimate_gauge(user, acted=True)
     return logs
 
 
@@ -574,6 +594,7 @@ def _execute_monster_action(monster: Monster, user: User, context: CombatContext
             logs.append(log)
         # 유저 피격 시 장비 훅 (가시 피해, 반격 등) - 로그에서 데미지 추출
         damage_taken, _ = _metrics_recorder.parse_combat_metrics_from_logs([log])
+        add_ultimate_gauge(target, taken_damage=damage_taken)
         damaged_logs = _equipment_manager.apply_on_damaged(target, monster, damage_taken)
         logs.extend(damaged_logs)
     else:
@@ -581,6 +602,7 @@ def _execute_monster_action(monster: Monster, user: User, context: CombatContext
         event = process_incoming_damage(target, damage, attacker=monster)
         logs.extend(event.extra_logs)
         logs.append(f"⚔️ **{monster.get_name()}** 기본 공격 → **{target.get_name()}** {event.actual_damage} 데미지")
+        add_ultimate_gauge(target, taken_damage=event.actual_damage)
 
         # 유저 피격 시 장비 훅
         damaged_logs = _equipment_manager.apply_on_damaged(target, monster, event.actual_damage)

@@ -46,11 +46,15 @@ class CombatUIManager:
             리더의 전투 메시지
         """
         from service.dungeon.dungeon_ui import create_battle_embed_multi
+        from views.combat_control_view import CombatControlView
 
         embed = create_battle_embed_multi(user, context, combat_log, session.participants)
 
         # 리더에게 전투 UI 전송
-        combat_message = await interaction.user.send(embed=embed)
+        combat_message = await interaction.user.send(
+            embed=embed,
+            view=CombatControlView(session, user.discord_id, timeout=None),
+        )
 
         # 난입 참가자들에게도 전투 UI 전송
         session.participant_combat_messages.clear()
@@ -58,7 +62,10 @@ class CombatUIManager:
             for participant_id, participant in session.participants.items():
                 try:
                     discord_user = await interaction.client.fetch_user(participant.discord_id)
-                    participant_msg = await discord_user.send(embed=embed)
+                    participant_msg = await discord_user.send(
+                        embed=embed,
+                        view=CombatControlView(session, participant.discord_id, timeout=None),
+                    )
                     session.participant_combat_messages[participant_id] = participant_msg
                     logger.info(f"Combat UI sent to participant: {participant.discord_id}")
                 except Exception as e:
@@ -85,19 +92,28 @@ class CombatUIManager:
             combat_log: 전투 로그
         """
         from service.dungeon.dungeon_ui import create_battle_embed_multi
+        from views.combat_control_view import CombatControlView
 
         embed = create_battle_embed_multi(user, context, combat_log, session.participants)
 
         # 리더 메시지 업데이트
         try:
-            await combat_message.edit(embed=embed)
+            await combat_message.edit(
+                embed=embed,
+                view=CombatControlView(session, user.discord_id, timeout=None),
+            )
         except Exception as e:
             logger.error(f"Failed to update leader combat message: {e}")
 
         # 참가자 메시지 업데이트
-        for participant_msg in session.participant_combat_messages.values():
+        for participant_id, participant_msg in session.participant_combat_messages.items():
             try:
-                await participant_msg.edit(embed=embed)
+                participant = session.participants.get(participant_id)
+                actor_discord_id = participant.discord_id if participant else user.discord_id
+                await participant_msg.edit(
+                    embed=embed,
+                    view=CombatControlView(session, actor_discord_id, timeout=None),
+                )
             except Exception as e:
                 logger.error(f"Failed to update participant combat UI: {e}")
 
@@ -118,6 +134,7 @@ class CombatUIManager:
             combat_log: 전투 로그
         """
         from service.dungeon.dungeon_ui import create_battle_embed_multi
+        from views.combat_control_view import CombatControlView
 
         if not session.participants:
             return
@@ -160,14 +177,22 @@ class CombatUIManager:
 
         # 리더 메시지 업데이트
         try:
-            await combat_message.edit(embed=final_embed)
+            await combat_message.edit(
+                embed=final_embed,
+                view=CombatControlView(session, user.discord_id, timeout=None),
+            )
         except Exception as e:
             logger.error(f"Failed to update leader combat message: {e}")
 
         # 참가자 메시지 업데이트
-        for participant_msg in session.participant_combat_messages.values():
+        for participant_id, participant_msg in session.participant_combat_messages.items():
             try:
-                await participant_msg.edit(embed=final_embed)
+                participant = session.participants.get(participant_id)
+                actor_discord_id = participant.discord_id if participant else user.discord_id
+                await participant_msg.edit(
+                    embed=final_embed,
+                    view=CombatControlView(session, actor_discord_id, timeout=None),
+                )
             except Exception as e:
                 logger.error(f"Failed to update participant combat message: {e}")
 

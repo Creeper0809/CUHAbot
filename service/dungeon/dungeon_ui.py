@@ -11,6 +11,7 @@ from discord import Embed
 from config import COMBAT, EmbedColor, WEEKLY_TOWER
 from models import UserStatEnum, User, Monster
 from service.dungeon.status import get_status_icons
+from service.skill.ultimate_service import get_ultimate_mode_for_skill
 from service.dungeon.combat_context import CombatContext
 from service.session import ContentType
 
@@ -216,6 +217,12 @@ def _add_all_player_fields(embed: Embed, players: list[User]) -> None:
         status = get_status_icons(player)
 
         line = f"👤 **{player.get_name()}**\n{hp_bar} **{player.now_hp}** / {max_hp} ({hp_pct}%)"
+        ultimate_skill_id = getattr(player, "equipped_ultimate_skill", 0)
+        if ultimate_skill_id and get_ultimate_mode_for_skill(ultimate_skill_id) == "manual":
+            gauge = int(getattr(player, "ultimate_gauge", 0))
+            cooldown = int(getattr(player, "ultimate_cooldown_remaining", 0))
+            cd_text = f" | 쿨:{cooldown}턴" if cooldown > 0 else ""
+            line += f"\n🔥 궁극기 게이지: {gauge}/100{cd_text}"
         if status:
             line += f" {status}"
         player_lines.append(line)
@@ -236,6 +243,12 @@ def _add_player_fields(embed: Embed, player: User) -> None:
     status = get_status_icons(player)
 
     value = f"{hp_bar}\n**{player.now_hp}** / {max_hp} ({hp_pct}%)"
+    ultimate_skill_id = getattr(player, "equipped_ultimate_skill", 0)
+    if ultimate_skill_id and get_ultimate_mode_for_skill(ultimate_skill_id) == "manual":
+        gauge = int(getattr(player, "ultimate_gauge", 0))
+        cooldown = int(getattr(player, "ultimate_cooldown_remaining", 0))
+        cd_text = f" | 쿨:{cooldown}턴" if cooldown > 0 else ""
+        value += f"\n🔥 궁극기 게이지: {gauge}/100{cd_text}"
     if status:
         value += f"\n{status}"
 

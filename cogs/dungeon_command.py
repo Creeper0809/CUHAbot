@@ -23,6 +23,12 @@ from service.player.healing_service import HealingService
 from service.item.inventory_service import InventoryService
 from service.session import is_in_combat, create_session, end_session
 from service.skill.skill_deck_service import SkillDeckService
+from service.skill.ultimate_service import (
+    get_ultimate_mode_for_skill,
+    is_ultimate_skill,
+    load_ultimate_to_user,
+    set_ultimate_skill,
+)
 from service.item.equipment_service import EquipmentService
 from service.skill.skill_ownership_service import SkillOwnershipService
 from service.temp_admin_service import is_admin_or_temp
@@ -55,6 +61,7 @@ class DungeonCommand(commands.Cog):
 
             # 스킬 덱 로드 (전투에서 사용)
             await SkillDeckService.load_deck_to_user(user)
+            await load_ultimate_to_user(user)
 
             # 장비 스탯 로드 (전투에서 사용)
             await EquipmentService.apply_equipment_stats(user)
@@ -327,6 +334,85 @@ class DungeonCommand(commands.Cog):
 
             # 유저 객체에 덱 로드
             await SkillDeckService.load_deck_to_user(user)
+
+    @requires_account()
+    @app_commands.command(
+        name="궁극기설정",
+        description="궁극기 슬롯을 설정합니다 (수동/자동은 스킬별 고정)"
+    )
+    @app_commands.guilds(*GUILD_IDS)
+    @app_commands.describe(
+        skill_id="장착할 궁극기 스킬 ID (해제: 0)"
+    )
+    async def configure_ultimate(
+        self,
+        interaction: discord.Interaction,
+        skill_id: int | None = None,
+    ):
+        if is_in_combat(interaction.user.id):
+            await interaction.response.send_message(
+                "⚠️ 전투 중에는 궁극기 설정을 변경할 수 없습니다.",
+                ephemeral=True
+            )
+            return
+
+        user: User = await find_account_by_discordid(interaction.user.id)
+        if not user:
+            await interaction.response.send_message(
+                "등록된 계정이 없습니다. `/등록`을 먼저 해주세요.",
+                ephemeral=True
+            )
+            return
+
+        await load_ultimate_to_user(user)
+
+        updated_fields = []
+
+        if skill_id is not None:
+            if skill_id != 0 and not is_ultimate_skill(skill_id):
+                await interaction.response.send_message(
+                    "⚠️ 궁극기 스킬 ID만 장착할 수 있습니다.",
+                    ephemeral=True
+                )
+                return
+
+            if skill_id != 0:
+                owned_skills = await SkillOwnershipService.get_all_owned_skills(user)
+                owned_ids = {owned.skill_id for owned in owned_skills}
+                if skill_id not in owned_ids:
+                    await interaction.response.send_message(
+                        "⚠️ 보유하지 않은 궁극기는 장착할 수 없습니다.",
+                        ephemeral=True
+                    )
+                    return
+
+            ok = await set_ultimate_skill(user, skill_id)
+            if not ok:
+                await interaction.response.send_message(
+                    "⚠️ 궁극기 슬롯 저장에 실패했습니다. (테이블 미생성 가능)",
+                    ephemeral=True
+                )
+                return
+            updated_fields.append(f"궁극기 슬롯: `{skill_id}`")
+
+        await load_ultimate_to_user(user)
+        mode_value = get_ultimate_mode_for_skill(user.equipped_ultimate_skill)
+        mode_name = "수동" if mode_value == "manual" else "자동"
+
+        if not updated_fields:
+            msg = (
+                "현재 궁극기 설정\n"
+                f"- 슬롯: `{user.equipped_ultimate_skill}`\n"
+                f"- 발동 정책: `{mode_name}` (스킬 고정)"
+            )
+        else:
+            msg = (
+                "궁극기 설정이 업데이트되었습니다.\n"
+                + "\n".join(f"- {line}" for line in updated_fields)
+                + f"\n\n현재 설정\n- 슬롯: `{user.equipped_ultimate_skill}`\n- 발동 정책: `{mode_name}` (스킬 고정)"
+            )
+
+        await interaction.response.send_message(msg, ephemeral=True)
 
     @requires_account()
     @app_commands.command(

@@ -40,6 +40,12 @@ async def process_encounter(session: DungeonSession, interaction: discord.Intera
     """
     session.exploration_step += 1
 
+    # 주간 타워는 "1층 = 1전투" 규칙을 강제한다.
+    # 소셜 encounter가 먼저 발동하면 전투 없이 층이 넘어갈 수 있으므로
+    # 타워에서는 몬스터 encounter만 허용한다.
+    if session.content_type == ContentType.WEEKLY_TOWER:
+        return await _process_monster_encounter(session, interaction)
+
     # Phase 3: 멀티유저 encounter 우선 체크
     from service.dungeon.social_encounter_checker import check_social_encounter
     from service.dungeon.social_encounter_types import (
@@ -100,9 +106,6 @@ async def process_encounter(session: DungeonSession, interaction: discord.Intera
             del buffs["force_treasure"]
     else:
         encounter_type = EncounterFactory.roll_encounter_type(weights=encounter_weights)
-
-    if session.content_type == ContentType.WEEKLY_TOWER:
-        encounter_type = EncounterType.MONSTER
 
     logger.debug(
         f"Encounter rolled: user={session.user.discord_id}, "
@@ -186,7 +189,12 @@ async def _process_monster_encounter(session: DungeonSession, interaction: disco
     # Phase 4: 보스방 대기실 체크
     from service.dungeon.reward_calculator import is_boss_monster
 
-    if len(monsters) == 1 and is_boss_monster(monsters[0]) and session.voice_channel_id:
+    if (
+        session.content_type != ContentType.WEEKLY_TOWER
+        and len(monsters) == 1
+        and is_boss_monster(monsters[0])
+        and session.voice_channel_id
+    ):
         from service.dungeon.social_encounter_checker import check_boss_waiting_room
         from service.dungeon.social_encounter_types import BossRoomEncounter
 

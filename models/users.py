@@ -89,6 +89,11 @@ class User(models.Model):
     status: list["Buff"]
     equipped_skill: list[int]
     skill_queue: list[int]
+    equipped_ultimate_skill: int
+    ultimate_mode: str
+    ultimate_gauge: int
+    ultimate_cooldown_remaining: int
+    manual_ultimate_requested: bool
 
     def __init__(self, **kwargs: Any) -> None:
         super().__init__(**kwargs)
@@ -99,6 +104,11 @@ class User(models.Model):
         self.status = []
         self.equipped_skill = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
         self.skill_queue = []
+        self.equipped_ultimate_skill = 0
+        self.ultimate_mode = "manual"
+        self.ultimate_gauge = 0
+        self.ultimate_cooldown_remaining = 0
+        self.manual_ultimate_requested = False
         self.equipment_stats = {
             "hp": 0,
             "attack": 0,

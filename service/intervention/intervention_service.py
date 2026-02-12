@@ -260,6 +260,9 @@ class InterventionService:
                     # 스킬 덱 로드
                     from service.skill.skill_deck_service import SkillDeckService
                     await SkillDeckService.load_deck_to_user(user)
+                    from service.skill.ultimate_service import load_ultimate_to_user, reset_ultimate_combat_state
+                    await load_ultimate_to_user(user)
+                    reset_ultimate_combat_state(user)
 
                     # 장비 스탯 로드
                     from service.item.equipment_service import EquipmentService

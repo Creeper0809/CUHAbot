@@ -28,6 +28,7 @@ from .user_equipment import *
 from .user_inventory import *
 from .user_owned_skill import *
 from .user_skill_deck import *
+from .user_ultimate_deck import *
 from .users import *
 from .user_tower_progress import *
 from .voice_channel_level import *
