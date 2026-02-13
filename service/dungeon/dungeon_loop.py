@@ -60,6 +60,9 @@ async def start_dungeon(session: DungeonSession, interaction: discord.Interactio
     session.max_steps = _calculate_dungeon_steps(session.dungeon)
     if session.content_type == ContentType.WEEKLY_TOWER:
         session.max_steps = 1
+    elif session.content_type == ContentType.RAID:
+        # 레이드는 탐험 루프 없이 보스 전투 1회로 처리
+        session.max_steps = 1
 
     # 음성 채널에 있으면 공유 인스턴스 참여
     if session.voice_channel_id and session.dungeon:
@@ -185,6 +188,21 @@ async def _handle_dungeon_clear(session, interaction, event_queue) -> bool:
         await _update_dungeon_log(session, event_queue)
         await handle_floor_clear(session, interaction)
         return True
+    if session.content_type == ContentType.RAID and session.raid_id:
+        from service.raid.raid_progress_service import get_raid_clear_bonus
+        clear_turns = 0
+        if getattr(session, "combat_context", None):
+            clear_turns = int(getattr(session.combat_context, "round_number", 0) or 0)
+        bonus_exp, bonus_gold, is_first = await get_raid_clear_bonus(
+            session.user,
+            session.raid_id,
+            clear_turns=clear_turns,
+        )
+        session.total_exp += bonus_exp
+        session.total_gold += bonus_gold
+        if is_first:
+            event_queue.append("🏅 주간 첫 레이드 클리어 보너스 획득!")
+        event_queue.append(f"🎁 레이드 보너스: ⭐ +{bonus_exp} EXP / 💰 +{bonus_gold} G")
 
     logger.info(f"Dungeon cleared: user={session.user.discord_id}")
 

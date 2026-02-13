@@ -4,7 +4,7 @@ from discord import app_commands
 
 from bot import GUILD_IDS
 from models import Item, Skill_Model, UserStatEnum
-from models.repos.static_cache import load_static_data
+from models.repos.static_cache import load_static_data, get_static_cache_summary
 from models.repos.users_repo import find_account_by_discordid
 from service.item.inventory_service import InventoryService
 from service.skill.skill_ownership_service import SkillOwnershipService
@@ -145,12 +145,34 @@ class ServerAdminCammand(commands.Cog):
 
     @app_commands.command(
         name="데베재캐시",
-        description="데이터베이스 변동시 다시 캐시합니다"
+        description="DB 기준 모든 정적 데이터를 다시 캐시합니다"
     )
     @commands.has_permissions(administrator=True)
     async def re_cache(self, interaction: discord.Interaction):
+        await interaction.response.defer(ephemeral=True, thinking=True)
         await load_static_data()
-        await interaction.response.send_message("데이터베이스 재캐시 완료")
+        summary = get_static_cache_summary()
+        lines = [
+            "✅ 데이터베이스 기준 정적 데이터 재캐시 완료",
+            f"- 던전: {summary['dungeons']}",
+            f"- 몬스터: {summary['monsters']}",
+            f"- 아이템: {summary['items']}",
+            f"- 스킬: {summary['skills']}",
+            f"- 스폰 던전 수: {summary['spawns_dungeons']}",
+            f"- 장비 아이템: {summary['equipment_items']}",
+            f"- 세트 매핑: {summary['set_memberships']}",
+            f"- 상자 드랍 타입: {summary['box_drop_types']}",
+            f"- 레이드: {summary['raids']}",
+            f"- 레이드 타겟팅 룰: {summary['raid_targeting_rules']}",
+            f"- 레이드 특수 액션: {summary['raid_special_actions']}",
+            f"- 레이드 미니게임 그룹: {summary['raid_minigame_groups']}",
+            f"- 레이드 전환 그룹: {summary['raid_transition_groups']}",
+            f"- 레이드 파츠 그룹: {summary['raid_part_groups']}",
+            f"- 레이드 기믹 그룹: {summary['raid_gimmick_groups']}",
+            f"- 레이드 보스 스킬 그룹: {summary['raid_boss_skill_groups']}",
+            f"- 레이드 미니게임 규칙: {summary['raid_minigame_rules']}",
+        ]
+        await interaction.followup.send("\n".join(lines), ephemeral=True)
 
     @app_commands.command(
         name="아이템지급",

@@ -135,6 +135,33 @@ class DungeonSession:
     allow_intervention: bool = True
     """난입 허용 여부 (유저가 설정)"""
 
+    # 레이드 전용 런타임 상태
+    raid_id: Optional[int] = None
+    raid_phase: int = 1
+    raid_current_target: Optional[str] = None
+    raid_target_priority: list[str] = field(default_factory=list)
+    raid_pending_target: Optional[str] = None
+    raid_target_apply_turn: int = 0
+    raid_destroyed_parts: set[str] = field(default_factory=set)
+    raid_locked_skills: set[str] = field(default_factory=set)
+    raid_part_hp: dict[str, int] = field(default_factory=dict)
+    raid_part_max_hp: dict[str, int] = field(default_factory=dict)
+    raid_action_used_round: dict[int, int] = field(default_factory=dict)
+    raid_action_next_round: dict[str, int] = field(default_factory=dict)
+    raid_action_counters: dict[str, int] = field(default_factory=dict)
+    raid_provoke_target_discord_id: Optional[int] = None
+    raid_provoke_until_round: int = 0
+    raid_last_broken_part_key: Optional[str] = None
+    raid_gimmick_last_round: dict[str, int] = field(default_factory=dict)
+    raid_pending_transition_id: Optional[int] = None
+    raid_pending_minigame_id: Optional[int] = None
+    raid_minigame_started_round: int = 0
+    raid_minigame_inputs: list[str] = field(default_factory=list)
+    raid_minigame_expected: list[str] = field(default_factory=list)
+    raid_minigame_prompt: Optional[str] = None
+    raid_minigame_stage_inputs: dict[str, str] = field(default_factory=dict)
+    raid_minigame_stage_index: int = 0
+
     def is_dungeon_cleared(self) -> bool:
         """던전 클리어 조건 확인"""
         return self.exploration_step >= self.max_steps

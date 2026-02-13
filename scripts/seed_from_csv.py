@@ -137,6 +137,13 @@ def safe_float(value: str, default: float = 0.0) -> float:
         return default
 
 
+def safe_bool(value: str, default: bool = False) -> bool:
+    """문자열을 bool로 안전하게 변환"""
+    if value is None:
+        return default
+    return str(value).strip().lower() in {"1", "true", "t", "y", "yes"}
+
+
 # ============================================================
 # DB 초기화
 # ============================================================
@@ -160,6 +167,15 @@ async def reset_all_tables():
 
     # FK 의존성 순서대로 삭제 (자식 → 부모)
     tables = [
+        # 레이드 시스템
+        "raid_boss_skill",
+        "raid_gimmick",
+        "raid_part",
+        "raid_phase_transition",
+        "raid_minigame",
+        "raid_special_action",
+        "raid_targeting_rule",
+        "raid",
         # 유저 관련 (세션/장비/인벤토리)
         "dungeon_user_pos",
         "skill_equip",
@@ -711,6 +727,184 @@ async def seed_sets():
     print(f"✓ 세트 데이터 삽입 완료 (set_effects.csv)")
 
 
+async def seed_raids():
+    """레이드 데이터 삽입 (raid_*.csv)"""
+    from models.raid import (
+        Raid,
+        RaidTargetingRule,
+        RaidSpecialAction,
+        RaidMinigame,
+        RaidPhaseTransition,
+        RaidPart,
+        RaidGimmick,
+        RaidBossSkill,
+    )
+
+    # raids.csv
+    raid_rows = read_csv("raids.csv")
+    raids = []
+    for row in raid_rows:
+        raids.append(Raid(
+            raid_id=safe_int(row["raid_id"]),
+            dungeon_id=safe_int(row["dungeon_id"]),
+            raid_key=row["raid_key"],
+            raid_name=row["raid_name"],
+            recommended_level=safe_int(row["recommended_level"], 1),
+            max_party_size=safe_int(row["max_party_size"], 3),
+            boss_code=row["boss_code"],
+            boss_name=row["boss_name"],
+            main_attribute=row.get("main_attribute", "all"),
+            phase_count=safe_int(row.get("phase_count", "3"), 3),
+            phase_hp_triggers=row.get("phase_hp_triggers", "70|35"),
+            enrage_turn_limit=safe_int(row.get("enrage_turn_limit", "20"), 20),
+            default_priority_1=row.get("default_priority_1", "body"),
+            default_priority_2=row.get("default_priority_2", "body"),
+            default_priority_3=row.get("default_priority_3", "body"),
+            notes=row.get("notes", ""),
+        ))
+    await Raid.bulk_create(raids)
+    print(f"  Raid {len(raids)}개 삽입")
+
+    # raid_targeting_rules.csv
+    targeting_rows = read_csv("raid_targeting_rules.csv")
+    targeting_rules = []
+    for row in targeting_rows:
+        targeting_rules.append(RaidTargetingRule(
+            raid_id=safe_int(row["raid_id"]),
+            dropbox_enabled=safe_bool(row.get("dropbox_enabled", "true"), True),
+            apply_delay_turns=safe_int(row.get("apply_delay_turns", "1"), 1),
+            team_priority_slots=safe_int(row.get("team_priority_slots", "3"), 3),
+            personal_override_enabled=safe_bool(row.get("personal_override_enabled", "true"), True),
+            personal_override_slots=safe_int(row.get("personal_override_slots", "1"), 1),
+            persist_selection=safe_bool(row.get("persist_selection", "true"), True),
+            single_target_rule=row.get("single_target_rule", "selected_priority_first"),
+            aoe_target_rule=row.get("aoe_target_rule", "body_plus_active_parts"),
+            destroyed_part_fallback=row.get("destroyed_part_fallback", "next_valid_priority"),
+            notes=row.get("notes", ""),
+        ))
+    await RaidTargetingRule.bulk_create(targeting_rules)
+    print(f"  RaidTargetingRule {len(targeting_rules)}개 삽입")
+
+    # raid_special_actions.csv
+    action_rows = read_csv("raid_special_actions.csv")
+    actions = []
+    for row in action_rows:
+        actions.append(RaidSpecialAction(
+            action_key=row["action_key"],
+            action_name=row["action_name"],
+            cooldown_rounds=safe_int(row.get("cooldown_rounds", "0"), 0),
+            max_uses_per_round=safe_int(row.get("max_uses_per_round", "1"), 1),
+            target_type=row.get("target_type", "boss"),
+            effect_type=row.get("effect_type", "none"),
+            base_value=safe_int(row.get("base_value", "0"), 0),
+            scaling_stat=row.get("scaling_stat", "none"),
+            description=row.get("description", ""),
+        ))
+    await RaidSpecialAction.bulk_create(actions)
+    print(f"  RaidSpecialAction {len(actions)}개 삽입")
+
+    # raid_minigames.csv
+    minigame_rows = read_csv("raid_minigames.csv")
+    minigames = []
+    for row in minigame_rows:
+        minigames.append(RaidMinigame(
+            minigame_id=safe_int(row["minigame_id"]),
+            raid_id=safe_int(row["raid_id"]),
+            minigame_key=row["minigame_key"],
+            minigame_name=row["minigame_name"],
+            minigame_type=row["minigame_type"],
+            time_limit_sec=safe_int(row.get("time_limit_sec", "20"), 20),
+            input_count=safe_int(row.get("input_count", "3"), 3),
+            success_effect=row.get("success_effect", "none"),
+            fail_effect=row.get("fail_effect", "none"),
+        ))
+    await RaidMinigame.bulk_create(minigames)
+    print(f"  RaidMinigame {len(minigames)}개 삽입")
+
+    # raid_phase_transitions.csv
+    transition_rows = read_csv("raid_phase_transitions.csv")
+    transitions = []
+    for row in transition_rows:
+        transitions.append(RaidPhaseTransition(
+            transition_id=safe_int(row["transition_id"]),
+            raid_id=safe_int(row["raid_id"]),
+            from_phase=safe_int(row.get("from_phase", "1"), 1),
+            to_phase=safe_int(row.get("to_phase", "2"), 2),
+            trigger_type=row.get("trigger_type", "hp_lte"),
+            trigger_value=row.get("trigger_value", "70"),
+            minigame_id=safe_int(row.get("minigame_id", "0"), 0),
+            success_buff_key=row.get("success_buff_key", "none"),
+            fail_penalty_key=row.get("fail_penalty_key", "none"),
+        ))
+    await RaidPhaseTransition.bulk_create(transitions)
+    print(f"  RaidPhaseTransition {len(transitions)}개 삽입")
+
+    # raid_parts.csv
+    part_rows = read_csv("raid_parts.csv")
+    parts = []
+    for row in part_rows:
+        parts.append(RaidPart(
+            part_id=safe_int(row["part_id"]),
+            raid_id=safe_int(row["raid_id"]),
+            part_key=row["part_key"],
+            part_name=row["part_name"],
+            max_hp_ratio=safe_float(row.get("max_hp_ratio", "0.2"), 0.2),
+            defense_multiplier=safe_float(row.get("defense_multiplier", "1.0"), 1.0),
+            targetable_from_turn=safe_int(row.get("targetable_from_turn", "1"), 1),
+            destructible=safe_bool(row.get("destructible", "true"), True),
+            on_destroy_effect=row.get("on_destroy_effect", "none"),
+            on_destroy_value=safe_float(row.get("on_destroy_value", "0"), 0.0),
+            disabled_boss_skill_keys=row.get("disabled_boss_skill_keys", None) or None,
+            skill_lock_duration_turns=safe_int(row.get("skill_lock_duration_turns", "-1"), -1),
+            priority_hint=row.get("priority_hint", "mid"),
+        ))
+    await RaidPart.bulk_create(parts)
+    print(f"  RaidPart {len(parts)}개 삽입")
+
+    # raid_gimmicks.csv
+    gimmick_rows = read_csv("raid_gimmicks.csv")
+    gimmicks = []
+    for row in gimmick_rows:
+        gimmicks.append(RaidGimmick(
+            gimmick_id=safe_int(row["gimmick_id"]),
+            raid_id=safe_int(row["raid_id"]),
+            phase=safe_int(row.get("phase", "1"), 1),
+            gimmick_key=row["gimmick_key"],
+            gimmick_name=row["gimmick_name"],
+            trigger_type=row.get("trigger_type", "interval_turn"),
+            trigger_value=row.get("trigger_value", "0"),
+            duration_turns=safe_int(row.get("duration_turns", "0"), 0),
+            target_scope=row.get("target_scope", "boss"),
+            success_condition_type=row.get("success_condition_type", "none"),
+            success_condition_value=row.get("success_condition_value", ""),
+            success_effect=row.get("success_effect", "none"),
+            fail_effect=row.get("fail_effect", "none"),
+            cooldown_turns=safe_int(row.get("cooldown_turns", "0"), 0),
+        ))
+    await RaidGimmick.bulk_create(gimmicks)
+    print(f"  RaidGimmick {len(gimmicks)}개 삽입")
+
+    # raid_boss_skills.csv (CSV에는 PK가 없어서 순차 ID 생성)
+    boss_skill_rows = read_csv("raid_boss_skills.csv")
+    boss_skills = []
+    for idx, row in enumerate(boss_skill_rows, start=1):
+        boss_skills.append(RaidBossSkill(
+            id=idx,
+            raid_id=safe_int(row["raid_id"]),
+            skill_key=row["skill_key"],
+            skill_name=row["skill_name"],
+            skill_id=nullable_int(row.get("skill_id", "")),
+            phase=safe_int(row.get("phase", "1"), 1),
+            removable_by_part=safe_bool(row.get("removable_by_part", "false"), False),
+            remove_source_part_key=row.get("remove_source_part_key", None) or None,
+            notes=row.get("notes", ""),
+        ))
+    await RaidBossSkill.bulk_create(boss_skills)
+    print(f"  RaidBossSkill {len(boss_skills)}개 삽입")
+
+    print("✓ 레이드 데이터 삽입 완료 (raid_*.csv)")
+
+
 # ============================================================
 # 메인
 # ============================================================
@@ -750,6 +944,10 @@ async def main():
     # 5. 세트 데이터 (장비 데이터 의존)
     print("\n[5/5] 세트 아이템 데이터 삽입")
     await seed_sets()
+
+    # 6. 레이드 데이터
+    print("\n[6/6] 레이드 데이터 삽입")
+    await seed_raids()
 
     await Tortoise.close_connections()
 

@@ -1,0 +1,23 @@
+raid_id,skill_key,skill_name,skill_id,phase,removable_by_part,remove_source_part_key,notes
+101,life_reflux,생명 역류,9096,1,true,regen_core,재생핵 파괴 시 봉인
+101,parasite_mark_explosion,기생 표식 폭발,9091,1,true,parasite_root,기생뿌리 파괴 시 폭발 단계 봉인
+102,execution_heavy_strike,참수 집행 강공,9129,2,true,execution_blade,집행검 파괴 시 봉인
+102,sin_contract_penalty,죄업 계약 자해 페널티,9072,1,true,contract_tablet,계약서 파괴 시 완화/봉인
+103,inversion_overdrive,역전 위상 강화,9231,2,true,stabilizer_node,안정화노드 파괴 시 봉인
+103,mirror_reflect,행동 미러 반사,9193,1,true,mirror_core,미러코어 파괴 시 봉인
+104,pulse_aoe,심장 맥동 광역기,9186,1,true,heart_core,심장코어 파괴 시 봉인
+104,isolation_burst,격리 붕괴 폭발,9065,2,true,dimension_anchor,차원앵커 파괴 시 봉인
+105,dragon_breath,용 브레스,9141,2,true,head,머리 파괴 시 봉인
+105,sky_hunt,공중 사냥,9146,2,true,wing,날개 파괴 시 봉인
+105,tail_followup_aoe,꼬리 후속 광역,9115,2,true,tail,꼬리 파괴 시 봉인
+106,throne_execute,왕좌 처형,9178,2,true,crown,왕관 파괴 시 봉인
+106,corpse_absorb,사령 흡수,9180,1,true,throne_core,왕좌핵 파괴 시 봉인
+107,noon_judgement,정오 심판,9220,2,true,sun_core,태양핵 파괴 시 봉인
+107,light_overcharge_burn,광휘 과충전 소각,9218,1,true,shadow_core,그림자핵 파괴 시 봉인
+108,twilight_cycle_shuffle,황혼 순환 셔플,9200,1,true,order_core,질서코어 파괴 시 봉인
+108,fate_balance_penalty,운명의 천칭 벌점,9121,2,true,chaos_core,혼돈코어 파괴 시 봉인
+108,doomsday_cast,종말 카운트다운 시전,9177,3,true,doomsday_core,종말핵 파괴 시 봉인/지연
+109,volatility_crash,변동성 폭락,9186,1,true,circuit_breaker,서킷브레이커 파괴 시 봉인
+109,bull_rush,상승장 돌파,9193,2,true,bull_core,상승코어 파괴 시 봉인
+109,bear_crush,하락장 압착,9129,2,true,bear_core,하락코어 파괴 시 봉인
+109,margin_call,마진콜 청산,9072,1,false,,정화/조건 파훼 대상 기믹 스킬

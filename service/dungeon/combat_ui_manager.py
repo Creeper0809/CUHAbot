@@ -48,7 +48,7 @@ class CombatUIManager:
         from service.dungeon.dungeon_ui import create_battle_embed_multi
         from views.combat_control_view import CombatControlView
 
-        embed = create_battle_embed_multi(user, context, combat_log, session.participants)
+        embed = create_battle_embed_multi(user, context, combat_log, session.participants, session=session)
 
         # 리더에게 전투 UI 전송
         combat_message = await interaction.user.send(
@@ -94,7 +94,7 @@ class CombatUIManager:
         from service.dungeon.dungeon_ui import create_battle_embed_multi
         from views.combat_control_view import CombatControlView
 
-        embed = create_battle_embed_multi(user, context, combat_log, session.participants)
+        embed = create_battle_embed_multi(user, context, combat_log, session.participants, session=session)
 
         # 리더 메시지 업데이트
         try:
@@ -146,8 +146,11 @@ class CombatUIManager:
 
             try:
                 discord_user = await session.discord_client.fetch_user(participant.discord_id)
-                embed = create_battle_embed_multi(user, context, combat_log, session.participants)
-                participant_msg = await discord_user.send(embed=embed)
+                embed = create_battle_embed_multi(user, context, combat_log, session.participants, session=session)
+                participant_msg = await discord_user.send(
+                    embed=embed,
+                    view=CombatControlView(session, participant.discord_id, timeout=None),
+                )
                 session.participant_combat_messages[participant_id] = participant_msg
                 logger.info(f"Combat UI sent to new intervener: {participant.discord_id}")
             except Exception as e:
@@ -172,8 +175,9 @@ class CombatUIManager:
             combat_log: 전투 로그
         """
         from service.dungeon.dungeon_ui import create_battle_embed_multi
+        from views.combat_control_view import CombatControlView
 
-        final_embed = create_battle_embed_multi(user, context, combat_log, session.participants)
+        final_embed = create_battle_embed_multi(user, context, combat_log, session.participants, session=session)
 
         # 리더 메시지 업데이트
         try:

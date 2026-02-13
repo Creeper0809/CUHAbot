@@ -21,7 +21,7 @@ from service.collection_service import CollectionService, EntryNotFoundError
 from service.dungeon.item_service import get_item_info, ItemNotFoundException
 from service.player.healing_service import HealingService
 from service.item.inventory_service import InventoryService
-from service.session import is_in_combat, create_session, end_session
+from service.session import ContentType, is_in_combat, create_session, end_session
 from service.skill.skill_deck_service import SkillDeckService
 from service.skill.ultimate_service import (
     get_ultimate_mode_for_skill,
@@ -32,6 +32,9 @@ from service.skill.ultimate_service import (
 from service.item.equipment_service import EquipmentService
 from service.skill.skill_ownership_service import SkillOwnershipService
 from service.temp_admin_service import is_admin_or_temp
+from service.raid.raid_service import init_raid_session_state
+from service.raid.raid_progress_service import check_raid_entry, consume_raid_entry
+from models.repos.raid_repo import find_raid_by_dungeon_id
 from models import User, UserStatEnum
 from models.repos.static_cache import monster_cache_by_id
 from service.dungeon.combat_context import CombatContext
@@ -116,6 +119,29 @@ class DungeonCommand(commands.Cog):
             await interaction.followup.send(f"{view.selected_dungeon.name} 던전에 입장합니다!")
 
             session.dungeon = view.selected_dungeon
+            session.content_type = (
+                ContentType.RAID
+                if view.selected_dungeon.id >= 100
+                else ContentType.NORMAL_DUNGEON
+            )
+            session.allow_intervention = session.content_type != ContentType.RAID
+            if session.content_type == ContentType.RAID:
+                raid = find_raid_by_dungeon_id(session.dungeon.id)
+                if raid:
+                    entry_check = await check_raid_entry(user, raid.raid_id)
+                    if not entry_check.allowed:
+                        await interaction.followup.send(
+                            f"⛔ 이번 주 레이드 입장 횟수를 모두 사용했습니다. "
+                            f"({entry_check.max_entries}/{entry_check.max_entries})",
+                            ephemeral=True,
+                        )
+                        return
+                    remaining, max_entries = await consume_raid_entry(user, raid.raid_id)
+                    await interaction.followup.send(
+                        f"🎫 주간 레이드 입장권 차감: 남은 횟수 **{remaining}/{max_entries}**",
+                        ephemeral=True,
+                    )
+                init_raid_session_state(session)
             await start_dungeon(session, interaction)
 
         finally:

@@ -19,7 +19,7 @@ from exceptions import (
     InterventionNotAllowedError,
 )
 from config.multiplayer import PARTY
-from service.session import DungeonSession
+from service.session import ContentType, DungeonSession
 from models import User
 
 logger = logging.getLogger(__name__)
@@ -114,6 +114,10 @@ class InterventionService:
         Raises:
             InterventionError: 난입 불가 조건
         """
+        # 0. 레이드 콘텐츠는 난입 불가
+        if session.content_type == ContentType.RAID:
+            raise InterventionError("레이드 전투는 난입할 수 없습니다.")
+
         # 1. 난입 허용 여부
         if not session.allow_intervention:
             raise InterventionNotAllowedError()
@@ -213,6 +217,12 @@ class InterventionService:
             전투 로그 메시지 리스트
         """
         logs = []
+
+        # 레이드는 난입 처리 자체를 수행하지 않음
+        if session.content_type == ContentType.RAID:
+            if session.intervention_pending:
+                session.intervention_pending.clear()
+            return logs
 
         if not session.intervention_pending:
             return logs

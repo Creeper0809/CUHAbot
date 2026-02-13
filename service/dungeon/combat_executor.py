@@ -19,7 +19,7 @@ from service.dungeon.combat_context import CombatContext
 from service.player.stat_synergy_combat import (
     has_first_strike, roll_extra_action, get_hp_regen_per_turn_pct,
 )
-from service.session import set_combat_state
+from service.session import ContentType, set_combat_state
 from service.skill.ultimate_service import (
     add_ultimate_gauge,
     reset_ultimate_combat_state,
@@ -251,6 +251,18 @@ async def _process_turn_multi(
             field_logs = context.field_effect.on_round_start(all_players, context.get_all_alive_monsters())
             for log in field_logs:
                 combat_log.append(log)
+        if session.content_type == ContentType.RAID:
+            from service.raid.raid_combat_engine import process_raid_round_gimmicks
+            from service.raid.raid_combat_engine import get_boss_skill_lock_summary
+            from service.raid.raid_service import get_effective_raid_target
+
+            current_target = get_effective_raid_target(session)
+            if current_target:
+                combat_log.append(f"📌 레이드 우선 타겟(초기): **{current_target}**")
+            for log in get_boss_skill_lock_summary(session):
+                combat_log.append(log)
+            for log in process_raid_round_gimmicks(session, user, context.round_number):
+                combat_log.append(log)
 
     while context.action_count < COMBAT.MAX_ACTIONS_PER_LOOP:
         # 플레이어 사망 시 부활 효과 먼저 체크 (전투 종료 전)
@@ -310,6 +322,31 @@ async def _process_turn_multi(
 
             if context.check_and_advance_round():
                 combat_log.append(f"━━━ 🌟 **라운드 {context.round_number}** ━━━")
+                if session.content_type == ContentType.RAID:
+                    from service.raid.raid_combat_engine import process_raid_round_gimmicks
+                    from service.raid.raid_combat_engine import get_boss_skill_lock_summary
+                    from service.raid.raid_combat_engine import process_pending_raid_minigame_timeout
+                    from service.raid.raid_service import apply_pending_raid_target_selection, get_effective_raid_target
+
+                    applied = apply_pending_raid_target_selection(session, context.round_number)
+                    if applied:
+                        combat_log.append(f"🎯 레이드 우선 타겟 변경 적용: **{applied}** (이번 라운드부터)")
+
+                    current_target = get_effective_raid_target(session)
+                    if current_target:
+                        combat_log.append(f"📌 현재 우선 타겟: **{current_target}**")
+                    for log in get_boss_skill_lock_summary(session):
+                        combat_log.append(log)
+                    if context.monsters:
+                        for log in process_pending_raid_minigame_timeout(
+                            session,
+                            user,
+                            context.monsters[0],
+                            context.round_number,
+                        ):
+                            combat_log.append(log)
+                    for log in process_raid_round_gimmicks(session, user, context.round_number):
+                        combat_log.append(log)
                 await _update_all_combat_messages(session, combat_message, user, context, combat_log)
             continue
 
@@ -318,6 +355,30 @@ async def _process_turn_multi(
         action_logs = _execute_entity_action(session, user, actor, context)
         for log in action_logs:
             combat_log.append(log)
+
+        if session.content_type == ContentType.RAID and context.monsters and isinstance(actor, User):
+            from service.raid.raid_combat_engine import (
+                process_raid_part_breaks,
+                process_raid_phase_transition,
+            )
+
+            primary_boss = context.monsters[0]
+            dealt_damage, _ = _metrics_recorder.parse_combat_metrics_from_logs(action_logs)
+            for log in process_raid_part_breaks(
+                session,
+                primary_boss,
+                part_damage=dealt_damage,
+                current_round=context.round_number,
+            ):
+                combat_log.append(log)
+            for log in process_raid_phase_transition(
+                session,
+                user,
+                primary_boss,
+                combat_log,
+                current_round=context.round_number,
+            ):
+                combat_log.append(log)
 
         # 신규: 기여도 기록 (파티 리더 + 난입자)
         if isinstance(actor, User):
@@ -434,6 +495,33 @@ async def _process_turn_multi(
 
         if context.check_and_advance_round():
             combat_log.append(f"━━━ 🌟 **라운드 {context.round_number}** ━━━")
+
+            if session.content_type == ContentType.RAID:
+                from service.raid.raid_combat_engine import process_raid_round_gimmicks
+                from service.raid.raid_combat_engine import process_pending_raid_minigame_timeout
+                from service.raid.raid_service import apply_pending_raid_target_selection, get_effective_raid_target
+                from service.raid.raid_combat_engine import get_boss_skill_lock_summary
+
+                applied = apply_pending_raid_target_selection(session, context.round_number)
+                if applied:
+                    combat_log.append(f"🎯 레이드 우선 타겟 변경 적용: **{applied}** (이번 라운드부터)")
+
+                current_target = get_effective_raid_target(session)
+                if current_target:
+                    combat_log.append(f"📌 현재 우선 타겟: **{current_target}**")
+                for log in get_boss_skill_lock_summary(session):
+                    combat_log.append(log)
+                if context.monsters:
+                    for log in process_pending_raid_minigame_timeout(
+                        session,
+                        user,
+                        context.monsters[0],
+                        context.round_number,
+                    ):
+                        combat_log.append(log)
+
+                for log in process_raid_round_gimmicks(session, user, context.round_number):
+                    combat_log.append(log)
 
             # HP 체크포인트: 5라운드마다 DB 동기화 (봇 크래시 대비)
             if context.round_number % 5 == 0:
@@ -579,12 +667,31 @@ def _execute_monster_action(monster: Monster, user: User, context: CombatContext
             if participant.now_hp > 0:
                 alive_players.append(participant)
 
-    # 랜덤으로 대상 선택
+    # 랜덤으로 대상 선택 (레이드 도발 우선 반영)
     if not alive_players:
         # 모두 죽었으면 그냥 user 사용 (어차피 전투 종료됨)
         target = user
     else:
         target = random.choice(alive_players)
+        if session and session.content_type == ContentType.RAID:
+            provoke_id = getattr(session, "raid_provoke_target_discord_id", None)
+            provoke_until = int(getattr(session, "raid_provoke_until_round", 0) or 0)
+            current_round = int(getattr(context, "round_number", 1) or 1)
+
+            if provoke_id and current_round <= provoke_until:
+                for p in alive_players:
+                    if getattr(p, "discord_id", None) == provoke_id:
+                        target = p
+                        break
+            elif provoke_id and current_round > provoke_until:
+                session.raid_provoke_target_discord_id = None
+                session.raid_provoke_until_round = 0
+
+    if session and session.content_type == ContentType.RAID:
+        from service.raid.raid_combat_engine import filter_locked_boss_skills
+
+        # 봉인된 보스 스킬 반영 (실시간 덱 슬롯 비활성화)
+        monster.use_skill = filter_locked_boss_skills(session, list(getattr(monster, "use_skill", [])))
 
     monster_skill = monster.next_skill()
 

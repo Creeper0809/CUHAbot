@@ -14,6 +14,7 @@ import discord
 
 from config.notification import NOTIFICATION as NOTIF_CONFIG
 from service.session import get_session, get_sessions_in_voice_channel
+from service.session import ContentType
 from service.voice_channel.proximity_calculator import ProximityCalculator
 
 logger = logging.getLogger(__name__)
@@ -186,7 +187,7 @@ class NotificationService:
                 description=(
                     f"{session.user.get_name()}님이 {session.dungeon.name}에서 전투 중입니다!\n\n"
                     f"{distance_info}\n\n"
-                    f"난입하거나 관전할 수 있습니다."
+                    f"{'관전할 수 있습니다.' if session.content_type == ContentType.RAID else '난입하거나 관전할 수 있습니다.'}"
                 ),
                 color=discord.Color.red()
             )

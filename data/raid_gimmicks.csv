@@ -1,0 +1,37 @@
+gimmick_id,raid_id,phase,gimmick_key,gimmick_name,trigger_type,trigger_value,duration_turns,target_scope,success_condition_type,success_condition_value,success_effect,fail_effect,cooldown_turns
+101001,101,1,parasite_mark,기생 표식,interval_turn,3,3,random_2_players,cleanse_or_cut,"cleanse_count>=2|cut_parasite_root>=1",remove_marks,mark_explosion_2targets,2
+101002,101,1,life_reflux,생명 역류,interval_turn,3,0,boss,damage_regen_core,regen_core_hit_count>=3,reduce_heal_ratio_35pct,boss_heal_by_debuff_count,2
+101003,101,2,cycle_shield,순환 보호막,hp_lte,75,2,boss,total_hit_count,hit_count>=18,break_shield,boss_damage_reduction_50pct,3
+101004,101,1,part_break_skill_lock,핵 파괴 봉인,part_destroy,regen_core,-1,boss,break_target_part,regen_core,lock_boss_skill_life_reflux,none,0
+102001,102,1,sin_contract,죄업 계약,interval_turn,4,2,all_players,damage_contract_tablet,contract_tablet_hit_count>=4,reduce_contract_penalty,contract_self_damage_up,3
+102002,102,2,execution,참수 집행,interval_turn,3,1,highest_curse_player,provoke_or_break_part,"provoke_success>=1|break_execution_blade>=1",weaken_execution,execute_heavy_strike,2
+102003,102,1,hellgate,지옥문 소환,interval_turn,5,0,boss,clear_adds_or_tablet,"adds_cleared<=2turn|contract_tablet_hit_count>=5",delay_next_summon,empowered_aoe,2
+102004,102,2,part_break_skill_lock,검 파괴 봉인,part_destroy,execution_blade,-1,boss,break_target_part,execution_blade,lock_boss_skill_execution_heavy_strike,none,0
+103001,103,1,action_mirror,행동 미러링,end_round,1,1,party,action_type_distribution,duplicate_action_type<=1,normal_copy,enhanced_reflect,0
+103002,103,2,inversion,역전 위상,interval_turn,4,2,party,hit_stabilizer_node,stabilizer_node_hit_count>=4,reduce_inversion_ratio,heal_damage_inversion_high,2
+103003,103,2,core_expose,코어 노출,interval_turn,5,1,boss,damage_mirror_core,mirror_core_hit_count>=6,boss_stagger_1turn,party_chaos_debuff,3
+103004,103,2,part_break_skill_lock,코어 파괴 봉인,part_destroy,mirror_core,-1,boss,break_target_part,mirror_core,lock_boss_skill_mirror_reflect,none,0
+104001,104,1,pulse_count,심장 맥동 카운트,interval_turn,1,0,boss,seal_and_core_hit,"seal_count>=1&heart_core_hit_count>=2",decrease_pulse_count,pulse_aoe_lethal,0
+104002,104,2,isolation,차원 격리,interval_turn,4,2,random_1_player,break_anchor,dimension_anchor_hit_count>=5,return_isolated_player,isolated_player_burst_damage,2
+104003,104,2,gravity_backlash,중력 붕괴,end_round,1,1,party,split_priority_target,same_target_focus<=1,none,party_backlash_damage,0
+104004,104,1,part_break_skill_lock,심장코어 파괴 봉인,part_destroy,heart_core,-1,boss,break_target_part,heart_core,lock_boss_skill_pulse_aoe,none,0
+105001,105,1,dragon_resonance,용린 공명,interval_turn,3,3,boss,opposite_attribute_hits,opposite_attr_hit_count>=5,reduce_resonance_stack,resonance_damage_up,0
+105002,105,2,part_pattern,파츠 패턴 강화,hp_lte,70,0,boss,break_parts_count,broken_parts>=2,disable_enhanced_patterns,keep_enhanced_patterns,0
+105003,105,2,dragon_roar,용언 포효,interval_turn,4,1,party,cleanse_or_head_hit,"cleanse_count>=2|head_hit_count>=4",cancel_fear,party_fear_2turn,2
+105004,105,2,part_break_skill_lock,머리 파괴 봉인,part_destroy,head,-1,boss,break_target_part,head,lock_boss_skill_dragon_breath,none,0
+106001,106,1,corpse_absorb,사령 흡수,interval_turn,3,0,boss,hit_throne_core,throne_core_hit_count>=4,delay_absorb_2turn,boss_permanent_stack_up,1
+106002,106,2,throne_judgement,왕좌의 판결,interval_turn,4,1,highest_hp_player,provoke_or_crown_break,"provoke_success>=1|break_crown>=1",reduce_execute_damage,target_execute_lethal,2
+106003,106,2,reverse_barrier,역성 역장,interval_turn,3,2,boss,seal_success,seal_count>=1,lock_current_polarity_once,wrong_attribute_penalty_up,1
+106004,106,2,part_break_skill_lock,왕관 파괴 봉인,part_destroy,crown,-1,boss,break_target_part,crown,lock_boss_skill_throne_execute,none,0
+107001,107,1,light_overcharge,광휘 과충전,interval_turn,1,0,boss,hit_shadow_core,shadow_core_hit_count>=3,drain_light_gauge_35,stage_burn_aoe,0
+107002,107,2,eclipse_decree,일식 선고,interval_turn,4,2,marked_2_players,cleanse_or_dual_core_hit,"cleanse_count>=2|sun_shadow_hit_both>=1",clear_dual_mark,dual_mark_explosion,2
+107003,107,2,noon_judgement,정오 심판,interval_turn,5,1,party,seal_success,seal_count>=1,extend_safe_window,party_blind_heavy_damage,2
+107004,107,1,part_break_skill_lock,그림자핵 파괴 봉인,part_destroy,shadow_core,-1,boss,break_target_part,shadow_core,lock_boss_skill_light_overcharge_burn,none,0
+108001,108,1,twilight_cycle,황혼 순환,interval_turn,2,0,boss,hit_order_core,order_core_hit_count>=4,lock_next_cycle,attribute_backfire_party,0
+108002,108,2,fate_balance,운명의 천칭,end_round,1,0,party,balanced_action_log,same_action_type_2round<=0,clear_penalty_progress,judgement_stack_up,0
+108003,108,3,doomsday_count,종말 카운트다운,phase_start,3,8,boss,break_doomsday_core,doomsday_core_break_once,extend_turn_limit_2,immediate_enrage,0
+108004,108,3,part_break_skill_lock,종말핵 파괴 봉인,part_destroy,doomsday_core,-1,boss,break_target_part,doomsday_core,lock_boss_skill_doomsday_cast,none,0
+109001,109,1,volatility_ramp,변동성 폭주,interval_turn,2,0,boss,hit_breaker_or_seal,"circuit_breaker_hit_count>=3|seal_count>=1",reduce_vix_40,volatility_crash_aoe,0
+109002,109,1,margin_call,마진콜,interval_turn,3,2,lowest_hp_player,cleanse_or_break_core,"cleanse_count>=2|break_bull_core>=1",remove_margin_mark,margin_liquidation_lethal,2
+109003,109,2,market_rollover,상승/하락 롤오버,interval_turn,3,2,boss,break_market_core,"break_bull_core>=1|break_bear_core>=1",disable_mode_skill,mode_skill_empower,1
+109004,109,1,part_break_skill_lock,서킷브레이커 파괴 봉인,part_destroy,circuit_breaker,-1,boss,break_target_part,circuit_breaker,lock_boss_skill_volatility_crash,none,0

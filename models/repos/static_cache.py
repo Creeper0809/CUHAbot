@@ -1,6 +1,20 @@
 import logging
 
-from models import Dungeon, Monster, DungeonSpawn, Item, Skill_Model
+from models import (
+    Dungeon,
+    Monster,
+    DungeonSpawn,
+    Item,
+    Skill_Model,
+    Raid,
+    RaidTargetingRule,
+    RaidSpecialAction,
+    RaidMinigame,
+    RaidPhaseTransition,
+    RaidPart,
+    RaidGimmick,
+    RaidBossSkill,
+)
 from service.dungeon.skill import Skill
 from service.dungeon.components import get_component_by_tag, skill_component_register
 from service.economy.shop_service import ShopService
@@ -17,11 +31,25 @@ _dungeon_levels_sorted: list[int] = []  # 던전 require_level 정렬 리스트
 equipment_cache = {}  # item_id -> EquipmentItem
 set_name_by_item_id = {}  # item_id -> set_name (e.g. "🔥 화염")
 equipment_by_source = {}  # acquisition_source -> [item_id, ...]
+raid_minigame_rule_by_minigame_id = {}  # minigame_id -> rule dict
+raid_cache_by_id = {}  # raid_id -> Raid
+raid_cache_by_dungeon_id = {}  # dungeon_id -> Raid
+raid_targeting_rules_by_raid_id = {}  # raid_id -> RaidTargetingRule
+raid_special_actions_by_key = {}  # action_key -> RaidSpecialAction
+raid_minigames_by_raid_id = {}  # raid_id -> [RaidMinigame]
+raid_phase_transitions_by_raid_id = {}  # raid_id -> [RaidPhaseTransition]
+raid_parts_by_raid_id = {}  # raid_id -> [RaidPart]
+raid_gimmicks_by_raid_id = {}  # raid_id -> [RaidGimmick]
+raid_boss_skills_by_raid_id = {}  # raid_id -> [RaidBossSkill]
 
 
 async def load_static_data():
     """정적 데이터 로드 (봇 시작 시 호출)"""
     global dungeon_cache, monster_cache_by_id, item_cache, spawn_info, skill_cache_by_id, box_drop_table, _dungeon_levels_sorted
+    global raid_cache_by_id, raid_cache_by_dungeon_id, raid_targeting_rules_by_raid_id, raid_special_actions_by_key
+    global raid_minigames_by_raid_id, raid_phase_transitions_by_raid_id, raid_parts_by_raid_id
+    global raid_gimmicks_by_raid_id, raid_boss_skills_by_raid_id
+    global raid_minigame_rule_by_minigame_id
     logger.info("Loading static data...")
 
     # 던전 로딩
@@ -77,6 +105,50 @@ async def load_static_data():
 
     logger.info(f"Loaded {len(skill_cache_by_id)} skills")
 
+    # 레이드 정적 데이터 로딩
+    try:
+        raids = await Raid.all()
+        raid_cache_by_id = {r.raid_id: r for r in raids}
+        raid_cache_by_dungeon_id = {r.dungeon_id: r for r in raids}
+        logger.info(f"Loaded {len(raid_cache_by_id)} raids")
+
+        targeting_rules = await RaidTargetingRule.all()
+        raid_targeting_rules_by_raid_id = {r.raid_id: r for r in targeting_rules}
+
+        special_actions = await RaidSpecialAction.all()
+        raid_special_actions_by_key = {a.action_key: a for a in special_actions}
+
+        raid_minigames_by_raid_id = {}
+        for row in await RaidMinigame.all():
+            raid_minigames_by_raid_id.setdefault(row.raid_id, []).append(row)
+
+        raid_phase_transitions_by_raid_id = {}
+        for row in await RaidPhaseTransition.all():
+            raid_phase_transitions_by_raid_id.setdefault(row.raid_id, []).append(row)
+
+        raid_parts_by_raid_id = {}
+        for row in await RaidPart.all():
+            raid_parts_by_raid_id.setdefault(row.raid_id, []).append(row)
+
+        raid_gimmicks_by_raid_id = {}
+        for row in await RaidGimmick.all():
+            raid_gimmicks_by_raid_id.setdefault(row.raid_id, []).append(row)
+
+        raid_boss_skills_by_raid_id = {}
+        for row in await RaidBossSkill.all():
+            raid_boss_skills_by_raid_id.setdefault(row.raid_id, []).append(row)
+    except Exception as e:
+        logger.warning(f"Raid tables not available yet. Skipping raid cache load: {e}")
+        raid_cache_by_id = {}
+        raid_cache_by_dungeon_id = {}
+        raid_targeting_rules_by_raid_id = {}
+        raid_special_actions_by_key = {}
+        raid_minigames_by_raid_id = {}
+        raid_phase_transitions_by_raid_id = {}
+        raid_parts_by_raid_id = {}
+        raid_gimmicks_by_raid_id = {}
+        raid_boss_skills_by_raid_id = {}
+
     # 장비 캐시 로딩
     await _load_equipment_cache()
 
@@ -85,6 +157,7 @@ async def load_static_data():
 
     # 상자 드랍 테이블 로딩
     await load_box_drop_table()
+    await load_raid_minigame_rules()
 
 
 EQUIP_POS_NAMES = {
@@ -188,6 +261,53 @@ def get_box_pool_by_monster_type(monster_type: str) -> list[tuple[int, float]]:
     return box_drop_table.get(monster_type, [])
 
 
+async def load_raid_minigame_rules():
+    """레이드 미니게임 규칙 CSV 로드"""
+    import csv
+    global raid_minigame_rule_by_minigame_id
+
+    raid_minigame_rule_by_minigame_id = {}
+    csv_path = "data/raid_minigame_rules.csv"
+
+    try:
+        with open(csv_path, "r", encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                try:
+                    minigame_id = int(row.get("minigame_id", "0") or 0)
+                except ValueError:
+                    continue
+                if minigame_id <= 0:
+                    continue
+
+                def _to_int(v, default=0):
+                    try:
+                        return int(v)
+                    except (TypeError, ValueError):
+                        return default
+
+                def _to_bool(v, default=False):
+                    if v is None:
+                        return default
+                    return str(v).strip().lower() in ("1", "true", "t", "yes", "y")
+
+                rule = {
+                    "minigame_id": minigame_id,
+                    "fail_fast": _to_bool(row.get("fail_fast"), False),
+                    "timing_allowed_miss": max(0, _to_int(row.get("timing_allowed_miss"), 0)),
+                    "sim_fail_tolerance": max(0, _to_int(row.get("sim_fail_tolerance"), 0)),
+                    "sim_token_pool": (row.get("sim_token_pool") or "").strip(),
+                    "sim_required_alive_min": max(1, _to_int(row.get("sim_required_alive_min"), 1)),
+                    "notes": (row.get("notes") or "").strip(),
+                }
+                raid_minigame_rule_by_minigame_id[minigame_id] = rule
+
+        logger.info(f"Loaded raid minigame rules: {len(raid_minigame_rule_by_minigame_id)}")
+    except FileNotFoundError:
+        logger.warning(f"Raid minigame rules not found: {csv_path}")
+        raid_minigame_rule_by_minigame_id = {}
+
+
 def _resolve_skill_components(skill_config):
     """레거시 스킬 설정을 컴포넌트 구조로 정규화"""
     if not isinstance(skill_config, dict):
@@ -211,6 +331,30 @@ def _resolve_skill_components(skill_config):
 
 def get_dungeons():
     return dungeon_cache
+
+
+def get_static_cache_summary() -> dict:
+    """현재 정적 캐시 로드 상태 요약"""
+    return {
+        "dungeons": len(dungeon_cache),
+        "monsters": len(monster_cache_by_id),
+        "items": len(item_cache),
+        "skills": len(skill_cache_by_id),
+        "spawns_dungeons": len(spawn_info),
+        "equipment_items": len(equipment_cache),
+        "set_memberships": len(set_name_by_item_id),
+        "equipment_sources": len(equipment_by_source),
+        "box_drop_types": len(box_drop_table),
+        "raids": len(raid_cache_by_id),
+        "raid_targeting_rules": len(raid_targeting_rules_by_raid_id),
+        "raid_special_actions": len(raid_special_actions_by_key),
+        "raid_minigame_groups": len(raid_minigames_by_raid_id),
+        "raid_transition_groups": len(raid_phase_transitions_by_raid_id),
+        "raid_part_groups": len(raid_parts_by_raid_id),
+        "raid_gimmick_groups": len(raid_gimmicks_by_raid_id),
+        "raid_boss_skill_groups": len(raid_boss_skills_by_raid_id),
+        "raid_minigame_rules": len(raid_minigame_rule_by_minigame_id),
+    }
 
 
 def get_previous_dungeon_level(current_level: int) -> int:

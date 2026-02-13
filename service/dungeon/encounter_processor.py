@@ -45,6 +45,8 @@ async def process_encounter(session: DungeonSession, interaction: discord.Intera
     # 타워에서는 몬스터 encounter만 허용한다.
     if session.content_type == ContentType.WEEKLY_TOWER:
         return await _process_monster_encounter(session, interaction)
+    if session.content_type == ContentType.RAID:
+        return await _process_monster_encounter(session, interaction)
 
     # Phase 3: 멀티유저 encounter 우선 체크
     from service.dungeon.social_encounter_checker import check_social_encounter
@@ -180,6 +182,10 @@ async def _process_monster_encounter(session: DungeonSession, interaction: disco
         if session.content_type == ContentType.WEEKLY_TOWER:
             from service.tower.tower_service import get_floor_monster
             monsters = [await get_floor_monster(session.current_floor)]
+        elif session.content_type == ContentType.RAID:
+            monsters = [_spawn_raid_boss(session.dungeon.id)]
+            from service.raid.raid_service import init_raid_part_state_from_boss
+            init_raid_part_state_from_boss(session, monsters[0])
         else:
             monsters = _spawn_monster_group(session.dungeon.id, progress)
     except (MonsterNotFoundError, MonsterSpawnNotFoundError) as e:
@@ -351,6 +357,33 @@ def _spawn_random_monster(dungeon_id: int, progress: float = 0.0) -> Monster:
     return monster
 
 
+def _spawn_raid_boss(dungeon_id: int) -> Monster:
+    """레이드 보스 1체 스폰 (던전 스폰 정보에서 보스 우선 선택)"""
+    from service.dungeon.reward_calculator import is_boss_monster
+
+    monsters_spawn = find_all_dungeon_spawn_monster_by(dungeon_id)
+    if not monsters_spawn:
+        raise MonsterSpawnNotFoundError(dungeon_id)
+
+    boss_spawns = []
+    for spawn in monsters_spawn:
+        monster = find_monster_by_id(spawn.monster_id)
+        if monster and is_boss_monster(monster):
+            boss_spawns.append(spawn)
+
+    spawn_pool = boss_spawns or monsters_spawn
+    picked = random.choices(
+        population=spawn_pool,
+        weights=[max(0.0001, s.prob) for s in spawn_pool],
+        k=1
+    )[0]
+
+    monster = find_monster_by_id(picked.monster_id)
+    if not monster:
+        raise MonsterNotFoundError(picked.monster_id)
+    return monster
+
+
 def _spawn_monster_group(dungeon_id: int, progress: float = 0.0) -> list[Monster]:
     """던전에서 몬스터 그룹 스폰 (1~N마리) - CSV 기반"""
     from models.repos.static_cache import monster_cache_by_id
@@ -395,7 +428,7 @@ async def _ask_fight_or_flee(
     """전투/도주 선택 UI 표시 (그룹 전투 지원)"""
     from models.repos.skill_repo import get_skill_by_id
 
-    if session.content_type == ContentType.WEEKLY_TOWER:
+    if session.content_type in (ContentType.WEEKLY_TOWER, ContentType.RAID):
         return True
 
     # 그룹 전투 여부 확인

@@ -1,0 +1,10 @@
+raid_id,dropbox_enabled,apply_delay_turns,team_priority_slots,personal_override_enabled,personal_override_slots,persist_selection,single_target_rule,aoe_target_rule,destroyed_part_fallback,notes
+101,true,1,3,true,1,true,selected_priority_first,body_plus_active_parts,next_valid_priority,드롭박스 선택은 다음 턴부터 적용
+102,true,1,3,true,1,true,selected_priority_first,body_plus_active_parts,next_valid_priority,드롭박스 선택은 다음 턴부터 적용
+103,true,1,3,true,1,true,selected_priority_first,body_plus_active_parts,next_valid_priority,드롭박스 선택은 다음 턴부터 적용
+104,true,1,3,true,1,true,selected_priority_first,body_plus_active_parts,next_valid_priority,드롭박스 선택은 다음 턴부터 적용
+105,true,1,3,true,1,true,selected_priority_first,body_plus_active_parts,next_valid_priority,드롭박스 선택은 다음 턴부터 적용
+106,true,1,3,true,1,true,selected_priority_first,body_plus_active_parts,next_valid_priority,드롭박스 선택은 다음 턴부터 적용
+107,true,1,3,true,1,true,selected_priority_first,body_plus_active_parts,next_valid_priority,드롭박스 선택은 다음 턴부터 적용
+108,true,1,3,true,1,true,selected_priority_first,body_plus_active_parts,next_valid_priority,드롭박스 선택은 다음 턴부터 적용
+109,true,1,3,true,1,true,selected_priority_first,body_plus_active_parts,next_valid_priority,드롭박스 선택은 다음 턴부터 적용

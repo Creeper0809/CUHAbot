@@ -1,0 +1,10 @@
+raid_id,dungeon_id,raid_key,raid_name,recommended_level,max_party_size,boss_code,boss_name,main_attribute,phase_count,phase_hp_triggers,enrage_turn_limit,default_priority_1,default_priority_2,default_priority_3,notes
+101,101,raid_roots,세계수의 뿌리,30,3,boss_rotheart,부패한 세계수의 심핵 로트하트,water_nature,3,"70|35",18,regen_core,parasite_root,body,재생 차단형 입문 레이드
+102,102,raid_castle,마왕성,40,3,boss_agares,칠죄의 집행자 아가레스,dark_fire,3,"70|35",18,execution_blade,contract_tablet,body,위험 선택/저주 분산
+103,103,raid_genesis_rift,창세의 균열,50,3,boss_proto_nemesis,균열 감시자 프로토-네메시스,chaos,3,"70|35",17,stabilizer_node,body,mirror_core,행동 편중 대응
+104,104,raid_dimension_heart,차원의 심장,60,3,boss_abyss_cardio,차원 포식자 아비스 카디오,dark_lightning,3,"70|35",17,heart_core,dimension_anchor,body,카운트다운/격리 대응
+105,105,raid_dragon_tomb,용신의 무덤,70,3,boss_draken_myr,잠든 용신의 사념 드라켄 미르,fire_ice,3,"70|35",16,head,wing,tail,파츠 파괴 중심
+106,106,raid_death_throne,죽음의 왕좌,80,3,boss_necros_rex,망자의 군주 네크로스 렉스,dark_holy,3,"70|35",16,crown,throne_core,body,토큰/처형 대응
+107,107,raid_sun_palace,태양신의 궁전,90,3,boss_solar_invictor,일식의 화신 솔라 인빅터,holy_fire,3,"70|35",15,shadow_core,sun_core,body,게이지/안전지대
+108,108,raid_twilight,신들의 황혼,100,3,boss_omega_ruin,종말의 편린 오메가 루인,all,3,"70|35",14,order_core,chaos_core,body,최종 복합 기믹
+109,109,raid_stock_exchange,붕괴한 증권거래소,52,3,boss_markt_crash,블랙 스완 집행자 마르크트 크래시,chaos_economy,3,"70|35",17,circuit_breaker,bear_core,bull_core,변동성/마진콜/서킷브레이커
