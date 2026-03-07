@@ -42,9 +42,24 @@ class StatusComponent(SkillComponent):
     def on_turn(self, attacker, target):
         if not self.status_type:
             return ""
-        if random.random() >= self.chance:
+        chance = self.chance
+        duration = self.status_duration
+
+        if hasattr(attacker, "equipped_skill"):
+            from service.skill.synergy_service import SynergyService
+            chance += SynergyService.calculate_status_chance_bonus(
+                attacker.equipped_skill, self.status_type, current_skill=self.skill
+            )
+            duration += SynergyService.calculate_status_duration_bonus(
+                attacker.equipped_skill, self.status_type, current_skill=self.skill
+            )
+
+        chance = max(0.0, min(1.0, chance))
+        duration = max(0, int(duration))
+
+        if random.random() >= chance:
             return ""
-        return apply_status_effect(target, self.status_type, self.stacks, self.status_duration)
+        return apply_status_effect(target, self.status_type, self.stacks, duration)
 
 
 @register_skill_with_tag("combo")

@@ -1,0 +1,10 @@
+minigame_id,fail_fast,timing_allowed_miss,sim_fail_tolerance,sim_token_pool,sim_required_alive_min,notes
+1011,false,0,0,ALL_DIFFERENT|DEFENSIVE|AGGRESSIVE,1,뿌리 절단 퍼즐
+1021,true,0,0,ALL_DIFFERENT|DEFENSIVE|AGGRESSIVE,1,봉인진 재작성은 즉시 실패 규칙 강화
+1031,false,1,0,ALL_DIFFERENT|DEFENSIVE|AGGRESSIVE,1,위상 동기화는 타이밍 오차 1회 허용
+1041,false,1,0,ALL_DIFFERENT|DEFENSIVE|AGGRESSIVE,1,차원 도약 러시 타이밍형
+1051,false,1,0,ALL_DIFFERENT|DEFENSIVE|AGGRESSIVE,1,봉인 쇄기 박기 타이밍형
+1061,false,0,1,ALL_DIFFERENT|DEFENSIVE|AGGRESSIVE,1,영혼 인도 의식은 단계 실패 1회 허용
+1071,false,0,0,ALL_DIFFERENT|DEFENSIVE|AGGRESSIVE,1,프리즘 정렬
+1081,false,0,1,ALL_DIFFERENT|DEFENSIVE|AGGRESSIVE,1,황혼의 선택은 단계 실패 1회 허용
+1091,true,0,0,ALL_DIFFERENT|DEFENSIVE|AGGRESSIVE,1,호가창 동결은 정답 외 즉시 실패

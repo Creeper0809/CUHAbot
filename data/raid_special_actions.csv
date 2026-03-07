@@ -1,0 +1,5 @@
+action_key,action_name,cooldown_rounds,max_uses_per_round,target_type,effect_type,base_value,scaling_stat,description
+cut,절단,0,1,part,fixed_part_damage,1200,none,특정 부위 내구도를 고정값으로 감소
+seal,봉인,1,1,boss_or_core,countdown_reduce,1,none,카운트다운 또는 충전 수치를 감소
+cleanse,정화,0,1,ally_or_party,mark_cleanse,1,none,표식 저주 공포 계열 기믹 스택/상태 해제
+provoke,도발,2,1,boss,single_target_redirect,1,vitality,다음 단일 강공의 대상을 사용자로 유도

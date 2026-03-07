@@ -8,6 +8,13 @@ SKILL_DECK_SIZE = 10
 DEFAULT_SKILL_SLOT = 0
 """빈 스킬 슬롯 값"""
 
+ULTIMATE_AUTO_DAMAGE_SCALE = 0.8
+"""자동 발동 궁극기 위력 계수 (수동 대비)"""
+
+# 현재 data/skills.csv 기준 궁극기 스킬 ID
+ULTIMATE_SKILL_IDS = {5001, 5002, 5003, 5004, 5005, 5006, 5007, 5008}
+"""궁극기 스킬 ID 집합"""
+
 
 @dataclass(frozen=True)
 class SkillIdConfig:

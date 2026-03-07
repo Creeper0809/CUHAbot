@@ -1,0 +1,10 @@
+minigame_id,raid_id,minigame_key,minigame_name,minigame_type,time_limit_sec,input_count,success_effect,fail_effect
+1011,101,root_cut,뿌리 절단 퍼즐,order_select,30,3,regen_multiplier_0.5,boss_heal_8pct
+1021,102,seal_rewrite,봉인진 재작성,safe_tile_select,25,3,next_execution_nullify,party_curse_stack_3
+1031,103,phase_sync,위상 동기화,timing_sync,20,3,boss_damage_taken_15pct,party_action_delay_1turn
+1041,104,rift_dash,차원 도약 러시,timing_jump,25,3,party_shield_20pct,party_hp_loss_15pct
+1051,105,seal_spike,봉인 쇄기 박기,sequential_timing,20,3,all_parts_defense_down_20pct,boss_extra_breath_once
+1061,106,soul_guide,영혼 인도 의식,route_match,30,3,remove_boss_permanent_stack_1,spawn_adds_3
+1071,107,prism_align,프리즘 정렬,rotation_match,25,3,boss_armor_penetration_down_20pct,party_blind_2turn
+1081,108,twilight_choice,황혼의 선택,simultaneous_choice,15,3,boss_damage_reduction_remove_1,boss_enrage_stack_1
+1091,109,orderbook_freeze,호가창 동결,price_select,20,3,boss_attack_down_20pct_2turn,boss_enter_crash_mode

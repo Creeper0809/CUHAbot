@@ -7,6 +7,7 @@ from decorator.account import requires_account
 from models.repos.users_repo import find_account_by_discordid
 from service.session import create_session, end_session
 from service.skill.skill_deck_service import SkillDeckService
+from service.skill.ultimate_service import load_ultimate_to_user
 from service.item.equipment_service import EquipmentService
 from service.player.healing_service import HealingService
 from service.tower.tower_service import initialize_tower_session, run_tower
@@ -41,6 +42,7 @@ class TowerCommand(commands.Cog):
 
         await HealingService.apply_natural_regen(user)
         await SkillDeckService.load_deck_to_user(user)
+        await load_ultimate_to_user(user)
         await EquipmentService.apply_equipment_stats(user)
 
         try:

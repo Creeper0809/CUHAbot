@@ -5,6 +5,7 @@
 """
 import asyncio
 import logging
+import os
 from collections import deque
 from typing import Union
 
@@ -19,7 +20,13 @@ from service.dungeon.combat_context import CombatContext
 from service.player.stat_synergy_combat import (
     has_first_strike, roll_extra_action, get_hp_regen_per_turn_pct,
 )
-from service.session import set_combat_state
+from service.session import ContentType, set_combat_state
+from service.skill.ultimate_service import (
+    add_ultimate_gauge,
+    reset_ultimate_combat_state,
+    select_skill_for_user_turn,
+    tick_ultimate_cooldown,
+)
 
 # 리팩토링된 클래스 import
 from service.dungeon.combat_ui_manager import CombatUIManager
@@ -110,6 +117,7 @@ async def execute_combat_context(session, interaction: discord.Interaction, cont
 
     # Phase 3: 캠프파이어 ATK 버프 적용
     _apply_campfire_buff(session)
+    reset_ultimate_combat_state(user)
 
     set_combat_state(user.discord_id, True)
 
@@ -149,7 +157,10 @@ async def execute_combat_context(session, interaction: discord.Interaction, cont
         # 최종 전투 결과 UI 업데이트 (리더 + 참가자들)
         await _ui_manager.send_final_combat_result(session, combat_message, user, context, context.combat_log)
 
-        await asyncio.sleep(COMBAT.COMBAT_END_DELAY)
+        if os.getenv("E2E_UI_AUTOPILOT") == "TRUE":
+            await asyncio.sleep(0.1)
+        else:
+            await asyncio.sleep(COMBAT.COMBAT_END_DELAY)
 
         return await process_combat_result_multi(session, context, turn_count)
 
@@ -244,6 +255,18 @@ async def _process_turn_multi(
             field_logs = context.field_effect.on_round_start(all_players, context.get_all_alive_monsters())
             for log in field_logs:
                 combat_log.append(log)
+        if session.content_type == ContentType.RAID:
+            from service.raid.raid_combat_engine import process_raid_round_gimmicks
+            from service.raid.raid_combat_engine import get_boss_skill_lock_summary
+            from service.raid.raid_service import get_effective_raid_target
+
+            current_target = get_effective_raid_target(session)
+            if current_target:
+                combat_log.append(f"📌 레이드 우선 타겟(초기): **{current_target}**")
+            for log in get_boss_skill_lock_summary(session):
+                combat_log.append(log)
+            for log in process_raid_round_gimmicks(session, user, context.round_number):
+                combat_log.append(log)
 
     while context.action_count < COMBAT.MAX_ACTIONS_PER_LOOP:
         # 플레이어 사망 시 부활 효과 먼저 체크 (전투 종료 전)
@@ -270,7 +293,10 @@ async def _process_turn_multi(
             # 부활 발생 시 UI 업데이트
             if revived:
                 await _update_all_combat_messages(session, combat_message, user, context, combat_log)
-                await asyncio.sleep(COMBAT.TURN_PHASE_DELAY)
+                if os.getenv("E2E_UI_AUTOPILOT") == "TRUE":
+                    await asyncio.sleep(0.05)
+                else:
+                    await asyncio.sleep(COMBAT.TURN_PHASE_DELAY)
 
             # 부활 후에도 모두 죽었으면 전투 종료
             if _all_players_dead(user, session):
@@ -299,10 +325,38 @@ async def _process_turn_multi(
             context.consume_gauge(actor)
             # 행동하지 못할 때는 지속시간 감소하지 않음 (행동 후에만 감소)
             await _update_all_combat_messages(session, combat_message, user, context, combat_log)
-            await asyncio.sleep(COMBAT.TURN_PHASE_DELAY)
+            if os.getenv("E2E_UI_AUTOPILOT") == "TRUE":
+                await asyncio.sleep(0.05)
+            else:
+                await asyncio.sleep(COMBAT.TURN_PHASE_DELAY)
 
             if context.check_and_advance_round():
                 combat_log.append(f"━━━ 🌟 **라운드 {context.round_number}** ━━━")
+                if session.content_type == ContentType.RAID:
+                    from service.raid.raid_combat_engine import process_raid_round_gimmicks
+                    from service.raid.raid_combat_engine import get_boss_skill_lock_summary
+                    from service.raid.raid_combat_engine import process_pending_raid_minigame_timeout
+                    from service.raid.raid_service import apply_pending_raid_target_selection, get_effective_raid_target
+
+                    applied = apply_pending_raid_target_selection(session, context.round_number)
+                    if applied:
+                        combat_log.append(f"🎯 레이드 우선 타겟 변경 적용: **{applied}** (이번 라운드부터)")
+
+                    current_target = get_effective_raid_target(session)
+                    if current_target:
+                        combat_log.append(f"📌 현재 우선 타겟: **{current_target}**")
+                    for log in get_boss_skill_lock_summary(session):
+                        combat_log.append(log)
+                    if context.monsters:
+                        for log in process_pending_raid_minigame_timeout(
+                            session,
+                            user,
+                            context.monsters[0],
+                            context.round_number,
+                        ):
+                            combat_log.append(log)
+                    for log in process_raid_round_gimmicks(session, user, context.round_number):
+                        combat_log.append(log)
                 await _update_all_combat_messages(session, combat_message, user, context, combat_log)
             continue
 
@@ -311,6 +365,30 @@ async def _process_turn_multi(
         action_logs = _execute_entity_action(session, user, actor, context)
         for log in action_logs:
             combat_log.append(log)
+
+        if session.content_type == ContentType.RAID and context.monsters and isinstance(actor, User):
+            from service.raid.raid_combat_engine import (
+                process_raid_part_breaks,
+                process_raid_phase_transition,
+            )
+
+            primary_boss = context.monsters[0]
+            dealt_damage, _ = _metrics_recorder.parse_combat_metrics_from_logs(action_logs)
+            for log in process_raid_part_breaks(
+                session,
+                primary_boss,
+                part_damage=dealt_damage,
+                current_round=context.round_number,
+            ):
+                combat_log.append(log)
+            for log in process_raid_phase_transition(
+                session,
+                user,
+                primary_boss,
+                combat_log,
+                current_round=context.round_number,
+            ):
+                combat_log.append(log)
 
         # 신규: 기여도 기록 (파티 리더 + 난입자)
         if isinstance(actor, User):
@@ -399,7 +477,10 @@ async def _process_turn_multi(
         if session:
             await SpectatorService.update_all_spectators(session)
 
-        await asyncio.sleep(COMBAT.TURN_PHASE_DELAY)
+        if os.getenv("E2E_UI_AUTOPILOT") == "TRUE":
+            await asyncio.sleep(0.05)
+        else:
+            await asyncio.sleep(COMBAT.TURN_PHASE_DELAY)
 
         # 유저 부활 효과 체크 (리더 + 참가자)
         if user.now_hp <= 0:
@@ -427,6 +508,33 @@ async def _process_turn_multi(
 
         if context.check_and_advance_round():
             combat_log.append(f"━━━ 🌟 **라운드 {context.round_number}** ━━━")
+
+            if session.content_type == ContentType.RAID:
+                from service.raid.raid_combat_engine import process_raid_round_gimmicks
+                from service.raid.raid_combat_engine import process_pending_raid_minigame_timeout
+                from service.raid.raid_service import apply_pending_raid_target_selection, get_effective_raid_target
+                from service.raid.raid_combat_engine import get_boss_skill_lock_summary
+
+                applied = apply_pending_raid_target_selection(session, context.round_number)
+                if applied:
+                    combat_log.append(f"🎯 레이드 우선 타겟 변경 적용: **{applied}** (이번 라운드부터)")
+
+                current_target = get_effective_raid_target(session)
+                if current_target:
+                    combat_log.append(f"📌 현재 우선 타겟: **{current_target}**")
+                for log in get_boss_skill_lock_summary(session):
+                    combat_log.append(log)
+                if context.monsters:
+                    for log in process_pending_raid_minigame_timeout(
+                        session,
+                        user,
+                        context.monsters[0],
+                        context.round_number,
+                    ):
+                        combat_log.append(log)
+
+                for log in process_raid_round_gimmicks(session, user, context.round_number):
+                    combat_log.append(log)
 
             # HP 체크포인트: 5라운드마다 DB 동기화 (봇 크래시 대비)
             if context.round_number % 5 == 0:
@@ -493,12 +601,16 @@ def _execute_user_action(user: User, context: CombatContext) -> list[str]:
     from service.dungeon.reward_calculator import get_attack_stat
 
     logs = []
-    user_skill = user.next_skill()
+    tick_ultimate_cooldown(user)
 
     # 랜덤으로 몬스터 선택 (살아있는 몬스터 중)
     alive_monsters = context.get_all_alive_monsters()
     if not alive_monsters:
         return []
+
+    user_skill, ultimate_log, ultimate_scale = select_skill_for_user_turn(user, alive_monsters)
+    if ultimate_log:
+        logs.append(ultimate_log)
     target = random.choice(alive_monsters)
 
     # 턴 시작 시 장비 효과 (행동 예측 등)
@@ -506,24 +618,31 @@ def _execute_user_action(user: User, context: CombatContext) -> list[str]:
     logs.extend(turn_start_logs)
 
     if user_skill:
-        if _is_skill_aoe(user_skill):
-            for monster in alive_monsters:
-                log = user_skill.on_turn(user, monster)
+        # 궁극기 자동 발동 시 이번 행동의 공격 계수만 약화한다.
+        user._ultimate_damage_scale = ultimate_scale
+        try:
+            if _is_skill_aoe(user_skill):
+                for monster in alive_monsters:
+                    log = user_skill.on_turn(user, monster)
+                    if log and log.strip():
+                        logs.append(log)
+                    # 공격 후 장비 훅 (추가 공격, 회복 봉인 등)
+                    # 로그에서 데미지 추출
+                    damage_dealt, _ = _metrics_recorder.parse_combat_metrics_from_logs([log])
+                    add_ultimate_gauge(user, dealt_damage=damage_dealt)
+                    attack_logs = _equipment_manager.apply_on_attack(user, monster, damage_dealt)
+                    logs.extend(attack_logs)
+            else:
+                log = user_skill.on_turn(user, target)
                 if log and log.strip():
                     logs.append(log)
-                # 공격 후 장비 훅 (추가 공격, 회복 봉인 등)
-                # 로그에서 데미지 추출
+                # 공격 후 장비 훅 - 로그에서 데미지 추출
                 damage_dealt, _ = _metrics_recorder.parse_combat_metrics_from_logs([log])
-                attack_logs = _equipment_manager.apply_on_attack(user, monster, damage_dealt)
+                add_ultimate_gauge(user, dealt_damage=damage_dealt)
+                attack_logs = _equipment_manager.apply_on_attack(user, target, damage_dealt)
                 logs.extend(attack_logs)
-        else:
-            log = user_skill.on_turn(user, target)
-            if log and log.strip():
-                logs.append(log)
-            # 공격 후 장비 훅 - 로그에서 데미지 추출
-            damage_dealt, _ = _metrics_recorder.parse_combat_metrics_from_logs([log])
-            attack_logs = _equipment_manager.apply_on_attack(user, target, damage_dealt)
-            logs.extend(attack_logs)
+        finally:
+            user._ultimate_damage_scale = 1.0
     else:
         from service.dungeon.damage_pipeline import process_incoming_damage
         damage = get_attack_stat(user)
@@ -534,11 +653,13 @@ def _execute_user_action(user: User, context: CombatContext) -> list[str]:
         # 공격 후 장비 훅 (반격, 추가 공격 등)
         attack_logs = _equipment_manager.apply_on_attack(user, target, event.actual_damage)
         logs.extend(attack_logs)
+        add_ultimate_gauge(user, dealt_damage=event.actual_damage)
 
         if event.reflected_damage > 0:
             reflect_event = process_incoming_damage(user, event.reflected_damage, is_reflected=True)
             logs.append(f"   🔄 반사 데미지 → **{user.get_name()}** {reflect_event.actual_damage}")
 
+    add_ultimate_gauge(user, acted=True)
     return logs
 
 
@@ -559,12 +680,31 @@ def _execute_monster_action(monster: Monster, user: User, context: CombatContext
             if participant.now_hp > 0:
                 alive_players.append(participant)
 
-    # 랜덤으로 대상 선택
+    # 랜덤으로 대상 선택 (레이드 도발 우선 반영)
     if not alive_players:
         # 모두 죽었으면 그냥 user 사용 (어차피 전투 종료됨)
         target = user
     else:
         target = random.choice(alive_players)
+        if session and session.content_type == ContentType.RAID:
+            provoke_id = getattr(session, "raid_provoke_target_discord_id", None)
+            provoke_until = int(getattr(session, "raid_provoke_until_round", 0) or 0)
+            current_round = int(getattr(context, "round_number", 1) or 1)
+
+            if provoke_id and current_round <= provoke_until:
+                for p in alive_players:
+                    if getattr(p, "discord_id", None) == provoke_id:
+                        target = p
+                        break
+            elif provoke_id and current_round > provoke_until:
+                session.raid_provoke_target_discord_id = None
+                session.raid_provoke_until_round = 0
+
+    if session and session.content_type == ContentType.RAID:
+        from service.raid.raid_combat_engine import filter_locked_boss_skills
+
+        # 봉인된 보스 스킬 반영 (실시간 덱 슬롯 비활성화)
+        monster.use_skill = filter_locked_boss_skills(session, list(getattr(monster, "use_skill", [])))
 
     monster_skill = monster.next_skill()
 
@@ -574,6 +714,7 @@ def _execute_monster_action(monster: Monster, user: User, context: CombatContext
             logs.append(log)
         # 유저 피격 시 장비 훅 (가시 피해, 반격 등) - 로그에서 데미지 추출
         damage_taken, _ = _metrics_recorder.parse_combat_metrics_from_logs([log])
+        add_ultimate_gauge(target, taken_damage=damage_taken)
         damaged_logs = _equipment_manager.apply_on_damaged(target, monster, damage_taken)
         logs.extend(damaged_logs)
     else:
@@ -581,6 +722,7 @@ def _execute_monster_action(monster: Monster, user: User, context: CombatContext
         event = process_incoming_damage(target, damage, attacker=monster)
         logs.extend(event.extra_logs)
         logs.append(f"⚔️ **{monster.get_name()}** 기본 공격 → **{target.get_name()}** {event.actual_damage} 데미지")
+        add_ultimate_gauge(target, taken_damage=event.actual_damage)
 
         # 유저 피격 시 장비 훅
         damaged_logs = _equipment_manager.apply_on_damaged(target, monster, event.actual_damage)
@@ -689,6 +831,11 @@ def _is_skill_aoe(skill) -> bool:
         return False
     for component in skill.components:
         if hasattr(component, 'is_aoe') and component.is_aoe:
+            return True
+        target_type = str(
+            getattr(component, "target_type", getattr(component, "target", ""))
+        ).lower()
+        if target_type in {"all", "all_enemies", "all_enemy", "enemies"}:
             return True
     return False
 

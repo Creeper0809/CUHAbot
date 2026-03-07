@@ -23,7 +23,7 @@ load_dotenv()
 CSV_PATH = os.path.join(PROJECT_ROOT, "data", "monsters.csv")
 
 MONSTER_FIELDS = [
-    "name", "description", "type", "hp", "attack",
+    "name", "description", "type", "hp", "attack", "ap_attack",
     "defense", "speed", "attribute", "skill_ids", "group_ids",
 ]
 
@@ -49,6 +49,7 @@ def load_monsters_from_csv() -> list[dict]:
                 "type": row.get("타입", "CommonMob"),
                 "hp": int(row["HP"]),
                 "attack": int(row["Attack"]),
+                "ap_attack": int(row.get("AP_Attack", 0) or 0),
                 "defense": int(row.get("Defense", 0)),
                 "speed": int(row.get("Speed", 10)),
                 "attribute": row.get("속성", "무속성") or "무속성",
@@ -100,6 +101,7 @@ async def seed_monsters():
                 type=csv_map[mid]["type"],
                 hp=csv_map[mid]["hp"],
                 attack=csv_map[mid]["attack"],
+                ap_attack=csv_map[mid]["ap_attack"],
                 defense=csv_map[mid]["defense"],
                 speed=csv_map[mid]["speed"],
                 attribute=csv_map[mid]["attribute"],
@@ -120,6 +122,7 @@ async def seed_monsters():
             monster.type = data["type"]
             monster.hp = data["hp"]
             monster.attack = data["attack"]
+            monster.ap_attack = data["ap_attack"]
             monster.defense = data["defense"]
             monster.speed = data["speed"]
             monster.attribute = data["attribute"]

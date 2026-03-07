@@ -11,6 +11,7 @@ from discord import Embed
 from config import COMBAT, EmbedColor, WEEKLY_TOWER
 from models import UserStatEnum, User, Monster
 from service.dungeon.status import get_status_icons
+from service.skill.ultimate_service import get_ultimate_mode_for_skill
 from service.dungeon.combat_context import CombatContext
 from service.session import ContentType
 
@@ -151,7 +152,8 @@ def create_battle_embed_multi(
     player: User,
     context: CombatContext,
     combat_log: deque[str],
-    participants: dict = None
+    participants: dict = None,
+    session=None,
 ) -> Embed:
     """전투 임베드 생성 (다중 몬스터 지원, 멀티플레이어 지원)"""
     alive = context.get_all_alive_monsters()
@@ -192,6 +194,100 @@ def create_battle_embed_multi(
     log_text = "\n".join(combat_log) if combat_log else "```전투 준비 중...```"
     embed.add_field(name="📜 전투 로그", value=log_text, inline=False)
 
+    # 레이드 상태 패널
+    if session and getattr(session, "content_type", None) == ContentType.RAID:
+        from models.repos.static_cache import (
+            raid_special_actions_by_key,
+            raid_minigames_by_raid_id,
+            raid_minigame_rule_by_minigame_id,
+        )
+
+        current_target = getattr(session, "raid_current_target", None) or "-"
+        pending_target = getattr(session, "raid_pending_target", None) or "-"
+        apply_turn = getattr(session, "raid_target_apply_turn", 0)
+        phase = getattr(session, "raid_phase", 1)
+        destroyed = sorted(list(getattr(session, "raid_destroyed_parts", set()) or set()))
+        destroyed_txt = ", ".join(destroyed) if destroyed else "없음"
+        pending_mg_id = getattr(session, "raid_pending_minigame_id", None)
+        pending_mg_txt = "-"
+        pending_mg_progress = "-"
+        pending_mg_prompt = getattr(session, "raid_minigame_prompt", None) or "-"
+        pending_mg_submits = len(dict(getattr(session, "raid_minigame_stage_inputs", {}) or {}))
+        if pending_mg_id:
+            rule = raid_minigame_rule_by_minigame_id.get(int(pending_mg_id), {})
+            for mg in raid_minigames_by_raid_id.get(getattr(session, "raid_id", 0), []):
+                if int(mg.minigame_id) == int(pending_mg_id):
+                    pending_mg_txt = mg.minigame_name
+                    if getattr(mg, "minigame_type", "") == "simultaneous_choice":
+                        pending_mg_prompt = (
+                            f"{pending_mg_prompt} | 현재 단계 제출: {pending_mg_submits}"
+                        )
+                        if rule:
+                            pending_mg_prompt += f" | 실패허용:{int(rule.get('sim_fail_tolerance', 1))}"
+                    break
+            if pending_mg_txt == "-":
+                pending_mg_txt = str(pending_mg_id)
+            expected = list(getattr(session, "raid_minigame_expected", []) or [])
+            inputs = list(getattr(session, "raid_minigame_inputs", []) or [])
+            pending_mg_progress = f"{len(inputs)}/{len(expected)}" if expected else "0/0"
+
+        embed.add_field(
+            name="🎯 레이드 타겟팅",
+            value=(
+                f"페이즈: **P{phase}**\n"
+                f"현재 우선 타겟: **{current_target}**\n"
+                f"예약 타겟: **{pending_target}** (적용 라운드: {apply_turn if apply_turn else '-'})\n"
+                f"전환 미니게임: **{pending_mg_txt}** ({pending_mg_progress})\n"
+                f"미니게임 힌트: {pending_mg_prompt}\n"
+                f"파괴 부위: {destroyed_txt}\n"
+                f"도발 대상: **{getattr(session, 'raid_provoke_target_discord_id', '-') or '-'}** "
+                f"(~R{getattr(session, 'raid_provoke_until_round', 0) or '-'})"
+            ),
+            inline=False,
+        )
+
+        part_hp = getattr(session, "raid_part_hp", {}) or {}
+        part_max = getattr(session, "raid_part_max_hp", {}) or {}
+        if part_hp:
+            lines = []
+            for key, now in sorted(part_hp.items()):
+                mx = max(1, int(part_max.get(key, now)))
+                pct = int((now / mx) * 100) if mx > 0 else 0
+                lines.append(f"- `{key}`: {now}/{mx} ({pct}%)")
+            embed.add_field(
+                name="🧩 부위 내구도",
+                value="\n".join(lines),
+                inline=False,
+            )
+
+        current_round = int(getattr(context, "round_number", 1) or 1)
+        action_used_round = getattr(session, "raid_action_used_round", {}) or {}
+        action_next_round = getattr(session, "raid_action_next_round", {}) or {}
+        if raid_special_actions_by_key:
+            status_lines = []
+            all_members = [player]
+            if participants:
+                all_members.extend(participants.values())
+            for member in all_members:
+                actor_id = int(getattr(member, "discord_id", 0) or 0)
+                if actor_id <= 0:
+                    continue
+                used_now = action_used_round.get(actor_id, 0) == current_round
+                chips = ["사용완료" if used_now else "사용가능"]
+                for action_key, action in raid_special_actions_by_key.items():
+                    cd_key = f"{actor_id}:{action_key}"
+                    available_round = int(action_next_round.get(cd_key, 1) or 1)
+                    remain = max(0, available_round - current_round)
+                    if remain > 0:
+                        chips.append(f"{action.action_name}:{remain}R")
+                status_lines.append(f"- **{member.get_name()}**: {', '.join(chips)}")
+            if status_lines:
+                embed.add_field(
+                    name="🛠️ 특수 액션 상태",
+                    value="\n".join(status_lines),
+                    inline=False,
+                )
+
     # Footer
     round_marker_pct = int((context.round_marker_gauge / COMBAT.ACTION_GAUGE_MAX) * 100)
     footer_text = f"🌟 라운드 {context.round_number} | 다음 라운드까지: {round_marker_pct}%"
@@ -216,6 +312,12 @@ def _add_all_player_fields(embed: Embed, players: list[User]) -> None:
         status = get_status_icons(player)
 
         line = f"👤 **{player.get_name()}**\n{hp_bar} **{player.now_hp}** / {max_hp} ({hp_pct}%)"
+        ultimate_skill_id = getattr(player, "equipped_ultimate_skill", 0)
+        if ultimate_skill_id and get_ultimate_mode_for_skill(ultimate_skill_id) == "manual":
+            gauge = int(getattr(player, "ultimate_gauge", 0))
+            cooldown = int(getattr(player, "ultimate_cooldown_remaining", 0))
+            cd_text = f" | 쿨:{cooldown}턴" if cooldown > 0 else ""
+            line += f"\n🔥 궁극기 게이지: {gauge}/100{cd_text}"
         if status:
             line += f" {status}"
         player_lines.append(line)
@@ -236,6 +338,12 @@ def _add_player_fields(embed: Embed, player: User) -> None:
     status = get_status_icons(player)
 
     value = f"{hp_bar}\n**{player.now_hp}** / {max_hp} ({hp_pct}%)"
+    ultimate_skill_id = getattr(player, "equipped_ultimate_skill", 0)
+    if ultimate_skill_id and get_ultimate_mode_for_skill(ultimate_skill_id) == "manual":
+        gauge = int(getattr(player, "ultimate_gauge", 0))
+        cooldown = int(getattr(player, "ultimate_cooldown_remaining", 0))
+        cd_text = f" | 쿨:{cooldown}턴" if cooldown > 0 else ""
+        value += f"\n🔥 궁극기 게이지: {gauge}/100{cd_text}"
     if status:
         value += f"\n{status}"
 

@@ -18,8 +18,8 @@ class DamageConfig:
     """최대 방어력 무시 비율 (70%)"""
 
     # 데미지 변동
-    DAMAGE_VARIANCE: float = 0.2
-    """데미지 랜덤 변동폭 (+-20%, 0.8~1.2배)"""
+    DAMAGE_VARIANCE: float = 0.1
+    """데미지 랜덤 변동폭 (+-10%, 0.9~1.1배)"""
 
     MIN_DAMAGE: int = 1
     """최소 데미지 (0 이하로 떨어지지 않음)"""

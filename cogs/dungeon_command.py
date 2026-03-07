@@ -1,6 +1,7 @@
 import discord
 from discord import app_commands
 from discord.ext import commands
+import os
 
 from views.collection_view import CollectionView
 from views.dungeon_select_view import DungeonSelectView
@@ -21,15 +22,26 @@ from service.collection_service import CollectionService, EntryNotFoundError
 from service.dungeon.item_service import get_item_info, ItemNotFoundException
 from service.player.healing_service import HealingService
 from service.item.inventory_service import InventoryService
-from service.session import is_in_combat, create_session, end_session
+from service.session import ContentType, is_in_combat, create_session, end_session
 from service.skill.skill_deck_service import SkillDeckService
+from service.skill.ultimate_service import (
+    get_ultimate_mode_for_skill,
+    is_ultimate_skill,
+    load_ultimate_to_user,
+    set_ultimate_skill,
+)
 from service.item.equipment_service import EquipmentService
 from service.skill.skill_ownership_service import SkillOwnershipService
 from service.temp_admin_service import is_admin_or_temp
+from service.raid.raid_service import init_raid_session_state
+from service.raid.raid_progress_service import check_raid_entry, consume_raid_entry
+from service.raid.raid_lobby_service import create_raid_lobby, close_raid_lobby, wait_raid_lobby_result
+from models.repos.raid_repo import find_raid_by_dungeon_id
 from models import User, UserStatEnum
 from models.repos.static_cache import monster_cache_by_id
 from service.dungeon.combat_context import CombatContext
 from service.dungeon.combat_executor import execute_combat_context
+from views.raid_lobby_view import create_raid_lobby_embed, RaidLobbyInviteView, RaidLobbyView
 
 
 class DungeonCommand(commands.Cog):
@@ -55,6 +67,7 @@ class DungeonCommand(commands.Cog):
 
             # 스킬 덱 로드 (전투에서 사용)
             await SkillDeckService.load_deck_to_user(user)
+            await load_ultimate_to_user(user)
 
             # 장비 스탯 로드 (전투에서 사용)
             await EquipmentService.apply_equipment_stats(user)
@@ -85,6 +98,19 @@ class DungeonCommand(commands.Cog):
                 await interaction.response.send_message("등록된 던전이 없습니다.")
                 return
 
+            if os.getenv("E2E_UI_AUTOPILOT") == "TRUE":
+                selectable = [d for d in dungeons if d.id < 100 and user.level >= d.require_level]
+                if not selectable:
+                    selectable = [d for d in dungeons if d.id < 100] or dungeons
+                view_selected = sorted(selectable, key=lambda d: (d.require_level, d.id))[0]
+                await interaction.response.send_message(f"[E2E] 자동 던전 선택: {view_selected.name}")
+                await interaction.followup.send(f"{view_selected.name} 던전에 입장합니다!")
+                session.dungeon = view_selected
+                session.content_type = ContentType.NORMAL_DUNGEON
+                session.allow_intervention = True
+                await start_dungeon(session, interaction)
+                return
+
             embed = discord.Embed(
                 title="🎯 던전을 선택하세요",
                 description="드롭다운에서 던전을 선택한 후 입장하거나 취소하세요.",
@@ -109,6 +135,122 @@ class DungeonCommand(commands.Cog):
             await interaction.followup.send(f"{view.selected_dungeon.name} 던전에 입장합니다!")
 
             session.dungeon = view.selected_dungeon
+            session.content_type = (
+                ContentType.RAID
+                if view.selected_dungeon.id >= 100
+                else ContentType.NORMAL_DUNGEON
+            )
+            session.allow_intervention = session.content_type != ContentType.RAID
+            if session.content_type == ContentType.RAID:
+                raid = find_raid_by_dungeon_id(session.dungeon.id)
+                if raid:
+                    entry_check = await check_raid_entry(user, raid.raid_id)
+                    if not entry_check.allowed:
+                        await interaction.followup.send(
+                            f"⛔ 이번 주 레이드 입장 횟수를 모두 사용했습니다. "
+                            f"({entry_check.max_entries}/{entry_check.max_entries})",
+                            ephemeral=True,
+                        )
+                        return
+
+                    voice_channel_id = getattr(getattr(interaction.user, "voice", None), "channel", None)
+                    voice_channel_id = voice_channel_id.id if voice_channel_id else None
+
+                    lobby = create_raid_lobby(
+                        leader_id=interaction.user.id,
+                        raid_id=raid.raid_id,
+                        raid_name=raid.raid_name,
+                        dungeon_id=raid.dungeon_id,
+                        required_level=int(getattr(raid, "recommended_level", 1) or 1),
+                        max_party_size=int(getattr(raid, "max_party_size", 3) or 3),
+                        voice_channel_id=voice_channel_id,
+                        timeout_seconds=60,
+                    )
+
+                    try:
+                        lobby_embed = create_raid_lobby_embed(lobby)
+
+                        # 리더 로비 UI
+                        await interaction.followup.send(
+                            "🐉 레이드 로비를 생성했습니다. 아래 UI에서 준비/시작을 진행하세요.",
+                            embed=lobby_embed,
+                            view=RaidLobbyView(lobby),
+                            ephemeral=True,
+                        )
+
+                        # 같은 VC 멤버에게 초대 DM 전송
+                        invited = 0
+                        voice_state = getattr(interaction.user, "voice", None)
+                        channel = getattr(voice_state, "channel", None)
+                        if channel:
+                            for member in channel.members:
+                                if member.bot or member.id == interaction.user.id:
+                                    continue
+                                try:
+                                    await member.send(
+                                        embed=discord.Embed(
+                                            title=f"🐉 레이드 초대 - {raid.raid_name}",
+                                            description=(
+                                                f"{interaction.user.display_name}님이 레이드 로비를 열었습니다.\n"
+                                                f"권장 레벨: Lv.{raid.recommended_level}+\n"
+                                                f"파티 정원: {raid.max_party_size}명"
+                                            ),
+                                            color=discord.Color.red(),
+                                        ),
+                                        view=RaidLobbyInviteView(lobby),
+                                    )
+                                    invited += 1
+                                except Exception:
+                                    continue
+
+                        await interaction.followup.send(
+                            f"📨 초대 전송: **{invited}명**\n"
+                            "모든 참가자가 준비 완료하면 리더가 시작할 수 있습니다. "
+                            "60초 뒤에는 자동 시작됩니다.",
+                            ephemeral=True,
+                        )
+
+                        lobby_result = await wait_raid_lobby_result(lobby)
+                        if lobby_result == "cancelled":
+                            await interaction.followup.send("🛑 레이드 로비가 취소되어 입장을 종료합니다.", ephemeral=True)
+                            return
+                        if lobby_result == "timeout_auto_start":
+                            await interaction.followup.send("⏱️ 로비 시간이 종료되어 현재 인원으로 자동 시작합니다.", ephemeral=True)
+
+                        # 리더 입장권 차감 (참가자는 참가 시 이미 차감)
+                        remaining, max_entries = await consume_raid_entry(user, raid.raid_id)
+                        await interaction.followup.send(
+                            f"🎫 리더 주간 레이드 입장권 차감: 남은 횟수 **{remaining}/{max_entries}**",
+                            ephemeral=True,
+                        )
+
+                        # 로비 참가자(리더 제외) 세션 참가자로 편입
+                        party_count = 1
+                        for uid in list(lobby.participants.keys()):
+                            if uid == interaction.user.id:
+                                continue
+                            participant = await find_account_by_discordid(uid)
+                            if not participant:
+                                continue
+
+                            # 전투 준비
+                            await SkillDeckService.load_deck_to_user(participant)
+                            await load_ultimate_to_user(participant)
+                            await EquipmentService.apply_equipment_stats(participant)
+                            await HealingService.apply_natural_regen(participant)
+
+                            session.participants[uid] = participant
+                            session.contribution[uid] = 0
+                            party_count += 1
+
+                        await interaction.followup.send(
+                            f"👥 레이드 파티 확정: **{party_count}/{raid.max_party_size}명**",
+                            ephemeral=True,
+                        )
+                    finally:
+                        close_raid_lobby(interaction.user.id)
+
+                init_raid_session_state(session)
             await start_dungeon(session, interaction)
 
         finally:
@@ -301,6 +443,10 @@ class DungeonCommand(commands.Cog):
         view.message = await interaction.original_response()
 
         # 사용자 응답 대기
+        if os.getenv("E2E_UI_AUTOPILOT") == "TRUE":
+            view.stop()
+            await interaction.followup.send("[E2E] 스킬 덱 UI 자동화 스킵", ephemeral=True)
+            return
         await view.wait()
 
         # 저장 처리
@@ -327,6 +473,85 @@ class DungeonCommand(commands.Cog):
 
             # 유저 객체에 덱 로드
             await SkillDeckService.load_deck_to_user(user)
+
+    @requires_account()
+    @app_commands.command(
+        name="궁극기설정",
+        description="궁극기 슬롯을 설정합니다 (수동/자동은 스킬별 고정)"
+    )
+    @app_commands.guilds(*GUILD_IDS)
+    @app_commands.describe(
+        skill_id="장착할 궁극기 스킬 ID (해제: 0)"
+    )
+    async def configure_ultimate(
+        self,
+        interaction: discord.Interaction,
+        skill_id: int | None = None,
+    ):
+        if is_in_combat(interaction.user.id):
+            await interaction.response.send_message(
+                "⚠️ 전투 중에는 궁극기 설정을 변경할 수 없습니다.",
+                ephemeral=True
+            )
+            return
+
+        user: User = await find_account_by_discordid(interaction.user.id)
+        if not user:
+            await interaction.response.send_message(
+                "등록된 계정이 없습니다. `/등록`을 먼저 해주세요.",
+                ephemeral=True
+            )
+            return
+
+        await load_ultimate_to_user(user)
+
+        updated_fields = []
+
+        if skill_id is not None:
+            if skill_id != 0 and not is_ultimate_skill(skill_id):
+                await interaction.response.send_message(
+                    "⚠️ 궁극기 스킬 ID만 장착할 수 있습니다.",
+                    ephemeral=True
+                )
+                return
+
+            if skill_id != 0:
+                owned_skills = await SkillOwnershipService.get_all_owned_skills(user)
+                owned_ids = {owned.skill_id for owned in owned_skills}
+                if skill_id not in owned_ids:
+                    await interaction.response.send_message(
+                        "⚠️ 보유하지 않은 궁극기는 장착할 수 없습니다.",
+                        ephemeral=True
+                    )
+                    return
+
+            ok = await set_ultimate_skill(user, skill_id)
+            if not ok:
+                await interaction.response.send_message(
+                    "⚠️ 궁극기 슬롯 저장에 실패했습니다. (테이블 미생성 가능)",
+                    ephemeral=True
+                )
+                return
+            updated_fields.append(f"궁극기 슬롯: `{skill_id}`")
+
+        await load_ultimate_to_user(user)
+        mode_value = get_ultimate_mode_for_skill(user.equipped_ultimate_skill)
+        mode_name = "수동" if mode_value == "manual" else "자동"
+
+        if not updated_fields:
+            msg = (
+                "현재 궁극기 설정\n"
+                f"- 슬롯: `{user.equipped_ultimate_skill}`\n"
+                f"- 발동 정책: `{mode_name}` (스킬 고정)"
+            )
+        else:
+            msg = (
+                "궁극기 설정이 업데이트되었습니다.\n"
+                + "\n".join(f"- {line}" for line in updated_fields)
+                + f"\n\n현재 설정\n- 슬롯: `{user.equipped_ultimate_skill}`\n- 발동 정책: `{mode_name}` (스킬 고정)"
+            )
+
+        await interaction.response.send_message(msg, ephemeral=True)
 
     @requires_account()
     @app_commands.command(

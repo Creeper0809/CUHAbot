@@ -2,6 +2,7 @@
 유저 관련 명령어 (우편, 업적 등)
 """
 import logging
+import os
 from typing import Optional
 
 import discord
@@ -150,6 +151,8 @@ class UserCommand(commands.Cog):
                         reward_received.append(f"✨ 경험치 +{reward['exp']}")
                     if reward.get("gold"):
                         reward_received.append(f"💰 골드 +{reward['gold']}")
+                    if reward.get("items"):
+                        reward_received.append(f"🎁 아이템 {len(reward['items'])}개")
 
                     embed.add_field(
                         name="✅ 보상 수령 완료",
@@ -187,7 +190,7 @@ class UserCommand(commands.Cog):
         try:
             reward = await MailService.claim_all_rewards(user.id)
 
-            if reward["exp"] == 0 and reward["gold"] == 0:
+            if reward["exp"] == 0 and reward["gold"] == 0 and not reward["items"]:
                 await interaction.response.send_message(
                     "📭 수령할 보상이 없습니다.",
                     ephemeral=True
@@ -347,6 +350,9 @@ class UserCommand(commands.Cog):
         # 메시지 전송 및 View에 메시지 참조 저장
         message = await interaction.followup.send(embed=embed, view=view, ephemeral=True)
         view.message = message
+
+        if os.getenv("E2E_UI_AUTOPILOT") == "TRUE":
+            await view.e2e_autopilot(interaction)
 
 
 async def setup(bot: commands.Bot):

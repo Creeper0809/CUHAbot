@@ -21,6 +21,7 @@ from service.dungeon.combat_events import (
     HitCalculationEvent,
 )
 from service.dungeon.damage_pipeline import process_incoming_damage
+from service.dungeon.status import has_curse_effect
 
 if TYPE_CHECKING:
     from service.dungeon.combat_context import CombatContext
@@ -48,6 +49,7 @@ class AttackComponent(SkillComponent):
         self.hit_count = 1
         self.is_physical = True
         self.is_aoe = False
+        self.target_type = "single"
 
     def apply_config(self, config, skill_name, priority=0):
         super().apply_config(config, skill_name, priority)
@@ -55,7 +57,13 @@ class AttackComponent(SkillComponent):
         self.ap_ratio = config.get("ap_ratio", 0.0)
         self.hit_count = config.get("hit_count", 1)
         self.is_physical = config.get("is_physical", True)
-        self.is_aoe = config.get("aoe", False)
+        self.target_type = str(config.get("target", "single")).lower()
+        self.is_aoe = bool(config.get("aoe", False)) or self.target_type in {
+            "all",
+            "all_enemies",
+            "all_enemy",
+            "enemies",
+        }
 
         # 레거시 호환: ad_ratio/ap_ratio 둘 다 없으면 damage를 ad_ratio로 사용
         if self.ad_ratio == 0.0 and self.ap_ratio == 0.0:
@@ -146,13 +154,28 @@ class AttackComponent(SkillComponent):
             # 흡혈 로그
             hit_logs.extend(dealt_event.logs)
 
+            # 패시브 흡혈 (장비 + 패시브 스킬의 lifesteal 스탯)
+            lifesteal_total = 0
+            passive_lifesteal = self._get_passive_lifesteal(attacker)
+            if passive_lifesteal > 0 and event.actual_damage > 0:
+                max_hp = attacker_stat.get(UserStatEnum.HP, attacker.hp)
+                heal = int(event.actual_damage * passive_lifesteal / 100)
+                if has_curse_effect(attacker):
+                    heal = heal // 2
+                old_hp = attacker.now_hp
+                attacker.now_hp = min(attacker.now_hp + heal, max_hp)
+                actual = attacker.now_hp - old_hp
+                if actual > 0:
+                    lifesteal_total += actual
+
             # 공격 로그
             crit_text = " 💥" if calc_event.is_critical else ""
             attr_text = self._get_attribute_text(attr_mult)
             dmg_display = event.actual_damage if not event.was_immune else 0
+            lifesteal_text = f" 💚흡혈 +{lifesteal_total}HP" if lifesteal_total > 0 else ""
             hit_logs.append(
                 f"⚔️ **{attacker.get_name()}** 「{self.skill_name}」 → "
-                f"**{target.get_name()}**에게 {dmg_display} 데미지! {crit_text}{attr_text}"
+                f"**{target.get_name()}**에게 {dmg_display} 데미지! {crit_text}{attr_text}{lifesteal_text}"
             )
 
             # 반사 데미지
@@ -251,6 +274,31 @@ class AttackComponent(SkillComponent):
             if skill and skill.is_passive:
                 passives.append(skill)
         return passives
+
+    def _get_passive_lifesteal(self, attacker) -> float:
+        """
+        장비 + 패시브 스킬에서 흡혈 스탯 추출
+
+        Returns:
+            흡혈 비율 (예: 10.0 = 10%)
+        """
+        total_lifesteal = 0.0
+
+        if hasattr(attacker, '_equipment_components_cache'):
+            components = attacker._equipment_components_cache
+            for comp in components:
+                if getattr(comp, '_tag', '') != "passive_buff":
+                    continue
+                lifesteal = getattr(comp, 'lifesteal', 0.0)
+                if lifesteal:
+                    total_lifesteal += lifesteal
+
+        if hasattr(attacker, 'equipped_skill'):
+            from service.dungeon.skill import get_passive_stat_bonuses
+            passive_bonuses = get_passive_stat_bonuses(attacker.equipped_skill)
+            total_lifesteal += passive_bonuses.get('lifesteal', 0.0)
+
+        return total_lifesteal
 
     def _get_defense(self, target_stat, target) -> int:
         """방어력 가져오기"""

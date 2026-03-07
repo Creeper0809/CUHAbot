@@ -2,13 +2,33 @@
 스탯 컴포넌트: BuffComponent, DebuffComponent, PassiveBuffComponent,
               TurnScalingComponent, DebuffReductionComponent
 """
+import random
+
 from models import UserStatEnum
 from service.dungeon.components.base import SkillComponent, register_skill_with_tag
+from service.dungeon.components.targeting_utils import resolve_targets
 from service.dungeon.status import (
-    AttackBuff, DefenseBuff, SpeedBuff,
+    AttackBuff, DefenseBuff, SpeedBuff, AccuracyBuff, EvasionBuff,
+    HealReceivedBuff, InvulnerabilityBuff,
 )
 from service.player.stat_synergy_combat import get_buff_duration_bonus
 from config import COMBAT
+
+
+def _normalize_ratio(value: float | int | None, default: float = 0.0) -> float:
+    if value is None:
+        return default
+    ratio = float(value)
+    if abs(ratio) > 1:
+        ratio /= 100.0
+    return ratio
+
+
+def _scaled_delta(base_value: int, modifier: float) -> int:
+    # Ratio-style modifiers (-1.0 ~ 1.0) scale with stat, otherwise treated as absolute.
+    if abs(modifier) <= 1:
+        return int(base_value * modifier)
+    return int(modifier)
 
 
 @register_skill_with_tag("buff")
@@ -31,50 +51,101 @@ class BuffComponent(SkillComponent):
         self.defense_mod = 0
         self.speed_mod = 0
         self.crit_rate_mod = 0
+        self.target_type = "self"
+        self.stat_key = ""
+        self.stat_value = 0.0
 
     def apply_config(self, config, skill_name, priority=0):
         super().apply_config(config, skill_name, priority)
         self.duration = config.get("duration", 3)
-        self.attack_mod = config.get("attack", 0)
-        self.defense_mod = config.get("defense", 0)
-        self.speed_mod = config.get("speed", 0)
-        self.crit_rate_mod = config.get("crit_rate", 0)
+        self.attack_mod = _normalize_ratio(config.get("attack", 0))
+        self.defense_mod = _normalize_ratio(config.get("defense", 0))
+        self.speed_mod = _normalize_ratio(config.get("speed", 0))
+        self.crit_rate_mod = _normalize_ratio(config.get("crit_rate", 0))
+        self.target_type = config.get("target", "self")
+        self.stat_key = str(config.get("stat", "")).lower().strip()
+        self.stat_value = _normalize_ratio(config.get("value", 0.0))
+
+        # New-format mapping: {"stat":"defense","value":0.15}
+        if self.stat_key in {"attack", "defense", "speed"} and self.stat_value != 0:
+            if self.stat_key == "attack":
+                self.attack_mod = self.stat_value
+            elif self.stat_key == "defense":
+                self.defense_mod = self.stat_value
+            elif self.stat_key == "speed":
+                self.speed_mod = self.stat_value
+        elif self.stat_key == "all":
+            self.attack_mod = self.stat_value
+            self.defense_mod = self.stat_value
+            self.speed_mod = self.stat_value
+        elif self.stat_key == "random_all":
+            # Random +/- for each stat, used by some boss gimmicks.
+            amt = abs(self.stat_value)
+            self.attack_mod = random.uniform(-amt, amt)
+            self.defense_mod = random.uniform(-amt, amt)
+            self.speed_mod = random.uniform(-amt, amt)
+        elif self.stat_key == "random":
+            amt = self.stat_value
+            chosen = random.choice(["attack", "defense", "speed"])
+            if chosen == "attack":
+                self.attack_mod = amt
+            elif chosen == "defense":
+                self.defense_mod = amt
+            else:
+                self.speed_mod = amt
 
     def on_turn(self, attacker, target):
-        effects = []
-        stat = attacker.get_stat()
-
-        # 스탯 시너지: 버프 지속 +N턴 (균형의 달인)
-        duration = self.duration + get_buff_duration_bonus(attacker)
-
-        if self.attack_mod != 0:
-            amount = int(stat[UserStatEnum.ATTACK] * self.attack_mod)
-            buff = AttackBuff()
-            buff.amount = amount
-            buff.duration = duration
-            attacker.status.append(buff)
-            effects.append(f"공격력 +{amount}")
-
-        if self.defense_mod != 0:
-            amount = int(stat[UserStatEnum.DEFENSE] * self.defense_mod)
-            buff = DefenseBuff()
-            buff.amount = amount
-            buff.duration = duration
-            attacker.status.append(buff)
-            effects.append(f"방어력 +{amount}")
-
-        if self.speed_mod != 0:
-            amount = int(stat[UserStatEnum.SPEED] * self.speed_mod)
-            buff = SpeedBuff()
-            buff.amount = amount
-            buff.duration = duration
-            attacker.status.append(buff)
-            effects.append(f"속도 +{amount}")
-
-        if not effects:
+        targets = resolve_targets(attacker, target, self.target_type)
+        if not targets:
             return ""
 
-        return f"✨ **{attacker.get_name()}** 「{self.skill_name}」 → {', '.join(effects)} ({duration}턴)"
+        duration = self.duration + get_buff_duration_bonus(attacker)
+        per_target_logs = []
+
+        for each in targets:
+            each_stat = each.get_stat()
+            effects = []
+
+            if self.attack_mod != 0:
+                amount = _scaled_delta(each_stat[UserStatEnum.ATTACK], self.attack_mod)
+                buff = AttackBuff()
+                buff.amount = amount
+                buff.duration = duration
+                each.status.append(buff)
+                effects.append(f"공격력 {amount:+}")
+
+            if self.defense_mod != 0:
+                amount = _scaled_delta(each_stat[UserStatEnum.DEFENSE], self.defense_mod)
+                buff = DefenseBuff()
+                buff.amount = amount
+                buff.duration = duration
+                each.status.append(buff)
+                effects.append(f"방어력 {amount:+}")
+
+            if self.speed_mod != 0:
+                amount = _scaled_delta(each_stat[UserStatEnum.SPEED], self.speed_mod)
+                buff = SpeedBuff()
+                buff.amount = amount
+                buff.duration = duration
+                each.status.append(buff)
+                effects.append(f"속도 {amount:+}")
+
+            if self.stat_key in {"invincible", "invulnerability"}:
+                invul = InvulnerabilityBuff()
+                invul.duration = duration
+                each.status.append(invul)
+                effects.append("무적")
+
+            if effects:
+                per_target_logs.append(f"**{each.get_name()}**: {', '.join(effects)}")
+
+        if not per_target_logs:
+            return ""
+
+        return (
+            f"✨ **{attacker.get_name()}** 「{self.skill_name}」 ({duration}턴)\n"
+            + "\n".join(per_target_logs)
+        )
 
 
 @register_skill_with_tag("debuff")
@@ -87,49 +158,122 @@ class DebuffComponent(SkillComponent):
         self.attack_mod = 0
         self.defense_mod = 0
         self.speed_mod = 0
+        self.target_type = "single"
+        self.stat_key = ""
+        self.stat_value = 0.0
 
     def apply_config(self, config, skill_name, priority=0):
         super().apply_config(config, skill_name, priority)
         self.duration = config.get("duration", 3)
-        self.attack_mod = config.get("attack", 0)
-        self.defense_mod = config.get("defense", 0)
-        self.speed_mod = config.get("speed", 0)
+        self.attack_mod = _normalize_ratio(config.get("attack", 0))
+        self.defense_mod = _normalize_ratio(config.get("defense", 0))
+        self.speed_mod = _normalize_ratio(config.get("speed", 0))
+        self.target_type = config.get("target", "single")
+        self.stat_key = str(config.get("stat", "")).lower().strip()
+        self.stat_value = _normalize_ratio(config.get("value", 0.0))
+
+        if self.stat_key in {"attack", "defense", "speed"} and self.stat_value != 0:
+            if self.stat_key == "attack":
+                self.attack_mod = self.stat_value
+            elif self.stat_key == "defense":
+                self.defense_mod = self.stat_value
+            else:
+                self.speed_mod = self.stat_value
+        elif self.stat_key in {"all", "all_debuffs"}:
+            value = self.stat_value if self.stat_value != 0 else -0.15
+            self.attack_mod = value
+            self.defense_mod = value
+            self.speed_mod = value
+        elif self.stat_key == "random":
+            value = self.stat_value if self.stat_value != 0 else -0.15
+            chosen = random.choice(["attack", "defense", "speed"])
+            if chosen == "attack":
+                self.attack_mod = value
+            elif chosen == "defense":
+                self.defense_mod = value
+            else:
+                self.speed_mod = value
+        elif self.stat_key == "random_all":
+            value = abs(self.stat_value if self.stat_value != 0 else 0.15)
+            self.attack_mod = random.uniform(-value, value)
+            self.defense_mod = random.uniform(-value, value)
+            self.speed_mod = random.uniform(-value, value)
 
     def on_turn(self, attacker, target):
-        effects = []
-        target_stat = target.get_stat()
-
-        if self.attack_mod != 0:
-            amount = int(target_stat[UserStatEnum.ATTACK] * self.attack_mod)
-            buff = AttackBuff()
-            buff.amount = amount  # 음수값
-            buff.duration = self.duration
-            buff.is_debuff = True
-            target.status.append(buff)
-            effects.append(f"공격력 {amount}")
-
-        if self.defense_mod != 0:
-            amount = int(target_stat[UserStatEnum.DEFENSE] * self.defense_mod)
-            buff = DefenseBuff()
-            buff.amount = amount
-            buff.duration = self.duration
-            buff.is_debuff = True
-            target.status.append(buff)
-            effects.append(f"방어력 {amount}")
-
-        if self.speed_mod != 0:
-            amount = int(target_stat[UserStatEnum.SPEED] * self.speed_mod)
-            buff = SpeedBuff()
-            buff.amount = amount
-            buff.duration = self.duration
-            buff.is_debuff = True
-            target.status.append(buff)
-            effects.append(f"속도 {amount}")
-
-        if not effects:
+        targets = resolve_targets(attacker, target, self.target_type)
+        if not targets:
             return ""
 
-        return f"🔮 **{attacker.get_name()}** 「{self.skill_name}」 → **{target.get_name()}** {', '.join(effects)} ({self.duration}턴)"
+        per_target_logs = []
+        for each in targets:
+            each_stat = each.get_stat()
+            effects = []
+
+            if self.attack_mod != 0:
+                amount = _scaled_delta(each_stat[UserStatEnum.ATTACK], self.attack_mod)
+                buff = AttackBuff()
+                buff.amount = amount
+                buff.duration = self.duration
+                buff.is_debuff = True
+                each.status.append(buff)
+                effects.append(f"공격력 {amount:+}")
+
+            if self.defense_mod != 0:
+                amount = _scaled_delta(each_stat[UserStatEnum.DEFENSE], self.defense_mod)
+                buff = DefenseBuff()
+                buff.amount = amount
+                buff.duration = self.duration
+                buff.is_debuff = True
+                each.status.append(buff)
+                effects.append(f"방어력 {amount:+}")
+
+            if self.speed_mod != 0:
+                amount = _scaled_delta(each_stat[UserStatEnum.SPEED], self.speed_mod)
+                buff = SpeedBuff()
+                buff.amount = amount
+                buff.duration = self.duration
+                buff.is_debuff = True
+                each.status.append(buff)
+                effects.append(f"속도 {amount:+}")
+
+            if self.stat_key in {"accuracy", "evasion"}:
+                points = int(self.stat_value * 100) if abs(self.stat_value) <= 1 else int(self.stat_value)
+                if self.stat_key == "accuracy":
+                    buff = AccuracyBuff()
+                    buff.amount = points
+                    buff.duration = self.duration
+                    buff.is_debuff = True
+                    each.status.append(buff)
+                    effects.append(f"명중률 {points:+}%")
+                else:
+                    buff = EvasionBuff()
+                    buff.amount = points
+                    buff.duration = self.duration
+                    buff.is_debuff = True
+                    each.status.append(buff)
+                    effects.append(f"회피율 {points:+}%")
+
+            if self.stat_key in {"heal_received", "heal_block"}:
+                heal_mod = self.stat_value
+                if self.stat_key == "heal_block":
+                    heal_mod = -1.0 if heal_mod == 0 else heal_mod
+                hb = HealReceivedBuff()
+                hb.amount = heal_mod
+                hb.duration = self.duration
+                hb.is_debuff = True
+                each.status.append(hb)
+                effects.append(f"회복량 {int(heal_mod * 100):+}%")
+
+            if effects:
+                per_target_logs.append(f"**{each.get_name()}**: {', '.join(effects)}")
+
+        if not per_target_logs:
+            return ""
+
+        return (
+            f"🔮 **{attacker.get_name()}** 「{self.skill_name}」 ({self.duration}턴)\n"
+            + "\n".join(per_target_logs)
+        )
 
 
 @register_skill_with_tag("passive_buff")
@@ -236,6 +380,10 @@ class PassiveBuffComponent(SkillComponent):
             return ""
         self._applied_entities.add(entity_id)
 
+        def _format_percent(value: float) -> int:
+            """퍼센트 표기용 값 정규화 (0~1 범위는 비율, 1 초과는 이미 퍼센트)"""
+            return int(value * 100) if abs(value) <= 1 else int(value)
+
         effects = []
         if self.attack_percent != 0:
             effects.append(f"공격력 +{int(self.attack_percent * 100)}%")
@@ -254,7 +402,7 @@ class PassiveBuffComponent(SkillComponent):
         if self.crit_damage != 0:
             effects.append(f"치명타배율 +{int(self.crit_damage * 100)}%")
         if self.lifesteal != 0:
-            effects.append(f"흡혈 +{int(self.lifesteal * 100)}%")
+            effects.append(f"흡혈 +{_format_percent(self.lifesteal)}%")
         if self.drop_rate != 0:
             effects.append(f"드롭률 +{int(self.drop_rate * 100)}%")
 

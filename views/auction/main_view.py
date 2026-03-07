@@ -4,6 +4,7 @@
 4-tab navigation: 전체 리스팅, 내 등록, 내 입찰, 구매 주문
 """
 import discord
+import os
 from datetime import datetime
 from typing import Optional
 
@@ -590,6 +591,47 @@ class AuctionMainView(discord.ui.View):
                 button.style = discord.ButtonStyle.primary
             else:
                 button.style = discord.ButtonStyle.secondary
+
+    async def e2e_autopilot(self, interaction: discord.Interaction):
+        if os.getenv("E2E_UI_AUTOPILOT") != "TRUE":
+            return
+
+        # 탭 순회
+        for tab_name in ("my_listings", "my_bids", "buy_orders", "all"):
+            self.current_tab = tab_name
+            await self.refresh_data()
+            self._update_tab_buttons()
+            embed = self.create_embed()
+            await interaction.response.edit_message(embed=embed, view=self)
+
+        # 페이지 이동 (가능한 경우)
+        if self.current_tab == "all" or self.current_tab == "my_listings":
+            total_items = len(self.listings)
+        elif self.current_tab == "my_bids":
+            total_items = len(self.bids)
+        else:
+            total_items = len(self.buy_orders)
+
+        total_pages = max(1, (total_items + self.items_per_page - 1) // self.items_per_page)
+        if total_pages > 1:
+            self.page = 1
+            embed = self.create_embed()
+            await interaction.response.edit_message(embed=embed, view=self)
+            self.page = 0
+            embed = self.create_embed()
+            await interaction.response.edit_message(embed=embed, view=self)
+
+        # 새로고침
+        await self.refresh_data()
+        embed = self.create_embed()
+        await interaction.response.edit_message(embed=embed, view=self)
+
+        # 닫기
+        await interaction.response.edit_message(
+            content="경매장을 닫았습니다.",
+            embed=None,
+            view=None
+        )
 
     async def on_timeout(self):
         """타임아웃 처리"""

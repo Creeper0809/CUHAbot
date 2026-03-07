@@ -21,10 +21,16 @@ from config.drops import (
 from config.ui import EmbedColor, UIConfig, UI
 from config.encounter import EncounterConfig, ENCOUNTER
 from config.enhancement import EnhancementConfig, ENHANCEMENT
-from config.skills import SKILL_DECK_SIZE, DEFAULT_SKILL_SLOT, SkillIdConfig, SKILL_ID
+from config.skills import (
+    SKILL_DECK_SIZE, DEFAULT_SKILL_SLOT, SkillIdConfig, SKILL_ID,
+    ULTIMATE_AUTO_DAMAGE_SCALE, ULTIMATE_SKILL_IDS,
+)
 from config.shop import ShopConfig, SHOP, InventoryConfig, INVENTORY
 from config.leveling import LEVELING_EXP_TABLE, LEVELING_EXP_DEFAULT
-from config.synergies import SynergyTier, ATTRIBUTE_SYNERGIES, ComboSynergy, COMBO_SYNERGIES
+from config.synergies import (
+    SynergyTier, ATTRIBUTE_SYNERGIES, EFFECT_SYNERGIES,
+    ComboSynergy, COMBO_SYNERGIES,
+)
 from config.grade import (
     InstanceGrade, GradeInfo, GRADE_TABLE,
     GRADE_DROP_WEIGHTS, SpecialEffectDef, SPECIAL_EFFECT_POOL,
@@ -66,12 +72,13 @@ __all__ = [
     "EnhancementConfig", "ENHANCEMENT",
     # skills
     "SKILL_DECK_SIZE", "DEFAULT_SKILL_SLOT", "SkillIdConfig", "SKILL_ID",
+    "ULTIMATE_AUTO_DAMAGE_SCALE", "ULTIMATE_SKILL_IDS",
     # shop & inventory
     "ShopConfig", "SHOP", "InventoryConfig", "INVENTORY",
     # leveling
     "LEVELING_EXP_TABLE", "LEVELING_EXP_DEFAULT",
     # synergies
-    "SynergyTier", "ATTRIBUTE_SYNERGIES", "ComboSynergy", "COMBO_SYNERGIES",
+    "SynergyTier", "ATTRIBUTE_SYNERGIES", "EFFECT_SYNERGIES", "ComboSynergy", "COMBO_SYNERGIES",
     # multiplayer
     "PartyConfig", "PARTY",
     "WeeklyTowerConfig", "WEEKLY_TOWER",

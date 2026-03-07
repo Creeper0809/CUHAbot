@@ -47,13 +47,24 @@ def is_boss_floor(floor: int) -> bool:
     return floor % WEEKLY_TOWER.BOSS_FLOOR_INTERVAL == 0
 
 
+def _normalize_tower_start_floor(current_floor: int) -> int:
+    if 1 <= current_floor <= WEEKLY_TOWER.TOTAL_FLOORS:
+        return current_floor
+    return 1
+
+
 async def initialize_tower_session(user, session: DungeonSession):
     season_id = get_current_season()
     progress = await get_or_create_progress(user, season_id)
 
+    # 과거 버그/수동 수정으로 current_floor가 범위를 벗어난 경우 복구
+    if progress.current_floor > WEEKLY_TOWER.TOTAL_FLOORS or progress.current_floor < 0:
+        progress.current_floor = 0
+        await save_progress(progress)
+
     session.user = user
     session.content_type = ContentType.WEEKLY_TOWER
-    session.current_floor = progress.current_floor if progress.current_floor > 0 else 1
+    session.current_floor = _normalize_tower_start_floor(progress.current_floor)
     session.status = SessionType.IDLE
     session.tower_progress = progress
 
@@ -71,7 +82,7 @@ async def prepare_floor(session: DungeonSession, progress) -> None:
     session.monsters_defeated = 0
     session.items_found = []
 
-    session.current_floor = progress.current_floor if progress.current_floor > 0 else 1
+    session.current_floor = _normalize_tower_start_floor(progress.current_floor)
     dungeon_id = get_dungeon_for_floor(session.current_floor)
     session.dungeon = dungeon_cache.get(dungeon_id) or await Dungeon.get(id=dungeon_id)
 
@@ -212,7 +223,9 @@ async def _handle_tower_complete(session: DungeonSession, interaction: discord.I
     reward_result = await RewardService.apply_rewards(session.user, 50000, 100000)
     if getattr(session, "tower_progress", None):
         session.tower_progress.tower_coins += 50
-        await session.tower_progress.save()
+        # 완주 후에는 다음 도전을 1층부터 시작한다.
+        session.tower_progress.current_floor = 0
+        await save_progress(session.tower_progress)
 
     embed = discord.Embed(
         title="🎊 타워 정복!",

@@ -7,6 +7,7 @@ import discord
 import logging
 
 from exceptions import SpectatorError, InterventionError
+from service.session import ContentType
 
 logger = logging.getLogger(__name__)
 
@@ -27,6 +28,14 @@ class CombatNotificationView(discord.ui.View):
 
         # Phase 2: 거리에 따라 난입 버튼 커스터마이징
         self._customize_intervene_button()
+
+        # 레이드는 난입 버튼 비활성화
+        if session and getattr(session, "content_type", None) == ContentType.RAID:
+            if len(self.children) >= 2:
+                intervene_btn = self.children[1]
+                intervene_btn.disabled = True
+                intervene_btn.label = "🚫 레이드 난입 불가"
+                intervene_btn.style = discord.ButtonStyle.secondary
 
     def _customize_intervene_button(self):
         """
@@ -104,6 +113,13 @@ class CombatNotificationView(discord.ui.View):
         button: discord.ui.Button
     ):
         """난입하기 버튼 콜백"""
+        if self.session and getattr(self.session, "content_type", None) == ContentType.RAID:
+            await interaction.response.send_message(
+                "🚫 레이드 전투는 난입할 수 없습니다.",
+                ephemeral=True
+            )
+            return
+
         try:
             from service.intervention.intervention_service import InterventionService
 

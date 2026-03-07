@@ -45,6 +45,7 @@ class DamageComponent(SkillComponent):
         self.armor_penetration = 0.0
         self.is_physical = True
         self.is_aoe = False
+        self.target_type = "single"
 
     def apply_config(self, config, skill_name, priority=0):
         super().apply_config(config, skill_name, priority)
@@ -52,7 +53,13 @@ class DamageComponent(SkillComponent):
         self.crit_bonus = config.get("crit_bonus", 0.0)
         self.armor_penetration = config.get("armor_pen", 0.0)
         self.is_physical = config.get("is_physical", True)
-        self.is_aoe = config.get("aoe", False)
+        self.target_type = str(config.get("target", "single")).lower()
+        self.is_aoe = bool(config.get("aoe", False)) or self.target_type in {
+            "all",
+            "all_enemies",
+            "all_enemy",
+            "enemies",
+        }
 
         self.ad_ratio = config.get("ad_ratio", 0.0)
         self.ap_ratio = config.get("ap_ratio", 0.0)
@@ -83,6 +90,8 @@ class DamageComponent(SkillComponent):
 
         # 받는 피해 배율 (동결, 표식 등)
         damage_taken_mult = get_damage_taken_multiplier(target)
+        synergy_taken_mult = self._get_target_synergy_damage_taken_multiplier(target)
+        damage_taken_mult *= synergy_taken_mult
 
         # 스탯 시너지: HP 조건부 보너스 (광전사 등)
         hp_bonuses = get_hp_conditional_bonuses(attacker)
@@ -101,6 +110,10 @@ class DamageComponent(SkillComponent):
 
         combined_mult = attr_mult * synergy_mult * damage_taken_mult * hp_dmg_bonus * equipment_skill_mult
 
+        # 궁극기 자동 발동 페널티(수동 대비 약화) 적용
+        ultimate_scale = float(getattr(attacker, "_ultimate_damage_scale", 1.0) or 1.0)
+        combined_mult *= ultimate_scale
+
         # 스탯 시너지: 물리 치명타 데미지 보너스 (파괴자)
         crit_mult = DAMAGE.CRITICAL_MULTIPLIER
         if self.is_physical:
@@ -108,6 +121,7 @@ class DamageComponent(SkillComponent):
 
         hit_logs = []
         for _ in range(self.hit_count):
+            lifesteal_total = 0
             # 명중 판정 전: 이벤트 기반 컴포넌트 적용
             from service.dungeon.combat_events import HitCalculationEvent
 
@@ -198,7 +212,7 @@ class DamageComponent(SkillComponent):
                 attacker.now_hp = min(attacker.now_hp + heal, max_hp)
                 actual = attacker.now_hp - old_hp
                 if actual > 0:
-                    hit_logs.append(f"   🩸 광전사 흡혈: +{actual} HP")
+                    lifesteal_total += actual
 
             # 패시브 흡혈 (장비 + 패시브 스킬의 lifesteal 스탯)
             passive_lifesteal = self._get_passive_lifesteal(attacker)
@@ -209,15 +223,16 @@ class DamageComponent(SkillComponent):
                 attacker.now_hp = min(attacker.now_hp + heal, max_hp)
                 actual = attacker.now_hp - old_hp
                 if actual > 0:
-                    hit_logs.append(f"   💚 흡혈: +{actual} HP")
+                    lifesteal_total += actual
 
             crit_text = " 💥" if result.is_critical else ""
             attr_text = _get_attribute_effectiveness_text(attr_mult)
             dmg_type_text = _get_damage_type_text(self.is_physical, self.skill_attribute)
             dmg_display = event.actual_damage if not event.was_immune else 0
+            lifesteal_text = f" 💚흡혈 +{lifesteal_total}HP" if lifesteal_total > 0 else ""
             hit_logs.append(
                 f"⚔️ **{attacker.get_name()}** 「{self.skill_name}」 → "
-                f"**{target.get_name()}** {dmg_display}💥{crit_text}{attr_text}{dmg_type_text}"
+                f"**{target.get_name()}** {dmg_display}💥{crit_text}{attr_text}{dmg_type_text}{lifesteal_text}"
             )
 
             # 반사 데미지 처리
@@ -252,8 +267,10 @@ class DamageComponent(SkillComponent):
         # 2. 패시브 스킬에서 흡혈
         if hasattr(attacker, 'equipped_skill'):
             from service.dungeon.skill import get_passive_stat_bonuses
+            from service.skill.synergy_service import SynergyService
             passive_bonuses = get_passive_stat_bonuses(attacker.equipped_skill)
             total_lifesteal += passive_bonuses.get('lifesteal', 0.0)
+            total_lifesteal += SynergyService.calculate_lifesteal_bonus(attacker.equipped_skill)
 
         return total_lifesteal
 
@@ -291,8 +308,14 @@ class DamageComponent(SkillComponent):
             return 1.0
         from service.skill.synergy_service import SynergyService
         return SynergyService.calculate_damage_multiplier(
-            attacker.equipped_skill, self.skill_attribute
+            attacker.equipped_skill, self.skill_attribute, actor=attacker, current_skill=self.skill
         )
+
+    def _get_target_synergy_damage_taken_multiplier(self, target) -> float:
+        if not hasattr(target, 'equipped_skill'):
+            return 1.0
+        from service.skill.synergy_service import SynergyService
+        return SynergyService.calculate_damage_taken_multiplier(target.equipped_skill)
 
     def _calculate_hit(
         self, attack_power, defense, crit_rate, attribute_multiplier,
@@ -394,7 +417,10 @@ class LifestealComponent(SkillComponent):
 
         actual_heal = self._apply_lifesteal(attacker, total_damage, max_hp)
         if actual_heal > 0:
-            hit_logs.append(f"   💚 흡혈 회복: **+{actual_heal}** HP")
+            if hit_logs:
+                hit_logs[-1] += f" 💚흡혈 +{actual_heal}HP"
+            else:
+                hit_logs.append(f"💚 흡혈 회복: **+{actual_heal}** HP")
 
         return "\n".join(hit_logs)
 

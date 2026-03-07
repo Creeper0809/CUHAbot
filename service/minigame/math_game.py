@@ -6,7 +6,7 @@
 import discord
 import random
 import time
-from .base_minigame import BaseMinigame, MinigameResult
+from .base_minigame import BaseMinigame, MinigameResult, build_e2e_result, e2e_autopilot_enabled
 
 
 class MathModal(discord.ui.Modal, title="🔢 수학 게임"):
@@ -81,6 +81,8 @@ class MathGame(BaseMinigame):
 
     async def start(self, interaction: discord.Interaction, **kwargs) -> MinigameResult:
         """게임 시작"""
+        if e2e_autopilot_enabled():
+            return build_e2e_result()
         # 난이도별 문제 생성
         question, answer = self._generate_problem()
 

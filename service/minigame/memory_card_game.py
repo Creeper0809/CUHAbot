@@ -6,7 +6,7 @@
 import discord
 import random
 import time
-from .base_minigame import BaseMinigame, MinigameResult
+from .base_minigame import BaseMinigame, MinigameResult, build_e2e_result, e2e_autopilot_enabled
 
 
 class MemoryCardView(discord.ui.View):
@@ -198,6 +198,8 @@ class MemoryCardGame(BaseMinigame):
 
     async def start(self, interaction: discord.Interaction, **kwargs) -> MinigameResult:
         """게임 시작"""
+        if e2e_autopilot_enabled():
+            return build_e2e_result()
         pairs = self.pairs_by_difficulty.get(self.difficulty, 4)
 
         view = MemoryCardView(self, pairs)

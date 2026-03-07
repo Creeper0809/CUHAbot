@@ -239,16 +239,49 @@ class SkillDeckView(discord.ui.View):
 
     def _add_synergy_info(self, embed: discord.Embed) -> None:
         """시너지 요약 필드"""
+        from config import ATTRIBUTE_SYNERGIES, EFFECT_SYNERGIES
         from service.skill.synergy_service import SynergyService
         active_synergies = SynergyService.get_active_synergies(self.current_deck)
 
-        if active_synergies:
-            synergy_names = [s.name for s in active_synergies[:5]]
-            embed.add_field(
-                name=f"🔮 시너지 ({len(active_synergies)}개)",
-                value=", ".join(synergy_names) + ("..." if len(active_synergies) > 5 else ""),
-                inline=False
-            )
+        if not active_synergies:
+            return
+
+        attr_keys = set(ATTRIBUTE_SYNERGIES.keys())
+        effect_keys = set(EFFECT_SYNERGIES.keys())
+        attr_lines = []
+        effect_lines = []
+        combo_lines = []
+
+        for synergy in active_synergies:
+            if synergy.combo:
+                combo_lines.append(f"• {synergy.name}: {synergy.description}")
+                continue
+
+            key = synergy.name.split(" ×", 1)[0]
+            line = f"• {synergy.name}: {synergy.description}"
+            if key in attr_keys:
+                attr_lines.append(line)
+            elif key in effect_keys:
+                effect_lines.append(line)
+            else:
+                combo_lines.append(line)
+
+        summary_lines = []
+        if attr_lines:
+            summary_lines.append("**속성 밀도**")
+            summary_lines.extend(attr_lines[:4])
+        if effect_lines:
+            summary_lines.append("**효과 밀도**")
+            summary_lines.extend(effect_lines[:4])
+        if combo_lines:
+            summary_lines.append("**조합 시너지**")
+            summary_lines.extend(combo_lines[:4])
+
+        embed.add_field(
+            name=f"🔮 시너지 ({len(active_synergies)}개)",
+            value="\n".join(summary_lines[:14]),
+            inline=False,
+        )
 
     def _get_skill_name(self, skill_id: int) -> str:
         if skill_id == 0:

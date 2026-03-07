@@ -6,7 +6,7 @@
 import discord
 import random
 import time
-from .base_minigame import BaseMinigame, MinigameResult
+from .base_minigame import BaseMinigame, MinigameResult, build_e2e_result, e2e_autopilot_enabled
 
 
 class TypingModal(discord.ui.Modal, title="⚡ 타이핑 게임"):
@@ -130,6 +130,8 @@ class TypingGame(BaseMinigame):
 
     async def start(self, interaction: discord.Interaction, **kwargs) -> MinigameResult:
         """게임 시작"""
+        if e2e_autopilot_enabled():
+            return build_e2e_result()
         # 랜덤 문장 선택
         sentences = self.sentences.get(self.difficulty, self.sentences[1])
         target_text = random.choice(sentences)

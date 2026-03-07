@@ -96,14 +96,14 @@
 4007,시간 정지,active,debuff,없음,SS,적 행동 정지(3턴),시간의 수호자,셋업,"{""components"":[{""tag"":""debuff"",""duration"":3,""speed"":-1.0}]}",Y
 4008,존재의 붕괴,active,debuff,없음,SSS,적 전체 스탯-40%(5턴),차원의 파괴자,셋업,"{""components"":[{""tag"":""debuff"",""duration"":5,""attack"":-0.4,""defense"":-0.4,""speed"":-0.4}]}",Y
 4009,신의 저주,active,debuff,없음,신화,적 전체 스탯-50% 버프불가(10턴),태양신 라,저주/셋업,"{""components"":[{""tag"":""debuff"",""duration"":10,""attack"":-0.5,""defense"":-0.5,""speed"":-0.5}]}",Y
-5001,오버드라이브,active,ultimate,없음,A,전체 데미지2배(3턴) 슬롯소모,시련의 탑,피니셔,"{""components"":[{""tag"":""buff"",""duration"":3,""attack"":1.0}]}",Y
-5002,최후의 일격,active,ultimate,없음,A,물리(5.0AD)(HP비례강화) 슬롯소모,용의 둥지,물리/피니셔,"{""components"":[{""tag"":""attack"",""ad_ratio"":5.0}]}",Y
-5003,시간 정지 (궁),active,ultimate,없음,S,적 행동불가(3턴) 슬롯소모,창세의 관찰자,피니셔,"{""components"":[{""tag"":""debuff"",""duration"":3,""speed"":-1.0}]}",Y
-5004,세계의 종말,active,ultimate,없음,S,마법(4.0AP) 전체 전속성 슬롯소모,마왕 발더스,범위/피니셔,"{""components"":[{""tag"":""attack"",""ap_ratio"":4.0,""is_physical"":false}]}",Y
-5005,불사,active,ultimate,없음,S,HP1 이하 불가(전투) 슬롯소모,심판자,보호막/피니셔,"{""components"":[{""tag"":""shield"",""percent"":1.0,""duration"":99}]}",Y
-5006,시간 역전,active,ultimate,없음,SS,전투5턴전 복원(1회) 슬롯소모,시간의 수호자,피니셔,"{""components"":[{""tag"":""heal"",""percent"":1.0}]}",Y
-5007,차원 붕괴,active,ultimate,없음,SS,고정(0.5HP) 전체 슬롯소모,공허의 지배자,범위/피니셔,"{""components"":[{""tag"":""attack"",""ap_ratio"":5.0,""is_physical"":false}]}",Y
-5008,용신의 심판,active,ultimate,없음,SSS,마법(8.0AP) 전체 5속성 슬롯소모,용신 티아마트,범위/피니셔,"{""components"":[{""tag"":""attack"",""ap_ratio"":8.0,""is_physical"":false}]}",Y
+5001,오버드라이브,active,ultimate,없음,A,전체 데미지2배(3턴) 슬롯소모,시련의 탑,피니셔,"{""components"":[{""tag"":""buff"",""duration"":3,""attack"":1.0}],""ultimate"":{""mode"":""manual"",""cooldown"":3}}",Y
+5002,최후의 일격,active,ultimate,없음,A,물리(5.0AD)(HP비례강화) 슬롯소모,용의 둥지,물리/피니셔,"{""components"":[{""tag"":""attack"",""ad_ratio"":5.0}],""ultimate"":{""mode"":""manual"",""cooldown"":4}}",Y
+5003,시간 정지 (궁),active,ultimate,없음,S,적 행동불가(3턴) 슬롯소모,창세의 관찰자,피니셔,"{""components"":[{""tag"":""debuff"",""duration"":3,""speed"":-1.0}],""ultimate"":{""mode"":""auto"",""cooldown"":5}}",Y
+5004,세계의 종말,active,ultimate,없음,S,마법(4.0AP) 전체 전속성 슬롯소모,마왕 발더스,범위/피니셔,"{""components"":[{""tag"":""attack"",""ap_ratio"":4.0,""is_physical"":false}],""ultimate"":{""mode"":""auto"",""cooldown"":4}}",Y
+5005,불사,active,ultimate,없음,S,HP1 이하 불가(전투) 슬롯소모,심판자,보호막/피니셔,"{""components"":[{""tag"":""shield"",""percent"":1.0,""duration"":99}],""ultimate"":{""mode"":""manual"",""cooldown"":6}}",Y
+5006,시간 역전,active,ultimate,없음,SS,전투5턴전 복원(1회) 슬롯소모,시간의 수호자,피니셔,"{""components"":[{""tag"":""heal"",""percent"":1.0}],""ultimate"":{""mode"":""auto"",""cooldown"":5}}",Y
+5007,차원 붕괴,active,ultimate,없음,SS,고정(0.5HP) 전체 슬롯소모,공허의 지배자,범위/피니셔,"{""components"":[{""tag"":""attack"",""ap_ratio"":5.0,""is_physical"":false}],""ultimate"":{""mode"":""auto"",""cooldown"":5}}",Y
+5008,용신의 심판,active,ultimate,없음,SSS,마법(8.0AP) 전체 5속성 슬롯소모,용신 티아마트,범위/피니셔,"{""components"":[{""tag"":""attack"",""ap_ratio"":8.0,""is_physical"":false}],""ultimate"":{""mode"":""auto"",""cooldown"":6}}",Y
 5009,태양의 심판,active,ultimate,없음,신화,고정(0.8HP) 전체 자힐(100%) 슬롯소모,태양신 라,범위/피니셔,"{""components"":[{""tag"":""attack"",""ap_ratio"":10.0,""is_physical"":false},{""tag"":""heal"",""percent"":1.0}]}",Y
 5010,창세,active,ultimate,없음,신화,전투 재시작(자신유지 적리셋) 슬롯미소모,창조신의 그림자,피니셔,"{""components"":[{""tag"":""heal"",""percent"":1.0}]}",Y
 6001,날카로움,passive,combat,없음,D,공격력 +8%,상점,물리,"{""components"":[{""tag"":""passive_buff"",""attack_percent"":0.08}]}",Y

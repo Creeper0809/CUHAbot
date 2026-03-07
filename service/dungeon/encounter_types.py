@@ -4,6 +4,7 @@
 던전에서 발생할 수 있는 다양한 인카운터 유형을 정의합니다.
 """
 import asyncio
+import os
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
@@ -29,6 +30,10 @@ from service.economy.shop_service import ShopService
 
 if TYPE_CHECKING:
     from service.session import DungeonSession
+
+
+def _e2e_autopilot_enabled() -> bool:
+    return os.getenv("E2E_UI_AUTOPILOT") == "TRUE"
     from models import Monster
 
 
@@ -106,6 +111,10 @@ class TreasureEncounter(Encounter):
         interaction: discord.Interaction
     ) -> EncounterResult:
         """보물상자 열기"""
+        if _e2e_autopilot_enabled():
+            chest_emoji = {"normal": "📦", "silver": "🎁", "gold": "💎"}.get(self.chest_grade, "📦")
+            # 아이템 지급 로직은 아래에서 동일하게 수행됨
+            pass
         chest_item_map = {
             "normal": DROP.CHEST_ITEM_NORMAL_ID,
             "silver": DROP.CHEST_ITEM_SILVER_ID,
@@ -132,22 +141,23 @@ class TreasureEncounter(Encounter):
             except InventoryFullError:
                 item_name = "상자 (인벤토리 가득 참)"
 
-        # View 표시
-        view = TreasureView(
-            user=interaction.user,
-            chest_grade=self.chest_grade,
-            timeout=15
-        )
+        if not _e2e_autopilot_enabled():
+            # View 표시
+            view = TreasureView(
+                user=interaction.user,
+                chest_grade=self.chest_grade,
+                timeout=15
+            )
 
-        embed = view.create_embed(opened=False)
-        msg = await interaction.user.send(embed=embed, view=view)
-        view.message = msg
+            embed = view.create_embed(opened=False)
+            msg = await interaction.user.send(embed=embed, view=view)
+            view.message = msg
 
-        await view.wait()
+            await view.wait()
 
-        # 상자 열기 결과
-        result_embed = view.create_embed(opened=True, item_name=item_name)
-        await show_encounter_result(msg, result_embed, delay=2.5)
+            # 상자 열기 결과
+            result_embed = view.create_embed(opened=True, item_name=item_name)
+            await show_encounter_result(msg, result_embed, delay=2.5)
 
         chest_emoji = {"normal": "📦", "silver": "🎁", "gold": "💎"}.get(self.chest_grade, "📦")
 
@@ -223,38 +233,45 @@ class TrapEncounter(Encounter):
                 damage_taken=actual_damage
             )
 
-        # View 표시 (일반 함정)
-        view = TrapView(
-            user=interaction.user,
-            trap_name=trap_name,
-            damage=actual_damage,
-            timeout=3
-        )
+        if _e2e_autopilot_enabled():
+            escaped = True
+        else:
+            # View 표시 (일반 함정)
+            view = TrapView(
+                user=interaction.user,
+                trap_name=trap_name,
+                damage=actual_damage,
+                timeout=3
+            )
 
-        embed = view.create_embed(triggered=False)
-        msg = await interaction.user.send(embed=embed, view=view)
-        view.message = msg
+            embed = view.create_embed(triggered=False)
+            msg = await interaction.user.send(embed=embed, view=view)
+            view.message = msg
 
-        await view.wait()
+            await view.wait()
+            escaped = view.escaped
 
         # 회피 성공 시 피해 감소
-        if view.escaped:
+        if escaped:
             actual_damage = actual_damage // 2  # 피해 절반
-            result_embed = view.create_escaped_embed()
-            if actual_damage > 0:
-                result_embed.add_field(
-                    name="부분 피해",
-                    value=f"완전히 피하지는 못했다... -{actual_damage} HP",
-                    inline=False
-                )
+            if not _e2e_autopilot_enabled():
+                result_embed = view.create_escaped_embed()
+                if actual_damage > 0:
+                    result_embed.add_field(
+                        name="부분 피해",
+                        value=f"완전히 피하지는 못했다... -{actual_damage} HP",
+                        inline=False
+                    )
         else:
-            result_embed = view.create_embed(triggered=True)
+            if not _e2e_autopilot_enabled():
+                result_embed = view.create_embed(triggered=True)
 
         user.now_hp -= actual_damage
 
-        await show_encounter_result(msg, result_embed, delay=2.0)
+        if not _e2e_autopilot_enabled():
+            await show_encounter_result(msg, result_embed, delay=2.0)
 
-        escape_msg = " *(회피!)*" if view.escaped else ""
+        escape_msg = " *(회피!)*" if escaped else ""
         detect_msg = f" *(피해 -{int(damage_reduction*100)}%)*" if damage_reduction > 0 else ""
 
         return EncounterResult(
@@ -316,22 +333,23 @@ class RandomEventEncounter(Encounter):
         is_blessing = random.random() < 0.6  # 60% 확률로 축복
         event_type = "blessing" if is_blessing else "curse"
 
-        # View 표시
-        view = RandomEventView(
-            user=interaction.user,
-            is_blessing=is_blessing,
-            event_type=event_type,
-            timeout=10
-        )
+        if not _e2e_autopilot_enabled():
+            # View 표시
+            view = RandomEventView(
+                user=interaction.user,
+                is_blessing=is_blessing,
+                event_type=event_type,
+                timeout=10
+            )
 
-        embed = view.create_embed(before=True)
-        msg = await interaction.user.send(embed=embed, view=view)
-        view.message = msg
+            embed = view.create_embed(before=True)
+            msg = await interaction.user.send(embed=embed, view=view)
+            view.message = msg
 
-        await view.wait()
+            await view.wait()
 
-        # 결과 임베드
-        result_embed = view.create_embed(before=False)
+            # 결과 임베드
+            result_embed = view.create_embed(before=False)
 
         if is_blessing:
             # 축복 효과 (HP 회복 또는 버프)
@@ -350,7 +368,8 @@ class RandomEventEncounter(Encounter):
                     inline=False
                 )
 
-                await show_encounter_result(msg, result_embed, delay=2.5)
+                if not _e2e_autopilot_enabled():
+                    await show_encounter_result(msg, result_embed, delay=2.5)
 
                 return EncounterResult(
                     encounter_type=self.encounter_type,
@@ -366,7 +385,8 @@ class RandomEventEncounter(Encounter):
                     inline=False
                 )
 
-                await show_encounter_result(msg, result_embed, delay=2.5)
+                if not _e2e_autopilot_enabled():
+                    await show_encounter_result(msg, result_embed, delay=2.5)
 
                 return EncounterResult(
                     encounter_type=self.encounter_type,
@@ -384,7 +404,8 @@ class RandomEventEncounter(Encounter):
                     inline=False
                 )
 
-                await show_encounter_result(msg, result_embed, delay=2.5)
+                if not _e2e_autopilot_enabled():
+                    await show_encounter_result(msg, result_embed, delay=2.5)
 
                 return EncounterResult(
                     encounter_type=self.encounter_type,
@@ -410,7 +431,8 @@ class RandomEventEncounter(Encounter):
                     inline=False
                 )
 
-                await show_encounter_result(msg, result_embed, delay=2.5)
+                if not _e2e_autopilot_enabled():
+                    await show_encounter_result(msg, result_embed, delay=2.5)
 
                 return EncounterResult(
                     encounter_type=self.encounter_type,
@@ -429,7 +451,8 @@ class RandomEventEncounter(Encounter):
                     inline=False
                 )
 
-                await show_encounter_result(msg, result_embed, delay=2.5)
+                if not _e2e_autopilot_enabled():
+                    await show_encounter_result(msg, result_embed, delay=2.5)
 
                 return EncounterResult(
                     encounter_type=self.encounter_type,
@@ -457,55 +480,57 @@ class NPCEncounter(Encounter):
 
         npc_type = random.choice(["merchant", "healer", "sage"])
 
-        # View 표시
-        view = NPCView(
-            user=interaction.user,
-            npc_type=npc_type,
-            timeout=15
-        )
+        if not _e2e_autopilot_enabled():
+            # View 표시
+            view = NPCView(
+                user=interaction.user,
+                npc_type=npc_type,
+                timeout=15
+            )
 
-        embed = view.create_embed(before=True)
-        msg = await interaction.user.send(embed=embed, view=view)
-        view.message = msg
+            embed = view.create_embed(before=True)
+            msg = await interaction.user.send(embed=embed, view=view)
+            view.message = msg
 
-        await view.wait()
+            await view.wait()
 
-        # 결과 임베드
-        result_embed = view.create_embed(before=False)
+            # 결과 임베드
+            result_embed = view.create_embed(before=False)
 
         if npc_type == "merchant":
             # 상인: 실제 상점 열기
             user_gold = await ShopService.get_user_gold(user)
 
-            # 상점 View 표시
-            shop_view = ShopView(
-                user=interaction.user,
-                db_user=user,
-                user_gold=user_gold,
-                shop_items=await ShopService.get_shop_items_for_display(
-                    dungeon_level=session.dungeon.require_level,
-                    dungeon_name=session.dungeon.name if session.dungeon else "",
-                ),
-                timeout=60,
-                dungeon_session=session
-            )
+            if not _e2e_autopilot_enabled():
+                # 상점 View 표시
+                shop_view = ShopView(
+                    user=interaction.user,
+                    db_user=user,
+                    user_gold=user_gold,
+                    shop_items=await ShopService.get_shop_items_for_display(
+                        dungeon_level=session.dungeon.require_level,
+                        dungeon_name=session.dungeon.name if session.dungeon else "",
+                    ),
+                    timeout=60,
+                    dungeon_session=session
+                )
 
-            shop_embed = shop_view.create_embed()
-            shop_msg = await interaction.user.send(embed=shop_embed, view=shop_view)
-            shop_view.message = shop_msg
+                shop_embed = shop_view.create_embed()
+                shop_msg = await interaction.user.send(embed=shop_embed, view=shop_view)
+                shop_view.message = shop_msg
 
-            # 상점 이용 대기
-            await shop_view.wait()
+                # 상점 이용 대기
+                await shop_view.wait()
 
-            # 상점 닫힌 후 결과 메시지
-            result_embed.description = "*\"좋은 거래였네, 친구!\"*"
-            result_embed.add_field(
-                name="🏪 상점 이용",
-                value="상인과의 거래가 끝났습니다.",
-                inline=False
-            )
+                # 상점 닫힌 후 결과 메시지
+                result_embed.description = "*\"좋은 거래였네, 친구!\"*"
+                result_embed.add_field(
+                    name="🏪 상점 이용",
+                    value="상인과의 거래가 끝났습니다.",
+                    inline=False
+                )
 
-            await show_encounter_result(msg, result_embed, delay=1.0)
+                await show_encounter_result(msg, result_embed, delay=1.0)
 
             return EncounterResult(
                 encounter_type=self.encounter_type,
@@ -526,7 +551,8 @@ class NPCEncounter(Encounter):
                 inline=False
             )
 
-            await show_encounter_result(msg, result_embed, delay=2.5)
+            if not _e2e_autopilot_enabled():
+                await show_encounter_result(msg, result_embed, delay=2.5)
 
             return EncounterResult(
                 encounter_type=self.encounter_type,
@@ -546,7 +572,8 @@ class NPCEncounter(Encounter):
                 inline=False
             )
 
-            await show_encounter_result(msg, result_embed, delay=2.5)
+            if not _e2e_autopilot_enabled():
+                await show_encounter_result(msg, result_embed, delay=2.5)
 
             return EncounterResult(
                 encounter_type=self.encounter_type,
@@ -582,17 +609,18 @@ class HiddenRoomEncounter(Encounter):
         heal_amount = int(max_hp * 0.15)
         actual_heal = min(heal_amount, max_hp - user.now_hp)
 
-        # View 표시
-        view = HiddenRoomView(
-            user=interaction.user,
-            timeout=15
-        )
+        if not _e2e_autopilot_enabled():
+            # View 표시
+            view = HiddenRoomView(
+                user=interaction.user,
+                timeout=15
+            )
 
-        embed = view.create_embed(before=True)
-        msg = await interaction.user.send(embed=embed, view=view)
-        view.message = msg
+            embed = view.create_embed(before=True)
+            msg = await interaction.user.send(embed=embed, view=view)
+            view.message = msg
 
-        await view.wait()
+            await view.wait()
 
         # 보상 적용
         session.total_gold += gold_gained
@@ -600,14 +628,15 @@ class HiddenRoomEncounter(Encounter):
         user.now_hp += actual_heal
 
         # 결과 표시
-        result_embed = view.create_embed(
-            before=False,
-            gold=gold_gained,
-            exp=exp_gained,
-            heal=actual_heal
-        )
+        if not _e2e_autopilot_enabled():
+            result_embed = view.create_embed(
+                before=False,
+                gold=gold_gained,
+                exp=exp_gained,
+                heal=actual_heal
+            )
 
-        await show_encounter_result(msg, result_embed, delay=3.0)
+            await show_encounter_result(msg, result_embed, delay=3.0)
 
         return EncounterResult(
             encounter_type=self.encounter_type,

@@ -4,6 +4,7 @@
 모든 미니게임은 이 클래스를 상속받아 구현합니다.
 """
 import discord
+import os
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Optional
@@ -93,3 +94,17 @@ class BaseMinigame(ABC):
             패널티 데미지
         """
         return int(boss_attack * 0.5)  # 보스 공격력의 50%
+
+
+def e2e_autopilot_enabled() -> bool:
+    return os.getenv("E2E_UI_AUTOPILOT") == "TRUE" or os.getenv("E2E_MINIGAME_AUTOPILOT") == "TRUE"
+
+
+def build_e2e_result() -> MinigameResult:
+    return MinigameResult(
+        success=True,
+        score=100,
+        time_taken=0.1,
+        bonus_damage=1.0,
+        message="E2E autopilot",
+    )
