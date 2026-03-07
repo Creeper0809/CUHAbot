@@ -49,6 +49,7 @@ class AttackComponent(SkillComponent):
         self.hit_count = 1
         self.is_physical = True
         self.is_aoe = False
+        self.target_type = "single"
 
     def apply_config(self, config, skill_name, priority=0):
         super().apply_config(config, skill_name, priority)
@@ -56,7 +57,13 @@ class AttackComponent(SkillComponent):
         self.ap_ratio = config.get("ap_ratio", 0.0)
         self.hit_count = config.get("hit_count", 1)
         self.is_physical = config.get("is_physical", True)
-        self.is_aoe = config.get("aoe", False)
+        self.target_type = str(config.get("target", "single")).lower()
+        self.is_aoe = bool(config.get("aoe", False)) or self.target_type in {
+            "all",
+            "all_enemies",
+            "all_enemy",
+            "enemies",
+        }
 
         # 레거시 호환: ad_ratio/ap_ratio 둘 다 없으면 damage를 ad_ratio로 사용
         if self.ad_ratio == 0.0 and self.ap_ratio == 0.0:

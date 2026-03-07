@@ -414,18 +414,18 @@
 - [ ] 타워 상점
 
 ### 6.2 레이드 던전 (3인)
-- [ ] 파티 매칭
-- [ ] 레이드 페이즈 시스템
+- [x] 파티 매칭
+- [x] 레이드 페이즈 시스템
 - [x] 레이드 상세 기획 문서 작성 - `docs/RaidDungeonDesign.md`
-- [ ] 8개 레이드 던전 구현
-  - [ ] 세계수의 뿌리 (Lv.30+)
-  - [ ] 마왕성 (Lv.40+)
-  - [ ] 창세의 균열 (Lv.50)
-  - [ ] 차원의 심장 (Lv.60+)
-  - [ ] 용신의 무덤 (Lv.70+)
-  - [ ] 죽음의 왕좌 (Lv.80+)
-  - [ ] 태양신의 궁전 (Lv.90+)
-  - [ ] 신들의 황혼 (Lv.100)
+- [x] 8개 레이드 던전 구현
+  - [x] 세계수의 뿌리 (Lv.30+)
+  - [x] 마왕성 (Lv.40+)
+  - [x] 창세의 균열 (Lv.50)
+  - [x] 차원의 심장 (Lv.60+)
+  - [x] 용신의 무덤 (Lv.70+)
+  - [x] 죽음의 왕좌 (Lv.80+)
+  - [x] 태양신의 궁전 (Lv.90+)
+  - [x] 신들의 황혼 (Lv.100)
 
 ### 6.3 궁극기 시스템
 - [x] 궁극기 슬롯 소모 규칙
@@ -449,9 +449,9 @@
 
 ### 6.6 패시브 스킬 시스템
 - [x] 전투 패시브 (공격/방어/속도/치명타/상태이상) - `PassiveBuffComponent`, `passive_regen`, `passive_turn_scaling`
-- [ ] 파밍 패시브 (경험치/드롭/골드)
-- [ ] 탐험 패시브 (이동속도/함정감지/숨겨진방)
-- [ ] 소셜 패시브 (파티 버프)
+- [x] 파밍 패시브 (경험치/드롭/골드) - `data/skills.csv`(6101~6108), `PassiveBuffComponent`
+- [x] 탐험 패시브 (이동속도/함정감지/숨겨진방) - `special_equipment_components.py`(`exploration_speed`, `trap_detection`)
+- [x] 소셜 패시브 (파티 버프) - `aura_passive_components.py`(`passive_aura_buff`)
 - [x] 특수 패시브 (부활/피흡) - `OnDeathReviveComponent`, `DamageReflectionComponent`
 - [x] 조건부 패시브 (HP 조건 등) - `ConditionalPassiveComponent`
 - [x] 방어 패시브 (면역/저항/반사/상태면역) - `defensive_passive_components.py`
@@ -530,7 +530,7 @@
 - [ ] PartyView (파티 관리)
 - [ ] AuctionView (옥션)
 - [ ] TowerView (주간 타워)
-- [ ] RaidLobbyView (레이드 대기)
+- [x] RaidLobbyView (레이드 대기)
 - [ ] SettingsView (설정)
 
 ### Embed 디자인
@@ -607,4 +607,4 @@
 
 ---
 
-*최종 업데이트: 2026-02-09 (Phase 3 완료, Phase 4 80% 완료, 패시브 Phase 2 완료 - 데미지 파이프라인/방어패시브/오라/부활/턴성장/디버프감소)*
+*최종 업데이트: 2026-02-16 (6.2 레이드 파티 매칭/로비 UI 포함 상태 갱신, 6.6 패시브 체크 반영)*

@@ -819,6 +819,11 @@ def _is_skill_aoe(skill) -> bool:
     for component in skill.components:
         if hasattr(component, 'is_aoe') and component.is_aoe:
             return True
+        target_type = str(
+            getattr(component, "target_type", getattr(component, "target", ""))
+        ).lower()
+        if target_type in {"all", "all_enemies", "all_enemy", "enemies"}:
+            return True
     return False
 
 

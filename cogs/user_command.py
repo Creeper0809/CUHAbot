@@ -150,6 +150,8 @@ class UserCommand(commands.Cog):
                         reward_received.append(f"✨ 경험치 +{reward['exp']}")
                     if reward.get("gold"):
                         reward_received.append(f"💰 골드 +{reward['gold']}")
+                    if reward.get("items"):
+                        reward_received.append(f"🎁 아이템 {len(reward['items'])}개")
 
                     embed.add_field(
                         name="✅ 보상 수령 완료",
@@ -187,7 +189,7 @@ class UserCommand(commands.Cog):
         try:
             reward = await MailService.claim_all_rewards(user.id)
 
-            if reward["exp"] == 0 and reward["gold"] == 0:
+            if reward["exp"] == 0 and reward["gold"] == 0 and not reward["items"]:
                 await interaction.response.send_message(
                     "📭 수령할 보상이 없습니다.",
                     ephemeral=True

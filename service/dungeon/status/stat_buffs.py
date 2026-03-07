@@ -90,6 +90,87 @@ class ApDefenseBuff(Buff):
         return "🌀"
 
 
+@register_buff_with_tag("accuracy")
+class AccuracyBuff(Buff):
+    def __init__(self):
+        super().__init__()
+        self.buff_type = "accuracy"
+
+    def apply_stat(self, stats: dict) -> None:
+        stats[UserStatEnum.ACCURACY] += self.amount
+
+    def get_description(self) -> str:
+        sign = "+" if self.amount > 0 else ""
+        return f"🎯 명중률 {sign}{self.amount}% ({self.duration}턴)"
+
+    def get_emoji(self) -> str:
+        return "🎯"
+
+
+@register_buff_with_tag("evasion")
+class EvasionBuff(Buff):
+    def __init__(self):
+        super().__init__()
+        self.buff_type = "evasion"
+
+    def apply_stat(self, stats: dict) -> None:
+        stats[UserStatEnum.EVASION] += self.amount
+
+    def get_description(self) -> str:
+        sign = "+" if self.amount > 0 else ""
+        return f"💨 회피율 {sign}{self.amount}% ({self.duration}턴)"
+
+    def get_emoji(self) -> str:
+        return "💨"
+
+
+@register_buff_with_tag("heal_received")
+class HealReceivedBuff(Buff):
+    """
+    Healing received modifier.
+
+    amount:
+    -0.5 => heals at 50%
+    -1.0 => heals blocked
+    """
+
+    def __init__(self):
+        super().__init__()
+        self.buff_type = "heal_received"
+        self.amount = 0.0
+        self.is_debuff = True
+
+    def apply_stat(self, stats: dict) -> None:
+        # Applied by heal component directly.
+        return
+
+    def get_description(self) -> str:
+        pct = int(self.amount * 100)
+        sign = "+" if pct > 0 else ""
+        return f"🚫 회복량 {sign}{pct}% ({self.duration}턴)"
+
+    def get_emoji(self) -> str:
+        return "🚫"
+
+
+@register_buff_with_tag("invulnerability")
+class InvulnerabilityBuff(Buff):
+    """Temporary invulnerability checked in damage_pipeline._has_invulnerability."""
+
+    def __init__(self):
+        super().__init__()
+        self.buff_type = "invulnerability"
+
+    def apply_stat(self, stats: dict) -> None:
+        return
+
+    def get_description(self) -> str:
+        return f"🛡️ 무적 ({self.duration}턴)"
+
+    def get_emoji(self) -> str:
+        return "🛡️"
+
+
 @register_buff_with_tag("shield")
 class ShieldBuff(Buff):
     """보호막: 데미지를 흡수"""

@@ -45,6 +45,7 @@ class DamageComponent(SkillComponent):
         self.armor_penetration = 0.0
         self.is_physical = True
         self.is_aoe = False
+        self.target_type = "single"
 
     def apply_config(self, config, skill_name, priority=0):
         super().apply_config(config, skill_name, priority)
@@ -52,7 +53,13 @@ class DamageComponent(SkillComponent):
         self.crit_bonus = config.get("crit_bonus", 0.0)
         self.armor_penetration = config.get("armor_pen", 0.0)
         self.is_physical = config.get("is_physical", True)
-        self.is_aoe = config.get("aoe", False)
+        self.target_type = str(config.get("target", "single")).lower()
+        self.is_aoe = bool(config.get("aoe", False)) or self.target_type in {
+            "all",
+            "all_enemies",
+            "all_enemy",
+            "enemies",
+        }
 
         self.ad_ratio = config.get("ad_ratio", 0.0)
         self.ap_ratio = config.get("ap_ratio", 0.0)

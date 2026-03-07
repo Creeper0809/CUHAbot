@@ -10,6 +10,8 @@ from typing import List, Dict, Any, Optional
 
 from models.mail import Mail, MailType
 from models.users import User
+from service.item.inventory_service import InventoryService
+from service.player.user_service import UserService
 from .exceptions import (
     MailNotFoundError,
     AlreadyClaimedError,
@@ -23,6 +25,86 @@ logger = logging.getLogger(__name__)
 
 class MailService:
     """우편 서비스"""
+
+    @staticmethod
+    def _safe_int(value: Any, default: int = 0) -> int:
+        try:
+            return int(value)
+        except (TypeError, ValueError):
+            return default
+
+    @staticmethod
+    def _normalize_item_rewards(items: Any) -> List[Dict[str, int]]:
+        """
+        아이템 보상 포맷 정규화.
+
+        Supported:
+        - [{"id": 3001, "quantity": 2}]
+        - [{"item_id": 3001, "count": 2}]
+        - [3001, 3002] (각 1개)
+        - {"id": 3001, "quantity": 2}
+        """
+        if not items:
+            return []
+
+        if isinstance(items, dict):
+            candidates = [items]
+        elif isinstance(items, list):
+            candidates = items
+        else:
+            return []
+
+        normalized: List[Dict[str, int]] = []
+        for entry in candidates:
+            if isinstance(entry, int):
+                item_id = entry
+                quantity = 1
+            elif isinstance(entry, dict):
+                item_id = MailService._safe_int(
+                    entry.get("id", entry.get("item_id")), default=0
+                )
+                quantity = MailService._safe_int(
+                    entry.get("quantity", entry.get("count", entry.get("qty", 1))),
+                    default=1,
+                )
+            else:
+                continue
+
+            if item_id <= 0 or quantity <= 0:
+                continue
+            normalized.append({"id": item_id, "quantity": quantity})
+
+        return normalized
+
+    @staticmethod
+    async def _apply_reward_to_user(user: User, reward: Dict[str, Any]) -> Dict[str, Any]:
+        """유저에게 보상 지급 (경험치/골드/아이템)."""
+        exp = max(0, MailService._safe_int(reward.get("exp", 0)))
+        gold = max(0, MailService._safe_int(reward.get("gold", 0)))
+        items = MailService._normalize_item_rewards(reward.get("items", []))
+
+        if exp > 0:
+            await UserService.add_experience(user, exp)
+            logger.debug(f"EXP reward: user_id={user.id}, exp={exp}")
+
+        if gold > 0:
+            user.gold += gold
+            logger.debug(f"Gold reward: user_id={user.id}, gold={gold}")
+
+        if items:
+            for item_reward in items:
+                await InventoryService.add_item(
+                    user,
+                    item_reward["id"],
+                    item_reward["quantity"],
+                )
+            logger.debug(f"Item reward: user_id={user.id}, items={items}")
+
+        # 경험치는 UserService가 저장하고, 골드는 여기서 저장한다.
+        if gold > 0:
+            await user.save()
+
+        return {"exp": exp, "gold": gold, "items": items}
 
     @staticmethod
     async def send_mail(
@@ -164,34 +246,17 @@ class MailService:
         if mail.is_expired:
             raise ExpiredMailError()
 
-        # 보상 지급
-        reward = mail.reward_config
+        reward = mail.reward_config or {}
         user = await User.get(id=user_id)
-
-        # 경험치 지급
-        if "exp" in reward and reward["exp"] > 0:
-            # TODO: 경험치 지급 로직 (level_up 이벤트 발행 포함)
-            logger.debug(f"EXP reward: user_id={user_id}, exp={reward['exp']}")
-
-        # 골드 지급
-        if "gold" in reward and reward["gold"] > 0:
-            user.gold += reward["gold"]
-            logger.debug(f"Gold reward: user_id={user_id}, gold={reward['gold']}")
-
-        # 아이템 지급
-        if "items" in reward and reward["items"]:
-            # TODO: 아이템 지급 로직
-            logger.debug(f"Item reward: user_id={user_id}, items={reward['items']}")
-
-        await user.save()
+        paid_reward = await MailService._apply_reward_to_user(user, reward)
 
         # 수령 완료 처리
         mail.is_claimed = True
         mail.is_read = True
         await mail.save()
 
-        logger.info(f"Reward claimed: mail_id={mail_id}, user_id={user_id}, reward={reward}")
-        return reward
+        logger.info(f"Reward claimed: mail_id={mail_id}, user_id={user_id}, reward={paid_reward}")
+        return paid_reward
 
     @staticmethod
     async def delete_mail(mail_id: int, user_id: int) -> None:
@@ -236,40 +301,22 @@ class MailService:
 
         total_reward = {"exp": 0, "gold": 0, "items": []}
         claimed_count = 0
+        user = await User.get(id=user_id)
 
         for mail in mails:
             if mail.is_expired:
                 continue
 
-            reward = mail.reward_config
-            total_reward["exp"] += reward.get("exp", 0)
-            total_reward["gold"] += reward.get("gold", 0)
-            total_reward["items"].extend(reward.get("items", []))
+            reward = mail.reward_config or {}
+            paid_reward = await MailService._apply_reward_to_user(user, reward)
+            total_reward["exp"] += paid_reward["exp"]
+            total_reward["gold"] += paid_reward["gold"]
+            total_reward["items"].extend(paid_reward["items"])
 
             mail.is_claimed = True
             mail.is_read = True
             await mail.save()
             claimed_count += 1
-
-        # 일괄 지급
-        if total_reward["exp"] > 0 or total_reward["gold"] > 0:
-            user = await User.get(id=user_id)
-
-            # 경험치
-            if total_reward["exp"] > 0:
-                # TODO: 경험치 지급 로직
-                pass
-
-            # 골드
-            if total_reward["gold"] > 0:
-                user.gold += total_reward["gold"]
-
-            # 아이템
-            if total_reward["items"]:
-                # TODO: 아이템 지급 로직
-                pass
-
-            await user.save()
 
         logger.info(
             f"All rewards claimed: user_id={user_id}, "

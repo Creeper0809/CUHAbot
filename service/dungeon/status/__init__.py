@@ -27,6 +27,10 @@ from service.dungeon.status.stat_buffs import (
     SpeedBuff,
     ApAttackBuff,
     ApDefenseBuff,
+    AccuracyBuff,
+    EvasionBuff,
+    HealReceivedBuff,
+    InvulnerabilityBuff,
     ShieldBuff,
 )
 
