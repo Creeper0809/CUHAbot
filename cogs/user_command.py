@@ -2,6 +2,7 @@
 유저 관련 명령어 (우편, 업적 등)
 """
 import logging
+import os
 from typing import Optional
 
 import discord
@@ -349,6 +350,9 @@ class UserCommand(commands.Cog):
         # 메시지 전송 및 View에 메시지 참조 저장
         message = await interaction.followup.send(embed=embed, view=view, ephemeral=True)
         view.message = message
+
+        if os.getenv("E2E_UI_AUTOPILOT") == "TRUE":
+            await view.e2e_autopilot(interaction)
 
 
 async def setup(bot: commands.Bot):

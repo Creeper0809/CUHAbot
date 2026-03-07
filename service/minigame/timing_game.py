@@ -8,7 +8,7 @@ import discord
 import time
 from discord.ui import View, Button
 
-from .base_minigame import BaseMinigame, MinigameResult
+from .base_minigame import BaseMinigame, MinigameResult, build_e2e_result, e2e_autopilot_enabled
 
 
 class TimingGameView(View):
@@ -50,6 +50,8 @@ class TimingGame(BaseMinigame):
 
     async def start(self, interaction: discord.Interaction, **kwargs) -> MinigameResult:
         """게임 시작"""
+        if e2e_autopilot_enabled():
+            return build_e2e_result()
         # 타겟 구간 설정 (랜덤 위치)
         import random
         target_start = random.randint(0, 100 - self.target_size)

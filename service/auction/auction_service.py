@@ -191,9 +191,12 @@ class AuctionService:
 
         # Transaction: is_locked 해제 + 상태 변경
         async with in_transaction() as conn:
-            if listing.inventory_item:
-                listing.inventory_item.is_locked = False
-                await listing.inventory_item.save(using_db=conn)
+            inventory_item = None
+            if listing.inventory_item_id:
+                inventory_item = await listing.inventory_item
+            if inventory_item:
+                inventory_item.is_locked = False
+                await inventory_item.save(using_db=conn)
 
             listing.status = AuctionStatus.CANCELLED
             await listing.save(using_db=conn)

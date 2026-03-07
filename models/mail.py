@@ -2,7 +2,7 @@
 우편 모델
 """
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from enum import Enum
 from tortoise import fields
 from tortoise.models import Model
@@ -66,12 +66,17 @@ class Mail(Model):
         Returns:
             만료 시각
         """
-        return datetime.now() + timedelta(days=days)
+        return datetime.now(timezone.utc) + timedelta(days=days)
 
     @property
     def is_expired(self) -> bool:
         """만료 여부"""
-        return datetime.now() > self.expires_at
+        expires_at = self.expires_at
+        if expires_at is None:
+            return False
+        if expires_at.tzinfo is None:
+            return datetime.now() > expires_at
+        return datetime.now(timezone.utc) > expires_at
 
     @property
     def has_reward(self) -> bool:

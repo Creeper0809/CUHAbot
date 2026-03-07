@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import discord
+import os
 
 from config import EmbedColor
 from service.tower.tower_service import is_boss_floor
@@ -14,6 +15,9 @@ class TowerEntryView(discord.ui.View):
         super().__init__(timeout=timeout)
         self.user = user
         self.action = None
+        if os.getenv("E2E_UI_AUTOPILOT") == "TRUE":
+            self.action = "enter"
+            self.stop()
 
     def create_embed(self, season_id: int, progress) -> discord.Embed:
         current_floor = progress.current_floor if progress.current_floor > 0 else 1
@@ -63,6 +67,10 @@ class TowerFloorClearView(discord.ui.View):
         self.user = user
         self.cleared_floor = cleared_floor
         self.action = None
+        if os.getenv("E2E_UI_AUTOPILOT") == "TRUE":
+            max_floors = int(os.getenv("E2E_TOWER_MAX_FLOORS") or 1)
+            self.action = "return" if self.cleared_floor >= max_floors else "next"
+            self.stop()
 
     def create_embed(self, db_user, reward_result, tower_coins: int) -> discord.Embed:
         next_floor = self.cleared_floor + 1

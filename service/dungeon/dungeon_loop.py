@@ -4,6 +4,7 @@
 던전 탐험의 전체 라이프사이클을 관리합니다.
 """
 import asyncio
+import os
 import logging
 from collections import deque
 
@@ -58,6 +59,13 @@ async def start_dungeon(session: DungeonSession, interaction: discord.Interactio
         session.user.now_hp = 1
 
     session.max_steps = _calculate_dungeon_steps(session.dungeon)
+    if os.getenv("E2E_DUNGEON_MAX_STEPS"):
+        try:
+            forced_steps = int(os.getenv("E2E_DUNGEON_MAX_STEPS") or 0)
+            if forced_steps > 0:
+                session.max_steps = forced_steps
+        except ValueError:
+            pass
     if session.content_type == ContentType.WEEKLY_TOWER:
         session.max_steps = 1
     elif session.content_type == ContentType.RAID:
@@ -92,7 +100,10 @@ async def start_dungeon(session: DungeonSession, interaction: discord.Interactio
     # DM 컨트롤 메시지 전송
     await _send_control_dm(session, interaction, event_queue)
 
-    await asyncio.sleep(COMBAT.MAIN_LOOP_DELAY)
+    if os.getenv("E2E_UI_AUTOPILOT") == "TRUE":
+        await asyncio.sleep(0.1)
+    else:
+        await asyncio.sleep(COMBAT.MAIN_LOOP_DELAY)
 
     # 메인 루프
     while not session.ended and session.user.now_hp > 0:
@@ -142,11 +153,14 @@ async def start_dungeon(session: DungeonSession, interaction: discord.Interactio
                         color=discord.Color.dark_grey()
                     )
 
-                    try:
-                        await interaction.user.send(embed=embed)
-                        logger.info(f"Sent phantom discovery to user {session.user_id}")
-                    except discord.Forbidden:
-                        pass  # DM 비활성 사용자
+                    if os.getenv("E2E_UI_AUTOPILOT") == "TRUE":
+                        logger.info("E2E autopilot enabled: skip phantom discovery DM")
+                    else:
+                        try:
+                            await interaction.user.send(embed=embed)
+                            logger.info(f"Sent phantom discovery to user {session.user_id}")
+                        except discord.Forbidden:
+                            pass  # DM 비활성 사용자
 
             except Exception as e:
                 logger.error(f"Failed to process phantom discovery: {e}", exc_info=True)
@@ -160,7 +174,10 @@ async def start_dungeon(session: DungeonSession, interaction: discord.Interactio
             return await _handle_dungeon_return(session, interaction, event_queue)
 
         await _update_dungeon_log(session, event_queue)
-        await asyncio.sleep(COMBAT.MAIN_LOOP_DELAY)
+        if os.getenv("E2E_UI_AUTOPILOT") == "TRUE":
+            await asyncio.sleep(0.1)
+        else:
+            await asyncio.sleep(COMBAT.MAIN_LOOP_DELAY)
 
     if session.user.now_hp <= 0:
         return await _handle_player_death(session, interaction, event_queue)
@@ -404,13 +421,16 @@ async def _send_dungeon_summary(session, interaction, result_type: str, reward_r
 
     try:
         await interaction.user.send(embed=embed)
-    except discord.Forbidden:
+    except (discord.Forbidden, discord.HTTPException):
         pass
 
 
 async def _send_control_dm(session, interaction, event_queue) -> None:
     """DM으로 던전 컨트롤 메시지 전송"""
     from service.dungeon.dungeon_ui import create_dungeon_embed
+
+    if os.getenv("E2E_UI_AUTOPILOT") == "TRUE":
+        return
 
     control_embed = create_dungeon_embed(session, event_queue)
     control_embed.add_field(

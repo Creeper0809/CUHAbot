@@ -1,4 +1,5 @@
 import discord
+import os
 from discord.ext import commands
 from discord import app_commands
 
@@ -673,6 +674,12 @@ class ServerAdminCammand(commands.Cog):
             return
 
         monster = monster_cache_by_id[monster_id].copy()
+        if os.getenv("E2E_UI_AUTOPILOT") == "TRUE":
+            try:
+                monster.hp = 1
+                monster.now_hp = 1
+            except Exception:
+                pass
 
         # HP 확인
         if target_user.now_hp <= 0:
@@ -686,9 +693,18 @@ class ServerAdminCammand(commands.Cog):
 
         # 전투/도망 선택 화면 표시
         from service.dungeon.encounter_processor import _ask_fight_or_flee
+        from service.session import DungeonSession, ContentType
+        from models.repos.static_cache import dungeon_cache
 
         monsters = [monster]
-        will_fight = await _ask_fight_or_flee(interaction, monsters)
+        temp_session = DungeonSession(
+            user_id=target_discord_id,
+            user=target_user,
+            dungeon=None,
+            allow_intervention=False,
+        )
+        temp_session.content_type = ContentType.NORMAL_DUNGEON
+        will_fight = await _ask_fight_or_flee(temp_session, interaction, monsters)
 
         if will_fight is None:
             await interaction.followup.send("아무 행동도 하지 않았습니다.", ephemeral=True)
@@ -723,10 +739,11 @@ class ServerAdminCammand(commands.Cog):
                 context.field_effect = create_field_effect(effect_type)
 
         # 임시 세션 생성 (디버그 전투용)
+        dummy_dungeon = next(iter(dungeon_cache.values()), None)
         debug_session = DungeonSession(
             user_id=target_discord_id,
             user=target_user,
-            dungeon=None,  # 디버그 전투는 던전 없음
+            dungeon=dummy_dungeon,
             allow_intervention=False  # 디버그 전투는 난입 불가
         )
 

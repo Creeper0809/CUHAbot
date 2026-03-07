@@ -4,6 +4,7 @@
 경매장 UI를 제공합니다.
 """
 import discord
+import os
 from discord import app_commands
 from discord.ext import commands
 
@@ -56,6 +57,9 @@ class AuctionCommand(commands.Cog):
         )
 
         view.message = await interaction.original_response()
+
+        if os.getenv("E2E_UI_AUTOPILOT") == "TRUE":
+            await view.e2e_autopilot(interaction)
 
 
 async def setup(bot: commands.Bot):

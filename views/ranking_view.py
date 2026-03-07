@@ -4,6 +4,7 @@
 플레이어 랭킹을 탭 기반으로 표시하는 UI를 제공합니다.
 """
 from typing import Optional
+import os
 
 import discord
 
@@ -241,6 +242,31 @@ class RankingView(discord.ui.View):
                 await self.message.edit(view=None)
             except discord.NotFound:
                 pass
+
+    async def e2e_autopilot(self, interaction: discord.Interaction):
+        if os.getenv("E2E_UI_AUTOPILOT") != "TRUE":
+            return
+
+        for tab_name in ("gold", "tower", "level"):
+            self.current_tab = tab_name
+            self.current_page = 0
+            self._update_tab_buttons()
+            embed = self.create_embed()
+            await interaction.response.edit_message(embed=embed, view=self)
+
+        # 페이지 이동
+        if self.current_tab == "level":
+            rankings = self.level_rankings
+        elif self.current_tab == "gold":
+            rankings = self.gold_rankings
+        else:
+            rankings = self.tower_rankings
+
+        total_pages = max(1, (len(rankings) + self.ITEMS_PER_PAGE - 1) // self.ITEMS_PER_PAGE)
+        if total_pages > 1:
+            self.current_page = 1
+            embed = self.create_embed()
+            await interaction.response.edit_message(embed=embed, view=self)
 
 
 class TabButton(discord.ui.Button):

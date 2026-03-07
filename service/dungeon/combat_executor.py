@@ -5,6 +5,7 @@
 """
 import asyncio
 import logging
+import os
 from collections import deque
 from typing import Union
 
@@ -156,7 +157,10 @@ async def execute_combat_context(session, interaction: discord.Interaction, cont
         # 최종 전투 결과 UI 업데이트 (리더 + 참가자들)
         await _ui_manager.send_final_combat_result(session, combat_message, user, context, context.combat_log)
 
-        await asyncio.sleep(COMBAT.COMBAT_END_DELAY)
+        if os.getenv("E2E_UI_AUTOPILOT") == "TRUE":
+            await asyncio.sleep(0.1)
+        else:
+            await asyncio.sleep(COMBAT.COMBAT_END_DELAY)
 
         return await process_combat_result_multi(session, context, turn_count)
 
@@ -289,7 +293,10 @@ async def _process_turn_multi(
             # 부활 발생 시 UI 업데이트
             if revived:
                 await _update_all_combat_messages(session, combat_message, user, context, combat_log)
-                await asyncio.sleep(COMBAT.TURN_PHASE_DELAY)
+                if os.getenv("E2E_UI_AUTOPILOT") == "TRUE":
+                    await asyncio.sleep(0.05)
+                else:
+                    await asyncio.sleep(COMBAT.TURN_PHASE_DELAY)
 
             # 부활 후에도 모두 죽었으면 전투 종료
             if _all_players_dead(user, session):
@@ -318,7 +325,10 @@ async def _process_turn_multi(
             context.consume_gauge(actor)
             # 행동하지 못할 때는 지속시간 감소하지 않음 (행동 후에만 감소)
             await _update_all_combat_messages(session, combat_message, user, context, combat_log)
-            await asyncio.sleep(COMBAT.TURN_PHASE_DELAY)
+            if os.getenv("E2E_UI_AUTOPILOT") == "TRUE":
+                await asyncio.sleep(0.05)
+            else:
+                await asyncio.sleep(COMBAT.TURN_PHASE_DELAY)
 
             if context.check_and_advance_round():
                 combat_log.append(f"━━━ 🌟 **라운드 {context.round_number}** ━━━")
@@ -467,7 +477,10 @@ async def _process_turn_multi(
         if session:
             await SpectatorService.update_all_spectators(session)
 
-        await asyncio.sleep(COMBAT.TURN_PHASE_DELAY)
+        if os.getenv("E2E_UI_AUTOPILOT") == "TRUE":
+            await asyncio.sleep(0.05)
+        else:
+            await asyncio.sleep(COMBAT.TURN_PHASE_DELAY)
 
         # 유저 부활 효과 체크 (리더 + 참가자)
         if user.now_hp <= 0:

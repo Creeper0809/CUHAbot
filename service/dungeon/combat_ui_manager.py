@@ -4,6 +4,7 @@
 전투 메시지 생성 및 업데이트를 담당합니다.
 """
 import logging
+import os
 from collections import deque
 from typing import TYPE_CHECKING, Optional
 
@@ -51,14 +52,27 @@ class CombatUIManager:
         embed = create_battle_embed_multi(user, context, combat_log, session.participants, session=session)
 
         # 리더에게 전투 UI 전송
-        combat_message = await interaction.user.send(
-            embed=embed,
-            view=CombatControlView(session, user.discord_id, timeout=None),
-        )
+        if os.getenv("E2E_UI_AUTOPILOT") == "TRUE":
+            # E2E: DM 대신 채널 메시지로 대체
+            if hasattr(interaction, "followup"):
+                combat_message = await interaction.followup.send(
+                    embed=embed,
+                    view=CombatControlView(session, user.discord_id, timeout=None),
+                )
+            else:
+                combat_message = await interaction.channel.send(
+                    embed=embed,
+                    view=CombatControlView(session, user.discord_id, timeout=None),
+                )
+        else:
+            combat_message = await interaction.user.send(
+                embed=embed,
+                view=CombatControlView(session, user.discord_id, timeout=None),
+            )
 
         # 난입 참가자들에게도 전투 UI 전송
         session.participant_combat_messages.clear()
-        if session.participants:
+        if session.participants and os.getenv("E2E_UI_AUTOPILOT") != "TRUE":
             for participant_id, participant in session.participants.items():
                 try:
                     discord_user = await interaction.client.fetch_user(participant.discord_id)

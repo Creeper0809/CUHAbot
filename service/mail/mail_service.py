@@ -5,7 +5,7 @@
 """
 
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import List, Dict, Any, Optional
 
 from models.mail import Mail, MailType
@@ -131,7 +131,7 @@ class MailService:
         Returns:
             생성된 우편
         """
-        expires_at = datetime.now() + timedelta(days=expire_days)
+        expires_at = datetime.now(timezone.utc) + timedelta(days=expire_days)
 
         mail = await Mail.create(
             user_id=user_id,
@@ -362,7 +362,7 @@ class MailService:
         Returns:
             삭제된 우편 개수
         """
-        now = datetime.now()
+        now = datetime.now(timezone.utc)
         deleted = await Mail.filter(expires_at__lt=now).delete()
         logger.info(f"Expired mails cleaned up: count={deleted}")
         return deleted

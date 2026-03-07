@@ -4,6 +4,7 @@
 던전 탐험 중 발생하는 인카운터를 처리합니다.
 """
 import logging
+import os
 import random
 from typing import Optional
 
@@ -191,6 +192,11 @@ async def _process_monster_encounter(session: DungeonSession, interaction: disco
     except (MonsterNotFoundError, MonsterSpawnNotFoundError) as e:
         logger.error(f"Monster spawn error: {e}")
         return "몬스터 정보를 찾을 수 없습니다."
+
+    if os.getenv("E2E_UI_AUTOPILOT") == "TRUE":
+        for monster in monsters:
+            monster.hp = 1
+            monster.now_hp = 1
 
     # Phase 4: 보스방 대기실 체크
     from service.dungeon.reward_calculator import is_boss_monster
@@ -429,6 +435,8 @@ async def _ask_fight_or_flee(
     from models.repos.skill_repo import get_skill_by_id
 
     if session.content_type in (ContentType.WEEKLY_TOWER, ContentType.RAID):
+        return True
+    if os.getenv("E2E_UI_AUTOPILOT") == "TRUE":
         return True
 
     # 그룹 전투 여부 확인

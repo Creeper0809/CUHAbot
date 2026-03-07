@@ -1,6 +1,7 @@
 import discord
 from discord import app_commands
 from discord.ext import commands
+import os
 
 from views.collection_view import CollectionView
 from views.dungeon_select_view import DungeonSelectView
@@ -95,6 +96,19 @@ class DungeonCommand(commands.Cog):
             dungeons = find_all_dungeon()
             if not dungeons:
                 await interaction.response.send_message("등록된 던전이 없습니다.")
+                return
+
+            if os.getenv("E2E_UI_AUTOPILOT") == "TRUE":
+                selectable = [d for d in dungeons if d.id < 100 and user.level >= d.require_level]
+                if not selectable:
+                    selectable = [d for d in dungeons if d.id < 100] or dungeons
+                view_selected = sorted(selectable, key=lambda d: (d.require_level, d.id))[0]
+                await interaction.response.send_message(f"[E2E] 자동 던전 선택: {view_selected.name}")
+                await interaction.followup.send(f"{view_selected.name} 던전에 입장합니다!")
+                session.dungeon = view_selected
+                session.content_type = ContentType.NORMAL_DUNGEON
+                session.allow_intervention = True
+                await start_dungeon(session, interaction)
                 return
 
             embed = discord.Embed(
@@ -429,6 +443,10 @@ class DungeonCommand(commands.Cog):
         view.message = await interaction.original_response()
 
         # 사용자 응답 대기
+        if os.getenv("E2E_UI_AUTOPILOT") == "TRUE":
+            view.stop()
+            await interaction.followup.send("[E2E] 스킬 덱 UI 자동화 스킵", ephemeral=True)
+            return
         await view.wait()
 
         # 저장 처리
