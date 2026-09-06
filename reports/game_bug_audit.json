@@ -1,0 +1,19 @@
+{
+  "counts": {
+    "skills": 647,
+    "skill_components": 994,
+    "component_tags": 22,
+    "status_types": 22,
+    "rows:skills.csv": 647,
+    "rows:items_consumable.csv": 163,
+    "rows:items_equipment.csv": 486,
+    "rows:items_enhancement.csv": 21,
+    "rows:items_material.csv": 10,
+    "rows:monsters.csv": 128,
+    "rows:set_effects.csv": 98,
+    "rows:dungeons.csv": 32,
+    "errors": 0,
+    "warnings": 0
+  },
+  "findings": []
+}

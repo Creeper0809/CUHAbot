@@ -1,3 +1,18 @@
+<!-- BALANCE_V2_GENERATED_START -->
+# Stats V2
+
+이 문서는 `config/balance_v2.py`에서 생성됩니다.
+
+`O=max(0,L-50)`
+
+- HP: `300 + 18×(L-1) + floor(0.20×O²)`
+- AD/AP: `15 + 2×(L-1) + floor(0.02×O²)`
+- 물리/마법 방어: `8 + floor(1.05×(L-1)) + floor(0.012×O²)`
+- 행동률: `clamp(1+(속도-100)/200, 0.75, 1.50)`
+- 명중률: `clamp(명중-회피, 75%, 98%)`
+- 피해 감소: `min(70%, 유효방어/(유효방어+100))`
+<!-- BALANCE_V2_GENERATED_END -->
+
 # 능력치 시스템 (Stats System)
 
 ## 개요

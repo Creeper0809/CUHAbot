@@ -24,7 +24,8 @@ CSV_PATH = os.path.join(PROJECT_ROOT, "data", "monsters.csv")
 
 MONSTER_FIELDS = [
     "name", "description", "type", "hp", "attack", "ap_attack",
-    "defense", "speed", "attribute", "skill_ids", "group_ids",
+    "defense", "ap_defense", "accuracy", "evasion", "speed",
+    "attribute", "skill_ids", "group_ids", "action_profile",
 ]
 
 
@@ -35,6 +36,7 @@ def load_monsters_from_csv() -> list[dict]:
         reader = csv.DictReader(f)
         for row in reader:
             skill_ids = json.loads(row.get("skill_ids", "[]"))
+            action_profile = json.loads(row.get("action_profile") or "{}")
 
             group_str = row.get("그룹", "").strip()
             if group_str:
@@ -51,9 +53,13 @@ def load_monsters_from_csv() -> list[dict]:
                 "attack": int(row["Attack"]),
                 "ap_attack": int(row.get("AP_Attack", 0) or 0),
                 "defense": int(row.get("Defense", 0)),
-                "speed": int(row.get("Speed", 10)),
+                "ap_defense": int(row.get("AP_Defense", 0)),
+                "accuracy": int(row.get("Accuracy", 95)),
+                "evasion": int(row.get("Evasion", 5)),
+                "speed": int(row.get("Speed", 100)),
                 "attribute": row.get("속성", "무속성") or "무속성",
                 "skill_ids": skill_ids,
+                "action_profile": action_profile,
                 "group_ids": group_ids,
                 "level": int(row.get("레벨", 1)),
             })
@@ -103,9 +109,13 @@ async def seed_monsters():
                 attack=csv_map[mid]["attack"],
                 ap_attack=csv_map[mid]["ap_attack"],
                 defense=csv_map[mid]["defense"],
+                ap_defense=csv_map[mid]["ap_defense"],
+                accuracy=csv_map[mid]["accuracy"],
+                evasion=csv_map[mid]["evasion"],
                 speed=csv_map[mid]["speed"],
                 attribute=csv_map[mid]["attribute"],
                 skill_ids=csv_map[mid]["skill_ids"],
+                action_profile=csv_map[mid].get("action_profile", {}),
                 group_ids=csv_map[mid]["group_ids"],
             )
             for mid in new_ids
@@ -124,9 +134,13 @@ async def seed_monsters():
             monster.attack = data["attack"]
             monster.ap_attack = data["ap_attack"]
             monster.defense = data["defense"]
+            monster.ap_defense = data["ap_defense"]
+            monster.accuracy = data["accuracy"]
+            monster.evasion = data["evasion"]
             monster.speed = data["speed"]
             monster.attribute = data["attribute"]
             monster.skill_ids = data["skill_ids"]
+            monster.action_profile = data.get("action_profile", {})
             monster.group_ids = data["group_ids"]
         await Monster.bulk_update(existing_monsters, fields=MONSTER_FIELDS)
 

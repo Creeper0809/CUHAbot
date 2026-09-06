@@ -132,7 +132,8 @@ class AuctionItemInfoView(discord.ui.View):
 
         # === 스탯 정보 (상세 계산식 포함) ===
         grade_mult = GradeService.get_stat_multiplier(self.listing.instance_grade) if self.listing.instance_grade > 0 else 1.0
-        enhance_mult = 1 + (self.listing.enhancement_level * 0.05) if self.listing.enhancement_level > 0 else 1.0
+        from config import BALANCE_V2
+        enhance_mult = BALANCE_V2.enhancement_stat_multiplier(self.listing.enhancement_level)
 
         stat_labels = {
             "attack": "⚔️ 공격력",

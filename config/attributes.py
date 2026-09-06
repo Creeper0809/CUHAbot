@@ -35,19 +35,19 @@ ATTRIBUTE_DISADVANTAGE: dict[AttributeType, AttributeType] = {
 class AttributeConfig:
     """속성 상성 설정"""
 
-    ADVANTAGE_MULTIPLIER: float = 1.5
+    ADVANTAGE_MULTIPLIER: float = 1.25
     """유리한 속성 데미지 배율 (+50%)"""
 
-    DISADVANTAGE_MULTIPLIER: float = 0.5
+    DISADVANTAGE_MULTIPLIER: float = 0.80
     """불리한 속성 데미지 배율 (-50%)"""
 
-    SAME_ELEMENT_MULTIPLIER: float = 0.5
+    SAME_ELEMENT_MULTIPLIER: float = 0.90
     """동일 속성 데미지 배율 (-50%)"""
 
     NEUTRAL_MULTIPLIER: float = 1.0
     """무속성 데미지 배율"""
 
-    MAX_RESISTANCE: float = 0.75
+    MAX_RESISTANCE: float = 0.60
     """최대 속성 저항 (75%)"""
 
 

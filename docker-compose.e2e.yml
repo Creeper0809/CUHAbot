@@ -1,0 +1,71 @@
+name: cuhabot-e2e
+
+services:
+  e2e-db:
+    profiles: ["discord-e2e"]
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: cuhabot_e2e_test
+      POSTGRES_USER: cuhabot_e2e
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:?DATABASE_PASSWORD is required}
+    tmpfs:
+      - /var/lib/postgresql/data:rw,noexec,nosuid,size=1g
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cuhabot_e2e -d cuhabot_e2e_test"]
+      interval: 3s
+      timeout: 3s
+      retries: 30
+    restart: unless-stopped
+    networks: [e2e-internal]
+
+  e2e-db-init:
+    profiles: ["discord-e2e"]
+    build:
+      context: .
+    env_file: .env.e2e
+    environment:
+      DATABASE_URL: e2e-db
+      DATABASE_PORT: 5432
+      DATABASE_USER: cuhabot_e2e
+      DATABASE_TABLE: cuhabot_e2e_test
+    command:
+      - /bin/sh
+      - -ec
+      - |
+        python scripts/prepare_nas_database.py
+    depends_on:
+      e2e-db:
+        condition: service_healthy
+    restart: "no"
+    networks: [e2e-internal]
+
+  e2e-bot:
+    profiles: ["discord-e2e"]
+    build:
+      context: .
+    env_file: .env.e2e
+    environment:
+      DATABASE_URL: e2e-db
+      DATABASE_PORT: 5432
+      DATABASE_USER: cuhabot_e2e
+      DATABASE_TABLE: cuhabot_e2e_test
+      E2E_API_BIND: 0.0.0.0
+      E2E_API_PORT: 8765
+      ITEMIZATION_V4_ENABLED: "true"
+      FARMING_FOCUS_ENABLED: "true"
+      CRAFTING_V4_ENABLED: "true"
+      BUILD_PRESETS_V4_ENABLED: "true"
+      SET_EFFECTS_V4_ENABLED: "true"
+    ports:
+      - "127.0.0.1:8765:8765"
+    depends_on:
+      e2e-db:
+        condition: service_healthy
+      e2e-db-init:
+        condition: service_completed_successfully
+    restart: unless-stopped
+    networks: [e2e-internal]
+
+networks:
+  e2e-internal:
+    internal: false

@@ -4,6 +4,7 @@
 경매 시스템의 핵심 비즈니스 로직을 제공합니다.
 """
 import logging
+import statistics
 from datetime import datetime, timedelta, timezone
 from typing import List, Optional
 
@@ -26,6 +27,7 @@ from models.auction_history import AuctionHistory, AuctionSaleType
 from models.auction_listing import AuctionListing, AuctionStatus, AuctionType
 from models.buy_order import BuyOrder, BuyOrderStatus
 from models.item import ItemType
+from models.mail import MailType
 from models.user_inventory import UserInventory
 from models.users import User
 from service.item.inventory_service import InventoryService
@@ -90,6 +92,7 @@ class AuctionService:
 
         # Guard: 장착 중인 장비 체크
         if inventory_item.item.type == ItemType.EQUIP:
+            from models import UserBuildPresetItem
             from models.user_equipment import UserEquipment
             is_equipped = await UserEquipment.exists(
                 user=user,
@@ -97,6 +100,8 @@ class AuctionService:
             )
             if is_equipped:
                 raise ValueError("장착 중인 장비는 경매에 등록할 수 없습니다")
+            if await UserBuildPresetItem.exists(inventory_item=inventory_item):
+                raise ValueError("빌드 프리셋에서 사용하는 장비는 경매에 등록할 수 없습니다")
 
         # Guard: 가격 검증
         if starting_price < AUCTION.MIN_LISTING_PRICE:
@@ -527,7 +532,7 @@ class AuctionService:
             # 판매자에게 우편 발송
             await MailService.send_mail(
                 user_id=listing.seller_id,
-                mail_type="system",
+                mail_type=MailType.SYSTEM,
                 sender="경매장",
                 title="경매 만료",
                 content=f"**{listing.item_name}**의 경매가 입찰자 없이 만료되었습니다.",
@@ -581,13 +586,23 @@ class AuctionService:
     async def search_listings(
         item_type: Optional[ItemType] = None,
         item_grade: Optional[int] = None,
+        min_grade: int = 0,
+        max_grade: int = 8,
         min_enhancement: int = 0,
         max_enhancement: int = 99,
         min_price: int = 0,
         max_price: int = 999999999,
         sort_by: str = "created_at",
         offset: int = 0,
-        limit: int = 25
+        limit: int = 25,
+        item_id: int | None = None,
+        slot: int | None = None,
+        set_key: str | None = None,
+        source_key: str | None = None,
+        reforged: bool | None = None,
+        affix_id: str | None = None,
+        min_affix_tier: int | None = None,
+        min_affix_value: float | None = None,
     ) -> List[AuctionListing]:
         """리스팅 검색"""
         query = AuctionListing.filter(status=AuctionStatus.ACTIVE)
@@ -595,6 +610,36 @@ class AuctionService:
         # 필터 적용
         if item_grade is not None:
             query = query.filter(instance_grade=item_grade)
+        else:
+            query = query.filter(instance_grade__gte=min_grade, instance_grade__lte=max_grade)
+
+        if item_id is not None:
+            query = query.filter(item_id=item_id)
+        if item_type is not None:
+            query = query.filter(inventory_item__item__type=item_type)
+
+        if any(value is not None for value in (slot, set_key, source_key)):
+            from models import EquipmentItem
+            definitions = EquipmentItem.all()
+            if slot is not None:
+                definitions = definitions.filter(equip_pos=slot)
+            if set_key:
+                definitions = definitions.filter(set_key=set_key)
+            if source_key:
+                definitions = definitions.filter(acquisition_source=source_key)
+            allowed_ids = await definitions.values_list("item_id", flat=True)
+            query = query.filter(item_id__in=allowed_ids)
+
+        if reforged is not None:
+            lookup = "inventory_item__provenance__reforge_count__gt" if reforged else "inventory_item__provenance__reforge_count"
+            query = query.filter(**{lookup: 0})
+        if affix_id:
+            query = query.filter(inventory_item__affixes__affix_definition_id=affix_id)
+            if min_affix_tier is not None:
+                # T1 is stronger than T2, so a requested minimum T2 accepts 1..2.
+                query = query.filter(inventory_item__affixes__tier__lte=min_affix_tier)
+            if min_affix_value is not None:
+                query = query.filter(inventory_item__affixes__value__gte=min_affix_value)
 
         query = query.filter(
             enhancement_level__gte=min_enhancement,
@@ -614,7 +659,7 @@ class AuctionService:
             query = query.order_by("-created_at")
 
         # 페이지네이션
-        listings = await query.offset(offset).limit(limit).prefetch_related("seller")
+        listings = await query.distinct().offset(offset).limit(limit).prefetch_related("seller")
 
         return listings
 
@@ -668,6 +713,19 @@ class AuctionService:
             enhancement_level=enhancement_level,
             instance_grade=instance_grade
         ).order_by("-sold_at").limit(10)
+
+    @staticmethod
+    async def get_market_summary(item_id: int, *, days: int = 7) -> dict:
+        """Return recent transaction and a robust seven-day median price."""
+        cutoff = datetime.now(timezone.utc) - timedelta(days=days)
+        rows = list(await AuctionHistory.filter(item_id=item_id, sold_at__gte=cutoff).order_by("-sold_at"))
+        prices = [int(row.sale_price) for row in rows]
+        return {
+            "transactions": len(prices),
+            "latest": prices[0] if prices else None,
+            "median": round(statistics.median(prices)) if prices else None,
+            "days": days,
+        }
 
     # =========================================================================
     # 내부 헬퍼
@@ -779,7 +837,7 @@ class AuctionService:
         # 우편 발송
         await MailService.send_mail(
             user_id=seller.id,
-            mail_type="system",
+            mail_type=MailType.SYSTEM,
             sender="경매장",
             title="경매 판매 완료",
             content=(
@@ -791,7 +849,7 @@ class AuctionService:
 
         await MailService.send_mail(
             user_id=buyer.id,
-            mail_type="system",
+            mail_type=MailType.SYSTEM,
             sender="경매장",
             title="경매 구매 완료",
             content=(
@@ -935,7 +993,7 @@ class AuctionService:
         # 우편 발송
         await MailService.send_mail(
             user_id=seller.id,
-            mail_type="system",
+            mail_type=MailType.SYSTEM,
             sender="경매장",
             title="구매 주문 체결",
             content=(
@@ -947,7 +1005,7 @@ class AuctionService:
 
         await MailService.send_mail(
             user_id=buyer.id,
-            mail_type="system",
+            mail_type=MailType.SYSTEM,
             sender="경매장",
             title="구매 주문 체결",
             content=(

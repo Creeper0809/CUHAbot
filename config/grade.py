@@ -34,25 +34,25 @@ GRADE_TABLE: dict[int, GradeInfo] = {
         InstanceGrade.D, "D", 1.0, 0, 0, "⬜"
     ),
     InstanceGrade.C: GradeInfo(
-        InstanceGrade.C, "C", 1.05, 0, 0, "🟩"
+        InstanceGrade.C, "C", 1.08, 0, 0, "🟩"
     ),
     InstanceGrade.B: GradeInfo(
-        InstanceGrade.B, "B", 1.15, 0, 0, "🟦"
+        InstanceGrade.B, "B", 1.18, 0, 0, "🟦"
     ),
     InstanceGrade.A: GradeInfo(
-        InstanceGrade.A, "A", 1.3, 0, 1, "🟪"
+        InstanceGrade.A, "A", 1.32, 0, 1, "🟪"
     ),
     InstanceGrade.S: GradeInfo(
         InstanceGrade.S, "S", 1.5, 1, 2, "🟨"
     ),
     InstanceGrade.SS: GradeInfo(
-        InstanceGrade.SS, "SS", 1.8, 2, 2, "🟧"
+        InstanceGrade.SS, "SS", 1.72, 2, 2, "🟧"
     ),
     InstanceGrade.SSS: GradeInfo(
-        InstanceGrade.SSS, "SSS", 2.2, 2, 3, "❤️"
+        InstanceGrade.SSS, "SSS", 1.98, 2, 3, "❤️"
     ),
     InstanceGrade.MYTHIC: GradeInfo(
-        InstanceGrade.MYTHIC, "신화", 3.0, 3, 3, "💎"
+        InstanceGrade.MYTHIC, "신화", 2.30, 3, 3, "💎"
     ),
 }
 
@@ -63,33 +63,33 @@ GRADE_TABLE: dict[int, GradeInfo] = {
 
 GRADE_DROP_WEIGHTS: dict[str, dict[int, float]] = {
     "normal": {
-        InstanceGrade.D: 60,
-        InstanceGrade.C: 25,
-        InstanceGrade.B: 10,
-        InstanceGrade.A: 4,
-        InstanceGrade.S: 0.9,
-        InstanceGrade.SS: 0.08,
-        InstanceGrade.SSS: 0.015,
-        InstanceGrade.MYTHIC: 0.005,
+        InstanceGrade.D: 45,
+        InstanceGrade.C: 28,
+        InstanceGrade.B: 16,
+        InstanceGrade.A: 8,
+        InstanceGrade.S: 2.5,
+        InstanceGrade.SS: 0.4,
+        InstanceGrade.SSS: 0.09,
+        InstanceGrade.MYTHIC: 0.01,
     },
     "elite": {
-        InstanceGrade.D: 30,
-        InstanceGrade.C: 30,
-        InstanceGrade.B: 20,
-        InstanceGrade.A: 13,
-        InstanceGrade.S: 5,
-        InstanceGrade.SS: 1.5,
-        InstanceGrade.SSS: 0.4,
+        InstanceGrade.D: 20,
+        InstanceGrade.C: 28,
+        InstanceGrade.B: 24,
+        InstanceGrade.A: 17,
+        InstanceGrade.S: 8,
+        InstanceGrade.SS: 2.3,
+        InstanceGrade.SSS: 0.6,
         InstanceGrade.MYTHIC: 0.1,
     },
     "boss": {
-        InstanceGrade.D: 10,
-        InstanceGrade.C: 20,
-        InstanceGrade.B: 25,
-        InstanceGrade.A: 25,
-        InstanceGrade.S: 12,
-        InstanceGrade.SS: 5,
-        InstanceGrade.SSS: 2.5,
+        InstanceGrade.D: 5,
+        InstanceGrade.C: 12,
+        InstanceGrade.B: 22,
+        InstanceGrade.A: 27,
+        InstanceGrade.S: 20,
+        InstanceGrade.SS: 10,
+        InstanceGrade.SSS: 3.5,
         InstanceGrade.MYTHIC: 0.5,
     },
     "box_low": {

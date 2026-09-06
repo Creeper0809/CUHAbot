@@ -1,0 +1,112 @@
+{
+  "passed": true,
+  "total_runs": 60000,
+  "cases": [
+    {
+      "label": "Lv1 숲 무작위",
+      "runs": 10000,
+      "clear_rate": 1.0,
+      "minimum": 0.99,
+      "report": "beginner-forest-10000.json"
+    },
+    {
+      "label": "Lv1 숲 정예 우선",
+      "runs": 10000,
+      "clear_rate": 1.0,
+      "minimum": 0.95,
+      "report": "beginner-forest-elite-10000.json"
+    },
+    {
+      "label": "Lv5 동굴 무작위",
+      "runs": 10000,
+      "clear_rate": 1.0,
+      "minimum": 0.97,
+      "report": "beginner-cave-10000.json"
+    },
+    {
+      "label": "Lv5 동굴 정예 우선",
+      "runs": 10000,
+      "clear_rate": 1.0,
+      "minimum": 0.95,
+      "report": "beginner-cave-elite-10000.json"
+    },
+    {
+      "label": "Lv1 숲 강타 10장",
+      "runs": 10000,
+      "clear_rate": 1.0,
+      "minimum": 0.95,
+      "report": "beginner-basic-10000.json"
+    },
+    {
+      "label": "Lv1 숲 빈 덱",
+      "runs": 1000,
+      "clear_rate": 1.0,
+      "minimum": 0.95,
+      "report": "beginner-empty-1000.json"
+    },
+    {
+      "label": "Lv3 입문 지역",
+      "runs": 1000,
+      "clear_rate": 1.0,
+      "minimum": 0.97,
+      "report": "beginner-level3.json"
+    },
+    {
+      "label": "Lv7 입문 지역",
+      "runs": 1000,
+      "clear_rate": 1.0,
+      "minimum": 0.97,
+      "report": "beginner-level7.json"
+    },
+    {
+      "label": "Lv10 입문 지역",
+      "runs": 1000,
+      "clear_rate": 1.0,
+      "minimum": 0.97,
+      "report": "beginner-level10.json"
+    },
+    {
+      "label": "Lv11 mine 이전 지역 D+0 장비",
+      "runs": 1000,
+      "clear_rate": 0.972,
+      "minimum": 0.9,
+      "report": "beginner-level11-mine.json"
+    },
+    {
+      "label": "Lv11 lake 이전 지역 D+0 장비",
+      "runs": 1000,
+      "clear_rate": 0.995,
+      "minimum": 0.9,
+      "report": "beginner-level11-lake.json"
+    },
+    {
+      "label": "Lv15 storm 이전 지역 D+0 장비",
+      "runs": 1000,
+      "clear_rate": 1.0,
+      "minimum": 0.9,
+      "report": "beginner-level15-storm.json"
+    },
+    {
+      "label": "Lv15 temple 이전 지역 D+0 장비",
+      "runs": 1000,
+      "clear_rate": 1.0,
+      "minimum": 0.9,
+      "report": "beginner-level15-temple.json"
+    },
+    {
+      "label": "Lv20 storm 이전 지역 D+0 장비",
+      "runs": 1000,
+      "clear_rate": 1.0,
+      "minimum": 0.9,
+      "report": "beginner-level20-storm.json"
+    },
+    {
+      "label": "Lv20 temple 이전 지역 D+0 장비",
+      "runs": 1000,
+      "clear_rate": 1.0,
+      "minimum": 0.9,
+      "report": "beginner-level20-temple.json"
+    }
+  ],
+  "scope": "Real engine, actual starter/previous D+0 equipment IDs, SQLite persistence; Discord waits replaced"
+}

@@ -114,10 +114,8 @@ class AuctionItemSelectView(discord.ui.View):
                 value_parts.append(f"**등급**: {grade_emoji}")
 
             if inv.special_effects:
-                effects_str = ", ".join(
-                    f"{eff['type']} +{eff['value']}"
-                    for eff in inv.special_effects
-                )
+                from service.item.grade_service import GradeService
+                effects_str = GradeService.format_special_effects(inv.special_effects)
                 value_parts.append(f"**특수 효과**: {effects_str}")
 
             embed.add_field(

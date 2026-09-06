@@ -1,91 +1,76 @@
-name: Deploy
+name: Verify and deploy production
+
 on:
-  push:
-    branches: ["master"]
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: "Type DEPLOY PRODUCTION"
+        required: true
+        type: string
 
 jobs:
-  deploy:
+  verify:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Compile and test
+        run: |
+          python -m compileall -q bot.py cogs config models service tools scripts e2e_runtime views
+          python -m pytest tests/unit -q
+          python tools/balance_v2.py audit
+      - name: Verify generated balance data is committed
+        run: |
+          python tools/balance_v2.py generate --write
+          git diff --exit-code -- data docs
+
+  deploy:
+    needs: verify
+    if: github.event.inputs.confirmation == 'DEPLOY PRODUCTION'
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build release archive
+        run: |
+          tar \
+            --exclude=.git --exclude=.github --exclude=.venv --exclude=venv \
+            --exclude=.env --exclude='.env.*' --exclude=__pycache__ \
+            -czf "/tmp/cuhabot-${GITHUB_SHA}.tgz" .
       - name: Install cloudflared
         run: |
-          curl -L https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 -o /usr/local/bin/cloudflared
+          curl -fsSL https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 -o /usr/local/bin/cloudflared
           chmod +x /usr/local/bin/cloudflared
-
       - name: Configure SSH
         run: |
           RAW_HOST="${{ secrets.SSH_HOST }}"
-          HOST=$(echo "$RAW_HOST" | sed -E 's#^https?://##; s#/.*$##')
-          PORT=$(echo "$HOST" | sed -E 's#^[^:]+:([0-9]+)$#\1#')
-          HOST=$(echo "$HOST" | sed -E 's#:.*$##')
-          if [[ -z "$PORT" || "$PORT" == "$HOST" ]]; then
-            PORT="${{ secrets.SSH_PORT }}"
-          fi
-          if [[ -z "$PORT" ]]; then
-            PORT="22"
-          fi
-          if [[ -z "$HOST" ]]; then
-            echo "SSH_HOST must be a hostname like ssh.example.com"
-            exit 1
-          fi
-          echo "Resolved SSH host: $HOST"
-          echo "Resolved SSH port: $PORT"
-          if [[ "$HOST" == *"gongsim.xyz"* ]]; then
-            echo "Resolved SSH host matches gongsim.xyz: yes"
-          else
-            echo "Resolved SSH host matches gongsim.xyz: no"
-          fi
-          echo "SSH_HOST_RESOLVED=$HOST" >> $GITHUB_ENV
-          echo "SSH_PORT_RESOLVED=$PORT" >> $GITHUB_ENV
+          HOST=$(echo "$RAW_HOST" | sed -E 's#^https?://##; s#/.*$##; s#:.*$##')
+          test -n "$HOST"
+          echo "SSH_HOST_RESOLVED=$HOST" >> "$GITHUB_ENV"
           mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_KEY }}" > ~/.ssh/id_rsa
+          printf '%s\n' "${{ secrets.SSH_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-
-      - name: Deploy via SSH (Cloudflare Tunnel)
+      - name: Open authenticated SSH tunnel
         env:
           CF_ACCESS_CLIENT_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
           CF_ACCESS_CLIENT_SECRET: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
         run: |
-          set -euo pipefail
-          echo "CF_ACCESS_CLIENT_ID length: ${#CF_ACCESS_CLIENT_ID}"
-          echo "CF_ACCESS_CLIENT_SECRET length: ${#CF_ACCESS_CLIENT_SECRET}"
-          if [[ -z "$CF_ACCESS_CLIENT_ID" || -z "$CF_ACCESS_CLIENT_SECRET" ]]; then
-            echo "CF_ACCESS_CLIENT_ID/CF_ACCESS_CLIENT_SECRET are required to avoid browser-based Access login in CI."
-            exit 1
-          fi
-          LOCAL_PORT=2222
+          test -n "$CF_ACCESS_CLIENT_ID" && test -n "$CF_ACCESS_CLIENT_SECRET"
           cloudflared access tcp \
             --hostname "$SSH_HOST_RESOLVED" \
             --service-token-id "$CF_ACCESS_CLIENT_ID" \
             --service-token-secret "$CF_ACCESS_CLIENT_SECRET" \
-            --url "127.0.0.1:$LOCAL_PORT" \
-            --loglevel info \
-            >/tmp/cloudflared.log 2>&1 &
-          for i in {1..10}; do
-            if nc -z 127.0.0.1 $LOCAL_PORT; then
-              break
-            fi
-            sleep 1
-          done
-          if ! nc -z 127.0.0.1 $LOCAL_PORT; then
-            echo "cloudflared did not open local port"
-            tail -n 200 /tmp/cloudflared.log || true
-            exit 1
-          fi
-          if ! ssh -p $LOCAL_PORT -o ConnectTimeout=10 -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ${{ secrets.SSH_USER }}@127.0.0.1 <<'EOF'
-          cd /mnt/CUHA_BOT
-          git pull
-          docker compose up -d --build
-          EOF
-          then
-            echo "SSH failed; cloudflared log:"
-            tail -n 200 /tmp/cloudflared.log || true
-            AUD=$(grep -oE 'aud=[0-9a-f]{64}' /tmp/cloudflared.log | head -n 1 | cut -d= -f2 || true)
-            if [[ -n "$AUD" ]]; then
-              echo "Access AUD from log: $AUD"
-            fi
-            if grep -q "access/cli" /tmp/cloudflared.log; then
-              echo "Cloudflare Access is prompting for browser login. Ensure the Access app allows the service token and the secrets are correct."
-            fi
-            exit 1
-          fi
+            --url 127.0.0.1:2222 >/tmp/cloudflared.log 2>&1 &
+          for i in $(seq 1 20); do nc -z 127.0.0.1 2222 && exit 0; sleep 1; done
+          tail -n 100 /tmp/cloudflared.log
+          exit 1
+      - name: Upload and activate timestamped release
+        run: |
+          SSH="ssh -p 2222 -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ${{ secrets.SSH_USER }}@127.0.0.1"
+          SCP="scp -P 2222 -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa"
+          $SCP "/tmp/cuhabot-${GITHUB_SHA}.tgz" "${{ secrets.SSH_USER }}@127.0.0.1:/tmp/cuhabot-${GITHUB_SHA}.tgz"
+          $SSH "set -eu; release=/mnt/CUHA_BOT/releases/${GITHUB_SHA}; mkdir -p \"\$release\"; tar -xzf /tmp/cuhabot-${GITHUB_SHA}.tgz -C \"\$release\"; chmod +x \"\$release/deploy/production/activate-release.sh\"; \"\$release/deploy/production/activate-release.sh\" \"\$release\"; rm -f /tmp/cuhabot-${GITHUB_SHA}.tgz"

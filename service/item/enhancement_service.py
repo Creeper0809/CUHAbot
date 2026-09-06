@@ -17,7 +17,7 @@ from exceptions import (
     InsufficientGoldError,
     CombatRestrictionError,
 )
-from config import ENHANCEMENT
+from config import ENHANCEMENT, BALANCE_V2, GRADE_TABLE
 from service.session import get_session
 
 logger = logging.getLogger(__name__)
@@ -76,7 +76,19 @@ class EnhancementService:
         return 0.0
 
     @staticmethod
-    def _calculate_cost(grade_id: int, current_level: int) -> int:
+    async def _get_equipment_success_bonus(user: User) -> float:
+        from service.item.equipment_component_loader import load_user_equipment_components
+        from service.dungeon.skill import get_passive_effect_bonuses
+
+        bonus = 0.0
+        for component in await load_user_equipment_components(user):
+            if getattr(component, '_tag', '') == 'enhancement_bonus':
+                bonus += component.get_enhancement_success_bonus()
+        bonus += get_passive_effect_bonuses(user).get("enhance_luck", 0.0)
+        return min(0.20, bonus)
+
+    @staticmethod
+    def _calculate_cost(grade_id: int, current_level: int, item_level: int = 1) -> int:
         """
         강화 비용 계산
 
@@ -87,10 +99,11 @@ class EnhancementService:
         Returns:
             필요 골드
         """
-        grade_mult = EnhancementService.GRADE_MULTIPLIERS.get(grade_id, 1.0)
-        level_mult = 1.0 + (current_level * ENHANCEMENT.COST_PER_LEVEL_MULTIPLIER)
-        cost = int(ENHANCEMENT.BASE_COST * grade_mult * level_mult)
-        return cost
+        grade_info = GRADE_TABLE.get(grade_id)
+        grade_name = grade_info.name if grade_info else "D"
+        if grade_name == "신화":
+            grade_name = "MYTHIC"
+        return BALANCE_V2.enhancement_cost(item_level, grade_name, current_level + 1)
 
     @staticmethod
     async def get_enhancement_info(
@@ -166,10 +179,16 @@ class EnhancementService:
             }
 
         # 강화 비용 계산
-        cost = EnhancementService._calculate_cost(grade_id, current_level)
+        cost = EnhancementService._calculate_cost(
+            grade_id, current_level, equipment.require_level or 1,
+        )
 
         # 성공률 조회 (축복/저주 보정)
         success_rate = EnhancementService._get_success_rate(current_level)
+        success_rate = min(
+            1.0,
+            success_rate + await EnhancementService._get_equipment_success_bonus(user),
+        )
         is_blessed = inv_item.is_blessed
         is_cursed = inv_item.is_cursed
 
@@ -247,7 +266,11 @@ class EnhancementService:
 
         # 비용 계산 및 차감
         grade_id = getattr(inv_item.item, 'grade_id', 3)
-        cost = EnhancementService._calculate_cost(grade_id, current_level)
+        telemetry_item_id = inv_item.item_id
+        telemetry_item_name = inv_item.item.name
+        cost = EnhancementService._calculate_cost(
+            grade_id, current_level, equipment.require_level or 1,
+        )
 
         if user.gold < cost:
             raise InsufficientGoldError(cost, user.gold)
@@ -261,6 +284,10 @@ class EnhancementService:
 
             # 성공률 조회 (축복/저주 보정)
             success_rate = EnhancementService._get_success_rate(current_level)
+            success_rate = min(
+                1.0,
+                success_rate + await EnhancementService._get_equipment_success_bonus(user),
+            )
             is_blessed = inv_item.is_blessed
             is_cursed = inv_item.is_cursed
 
@@ -318,6 +345,15 @@ class EnhancementService:
                         result_type = EnhancementResult.FAIL_DESTROY
                         item_destroyed = True
                         new_level = 0
+                        from models import UserCraftingWallet
+                        wallet = await UserCraftingWallet.filter(user=user).select_for_update().first()
+                        if not wallet:
+                            wallet = await UserCraftingWallet.create(user=user)
+                        cores = dict(wallet.recovery_cores or {})
+                        core_key = str(inv_item.item_id)
+                        cores[core_key] = int(cores.get(core_key, 0)) + 1
+                        wallet.recovery_cores = cores
+                        await wallet.save(update_fields=["recovery_cores"])
                         await inv_item.delete()
                     else:
                         new_level = 0
@@ -326,19 +362,29 @@ class EnhancementService:
                         await inv_item.save()
 
         logger.info(
-            f"User {user.id} enhancement attempt: {inv_item.item.name} "
+            f"User {user.id} enhancement attempt: {telemetry_item_name} "
             f"+{current_level} → +{new_level} ({result_type}), cost={cost}"
         )
 
-        return EnhancementAttempt(
+        attempt = EnhancementAttempt(
             success=success,
             result_type=result_type,
             previous_level=current_level,
             new_level=new_level,
             cost=cost,
-            item_name=inv_item.item.name,
+            item_name=telemetry_item_name,
             item_destroyed=item_destroyed
         )
+        from service.telemetry import record_game_event
+        await record_game_event(
+            "enhancement", user=user, content_type="economy",
+            metrics={
+                "item_id": telemetry_item_id, "cost": cost,
+                "previous_level": current_level, "new_level": new_level,
+                "result": result_type, "destroyed": item_destroyed,
+            },
+        )
+        return attempt
 
     @staticmethod
     def get_success_rate_description(current_level: int) -> str:

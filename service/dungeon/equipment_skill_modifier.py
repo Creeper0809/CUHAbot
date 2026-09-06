@@ -6,6 +6,46 @@
 from typing import List, Optional
 
 
+def _component_damage_multiplier(comp, skill=None, target=None, attacker=None) -> float:
+    """Resolve one equipment component's executable outgoing-damage effect."""
+    tag = getattr(comp, '_tag', '')
+    if tag == "skill_damage_boost":
+        return comp.get_skill_damage_multiplier()
+    if tag in {"skill_type_damage_boost", "attribute_damage_boost"}:
+        return comp.get_skill_damage_multiplier(skill)
+    if tag == "conditional_damage_boost" and target is not None:
+        return comp.get_conditional_damage_multiplier(target)
+    if tag == "race_bonus" and target is not None:
+        return comp.get_race_bonus_multiplier(target)
+    if tag == "random_damage_variance":
+        return comp.get_damage_variance_multiplier()
+    if tag == "random_attribute":
+        attribute = str(
+            getattr(skill, "attribute", getattr(skill, "skill_attribute", "")) or ""
+        )
+        return comp.get_attribute_damage_multiplier(attribute)
+    if tag in {"combat_stat_growth", "on_kill_stack"}:
+        bonus = comp.get_stat_bonus()
+        return 1.0 + max(
+            float(bonus.get("attack", 0.0)),
+            float(bonus.get("ap_attack", 0.0)),
+        )
+    if tag == "conditional_stat_bonus" and attacker is not None:
+        # This component's condition is based on the wearer, not the enemy.
+        stat = str(getattr(comp, "stat", ""))
+        if stat in {"attack", "ap_attack", "all", "all_stats"}:
+            return comp.get_conditional_stat_multiplier(attacker)
+    return 1.0
+
+
+def _multiply_components(components, skill=None, target=None, attacker=None) -> float:
+    total = 1.0
+    for component in components:
+        total *= _component_damage_multiplier(component, skill, target, attacker)
+    # A corrupted legacy item must not turn one action into an unbounded value.
+    return max(0.10, min(total, 4.0))
+
+
 async def get_equipment_skill_damage_multiplier(attacker, skill=None, target=None) -> float:
     """
     장비에서 스킬 데미지 배율 수집
@@ -43,35 +83,15 @@ async def get_equipment_skill_damage_multiplier(attacker, skill=None, target=Non
             equipment = await EquipmentItem.get_or_none(
                 item=eq.inventory_item.item
             )
-            if not equipment or not equipment.config:
+            if not equipment:
                 continue
 
             # 컴포넌트 로드
-            components = load_equipment_components(equipment.config)
+            components = load_equipment_components(equipment.config) if equipment.config else []
+            from service.item.affix_service import get_affix_components
+            components.extend(await get_affix_components(eq.inventory_item))
 
-            # 각 컴포넌트에서 스킬 데미지 배율 수집
-            for comp in components:
-                tag = getattr(comp, '_tag', '')
-
-                # 일반 스킬 데미지 증폭
-                if tag == "skill_damage_boost":
-                    mult = comp.get_skill_damage_multiplier()
-                    total_multiplier *= mult
-
-                # 특정 타입 스킬 데미지 증폭
-                elif tag == "skill_type_damage_boost":
-                    mult = comp.get_skill_damage_multiplier(skill)
-                    total_multiplier *= mult
-
-                # 속성 스킬 데미지 증폭
-                elif tag == "attribute_damage_boost":
-                    mult = comp.get_skill_damage_multiplier(skill)
-                    total_multiplier *= mult
-
-                # 조건부 스킬 데미지 증폭
-                elif tag == "conditional_damage_boost" and target:
-                    mult = comp.get_conditional_damage_multiplier(target)
-                    total_multiplier *= mult
+            total_multiplier *= _multiply_components(components, skill, target, attacker)
 
         return total_multiplier
 
@@ -128,10 +148,12 @@ async def cache_equipment_components(attacker):
             equipment = await EquipmentItem.get_or_none(
                 item=eq.inventory_item.item
             )
-            if not equipment or not equipment.config:
+            if not equipment:
                 continue
 
-            components = load_equipment_components(equipment.config)
+            components = load_equipment_components(equipment.config) if equipment.config else []
+            from service.item.affix_service import get_affix_components
+            components.extend(await get_affix_components(eq.inventory_item))
             all_components.extend(components)
 
         # 런타임 캐시에 저장
@@ -160,33 +182,22 @@ def get_equipment_skill_damage_multiplier_sync(attacker, skill=None, target=None
     if not components:
         return 1.0
 
-    total_multiplier = 1.0
+    return _multiply_components(components, skill, target, attacker)
 
-    for comp in components:
-        tag = getattr(comp, '_tag', '')
 
-        # 일반 스킬 데미지 증폭
-        if tag == "skill_damage_boost":
-            if hasattr(comp, 'get_skill_damage_multiplier'):
-                mult = comp.get_skill_damage_multiplier()
-                total_multiplier *= mult
+def get_equipment_cooldown_multiplier_sync(attacker) -> float:
+    """Return the capped combined ultimate-cooldown multiplier."""
+    multiplier = 1.0
+    for component in get_equipment_components_sync(attacker):
+        if getattr(component, '_tag', '') == 'cooldown_reduction':
+            multiplier *= component.get_cooldown_multiplier()
+    return max(0.50, multiplier)
 
-        # 특정 타입 스킬 데미지 증폭
-        elif tag == "skill_type_damage_boost":
-            if hasattr(comp, 'get_skill_damage_multiplier'):
-                mult = comp.get_skill_damage_multiplier(skill)
-                total_multiplier *= mult
 
-        # 속성 스킬 데미지 증폭
-        elif tag == "attribute_damage_boost":
-            if hasattr(comp, 'get_skill_damage_multiplier'):
-                mult = comp.get_skill_damage_multiplier(skill)
-                total_multiplier *= mult
-
-        # 조건부 스킬 데미지 증폭
-        elif tag == "conditional_damage_boost" and target:
-            if hasattr(comp, 'get_conditional_damage_multiplier'):
-                mult = comp.get_conditional_damage_multiplier(target)
-                total_multiplier *= mult
-
-    return total_multiplier
+def get_equipment_buff_duration_multiplier_sync(attacker) -> float:
+    """Return combined duration multiplier for beneficial statuses."""
+    multiplier = 1.0
+    for component in get_equipment_components_sync(attacker):
+        if getattr(component, '_tag', '') == 'buff_duration_extension':
+            multiplier *= component.get_duration_multiplier(is_buff=True)
+    return min(2.0, max(1.0, multiplier))

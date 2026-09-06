@@ -6,7 +6,7 @@ InventoryService
 import logging
 from typing import List, Optional
 
-from models import Item, User
+from models import EquipmentAffixDefinition, EquipmentItem, Item, User
 from models.user_inventory import UserInventory
 from resources.item_emoji import ItemType
 from exceptions import (
@@ -15,7 +15,6 @@ from exceptions import (
     InventoryFullError,
 )
 from config import INVENTORY
-from service.collection_service import CollectionService
 from service.event import EventBus, GameEvent, GameEventType
 
 logger = logging.getLogger(__name__)
@@ -59,6 +58,17 @@ class InventoryService:
         if not item:
             raise ItemNotFoundError(item_id)
 
+        if item.type == ItemType.EQUIP:
+            from service.item.equipment_component_loader import load_equipment_components
+
+            equipment = await EquipmentItem.get_or_none(item=item)
+            if equipment and equipment.config:
+                for component in load_equipment_components(equipment.config):
+                    if getattr(component, '_tag', '') == 'enhancement_bonus':
+                        enhancement_level = max(
+                            enhancement_level, component.get_base_enhancement()
+                        )
+
         # 장비 아이템은 전부 유니크 인스턴스로 취급 (스택하지 않음)
         # 소모품/기타 아이템만 스택 허용
         if item.type != ItemType.EQUIP:
@@ -76,13 +86,23 @@ class InventoryService:
                     existing.quantity += quantity
                     await existing.save()
                     logger.debug(f"Stacked item {item_id} x{quantity} for user {user.id}")
+                    from service.collection_service import CollectionService
                     await CollectionService.register_item(user, item_id)
                     return existing
 
-        # 인벤토리 슬롯 체크 (새 슬롯 생성 시만)
-        current_slots = await UserInventory.filter(user=user).count()
-        if current_slots >= INVENTORY.MAX_SLOTS:
-            raise InventoryFullError(INVENTORY.MAX_SLOTS)
+        # V4 separates equipment storage from the compact consumable bag.
+        if item.type == ItemType.EQUIP:
+            from models import UserCraftingWallet
+            wallet, _ = await UserCraftingWallet.get_or_create(user=user)
+            equipment_ids = await EquipmentItem.all().values_list("item_id", flat=True)
+            current_slots = await UserInventory.filter(user=user, item_id__in=equipment_ids).count()
+            if current_slots >= wallet.equipment_storage:
+                raise InventoryFullError(wallet.equipment_storage)
+        else:
+            equipment_ids = await EquipmentItem.all().values_list("item_id", flat=True)
+            current_slots = await UserInventory.filter(user=user).exclude(item_id__in=equipment_ids).count()
+            if current_slots >= INVENTORY.MAX_SLOTS:
+                raise InventoryFullError(INVENTORY.MAX_SLOTS)
 
         # 새 인벤토리 항목 생성
         inv_item = await UserInventory.create(
@@ -95,11 +115,23 @@ class InventoryService:
             is_cursed=is_cursed,
             special_effects=special_effects,
         )
+        if item.type == ItemType.EQUIP and equipment:
+            from models import EquipmentProvenance
+            from service.item.affix_service import ensure_instance_affixes, sync_affix_definitions
+
+            if not await EquipmentAffixDefinition.exists():
+                await sync_affix_definitions()
+            await ensure_instance_affixes(inv_item, equipment.equip_pos)
+            await EquipmentProvenance.get_or_create(
+                inventory_item=inv_item,
+                defaults={"source_type": "drop", "source_key": equipment.acquisition_source or "", "original_owner_id": user.id},
+            )
         logger.info(
             f"Added item {item_id} x{quantity} (grade={instance_grade}) to user {user.id}"
         )
 
         # 도감에 등록
+        from service.collection_service import CollectionService
         await CollectionService.register_item(user, item_id)
 
         # 이벤트 발행: 아이템 획득
@@ -175,7 +207,7 @@ class InventoryService:
         Returns:
             UserInventory 목록
         """
-        return await UserInventory.filter(user=user).prefetch_related("item")
+        return await UserInventory.filter(user=user).prefetch_related("item", "affixes__affix_definition")
 
     @staticmethod
     async def get_inventory_item(

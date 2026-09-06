@@ -52,7 +52,8 @@ class EquipmentIntegrationManager:
     def apply_combat_start(
         self,
         user: "User",
-        context: "CombatContext"
+        context: "CombatContext",
+        session=None,
     ) -> list[str]:
         """
         전투 시작 시 장비 컴포넌트의 on_combat_start() 호출
@@ -74,6 +75,28 @@ class EquipmentIntegrationManager:
                 log = comp.on_combat_start(user, target)
                 if log and log.strip():
                     logs.append(log)
+
+            if getattr(comp, '_tag', '') == 'dungeon_specific_buff':
+                dungeon = getattr(session, 'dungeon', None)
+                dungeon_id = getattr(dungeon, 'id', None)
+                dungeon_type = str(
+                    getattr(session, 'content_type', getattr(dungeon, 'type', '')) or ''
+                ).lower()
+                if '훈련' in str(getattr(dungeon, 'name', '')):
+                    dungeon_type = 'training'
+                if comp.is_active_in_dungeon(dungeon_id, dungeon_type):
+                    applied = {}
+                    for stat, value in comp.get_stat_bonuses().items():
+                        attr = {'ad_defense': 'defense'}.get(stat, stat)
+                        if not hasattr(user, attr):
+                            continue
+                        current = getattr(user, attr)
+                        delta = int(value) if isinstance(current, int) and not isinstance(current, bool) else float(value)
+                        setattr(user, attr, current + delta)
+                        applied[attr] = applied.get(attr, 0.0) + delta
+                    if applied:
+                        user._equipment_temporary_stats = applied
+                        logs.append("🏰 던전 전용 장비 효과가 활성화되었습니다.")
 
         return logs
 
@@ -98,6 +121,13 @@ class EquipmentIntegrationManager:
         for comp in components:
             if hasattr(comp, 'on_turn_start'):
                 log = comp.on_turn_start(entity, target)
+                if log and log.strip():
+                    logs.append(log)
+
+            # These legacy effects expose on_turn even though their semantic
+            # trigger is the beginning of an action.
+            if getattr(comp, '_tag', '') == 'random_attribute' and hasattr(comp, 'on_turn'):
+                log = comp.on_turn(entity, target)
                 if log and log.strip():
                     logs.append(log)
 
@@ -128,6 +158,10 @@ class EquipmentIntegrationManager:
                 log = comp.on_attack(attacker, target, damage)
                 if log and log.strip():
                     logs.append(log)
+            if getattr(comp, '_tag', '') == 'on_attack_proc' and hasattr(comp, 'on_turn'):
+                log = comp.on_turn(attacker, target)
+                if log and log.strip():
+                    logs.append(log)
 
         return logs
 
@@ -152,6 +186,10 @@ class EquipmentIntegrationManager:
         components = self.get_equipment_components(defender)
 
         for comp in components:
+            if getattr(comp, '_tag', '') == 'damage_delay':
+                # The pipeline already moved the delayed portion before HP was
+                # changed; calling on_damaged again would schedule it twice.
+                continue
             if hasattr(comp, 'on_damaged'):
                 log = comp.on_damaged(defender, attacker, damage)
                 if log and log.strip():
@@ -173,33 +211,57 @@ class EquipmentIntegrationManager:
         components = self.get_equipment_components(actor)
 
         for comp in components:
-            tag = getattr(comp, '_tag', '')
-            log = ""
-
-            # 재생 효과
-            if tag == "regeneration" and hasattr(comp, 'on_turn_start'):
-                log = comp.on_turn_start(actor, None)
-
-            # 전투 성장 효과
-            elif tag == "combat_stat_growth" and hasattr(comp, 'on_turn_start'):
-                log = comp.on_turn_start(actor, None)
-
-            # 조건부 스탯 보너스
-            elif tag == "conditional_stat_bonus" and hasattr(comp, 'on_turn_start'):
-                log = comp.on_turn_start(actor, None)
-
-            # 주기적 무적
-            elif tag == "periodic_invincibility" and hasattr(comp, 'on_turn_start'):
-                log = comp.on_turn_start(actor, None)
-
-            # 아군 보호
-            elif tag == "ally_protection" and hasattr(comp, 'on_turn_start'):
-                log = comp.on_turn_start(actor, None)
-
-            if log and log.strip():
-                logs.append(log)
+            if getattr(comp, '_tag', '') == "combat_stat_growth" and hasattr(comp, 'on_turn'):
+                log = comp.on_turn(actor, None)
+                if log and log.strip():
+                    logs.append(log)
 
         return logs
+
+    def apply_skill_used(self, actor, skill) -> list[str]:
+        """Track equipment combos and refresh effects after choosing a skill."""
+        if skill is None:
+            return []
+        logs = []
+        for comp in self.get_equipment_components(actor):
+            if not hasattr(comp, 'on_skill_used'):
+                continue
+            argument = getattr(skill, 'id', 0) if getattr(comp, '_tag', '') == 'skill_refresh' else skill
+            log = comp.on_skill_used(actor, argument)
+            if log and str(log).strip():
+                logs.append(str(log))
+        return logs
+
+    def apply_on_kill(self, killer, dying_entity) -> list[str]:
+        """Run equipment kill triggers exactly once per defeated entity."""
+        logs = []
+        for comp in self.get_equipment_components(killer):
+            if getattr(comp, '_tag', '') not in {'on_kill_heal', 'on_kill_stack'}:
+                continue
+            log = comp.on_death(dying_entity, killer)
+            if log and str(log).strip():
+                logs.append(str(log))
+        return logs
+
+    def apply_combat_end(self, user) -> list[str]:
+        """Restore temporary equipment conversions before discarding state."""
+        logs = []
+        for comp in self.get_equipment_components(user):
+            if hasattr(comp, 'on_combat_end'):
+                log = comp.on_combat_end(user)
+                if log and str(log).strip():
+                    logs.append(str(log))
+        for attr, delta in getattr(user, '_equipment_temporary_stats', {}).items():
+            setattr(user, attr, getattr(user, attr) - delta)
+        user._equipment_temporary_stats = {}
+        return logs
+
+    def has_first_strike(self, user) -> bool:
+        return any(
+            getattr(comp, '_tag', '') == 'first_strike'
+            and getattr(comp, 'has_guaranteed_first_strike', lambda: False)()
+            for comp in self.get_equipment_components(user)
+        )
 
     def reset_component_caches(self, user: "User") -> None:
         """
@@ -240,6 +302,14 @@ class EquipmentIntegrationManager:
             # 연쇄 공격 리셋
             if hasattr(comp, '_chain_count'):
                 comp._chain_count = 0
+            if hasattr(comp, '_current_stacks'):
+                comp._current_stacks = 0
+            if hasattr(comp, '_last_skill_id'):
+                comp._last_skill_id = None
+            if hasattr(comp, '_used_skills'):
+                comp._used_skills.clear()
+            if hasattr(comp, '_accumulated'):
+                comp._accumulated = 0.0
 
             # 예측 상태 리셋
             if hasattr(comp, '_predicted_this_turn'):

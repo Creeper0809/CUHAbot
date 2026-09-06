@@ -1,6 +1,9 @@
 import discord
+import logging
 from typing import Dict, List
 from resources.item_emoji import ItemType, EmojiManager
+
+logger = logging.getLogger(__name__)
 
 class ItemEmbed:
     @staticmethod
@@ -32,9 +35,10 @@ class ItemEmbed:
                     type_items = await getattr(item, relation_name).all()
                     if type_items:
                         await type_items[0].apply_to_embed(embed)
-                except:
-                    # 관계가 없는 경우 ETC 처리
-                    item.type = ItemType.ETC
+                except Exception:
+                    # 설명 조회는 정적 아이템 타입을 바꾸면 안 된다. 관계 오류는
+                    # 로그로 남기고 기본 설명만 안전하게 반환한다.
+                    logger.exception("Failed to render item relation: item_id=%s relation=%s", item.id, relation_name)
 
         item.cost is not None and embed.add_field(
             name=f"가격 {emoji_manager.get_gold_emoji()}",

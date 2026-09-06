@@ -40,6 +40,7 @@ class PoisonEffect(StatusEffect):
         super().__init__()
         self.effect_type = "poison"
         self.max_stacks = STATUS_EFFECT.POISON_MAX_STACKS
+        self.damage_bonus = 0.0
 
     def tick(self, entity) -> str:
         # User는 get_stat()으로 최대 HP 조회, Monster는 hp 필드가 최대 HP
@@ -49,7 +50,7 @@ class PoisonEffect(StatusEffect):
         else:
             max_hp = entity.hp
 
-        damage = int(max_hp * STATUS_EFFECT.POISON_DAMAGE_PERCENT * self.stacks)
+        damage = int(max_hp * STATUS_EFFECT.POISON_DAMAGE_PERCENT * self.stacks * (1.0 + self.damage_bonus))
         damage = max(1, damage)
         entity.take_damage(damage)
         return f"☠️ **{entity.get_name()}** 중독! **-{damage}** HP"

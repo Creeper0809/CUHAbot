@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from typing import Optional
 
 from models import User
-from config import USER_STATS, LEVELING_EXP_TABLE, LEVELING_EXP_DEFAULT
+from config import USER_STATS, BALANCE_V2
 
 logger = logging.getLogger(__name__)
 
@@ -44,10 +44,7 @@ def get_exp_multiplier(level: int) -> int:
     Returns:
         필요 경험치 배율
     """
-    for max_level, exp_required in LEVELING_EXP_TABLE:
-        if level <= max_level:
-            return exp_required
-    return LEVELING_EXP_DEFAULT
+    return BALANCE_V2.exp_to_next(level)
 
 
 def get_exp_for_level(level: int) -> int:
@@ -60,10 +57,7 @@ def get_exp_for_level(level: int) -> int:
     Returns:
         필요 누적 경험치
     """
-    total_exp = 0
-    for lv in range(1, level):
-        total_exp += get_exp_multiplier(lv) * lv
-    return total_exp
+    return BALANCE_V2.cumulative_exp(level)
 
 
 def get_exp_to_next_level(level: int) -> int:
@@ -76,7 +70,7 @@ def get_exp_to_next_level(level: int) -> int:
     Returns:
         다음 레벨까지 필요한 경험치
     """
-    return get_exp_multiplier(level) * level
+    return BALANCE_V2.exp_to_next(level)
 
 
 def calculate_level_from_exp(total_exp: int) -> int:
@@ -93,7 +87,7 @@ def calculate_level_from_exp(total_exp: int) -> int:
     cumulative = 0
 
     while level < 100:
-        exp_needed = get_exp_multiplier(level) * level
+        exp_needed = get_exp_to_next_level(level)
         if cumulative + exp_needed > total_exp:
             break
         cumulative += exp_needed
@@ -124,6 +118,15 @@ class RewardService:
         """
         old_level = user.level
 
+        # Economic passives are deck choices just like combat passives.  Apply
+        # them at the single persistence boundary so room, boss and event
+        # rewards cannot accidentally disagree.
+        from service.dungeon.skill import get_passive_effect_bonuses
+
+        passive = get_passive_effect_bonuses(user)
+        exp_gained = max(0, round(exp_gained * (1.0 + passive.get("exp_bonus", 0.0))))
+        gold_gained = max(0, round(gold_gained * (1.0 + passive.get("gold_bonus", 0.0))))
+
         # 경험치 및 골드 추가
         user.exp += exp_gained
         user.gold += gold_gained
@@ -139,6 +142,21 @@ class RewardService:
 
             user.level = new_level
             user.stat_points += stat_points_gained
+
+            # Persist every level-derived base stat and preserve the player's
+            # current HP percentage while increasing the maximum.
+            from service.player.user_service import UserService
+
+            old_max_hp = max(1, user.hp)
+            hp_ratio = max(0.0, min(user.now_hp / old_max_hp, 1.0))
+            base_stats = UserService.calculate_base_stats(new_level)
+            user.hp = base_stats["hp"]
+            user.attack = base_stats["attack"]
+            user.ap_attack = base_stats["ap_attack"]
+            user.defense = base_stats["ad_defense"]
+            user.ap_defense = base_stats["ap_defense"]
+            user.speed = base_stats["speed"]
+            user.now_hp = int(user.hp * hp_ratio)
 
             level_up_result = LevelUpResult(
                 leveled_up=True,

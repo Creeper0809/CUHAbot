@@ -1,0 +1,32 @@
+{
+  "players": 100000,
+  "seed": 404,
+  "engine": "runtime-constant-cohort-v4",
+  "passed": true,
+  "metrics": {
+    "working_build_median_hours": 10.63,
+    "working_build_p90_hours": 12.111,
+    "level_100_median_hours": 37.502,
+    "upper_build_median_hours": 77.301,
+    "candidate_interval_runs": 2.0,
+    "gold_spend_ratio": 0.66664,
+    "dominant_set_share": 0.029,
+    "dominant_affix_share": 0.06647,
+    "level_100_median_sss_slots": 2.0,
+    "upper_build_sample_size": 73335
+  },
+  "checks": {
+    "working_build_median_10_12h": true,
+    "working_build_p90_at_most_18h": true,
+    "level_100_median_36_44h": true,
+    "upper_build_median_72_88h": true,
+    "candidate_interval_2_4_runs": true,
+    "target_base_guarantee_at_most_12_clears": true,
+    "set_layout_budget_within_10pct": true,
+    "single_set_share_below_35pct": true,
+    "single_affix_share_below_45pct": true,
+    "gold_spend_ratio_65_80pct": true,
+    "level_100_sss_supply_2_3": true
+  },
+  "violations": []
+}

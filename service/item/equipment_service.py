@@ -24,6 +24,7 @@ from service.item.equipment_component_loader import (
     load_equipment_components,
     get_equipment_passive_stats
 )
+from config import BALANCE_V2
 
 logger = logging.getLogger(__name__)
 
@@ -78,7 +79,8 @@ class EquipmentService:
         # 슬롯 호환성 체크 (equip_pos가 있는 경우)
         if equipment.equip_pos is not None:
             expected_slot = EquipmentService._get_slot_from_equip_pos(equipment.equip_pos)
-            if expected_slot and expected_slot != slot:
+            ring_slot = expected_slot == EquipmentSlot.RING1 and slot in {EquipmentSlot.RING1, EquipmentSlot.RING2}
+            if expected_slot and expected_slot != slot and not ring_slot:
                 raise EquipmentSlotMismatchError(
                     inv_item.item.name,
                     EquipmentSlot.get_korean_name(expected_slot),
@@ -102,6 +104,9 @@ class EquipmentService:
                 raise StatRequirementError(stat_name, required, current)
 
         # 기존 장비 해제
+        previous = await UserEquipment.filter(user=user, slot=slot).prefetch_related(
+            "inventory_item__item"
+        ).first()
         await UserEquipment.filter(user=user, slot=slot).delete()
 
         # 새 장비 착용
@@ -113,6 +118,21 @@ class EquipmentService:
 
         logger.info(f"User {user.id} equipped item {inv_item.item.id} in slot {slot.name}")
         await EquipmentService.apply_equipment_stats(user)
+        if previous:
+            from service.telemetry import record_game_event
+
+            await record_game_event(
+                "equipment_replaced", user=user, content_type="economy",
+                metrics={
+                    "slot": slot.name,
+                    "old_item_id": previous.inventory_item.item_id,
+                    "old_grade": previous.inventory_item.instance_grade,
+                    "old_enhancement": previous.inventory_item.enhancement_level,
+                    "new_item_id": inv_item.item_id,
+                    "new_grade": inv_item.instance_grade,
+                    "new_enhancement": inv_item.enhancement_level,
+                },
+            )
         return equipped
 
     @staticmethod
@@ -124,6 +144,10 @@ class EquipmentService:
             3: EquipmentSlot.BOOTS,
             4: EquipmentSlot.WEAPON,
             5: EquipmentSlot.SUB_WEAPON,
+            6: EquipmentSlot.GLOVES,
+            7: EquipmentSlot.NECKLACE,
+            8: EquipmentSlot.RING1,
+            9: EquipmentSlot.RING2,
         }
         return pos_to_slot.get(equip_pos)
 
@@ -212,8 +236,16 @@ class EquipmentService:
             "ap_attack": 0,
             "ad_defense": 0,
             "ap_defense": 0,
-            "speed": 0
+            "speed": 0,
+            "accuracy": 0,
+            "evasion": 0,
+            "crit_rate": 0,
+            "crit_damage": 0,
+            "drop_rate": 0,
         }
+
+        from service.combat.stats import ModifierBundle
+        modifier_bundle = ModifierBundle()
 
         # 모든 장비의 컴포넌트를 수집
         all_components = []
@@ -243,10 +275,10 @@ class EquipmentService:
             for stat_key, base_val in base_stats.items():
                 total_stats[stat_key] += base_val
 
-            # 강화 보너스 (등급 적용 후 기준, 5% per level)
+            # 강화 보너스 (Balance V2: 등급 적용 후 단계당 2%)
             enhancement = eq.inventory_item.enhancement_level
             if enhancement > 0:
-                bonus_mult = enhancement * 0.05
+                bonus_mult = BALANCE_V2.enhancement_stat_multiplier(enhancement) - 1.0
                 for stat_key, base_val in base_stats.items():
                     total_stats[stat_key] += int(base_val * bonus_mult)
 
@@ -261,9 +293,25 @@ class EquipmentService:
                 special_config = _convert_effects_to_components(
                     eq.inventory_item.special_effects
                 )
-                if special_config:
+                from models import UserEquipmentAffix
+                has_v4_affixes = await UserEquipmentAffix.exists(inventory_item=eq.inventory_item)
+                if special_config and not has_v4_affixes:
                     components = load_equipment_components(special_config)
                     all_components.extend(components)
+
+            from service.item.affix_service import get_affix_bundle
+            affix_bundle = await get_affix_bundle(eq.inventory_item)
+            for stat_key, bundle_key in {
+                "hp": "hp", "attack": "attack", "ap_attack": "ap_attack",
+                "ad_defense": "ad_defense", "ap_defense": "ap_defense", "speed": "speed",
+                "accuracy": "accuracy", "evasion": "evasion", "crit_rate": "critical_rate",
+                "crit_damage": "critical_damage", "drop_rate": "drop_rate",
+            }.items():
+                total_stats[stat_key] += round(getattr(affix_bundle, bundle_key))
+                setattr(affix_bundle, bundle_key, 0.0)
+            modifier_bundle.merge(affix_bundle)
+            # Affix flat stats are already consumed through the typed bundle above.
+            # Adding their passive components here would apply the same values twice.
 
         # 컴포넌트에서 스탯 추출
         passive_stats = get_equipment_passive_stats(all_components)
@@ -275,17 +323,22 @@ class EquipmentService:
         for stat_key, value in passive_stats.items():
             total_stats[stat_key] = total_stats.get(stat_key, 0) + int(value)
 
-        # 세트 효과 보너스 적용
-        set_bonuses = await SetDetectionService.get_set_bonus_stats(user)
-        for stat, bonus in set_bonuses.items():
-            if stat not in total_stats:
-                continue
-            if isinstance(bonus, int):
-                total_stats[stat] += bonus
-            elif isinstance(bonus, float) and 0 < bonus < 1:
-                total_stats[stat] = int(total_stats[stat] * (1 + bonus))
-            else:
-                total_stats[stat] += int(bonus)
+        # Flat set stats join equipment totals; percentage and combat effects
+        # remain typed so the final character aggregation can apply them once.
+        modifier_bundle.merge(await SetDetectionService.get_modifier_bundle(user))
+        flat_set_stats = {
+            "hp": "hp", "attack": "attack", "ap_attack": "ap_attack",
+            "ad_defense": "ad_defense", "ap_defense": "ap_defense", "speed": "speed",
+            "accuracy": "accuracy", "evasion": "evasion", "crit_rate": "critical_rate",
+            "crit_damage": "critical_damage", "drop_rate": "drop_rate",
+        }
+        for target, source in flat_set_stats.items():
+            total_stats[target] += round(getattr(modifier_bundle, source))
+            setattr(modifier_bundle, source, 0.0)
+        total_stats.update({
+            f"modifier_{key}": value
+            for key, value in modifier_bundle.as_runtime_dict().items()
+        })
 
         return total_stats
 
@@ -294,6 +347,13 @@ class EquipmentService:
         """장비 스탯을 런타임 필드에 반영"""
         stats = await EquipmentService.calculate_equipment_stats(user)
         user.equipment_stats = stats
+        from service.combat.stats import ModifierBundle
+        raw_bundle = {
+            key.removeprefix("modifier_"): value
+            for key, value in stats.items()
+            if key.startswith("modifier_")
+        }
+        user.modifier_bundle = ModifierBundle.from_mapping(raw_bundle)
 
 
 def _convert_effects_to_components(effects: List[Dict[str, Any]]) -> Optional[Dict[str, Any]]:

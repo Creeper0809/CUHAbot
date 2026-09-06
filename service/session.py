@@ -5,6 +5,9 @@
 """
 import asyncio
 import logging
+import random
+import secrets
+import time
 from dataclasses import dataclass, field
 from enum import IntEnum
 from typing import Optional, TYPE_CHECKING
@@ -69,6 +72,7 @@ class DungeonSession:
     total_gold: int = 0             # 획득한 총 골드
     monsters_defeated: int = 0      # 처치한 몬스터 수
     items_found: list = field(default_factory=list)  # 획득한 아이템 ID 목록
+    boss_reward_item_ids: list[int] = field(default_factory=list)
 
     # Discord 메시지 참조
     ui_message: Optional["Message"] = None   # 공개 채널 메시지
@@ -77,7 +81,7 @@ class DungeonSession:
     discord_client: Optional[object] = None  # Discord client (난입자 UI 전송용)
 
     # 시간 정보
-    start_time: float = field(default_factory=lambda: asyncio.get_event_loop().time())
+    start_time: float = field(default_factory=time.monotonic)
 
     # 음성 채널 상태
     voice_channel_id: Optional[int] = None
@@ -135,6 +139,28 @@ class DungeonSession:
     allow_intervention: bool = True
     """난입 허용 여부 (유저가 설정)"""
 
+    # 로그라이크 일반 던전 런타임 상태 (의도적으로 DB에 저장하지 않음)
+    roguelike_enabled: bool = False
+    run_nonce: str = field(default_factory=lambda: secrets.token_urlsafe(8))
+    run_seed: int = field(default_factory=lambda: secrets.randbits(63))
+    run_rng: random.Random = field(init=False, repr=False)
+    route_offers: list[dict] = field(default_factory=list)
+    selected_route_token: Optional[str] = None
+    route_choice_lock: asyncio.Lock = field(default_factory=asyncio.Lock, repr=False)
+    skill_augments: dict[int, list[str]] = field(default_factory=dict)
+    augment_offer_cache: dict[str, list[str]] = field(default_factory=dict)
+    augment_choice_lock: asyncio.Lock = field(default_factory=asyncio.Lock, repr=False)
+    run_end_event: asyncio.Event = field(default_factory=asyncio.Event, repr=False)
+    pause_started_at: Optional[float] = None
+    pause_deadline: Optional[float] = None
+    origin_guild_id: Optional[int] = None
+    origin_channel_id: Optional[int] = None
+    rest_shield_rate: float = 0.0
+    roguelike_combat_kind: Optional[str] = None
+    roguelike_resolution_seed: Optional[int] = None
+    roguelike_stat_scale: float = 1.0
+    roguelike_skip_flee: bool = False
+
     # 레이드 전용 런타임 상태
     raid_id: Optional[int] = None
     raid_phase: int = 1
@@ -161,6 +187,9 @@ class DungeonSession:
     raid_minigame_prompt: Optional[str] = None
     raid_minigame_stage_inputs: dict[str, str] = field(default_factory=dict)
     raid_minigame_stage_index: int = 0
+
+    def __post_init__(self) -> None:
+        self.run_rng = random.Random(self.run_seed)
 
     def is_dungeon_cleared(self) -> bool:
         """던전 클리어 조건 확인"""

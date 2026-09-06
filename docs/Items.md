@@ -1,3 +1,40 @@
+<!-- BALANCE_V2_GENERATED_START -->
+# Items V2
+
+이 문서는 `config/balance_v2.py`와 `data/items_equipment.csv`에서 생성됩니다.
+
+총 D등급 장비 예산: `B(L)=80+4.2L+0.02L²`
+
+## 등급 배율
+
+| 등급 | 배율 |
+|---|---:|
+| D | 1.00 |
+| C | 1.08 |
+| B | 1.18 |
+| A | 1.32 |
+| S | 1.50 |
+| SS | 1.72 |
+| SSS | 1.98 |
+| MYTHIC | 2.30 |
+
+## 슬롯 예산
+
+| 슬롯 | 비중 |
+|---|---:|
+| weapon | 24% |
+| sub_weapon | 12% |
+| armor | 16% |
+| helmet | 10% |
+| gloves | 10% |
+| boots | 10% |
+| necklace | 8% |
+| ring1 | 5% |
+| ring2 | 5% |
+
+강화는 단계당 기본 스탯 +2%이며 +15에서 +30%입니다. 판매가는 구매가의 25%입니다.
+<!-- BALANCE_V2_GENERATED_END -->
+
 # 아이템 시스템 (Item System)
 
 ## 개요
@@ -394,3 +431,31 @@ INSERT INTO Grade (id, name, description) VALUES
 (4, 'A', '영웅 등급'),
 (5, 'S', '전설 등급');
 ```
+# Farming and Buildcraft V4
+
+The V4 cohort simulator uses the runtime grade tables, dungeon/monster/box
+drop chances, regional seal thresholds, salvage essence, enhancement costs,
+skill-shop costs, and reforge costs. The canonical 100,000-player result is
+stored in `reports/itemization-v4-simulation-100k.json`.
+
+- Working build median: 10.63 hours; 90th percentile: 12.11 hours
+- Level 100 median: 37.50 hours
+- Upper build median: 77.30 hours
+- Meaningful candidate interval: 2.00 runs
+- Gold spend ratio: 66.66%
+- Level 100 median SSS slots: 2
+
+장비는 `고정 베이스 + 등급 + 관계형 랜덤 옵션 + 강화`의 네 층으로
+계산한다. D~B에는 옵션이 없고 A/S/SS/SSS/신화는 각각 1/2/2/3/3개의
+옵션을 갖는다. 옵션 티어와 품질 백분위는 별도로 표시하며 같은 효과군은
+한 장비에 중복되지 않는다.
+
+486개 베이스는 CSV의 `config.itemization_v4`에 ID별 판타지, 역할,
+옵션 프로필, 획득처, 포기 비용과 검토 표식을 기록한다. 세트 연결은
+표시 문자열이 아니라 `set_key`를 사용한다. 지원 세트는 36개이며 모든
+단계 설명은 실제 런타임 설정에서 결정적으로 생성된다.
+
+지역 완료는 Normal 8회, Elite 10회, Raid 12회마다 완성 인장을 준다.
+완성 인장 1개와 장비 정수 40개로 해당 지역 베이스를 A등급·호환 옵션
+1개 상태로 지정 제작한다. 분해, 재련, 지정 제작, 강화 계승과 파손 핵
+복구는 interaction 영수증으로 중복 처리를 막는다.

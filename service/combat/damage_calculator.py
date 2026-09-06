@@ -68,24 +68,26 @@ class DamageCalculator:
             DamageResult: 계산 결과
         """
         # 방어력 무시 비율 제한
-        actual_armor_pen = min(armor_penetration, DAMAGE.MAX_ARMOR_PENETRATION)
+        actual_armor_pen = max(0.0, min(armor_penetration, DAMAGE.MAX_ARMOR_PENETRATION))
 
         # 기본 데미지 계산 (속성 배율 적용)
         raw_damage = int(attack * skill_multiplier * attribute_multiplier)
 
-        # 방어력 적용
-        effective_defense = defense * (1 - actual_armor_pen)
-        defense_reduction = int(effective_defense * DAMAGE.PHYSICAL_DEFENSE_RATIO)
-
-        base_damage = raw_damage - defense_reduction
-
-        # 최소 데미지 보장
-        base_damage = max(base_damage, DAMAGE.MIN_DAMAGE)
+        # Balance V2 hyperbolic mitigation, capped at 70%.
+        effective_defense = max(0.0, defense) * (1 - actual_armor_pen)
+        reduction_rate = min(
+            DAMAGE.MAX_DEFENSE_REDUCTION,
+            effective_defense / (effective_defense + DAMAGE.DEFENSE_CONSTANT),
+        )
+        base_damage = raw_damage * (1.0 - reduction_rate)
+        minimum_damage = max(DAMAGE.MIN_DAMAGE, int(raw_damage * DAMAGE.MIN_RAW_DAMAGE_RATIO))
+        base_damage = int(max(base_damage, minimum_damage))
+        defense_reduction = max(0, raw_damage - base_damage)
 
         # 치명타 판정
         is_critical = force_critical or DamageCalculator._roll_critical(critical_rate)
         if is_critical:
-            base_damage = int(base_damage * critical_multiplier)
+            base_damage = int(base_damage * min(critical_multiplier, DAMAGE.MAX_CRITICAL_MULTIPLIER))
 
         # 데미지 변동 적용 (±DAMAGE_VARIANCE)
         final_damage = DamageCalculator._apply_variance(base_damage)
@@ -131,24 +133,26 @@ class DamageCalculator:
             DamageResult: 계산 결과
         """
         # 마법 관통 비율 제한
-        actual_magic_pen = min(magic_penetration, DAMAGE.MAX_ARMOR_PENETRATION)
+        actual_magic_pen = max(0.0, min(magic_penetration, DAMAGE.MAX_ARMOR_PENETRATION))
 
         # 기본 데미지 계산 (속성 배율 적용)
         raw_damage = int(ap_attack * skill_multiplier * attribute_multiplier)
 
-        # 마법 방어력 적용
-        effective_defense = ap_defense * (1 - actual_magic_pen)
-        defense_reduction = int(effective_defense * DAMAGE.MAGICAL_DEFENSE_RATIO)
-
-        base_damage = raw_damage - defense_reduction
-
-        # 최소 데미지 보장
-        base_damage = max(base_damage, DAMAGE.MIN_DAMAGE)
+        # Balance V2 uses the same mitigation curve for both damage channels.
+        effective_defense = max(0.0, ap_defense) * (1 - actual_magic_pen)
+        reduction_rate = min(
+            DAMAGE.MAX_DEFENSE_REDUCTION,
+            effective_defense / (effective_defense + DAMAGE.DEFENSE_CONSTANT),
+        )
+        base_damage = raw_damage * (1.0 - reduction_rate)
+        minimum_damage = max(DAMAGE.MIN_DAMAGE, int(raw_damage * DAMAGE.MIN_RAW_DAMAGE_RATIO))
+        base_damage = int(max(base_damage, minimum_damage))
+        defense_reduction = max(0, raw_damage - base_damage)
 
         # 치명타 판정
         is_critical = force_critical or DamageCalculator._roll_critical(critical_rate)
         if is_critical:
-            base_damage = int(base_damage * critical_multiplier)
+            base_damage = int(base_damage * min(critical_multiplier, DAMAGE.MAX_CRITICAL_MULTIPLIER))
 
         # 데미지 변동 적용
         final_damage = DamageCalculator._apply_variance(base_damage)
@@ -197,8 +201,8 @@ class DamageCalculator:
         Returns:
             치명타 여부
         """
-        # 최대 치명타 확률 제한 (80%)
-        actual_rate = min(critical_rate, 0.8)
+        # Balance V2 critical chance cap (70%).
+        actual_rate = max(0.0, min(critical_rate, DAMAGE.MAX_CRITICAL_RATE))
         return random.random() < actual_rate
 
     @staticmethod

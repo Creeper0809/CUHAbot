@@ -14,6 +14,7 @@ from config.grade import (
     SPECIAL_EFFECT_POOL,
     get_grade_info,
 )
+from config.balance_v2 import BALANCE_V2
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +23,7 @@ class GradeService:
     """인스턴스 등급 비즈니스 로직"""
 
     @staticmethod
-    def roll_grade(context: str = "normal") -> int:
+    def roll_grade(context: str = "normal", *, user=None, shop: bool = False) -> int:
         """
         컨텍스트 기반 인스턴스 등급 랜덤 결정
 
@@ -43,7 +44,26 @@ class GradeService:
         grades = list(weights_map.keys())
         weights = list(weights_map.values())
 
-        return random.choices(grades, weights=weights, k=1)[0]
+        grade = random.choices(grades, weights=weights, k=1)[0]
+        if user is None:
+            return grade
+
+        from service.dungeon.skill import get_passive_effect_bonuses
+
+        passive = get_passive_effect_bonuses(user)
+        if shop and passive.get("shop_rare", 0.0) > 0:
+            grade += max(1, int(passive["shop_rare"]))
+        elif not shop:
+            # Two-step upgrades are resolved first.  The rolls are separate so
+            # the authored probabilities remain literal percentage chances.
+            if random.random() < min(1.0, max(0.0, passive.get("grade_up2_chance", 0.0))):
+                grade += 2
+            elif random.random() < min(
+                1.0,
+                max(0.0, passive.get("grade_up_chance", 0.0) + passive.get("rare_drop", 0.0)),
+            ):
+                grade += 1
+        return min(max(grades), grade)
 
     @staticmethod
     def roll_special_effects(grade_id: int) -> Optional[list[dict]]:
@@ -91,8 +111,59 @@ class GradeService:
                 "type": effect_def.effect_type,
                 "value": value,
             })
+        return GradeService.cap_special_effect_budget(grade_id, effects)
 
-        return effects
+    # Conversion from a displayed percentage point to final item CP ratio.
+    # The weights are expected-combat-value estimates: penetration/crit/lifesteal
+    # are broadly useful, while crit damage and one-stat durability are narrower.
+    SPECIAL_EFFECT_CP_WEIGHTS = {
+        "lifesteal": 0.80,
+        "crit_rate": 0.80,
+        "crit_damage": 0.35,
+        "armor_pen": 0.80,
+        "bonus_hp_pct": 0.50,
+        "bonus_speed_pct": 0.60,
+    }
+
+    @staticmethod
+    def special_effect_budget_ratio(effects: Optional[list[dict]]) -> float:
+        return sum(
+            max(0.0, float(effect.get("value", 0))) / 100.0
+            * GradeService.SPECIAL_EFFECT_CP_WEIGHTS.get(str(effect.get("type")), 1.0)
+            for effect in (effects or [])
+        )
+
+    @staticmethod
+    def cap_special_effect_budget(grade_id: int, effects: list[dict]) -> list[dict]:
+        grade_info = get_grade_info(grade_id)
+        if not grade_info:
+            return []
+        grade_key = "MYTHIC" if grade_info.name == "신화" else grade_info.name
+        cap = BALANCE_V2.effect_budget_caps[grade_key]
+        used = GradeService.special_effect_budget_ratio(effects)
+        if cap <= 0 or used <= 0:
+            return [] if cap <= 0 else effects
+        if used <= cap + 1e-9:
+            return effects
+        scale = cap / used
+        capped = []
+        for effect in effects:
+            value = round(max(0.1, float(effect.get("value", 0)) * scale), 1)
+            capped.append({"type": effect["type"], "value": int(value) if value.is_integer() else value})
+        # Decimal rounding may overshoot by a few basis points. Reduce the
+        # largest-cost effect one display step until the hard cap is respected.
+        while GradeService.special_effect_budget_ratio(capped) > cap + 1e-9:
+            candidate = max(
+                capped,
+                key=lambda effect: GradeService.SPECIAL_EFFECT_CP_WEIGHTS.get(effect["type"], 1.0)
+                * float(effect["value"]),
+            )
+            candidate["value"] = round(max(0.0, float(candidate["value"]) - 0.1), 1)
+            if candidate["value"] <= 0:
+                capped.remove(candidate)
+                if not capped:
+                    break
+        return capped
 
     @staticmethod
     def get_stat_multiplier(grade_id: int) -> float:

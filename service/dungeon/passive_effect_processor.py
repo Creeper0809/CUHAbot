@@ -92,6 +92,27 @@ class PassiveEffectProcessor:
                 if log and log.strip():
                     logs.append(log)
 
+        from models import UserStatEnum
+        from service.dungeon.skill import get_passive_effect_bonuses
+        from service.dungeon.status import InvulnerabilityBuff
+
+        effects = get_passive_effect_bonuses(actor)
+        regen = max(0.0, effects.get("regen_percent", 0.0))
+        if regen:
+            maximum = actor.get_stat().get(UserStatEnum.HP, getattr(actor, "hp", 1))
+            before = actor.now_hp
+            actor.now_hp = min(maximum, actor.now_hp + max(1, int(maximum * regen)))
+            if actor.now_hp > before:
+                logs.append(f"💚 **{actor.get_name()}** 패시브 재생 +{actor.now_hp - before} HP")
+
+        invincible_turns = max(0, int(round(effects.get("invincible_turns", 0.0))))
+        if invincible_turns and not getattr(actor, "_passive_crisis_invincible_used", False):
+            actor._passive_crisis_invincible_used = True
+            buff = InvulnerabilityBuff()
+            buff.duration = invincible_turns
+            actor.status.append(buff)
+            logs.append(f"🛡️ **{actor.get_name()}** 위기 무적 {invincible_turns}턴")
+
         return logs
 
     def reset_all_skill_usage_counts(self) -> None:
@@ -108,3 +129,7 @@ class PassiveEffectProcessor:
                     component._turn_counts.clear()
                 if hasattr(component, '_base_stats'):
                     component._base_stats.clear()
+                if hasattr(component, '_used_entities'):
+                    component._used_entities.clear()
+                if hasattr(component, '_used_action_serial'):
+                    component._used_action_serial.clear()

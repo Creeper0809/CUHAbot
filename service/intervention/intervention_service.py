@@ -279,7 +279,9 @@ class InterventionService:
                     await EquipmentService.apply_equipment_stats(user)
 
                     # participants에 추가 (트랜잭션 성공 후에만)
+                    previous_members = 1 + len(session.participants)
                     session.participants[user_id] = user
+                    context.rescale_for_party(previous_members, previous_members + 1)
 
                     # 행동 게이지 초기화
                     context.action_gauges[id(user)] = 0

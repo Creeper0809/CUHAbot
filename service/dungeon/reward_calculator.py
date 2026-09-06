@@ -6,7 +6,7 @@
 import logging
 from typing import Optional
 
-from config import DUNGEON, DROP
+from config import DUNGEON, DROP, BALANCE_V2
 from models import Monster, MonsterTypeEnum, User, UserStatEnum
 from service.session import ContentType
 from service.collection_service import CollectionService
@@ -159,12 +159,27 @@ async def process_combat_result_multi(session, context, turn_count: int) -> str:
     # 이벤트 버스 (싱글톤)
     event_bus = EventBus()
 
-    for monster in context.monsters:
+    reward_monsters = [
+        monster for monster in context.monsters
+        if not getattr(monster, "is_phase_summon", False)
+    ]
+    for monster in reward_monsters:
         exp_mult = get_monster_exp_multiplier(monster)
         gold_mult = get_monster_gold_multiplier(monster)
 
-        exp = int(DUNGEON.BASE_EXP_PER_MONSTER * (1 + monster_level / 10) * exp_mult)
-        gold = int(DUNGEON.BASE_GOLD_PER_MONSTER * (1 + monster_level / 10) * gold_mult)
+        target_exp = BALANCE_V2.dungeon_exp(monster_level)
+        target_gold = BALANCE_V2.dungeon_gold(monster_level)
+        if session.roguelike_enabled:
+            if is_boss_monster(monster):
+                exp = round(target_exp * 0.25)
+                gold = round(target_gold * 0.25)
+            else:
+                exp = round(target_exp * 0.55 / 8 * exp_mult)
+                gold = round(target_gold * 0.55 / 8 * gold_mult)
+        else:
+            expected_steps = max(1, getattr(session, "max_steps", DUNGEON.BASE_STEPS))
+            exp = round(target_exp * 0.80 / expected_steps * exp_mult)
+            gold = round(target_gold * 0.80 / expected_steps * gold_mult)
 
         total_exp += exp
         total_gold += gold
@@ -190,11 +205,11 @@ async def process_combat_result_multi(session, context, turn_count: int) -> str:
                 result_lines.append(f"   {drop_msg}")
 
     # 그룹 보너스 (2마리 이상)
-    if len(context.monsters) >= 2:
+    if len(reward_monsters) >= 2:
         total_exp = int(total_exp * 1.2)
         total_gold = int(total_gold * 1.1)
 
-    session.monsters_defeated += len(context.monsters)
+    session.monsters_defeated += len(reward_monsters)
 
     # 주간 타워는 층 클리어 보상으로 대체
     if is_tower:

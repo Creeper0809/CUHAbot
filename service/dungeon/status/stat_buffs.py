@@ -124,6 +124,95 @@ class EvasionBuff(Buff):
         return "💨"
 
 
+@register_buff_with_tag("critical_rate")
+class CriticalRateBuff(Buff):
+    """치명타 확률을 퍼센트포인트 단위로 변경한다."""
+
+    def __init__(self):
+        super().__init__()
+        self.buff_type = "critical_rate"
+
+    def apply_stat(self, stats: dict) -> None:
+        stats[UserStatEnum.CRITICAL_RATE] = stats.get(UserStatEnum.CRITICAL_RATE, 0) + self.amount
+
+    def get_description(self) -> str:
+        return f"💥 치명타 확률 {self.amount:+}% ({self.duration}턴)"
+
+    def get_emoji(self) -> str:
+        return "💥"
+
+
+@register_buff_with_tag("damage_reduction")
+class DamageReductionBuff(Buff):
+    """받는 피해를 비율로 줄이는 전투 버프."""
+
+    def __init__(self):
+        super().__init__()
+        self.buff_type = "damage_reduction"
+        self.amount = 0.0
+
+    def apply_stat(self, stats: dict) -> None:
+        return
+
+    def get_description(self) -> str:
+        return f"🛡️ 받는 피해 -{int(self.amount * 100)}% ({self.duration}턴)"
+
+    def get_emoji(self) -> str:
+        return "🛡️"
+
+
+@register_buff_with_tag("healing_over_time")
+class HealingOverTimeBuff(Buff):
+    """매 턴 최대 HP의 일정 비율을 회복한다."""
+
+    def __init__(self):
+        super().__init__()
+        self.buff_type = "healing_over_time"
+        self.percent_per_turn = 0.0
+
+    def tick(self, entity) -> str:
+        stats = entity.get_stat() if hasattr(entity, "get_stat") else {}
+        maximum = max(1, int(stats.get(UserStatEnum.HP, getattr(entity, "hp", 1))))
+        amount = max(1, int(maximum * self.percent_per_turn))
+        old = getattr(entity, "now_hp", 0)
+        entity.now_hp = min(maximum, old + amount)
+        actual = entity.now_hp - old
+        return f"💚 **{entity.get_name()}** 재생 +{actual} HP" if actual > 0 else ""
+
+    def get_description(self) -> str:
+        return f"💚 턴당 HP {self.percent_per_turn * 100:.1f}% 회복 ({self.duration}턴)"
+
+    def get_emoji(self) -> str:
+        return "💚"
+
+
+@register_buff_with_tag("hit_stack_attack")
+class HitStackAttackBuff(Buff):
+    """공격 적중마다 공격력이 누적되는 제한형 버프."""
+
+    def __init__(self):
+        super().__init__()
+        self.buff_type = "hit_stack_attack"
+        self.per_hit = 0.0
+        self.maximum = 0.0
+        self.current = 0.0
+
+    def apply_stat(self, stats: dict) -> None:
+        if self.current <= 0:
+            return
+        stats[UserStatEnum.ATTACK] += int(stats.get(UserStatEnum.ATTACK, 0) * self.current)
+        stats[UserStatEnum.AP_ATTACK] += int(stats.get(UserStatEnum.AP_ATTACK, 0) * self.current)
+
+    def record_hit(self) -> None:
+        self.current = min(self.maximum, self.current + self.per_hit)
+
+    def get_description(self) -> str:
+        return f"⚔️ 적중 누적 공격력 +{int(self.current * 100)}%/{int(self.maximum * 100)}% ({self.duration}턴)"
+
+    def get_emoji(self) -> str:
+        return "⚔️"
+
+
 @register_buff_with_tag("heal_received")
 class HealReceivedBuff(Buff):
     """

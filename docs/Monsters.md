@@ -1,3 +1,18 @@
+<!-- BALANCE_V2_GENERATED_START -->
+# Monsters V2
+
+이 문서는 `config/balance_v2.py`와 `data/monsters.csv`에서 생성됩니다.
+
+| 유형 | 플레이어 행동 | 몬스터 행동당 최대 HP 피해 |
+|---|---:|---:|
+| 일반 | 2~3 | 6~9% |
+| 정예 | 4~6 | 9~13% |
+| 보스 | 8~12 | 12~16% |
+
+파티 HP/공격/보상 배율은 각각 `1+0.75(n-1)`, `1+0.12(n-1)`, `1+0.65(n-1)`입니다.
+몬스터 데이터는 AP_Defense, Accuracy, Evasion을 명시하며 공격 스킬의 참조 공격력은 0일 수 없습니다.
+<!-- BALANCE_V2_GENERATED_END -->
+
 # 몬스터 시스템 (Monster System)
 
 ## 개요

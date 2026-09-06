@@ -11,6 +11,10 @@ from config import EmbedColor
 from models.user_inventory import UserInventory
 from resources.item_emoji import ItemType
 from utils.grade_display import format_item_name, format_skill_name
+from utils.game_text import (
+    category_label, design_tag_label, design_tags_text, family_label,
+    localize_internal_terms, role_label, type_label,
+)
 
 
 class ItemDescriptionDropdown(discord.ui.Select):
@@ -181,6 +185,7 @@ class ItemDescriptionView(discord.ui.View):
     def _add_skill_description(self, embed: discord.Embed) -> None:
         """스킬 상세 설명"""
         from models.repos.static_cache import skill_cache_by_id
+        from service.skill.design_v3 import describe_skill_config
 
         skill = skill_cache_by_id.get(self.selected_item.skill_id)
         if not skill:
@@ -197,17 +202,20 @@ class ItemDescriptionView(discord.ui.View):
         skill_info_parts = []
 
         # 타입
-        skill_type = getattr(skill.skill_model, 'type', None)
+        config = getattr(skill.skill_model, 'config', None) or {}
+        design = config.get("design", {})
+        record = design.get("record", {})
+        skill_type = record.get("type")
         if skill_type:
-            skill_info_parts.append(f"**타입**: {skill_type}")
+            skill_info_parts.append(f"**타입**: {type_label(skill_type)}")
 
         # 카테고리
-        category = getattr(skill.skill_model, 'category', None)
+        category = record.get("category")
         if category:
-            skill_info_parts.append(f"**분류**: {category}")
+            skill_info_parts.append(f"**분류**: {category_label(category)}")
 
         # 속성
-        element = getattr(skill.skill_model, 'element', None)
+        element = getattr(skill.skill_model, 'attribute', None)
         if element:
             element_emoji = {
                 "물리": "⚔️",
@@ -228,9 +236,9 @@ class ItemDescriptionView(discord.ui.View):
                 inline=False
             )
 
-        # === 스킬 효과 설명 ===
-        if skill.skill_model.description:
-            effect_desc = skill.skill_model.description
+        # === 실제 컴포넌트에서 생성한 기계 효과 ===
+        effect_desc = describe_skill_config(config)
+        if effect_desc:
             # 패시브 스킬인 경우 표시
             if skill.is_passive:
                 effect_desc += "\n\n💡 **패시브 스킬**: 전투 시작 시 자동으로 효과가 적용됩니다"
@@ -241,9 +249,12 @@ class ItemDescriptionView(discord.ui.View):
             )
 
         # === 키워드 정보 ===
-        keywords = getattr(skill.skill_model, 'keywords', None)
+        keywords = getattr(skill.skill_model, 'keyword', None)
         if keywords:
-            keyword_desc = f"**{keywords}**\n"
+            display_keywords = "/".join(
+                design_tag_label(value.strip()) for value in str(keywords).split("/") if value.strip()
+            )
+            keyword_desc = f"**{display_keywords}**\n"
             keyword_desc += "💡 키워드는 스킬의 특수 효과나 연계를 나타냅니다"
             embed.add_field(
                 name="🏷️ 키워드",
@@ -251,22 +262,37 @@ class ItemDescriptionView(discord.ui.View):
                 inline=False
             )
 
-        # === 스킬 컴포넌트 정보 (상세) ===
-        if skill.components:
-            components_text = []
-            for comp in skill.components[:8]:  # 최대 8개
-                comp_name = comp.__class__.__name__.replace("Component", "")
-                comp_tag = getattr(comp, '_tag', '알 수 없음')
-                components_text.append(f"• **{comp_name}** (`{comp_tag}`)")
+        if design.get("intent"):
+            design_lines = [
+                f"**판타지**: {localize_internal_terms(design.get('fantasy', '-'))}",
+                f"**존재 이유**: {localize_internal_terms(design.get('purpose', design['intent']))}",
+                f"**선택할 때**: {localize_internal_terms(design.get('decision', '-'))}",
+            ]
+            if design.get("setup_tags"):
+                design_lines.append("**생성**: " + design_tags_text(design["setup_tags"]))
+            if design.get("payoff_tags"):
+                design_lines.append("**소비/증폭**: " + design_tags_text(design["payoff_tags"]))
+            if design.get("strengths"):
+                design_lines.append("**강점**: " + ", ".join(localize_internal_terms(value) for value in design["strengths"]))
+            if design.get("tradeoffs"):
+                design_lines.append("**대가**: " + ", ".join(localize_internal_terms(value) for value in design["tradeoffs"]))
+            if design.get("fallback"):
+                design_lines.append(f"**조건 실패 시**: {localize_internal_terms(design['fallback'])}")
+            embed.add_field(
+                name=f"🧩 덱 설계 의도 · {family_label(design.get('family'))}/{role_label(design.get('role'))}",
+                value="\n".join(design_lines)[:1024],
+                inline=False,
+            )
 
-            if components_text:
-                comp_desc = "\n".join(components_text)
-                comp_desc += "\n\n💡 컴포넌트는 스킬의 실제 동작을 구성하는 요소입니다"
-                embed.add_field(
-                    name="🔧 구성 요소",
-                    value=comp_desc,
-                    inline=False
+            partner_ids = [int(value) for value in design.get("partner_skill_ids", [])]
+            partner_lines = []
+            for partner_id in partner_ids[:8]:
+                partner = skill_cache_by_id.get(partner_id)
+                partner_lines.append(
+                    f"• `{partner_id}` {partner.name if partner else '알 수 없는 스킬'}"
                 )
+            if partner_lines:
+                embed.add_field(name="🔗 직접 연계 스킬", value="\n".join(partner_lines), inline=False)
 
         # === 획득처 정보 ===
         acquisition = getattr(skill.skill_model, 'acquisition_source', None)
@@ -278,7 +304,7 @@ class ItemDescriptionView(discord.ui.View):
             )
 
         # === 사용 가능 여부 ===
-        is_player_usable = getattr(skill.skill_model, 'is_player_usable', True)
+        is_player_usable = getattr(skill.skill_model, 'player_obtainable', True)
         if not is_player_usable:
             embed.add_field(
                 name="⚠️ 제한 사항",
@@ -350,7 +376,8 @@ class ItemDescriptionView(discord.ui.View):
 
         # === 스탯 정보 (상세 계산식 포함) ===
         grade_mult = GradeService.get_stat_multiplier(instance_grade) if instance_grade > 0 else 1.0
-        enhance_mult = 1 + (enhancement * 0.05) if enhancement > 0 else 1.0
+        from config import BALANCE_V2
+        enhance_mult = BALANCE_V2.enhancement_stat_multiplier(enhancement)
 
         stat_labels = {
             "attack": "⚔️ 공격력",
@@ -463,6 +490,19 @@ class ItemDescriptionView(discord.ui.View):
             )
 
         # === 인스턴스 정보 요약 ===
+        try:
+            from service.item.affix_service import format_affix
+            affix_rows = list(self.selected_item.affixes)
+        except (AttributeError, TypeError, RuntimeError):
+            affix_rows = []
+        if affix_rows:
+            affix_rows.sort(key=lambda row: row.position)
+            embed.add_field(
+                name="💠 V4 랜덤 옵션",
+                value="\n".join(f"• {format_affix(row)}" for row in affix_rows)[:1024],
+                inline=False,
+            )
+
         if instance_grade > 0 or enhancement > 0 or is_blessed or is_cursed:
             summary_parts = []
             if instance_grade > 0:

@@ -90,6 +90,7 @@ class E2EGameFlow(commands.Cog):
             self.guild = ctx.guild
             self.guild_id = ctx.guild.id if ctx.guild else None
             self.channel = ctx.channel
+            self.channel_id = ctx.channel.id if ctx.channel else None
             self.client = ctx.bot
             self.response = E2EGameFlow._DummyResponse(ctx)
             if message is not None:
@@ -674,6 +675,9 @@ class E2EGameFlow(commands.Cog):
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
         if not _e2e_enabled():
+            return
+        runtime = getattr(self.bot, "e2e_runtime", None)
+        if runtime and await runtime.on_message(message):
             return
         if message.author is None:
             return

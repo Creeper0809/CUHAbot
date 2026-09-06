@@ -83,6 +83,9 @@ from service.dungeon.components.skill_chain_components import (
 from service.dungeon.components.turn_based_components import (
     TurnCountEmpowerComponent, AccumulationComponent,
 )
+from service.dungeon.components.ecosystem_v3_components import (
+    CombatResourceComponent, ResourcePayoffComponent, StatusTransformComponent,
+)
 
 __all__ = [
     # 레지스트리
@@ -148,4 +151,6 @@ __all__ = [
     "ConsecutiveSkillBonusComponent", "SkillVarietyBonusComponent",
     # 턴 기반 효과
     "TurnCountEmpowerComponent", "AccumulationComponent",
+    # V3 named mechanics
+    "CombatResourceComponent", "ResourcePayoffComponent", "StatusTransformComponent",
 ]

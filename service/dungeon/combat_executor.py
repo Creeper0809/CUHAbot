@@ -43,6 +43,16 @@ _metrics_recorder = CombatMetricsRecorder()
 _equipment_manager = EquipmentIntegrationManager()
 
 
+def _roll_modifier_chance(entity, field: str, *, cap: float = 1.0, roll=None) -> bool:
+    """Roll one typed modifier chance with an explicit cap for testability."""
+    modifier = getattr(entity, "modifier_bundle", None)
+    chance = float(getattr(modifier, field, 0.0) if modifier is not None else 0.0)
+    if chance <= 0:
+        return False
+    random_value = roll() if roll is not None else __import__("random").random()
+    return random_value < min(cap, chance)
+
+
 def _all_players_dead(user: User, session) -> bool:
     """
     모든 플레이어(리더 + 난입자)가 죽었는지 확인
@@ -118,6 +128,8 @@ async def execute_combat_context(session, interaction: discord.Interaction, cont
     # Phase 3: 캠프파이어 ATK 버프 적용
     _apply_campfire_buff(session)
     reset_ultimate_combat_state(user)
+    user._roguelike_first_uses = set()
+    user._roguelike_echo_queue = []
 
     set_combat_state(user.discord_id, True)
 
@@ -187,7 +199,20 @@ async def execute_combat_context(session, interaction: discord.Interaction, cont
 
         # 스킬 및 장비 컴포넌트 상태 리셋
         _passive_processor.reset_all_skill_usage_counts()
-        _equipment_manager.reset_component_caches(user)
+        cleanup_players = [user]
+        if session and session.participants:
+            cleanup_players.extend(session.participants.values())
+        for player in cleanup_players:
+            _equipment_manager.apply_combat_end(player)
+            _equipment_manager.reset_component_caches(player)
+            for attr in (
+                "_party_size", "_passive_hit_bonus", "_hp_history",
+                "_passive_double_casting", "_passive_crisis_invincible_used",
+                "_passive_revive_used", "_passive_death_resist_used",
+                "_skill_action_serial",
+            ):
+                if hasattr(player, attr):
+                    delattr(player, attr)
 
 
 # =============================================================================
@@ -223,23 +248,33 @@ async def _process_turn_multi(
     if not context.action_gauges:
         context.user = user
         context.initialize_gauges(user)
-        # 장비 컴포넌트 캐싱 (스킬 데미지 강화용)
+        opening_players = [user]
+        if session and session.participants:
+            opening_players.extend(session.participants.values())
+        # 장비 컴포넌트 캐싱 (파티원별 효과/상태를 독립 보존)
         from service.dungeon.equipment_skill_modifier import cache_equipment_components
-        try:
-            await cache_equipment_components(user)
-        except Exception as e:
-            logger.warning(f"Failed to cache equipment components: {e}")
-        # 시너지: 선공 확정
-        if has_first_strike(user):
-            context.action_gauges[id(user)] = COMBAT.ACTION_GAUGE_MAX
-            combat_log.append("💨 **선공 확정** 시너지 발동!")
+        for player in opening_players:
+            player._party_size = len(opening_players)
+            player._passive_hit_bonus = 0.0
+            player._hp_history = [int(getattr(player, "now_hp", 0))]
+            try:
+                await cache_equipment_components(player)
+            except Exception as e:
+                logger.warning(f"Failed to cache equipment components: {e}")
+            for log in _equipment_manager.apply_combat_start(player, context, session):
+                combat_log.append(log)
+        # 시너지/세트/장비: 파티원별 선공 판정
+        for player in opening_players:
+            if (
+                has_first_strike(player)
+                or _equipment_manager.has_first_strike(player)
+                or _roll_modifier_chance(player, "first_strike")
+            ):
+                context.action_gauges[id(player)] = COMBAT.ACTION_GAUGE_MAX
+                combat_log.append(f"💨 **{player.get_name()}** 선공 효과 발동!")
         # 패시브 발동 로그
         passive_logs = _passive_processor.apply_combat_start_passives(user, context)
         for log in passive_logs:
-            combat_log.append(log)
-        # 장비 컴포넌트 전투 시작 훅 호출
-        equipment_logs = _equipment_manager.apply_combat_start(user, context)
-        for log in equipment_logs:
             combat_log.append(log)
         # 필드 효과 발동 메시지
         if context.field_effect:
@@ -313,17 +348,55 @@ async def _process_turn_multi(
 
         context.action_count += 1
 
+        history = list(getattr(actor, "_hp_history", []) or [])
+        history.append(int(getattr(actor, "now_hp", 0)))
+        actor._hp_history = history[-20:]
+
         # DOT 틱
         status_logs = process_status_ticks(actor)
         for log in status_logs:
             combat_log.append(log)
 
+        # Delayed active components live in CombatRuntimeState, not on the
+        # process-global cached component instance.  Resolve them on their
+        # owner's action boundary so concurrent combats cannot share charges.
+        from service.dungeon.components.special_components import process_delayed_self_destructs
+
+        if isinstance(actor, User):
+            delayed_targets = context.get_all_alive_monsters()
+        else:
+            delayed_targets = [user]
+            if session and session.participants:
+                delayed_targets.extend(session.participants.values())
+            delayed_targets = [value for value in delayed_targets if value.now_hp > 0]
+        for log in process_delayed_self_destructs(
+            actor,
+            context,
+            delayed_targets,
+            interrupted=not can_entity_act(actor),
+        ):
+            combat_log.append(log)
+
+        # A lethal tick must not let a dead actor attack or heal itself.
+        if actor.now_hp <= 0:
+            context.consume_gauge(actor)
+            _decrement_status_durations(actor)
+            continue
+
         # CC 체크
         if not can_entity_act(actor):
             cc_name = get_cc_effect_name(actor)
             combat_log.append(f"💫 **{actor.get_name()}** {cc_name}! 행동 불가")
+            if isinstance(actor, Monster) and (not session or session.content_type != ContentType.RAID):
+                from service.dungeon.monster_ai import interrupt_pending_monster_action
+
+                interruption_log = interrupt_pending_monster_action(actor, context)
+                if interruption_log:
+                    combat_log.append(interruption_log)
             context.consume_gauge(actor)
-            # 행동하지 못할 때는 지속시간 감소하지 않음 (행동 후에만 감소)
+            # Losing an action still consumes its duration. Otherwise a single
+            # one-turn stun/freezing effect permanently locks the actor.
+            _decrement_status_durations(actor)
             await _update_all_combat_messages(session, combat_message, user, context, combat_log)
             if os.getenv("E2E_UI_AUTOPILOT") == "TRUE":
                 await asyncio.sleep(0.05)
@@ -366,6 +439,14 @@ async def _process_turn_multi(
         for log in action_logs:
             combat_log.append(log)
 
+        # Normal-dungeon boss phase definitions are data-driven and apply only
+        # to combat copies. Raid phases continue to use the dedicated engine.
+        if session.content_type != ContentType.RAID:
+            from service.dungeon.monster_phase_service import process_monster_phase_transitions
+            for phase_monster in list(context.monsters):
+                for phase_log in process_monster_phase_transitions(phase_monster, context):
+                    combat_log.append(phase_log)
+
         if session.content_type == ContentType.RAID and context.monsters and isinstance(actor, User):
             from service.raid.raid_combat_engine import (
                 process_raid_part_breaks,
@@ -395,7 +476,9 @@ async def _process_turn_multi(
             _metrics_recorder.record_actor_contribution(session, actor, action_logs)
 
         # 사망 트리거 (on_death 컴포넌트)
-        death_logs = _check_death_triggers(context, alive_before, user)
+        death_logs = _check_death_triggers(
+            context, alive_before, actor if isinstance(actor, User) else user
+        )
         for log in death_logs:
             combat_log.append(log)
 
@@ -409,12 +492,13 @@ async def _process_turn_multi(
             combat_log.append(log)
 
         # 시너지: 유저 행동 후 HP 자동회복
-        if actor is user:
-            regen_log = _apply_synergy_hp_regen(user)
+        if isinstance(actor, User):
+            regen_log = _apply_synergy_hp_regen(actor)
             if regen_log:
                 combat_log.append(regen_log)
 
             # Phase 4: 위기 목격 체크 (유저 행동 후 HP 체크)
+        if actor is user:
             from service.dungeon.social_encounter_checker import check_crisis_witness, get_nearby_sessions, get_sessions_in_voice_channel
 
             if check_crisis_witness(session):
@@ -458,9 +542,13 @@ async def _process_turn_multi(
         context.consume_gauge(actor)
 
         # 시너지: 유저 추가 행동
-        if actor is user and roll_extra_action(user):
-            context.action_gauges[id(user)] += COMBAT.ACTION_GAUGE_COST
-            combat_log.append("🌀 **잔영** 시너지! 추가 행동!")
+        if isinstance(actor, User):
+            extra_action = roll_extra_action(actor)
+            if not extra_action:
+                extra_action = _roll_modifier_chance(actor, "extra_action", cap=0.50)
+            if extra_action:
+                context.action_gauges[id(actor)] += COMBAT.ACTION_GAUGE_COST
+                combat_log.append(f"🌀 **{actor.get_name()}** 추가 행동 효과 발동!")
 
         # 필드 효과: 턴 종료 시 처리
         if context.field_effect:
@@ -603,21 +691,49 @@ def _execute_user_action(user: User, context: CombatContext) -> list[str]:
     logs = []
     tick_ultimate_cooldown(user)
 
+    echo_queue = getattr(user, "_roguelike_echo_queue", [])
+    if echo_queue:
+        echo_skill, echo_ratio = echo_queue.pop(0)
+        user._roguelike_echo_queue = echo_queue
+        echo_targets = context.get_all_alive_monsters()
+        if echo_targets:
+            user._roguelike_echo_replaying = True
+            user._roguelike_external_multiplier = echo_ratio
+            try:
+                echo_log = echo_skill.on_turn(user, random.choice(echo_targets))
+                if echo_log:
+                    logs.append(f"🔁 잔향 발동\n{echo_log}")
+            finally:
+                user._roguelike_echo_replaying = False
+                user._roguelike_external_multiplier = 1.0
+
     # 랜덤으로 몬스터 선택 (살아있는 몬스터 중)
     alive_monsters = context.get_all_alive_monsters()
     if not alive_monsters:
         return []
 
     user_skill, ultimate_log, ultimate_scale = select_skill_for_user_turn(user, alive_monsters)
+    logs.extend(getattr(user, '_equipment_draw_logs', []) or [])
+    user._equipment_draw_logs = []
     if ultimate_log:
         logs.append(ultimate_log)
-    target = random.choice(alive_monsters)
+    from service.dungeon.status import get_taunt_source, has_status_effect
+
+    forced_target = get_taunt_source(user)
+    target = forced_target if forced_target in alive_monsters else random.choice(alive_monsters)
 
     # 턴 시작 시 장비 효과 (행동 예측 등)
     turn_start_logs = _equipment_manager.apply_turn_start(user, target)
     logs.extend(turn_start_logs)
+    logs.extend(_equipment_manager.apply_skill_used(user, user_skill))
+
+    if has_status_effect(user, "skill_seal"):
+        if user_skill:
+            logs.append(f"🔒 **{user.get_name()}** 스킬 봉인으로 기본 공격 사용")
+        user_skill = None
 
     if user_skill:
+        user._skill_action_serial = int(getattr(user, "_skill_action_serial", 0) or 0) + 1
         # 궁극기 자동 발동 시 이번 행동의 공격 계수만 약화한다.
         user._ultimate_damage_scale = ultimate_scale
         try:
@@ -641,14 +757,37 @@ def _execute_user_action(user: User, context: CombatContext) -> list[str]:
                 add_ultimate_gauge(user, dealt_damage=damage_dealt)
                 attack_logs = _equipment_manager.apply_on_attack(user, target, damage_dealt)
                 logs.extend(attack_logs)
+
+            from service.dungeon.skill import get_passive_effect_bonuses
+
+            double_cast = min(
+                1.0,
+                max(0.0, get_passive_effect_bonuses(user, target=target).get("double_cast", 0.0)),
+            )
+            if double_cast and not getattr(user, "_passive_double_casting", False) and random.random() < double_cast:
+                user._passive_double_casting = True
+                try:
+                    replay_targets = context.get_all_alive_monsters()
+                    if replay_targets:
+                        logs.append(f"🔁 **{user.get_name()}** 연속 공격 발동!")
+                        user._skill_action_serial += 1
+                        if _is_skill_aoe(user_skill):
+                            for monster in replay_targets:
+                                replay_log = user_skill.on_turn(user, monster)
+                                if replay_log:
+                                    logs.append(replay_log)
+                        else:
+                            replay_target = target if target.now_hp > 0 else random.choice(replay_targets)
+                            replay_log = user_skill.on_turn(user, replay_target)
+                            if replay_log:
+                                logs.append(replay_log)
+                finally:
+                    user._passive_double_casting = False
         finally:
             user._ultimate_damage_scale = 1.0
     else:
-        from service.dungeon.damage_pipeline import process_incoming_damage
-        damage = get_attack_stat(user)
-        event = process_incoming_damage(target, damage, attacker=user)
-        logs.extend(event.extra_logs)
-        logs.append(f"⚔️ **{user.get_name()}** 기본 공격 → **{target.get_name()}** {event.actual_damage} 데미지")
+        basic_logs, event = _perform_basic_attack(user, target)
+        logs.extend(basic_logs)
 
         # 공격 후 장비 훅 (반격, 추가 공격 등)
         attack_logs = _equipment_manager.apply_on_attack(user, target, event.actual_damage)
@@ -685,7 +824,10 @@ def _execute_monster_action(monster: Monster, user: User, context: CombatContext
         # 모두 죽었으면 그냥 user 사용 (어차피 전투 종료됨)
         target = user
     else:
-        target = random.choice(alive_players)
+        from service.dungeon.status import get_taunt_source
+
+        forced_target = get_taunt_source(monster)
+        target = forced_target if forced_target in alive_players else random.choice(alive_players)
         if session and session.content_type == ContentType.RAID:
             provoke_id = getattr(session, "raid_provoke_target_discord_id", None)
             provoke_until = int(getattr(session, "raid_provoke_until_round", 0) or 0)
@@ -706,22 +848,40 @@ def _execute_monster_action(monster: Monster, user: User, context: CombatContext
         # 봉인된 보스 스킬 반영 (실시간 덱 슬롯 비활성화)
         monster.use_skill = filter_locked_boss_skills(session, list(getattr(monster, "use_skill", [])))
 
-    monster_skill = monster.next_skill()
+    if not session or session.content_type != ContentType.RAID:
+        from service.dungeon.monster_ai import decide_monster_action
+
+        decision = decide_monster_action(monster, context)
+        logs.extend(decision.logs)
+        if decision.skip_basic:
+            return logs
+        monster_skill = decision.skill
+    else:
+        monster_skill = monster.next_skill()
+
+    from service.dungeon.status import has_status_effect
+    if has_status_effect(monster, "skill_seal"):
+        if monster_skill:
+            logs.append(f"🔒 **{monster.get_name()}** 스킬 봉인으로 기본 공격 사용")
+        monster_skill = None
 
     if monster_skill:
+        monster._skill_action_serial = int(getattr(monster, "_skill_action_serial", 0) or 0) + 1
+        before_hp = {id(player): player.now_hp for player in alive_players}
         log = monster_skill.on_turn(monster, target)
         if log and log.strip():
             logs.append(log)
-        # 유저 피격 시 장비 훅 (가시 피해, 반격 등) - 로그에서 데미지 추출
-        damage_taken, _ = _metrics_recorder.parse_combat_metrics_from_logs([log])
-        add_ultimate_gauge(target, taken_damage=damage_taken)
-        damaged_logs = _equipment_manager.apply_on_damaged(target, monster, damage_taken)
-        logs.extend(damaged_logs)
+        # Components resolve their own target scope. Measure actual HP deltas
+        # per player so one AOE action neither repeats support components nor
+        # attributes the aggregate damage to every target.
+        for action_target in alive_players:
+            damage_taken = max(0, before_hp[id(action_target)] - action_target.now_hp)
+            add_ultimate_gauge(action_target, taken_damage=damage_taken)
+            damaged_logs = _equipment_manager.apply_on_damaged(action_target, monster, damage_taken)
+            logs.extend(damaged_logs)
     else:
-        damage = get_attack_stat(monster)
-        event = process_incoming_damage(target, damage, attacker=monster)
-        logs.extend(event.extra_logs)
-        logs.append(f"⚔️ **{monster.get_name()}** 기본 공격 → **{target.get_name()}** {event.actual_damage} 데미지")
+        basic_logs, event = _perform_basic_attack(monster, target)
+        logs.extend(basic_logs)
         add_ultimate_gauge(target, taken_damage=event.actual_damage)
 
         # 유저 피격 시 장비 훅
@@ -733,6 +893,68 @@ def _execute_monster_action(monster: Monster, user: User, context: CombatContext
             logs.append(f"   🔄 반사 데미지 → **{monster.get_name()}** {reflect_event.actual_damage}")
 
     return logs
+
+
+def _perform_basic_attack(attacker, target):
+    """Execute a basic attack through the same V2 hit/crit/defense pipeline."""
+    from config import get_attribute_multiplier
+    from service.combat.damage_calculator import DamageCalculator
+    from service.dungeon.damage_pipeline import DamageEvent, process_incoming_damage
+
+    attacker_stat = attacker.get_stat()
+    target_stat = target.get_stat()
+    attack = attacker_stat.get(UserStatEnum.ATTACK, getattr(attacker, "attack", 0))
+    defense = target_stat.get(UserStatEnum.DEFENSE, getattr(target, "defense", 0))
+    accuracy = attacker_stat.get(UserStatEnum.ACCURACY, getattr(attacker, "accuracy", 95))
+    evasion = target_stat.get(UserStatEnum.EVASION, getattr(target, "evasion", 5))
+    for component in getattr(target, '_equipment_components_cache', []) or []:
+        if getattr(component, '_tag', '') == 'action_prediction':
+            evasion += component.get_evasion_bonus() * 100.0
+    crit_rate = attacker_stat.get(UserStatEnum.CRITICAL_RATE, 5) / 100.0
+    crit_damage = attacker_stat.get(UserStatEnum.CRITICAL_DAMAGE, 150) / 100.0
+
+    modifier = getattr(attacker, "modifier_bundle", None)
+    from service.dungeon.damage_pipeline import has_critical_immunity
+    if has_critical_immunity(target):
+        crit_rate = 0.0
+    penetration = modifier.armor_penetration if modifier is not None else 0.0
+    result = DamageCalculator.calculate_damage_with_hit_check(
+        attack=attack,
+        defense=defense,
+        armor_penetration=penetration,
+        critical_rate=crit_rate,
+        accuracy=accuracy,
+        evasion=evasion,
+        is_physical=True,
+    )
+    if not result.is_hit:
+        return [f"⚔️ **{attacker.get_name()}** 기본 공격 → **{target.get_name()}** MISS!"], DamageEvent()
+
+    # DamageCalculator uses the configured critical multiplier. Adjust to the
+    # character's real capped critical-damage stat.
+    damage = result.damage
+    if result.is_critical:
+        from config import DAMAGE
+        damage = int(damage / max(0.01, DAMAGE.CRITICAL_MULTIPLIER) * crit_damage)
+    multiplier = get_attribute_multiplier("무속성", getattr(target, "attribute", "무속성"))
+    if modifier is not None:
+        multiplier *= 1.0 + modifier.physical_damage_pct
+    from service.dungeon.equipment_skill_modifier import get_equipment_skill_damage_multiplier_sync
+    multiplier *= get_equipment_skill_damage_multiplier_sync(attacker, skill=None, target=target)
+    event = process_incoming_damage(
+        target,
+        max(1, int(damage * multiplier)),
+        attacker=attacker,
+        attribute="무속성",
+    )
+    logs = list(event.extra_logs)
+
+    critical_text = " 💥치명타" if result.is_critical else ""
+    logs.append(
+        f"⚔️ **{attacker.get_name()}** 기본 공격 → **{target.get_name()}** "
+        f"{event.actual_damage} 데미지{critical_text}"
+    )
+    return logs, event
 
 
 # =============================================================================
@@ -768,6 +990,7 @@ def _check_death_triggers(
             continue
 
         # 이 몬스터가 방금 죽음 → on_death 트리거
+        logs.extend(_equipment_manager.apply_on_kill(killer, monster))
         for skill_id in getattr(monster, 'skill_ids', []):
             if skill_id == 0:
                 continue
@@ -822,6 +1045,23 @@ def _check_player_revive(player: User, session) -> list[str]:
                     logger.info(f"Player {player.discord_id} revived with {player.now_hp} HP")
                     break
 
+    if player.now_hp <= 0:
+        from service.dungeon.skill import get_passive_effect_bonuses
+
+        effects = get_passive_effect_bonuses(player)
+        used = int(getattr(player, "_passive_revive_used", 0) or 0)
+        revive_uses = max(0, int(round(effects.get("revive", 0.0))))
+        death_resist = effects.get("death_resist", 0.0) > 0
+        if used < revive_uses:
+            maximum = player.get_stat().get(UserStatEnum.HP, getattr(player, "hp", 1))
+            player.now_hp = max(1, int(maximum * 0.30))
+            player._passive_revive_used = used + 1
+            logs.append(f"✨ **{player.get_name()}** 패시브 부활! HP {player.now_hp}")
+        elif death_resist and not getattr(player, "_passive_death_resist_used", False):
+            player.now_hp = 1
+            player._passive_death_resist_used = True
+            logs.append(f"🛡️ **{player.get_name()}** 불굴의 의지로 HP 1 생존!")
+
     return logs
 
 
@@ -846,6 +1086,9 @@ def _is_skill_aoe(skill) -> bool:
 def _apply_synergy_hp_regen(user: User) -> str:
     """시너지: 턴당 HP 자동회복"""
     regen_pct = get_hp_regen_per_turn_pct(user)
+    modifier = getattr(user, "modifier_bundle", None)
+    if modifier is not None:
+        regen_pct += modifier.regeneration_pct * 100.0
     if regen_pct <= 0:
         return ""
 
@@ -859,7 +1102,7 @@ def _apply_synergy_hp_regen(user: User) -> str:
     actual = user.now_hp - old_hp
     if actual <= 0:
         return ""
-    return f"💖 **영생** 시너지: HP +{actual} 회복"
+    return f"💖 **재생 효과**: HP +{actual} 회복"
 
 
 def _decrement_status_durations(entity) -> None:

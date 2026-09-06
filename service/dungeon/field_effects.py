@@ -123,7 +123,7 @@ class FreezeZoneEffect(FieldEffect):
 
         logs = []
         if random.random() < 0.15:
-            apply_status_effect(actor, FreezeEffect(duration=1))
+            apply_status_effect(actor, "freeze", duration=1)
             logs.append(f"❄️ **동결 지대** → **{actor.get_name()}** 동결!")
 
         return logs
@@ -188,12 +188,12 @@ class ChaosRiftEffect(FieldEffect):
         logs = []
         if random.random() < 0.20:
             effects = [
-                (BurnEffect(stacks=1, duration=2), "화상"),
-                (PoisonEffect(stacks=1, duration=2), "중독"),
-                (StunEffect(duration=1), "기절"),
+                ("burn", "화상"),
+                ("poison", "중독"),
+                ("stun", "기절"),
             ]
             effect, name = random.choice(effects)
-            apply_status_effect(actor, effect)
+            apply_status_effect(actor, effect, stacks=1, duration=1 if effect == "stun" else 2)
             logs.append(f"🌀 **차원 불안정** → **{actor.get_name()}** {name} 발생!")
 
         return logs

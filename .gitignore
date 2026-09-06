@@ -1,6 +1,11 @@
 .env
 .idea
 .vscode
+.venv/
+venv/
 __pycache__/
 .fuse_hidden*
 **/.fuse_hidden*
+.pytest_cache/
+*.py[cod]
+*.log

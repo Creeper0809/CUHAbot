@@ -31,6 +31,16 @@ class BackgroundTasksCog(commands.Cog):
             else:
                 logger.debug("No expired combat histories to clean up")
 
+            from service.item.box_open_service import BoxOpenService
+            receipt_count = await BoxOpenService.cleanup_receipts(days=30)
+            if receipt_count > 0:
+                logger.info("Cleaned up %s expired box-open receipts", receipt_count)
+
+            from service.telemetry import cleanup_game_events
+            telemetry_count = await cleanup_game_events(days=180)
+            if telemetry_count > 0:
+                logger.info("Cleaned up %s expired gameplay telemetry events", telemetry_count)
+
         except Exception as e:
             logger.error(f"Failed to cleanup combat histories: {e}", exc_info=True)
 
