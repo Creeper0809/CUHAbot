@@ -10,19 +10,19 @@ class UserStatsConfig:
     INITIAL_HP: int = 300
     """초기 HP"""
 
-    INITIAL_ATTACK: int = 10
+    INITIAL_ATTACK: int = 15
     """초기 물리 공격력"""
 
-    INITIAL_AP_ATTACK: int = 5
+    INITIAL_AP_ATTACK: int = 15
     """초기 마법 공격력"""
 
-    INITIAL_DEFENSE: int = 5
+    INITIAL_DEFENSE: int = 8
     """초기 물리 방어력"""
 
-    INITIAL_AP_DEFENSE: int = 5
+    INITIAL_AP_DEFENSE: int = 8
     """초기 마법 방어력"""
 
-    INITIAL_SPEED: int = 10
+    INITIAL_SPEED: int = 100
     """초기 속도"""
 
     INITIAL_LEVEL: int = 1
@@ -80,7 +80,7 @@ class UserStatsConfig:
     """스탯 초기화 스크롤 아이템 ID"""
 
     # 초기 보조 스탯 (백분율)
-    INITIAL_ACCURACY: int = 90
+    INITIAL_ACCURACY: int = 95
     """초기 명중률 (%)"""
 
     INITIAL_EVASION: int = 5
@@ -108,45 +108,46 @@ class StatConversionConfig:
     """능력치 → 전투 스탯 변환 계수"""
 
     # HP 변환 계수
-    HP_STR: float = 10.0
-    HP_INT: float = 5.0
-    HP_VIT: float = 25.0
+    HP_STR: float = 6.0
+    HP_INT: float = 6.0
+    HP_VIT: float = 15.0
 
     # 물리 공격력 변환 계수
-    ATTACK_STR: float = 3
-    ATTACK_DEX: float = 1.5
-    ATTACK_LUK: float = 1
+    ATTACK_STR: float = 2.0
+    ATTACK_DEX: float = 0.6
+    ATTACK_LUK: float = 0.3
 
     # 마법 공격력 변환 계수
-    AP_ATTACK_INT: float = 3
+    AP_ATTACK_INT: float = 2.0
+    AP_ATTACK_LUK: float = 0.3
 
     # 물리 방어력 변환 계수
-    AD_DEFENSE_STR: float = 0.5
-    AD_DEFENSE_VIT: float = 1.2
+    AD_DEFENSE_STR: float = 0.2
+    AD_DEFENSE_VIT: float = 0.55
 
     # 마법 방어력 변환 계수
-    AP_DEFENSE_INT: float = 1.2
-    AP_DEFENSE_VIT: float = 0.8
+    AP_DEFENSE_INT: float = 0.2
+    AP_DEFENSE_VIT: float = 0.45
 
     # 속도 변환 계수
-    SPEED_DEX: float = 1.0
+    SPEED_DEX: float = 0.25
 
     # 명중률 변환 계수 (%)
-    ACCURACY_DEX: float = 0.4
+    ACCURACY_DEX: float = 0.08
 
     # 회피율 변환 계수 (%)
-    EVASION_DEX: float = 0.3
-    EVASION_LUK: float = 0.1
+    EVASION_DEX: float = 0.04
+    EVASION_LUK: float = 0.0
 
     # 치명타율 변환 계수 (%)
-    CRIT_RATE_DEX: float = 0.3
-    CRIT_RATE_LUK: float = 0.5
+    CRIT_RATE_DEX: float = 0.0
+    CRIT_RATE_LUK: float = 0.12
 
     # 치명타 데미지 변환 계수 (%)
-    CRIT_DAMAGE_LUK: float = 1.0
+    CRIT_DAMAGE_LUK: float = 0.35
 
     # 드롭률 변환 계수 (%)
-    DROP_RATE_LUK: float = 0.5
+    DROP_RATE_LUK: float = 0.08
 
     # HP 자연회복률
     HP_REGEN_BASE: float = 0.015

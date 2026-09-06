@@ -1,0 +1,6378 @@
+[
+  {
+    "monster_id": 1,
+    "monster_name": "슬라임",
+    "revision": "V3-FSM",
+    "kind": "common",
+    "interrupt_policy": "delay",
+    "actions": [
+      {
+        "skill_id": 0,
+        "weight": 1,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 0,
+        "action_kind": "support",
+        "weight": 1,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 1,
+        "recover_actions": 0,
+        "recover_hp_percent": 0.03,
+        "support_log": "🛡️ **슬라임**이(가) 숨을 고르며 빈틈을 줄입니다."
+      },
+      {
+        "skill_id": 9001,
+        "weight": 4,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          0,
+          0,
+          9001
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 2,
+    "monster_name": "고블린",
+    "revision": "V3-FSM",
+    "kind": "common",
+    "interrupt_policy": "delay",
+    "actions": [
+      {
+        "skill_id": 9061,
+        "weight": 4,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 0,
+        "action_kind": "support",
+        "weight": 1,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 1,
+        "recover_actions": 0,
+        "recover_hp_percent": 0.03,
+        "support_log": "🛡️ **고블린**이(가) 숨을 고르며 빈틈을 줄입니다."
+      },
+      {
+        "skill_id": 9002,
+        "weight": 2,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9061,
+          0,
+          9002
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 3,
+    "monster_name": "늑대",
+    "revision": "V3-FSM",
+    "kind": "common",
+    "interrupt_policy": "delay",
+    "actions": [
+      {
+        "skill_id": 9077,
+        "weight": 5,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 0,
+        "action_kind": "support",
+        "weight": 1,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 1,
+        "recover_actions": 0,
+        "recover_hp_percent": 0.03,
+        "support_log": "🛡️ **늑대**이(가) 숨을 고르며 빈틈을 줄입니다."
+      },
+      {
+        "skill_id": 9003,
+        "weight": 2,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9077,
+          0,
+          9003
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 4,
+    "monster_name": "고블린 궁수",
+    "revision": "V3-FSM",
+    "kind": "common",
+    "interrupt_policy": "delay",
+    "actions": [
+      {
+        "skill_id": 9137,
+        "weight": 5,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 0,
+        "action_kind": "support",
+        "weight": 1,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 1,
+        "recover_actions": 0,
+        "recover_hp_percent": 0.03,
+        "support_log": "🛡️ **고블린 궁수**이(가) 숨을 고르며 빈틈을 줄입니다."
+      },
+      {
+        "skill_id": 9007,
+        "weight": 2,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9137,
+          0,
+          9007
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 5,
+    "monster_name": "고블린 주술사",
+    "revision": "V3-FSM",
+    "kind": "elite",
+    "interrupt_policy": "delay",
+    "actions": [
+      {
+        "skill_id": 0,
+        "action_kind": "basic",
+        "weight": 2,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9159,
+        "weight": 6,
+        "telegraph": "⚠️ 고블린 주술사이(가) 【몬】저주을 준비합니다.",
+        "interruptible": true,
+        "cooldown_actions": 2,
+        "recover_actions": 1
+      },
+      {
+        "skill_id": 9008,
+        "weight": 2,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9159,
+          9008
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 6,
+    "monster_name": "동굴 박쥐",
+    "revision": "V3-FSM",
+    "kind": "common",
+    "interrupt_policy": "delay",
+    "actions": [
+      {
+        "skill_id": 9240,
+        "weight": 4,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 0,
+        "action_kind": "support",
+        "weight": 1,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 1,
+        "recover_actions": 0,
+        "recover_hp_percent": 0.03,
+        "support_log": "🛡️ **동굴 박쥐**이(가) 숨을 고르며 빈틈을 줄입니다."
+      },
+      {
+        "skill_id": 9006,
+        "weight": 1,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 2,
+        "recover_actions": 0
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9240,
+          0,
+          9006
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 7,
+    "monster_name": "대왕 슬라임",
+    "revision": "V3-FSM",
+    "kind": "elite",
+    "interrupt_policy": "delay",
+    "actions": [
+      {
+        "skill_id": 0,
+        "action_kind": "basic",
+        "weight": 2,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9239,
+        "weight": 6,
+        "telegraph": "⚠️ 대왕 슬라임이(가) 점액 분사을 준비합니다.",
+        "interruptible": true,
+        "cooldown_actions": 2,
+        "recover_actions": 1
+      },
+      {
+        "skill_id": 9005,
+        "weight": 2,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9239,
+          9005
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 8,
+    "monster_name": "독버섯",
+    "revision": "V3-FSM",
+    "kind": "common",
+    "interrupt_policy": "delay",
+    "actions": [
+      {
+        "skill_id": 9238,
+        "weight": 6,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 0,
+        "action_kind": "support",
+        "weight": 1,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 1,
+        "recover_actions": 0,
+        "recover_hp_percent": 0.03,
+        "support_log": "🛡️ **독버섯**이(가) 숨을 고르며 빈틈을 줄입니다."
+      },
+      {
+        "skill_id": 9004,
+        "weight": 2,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9238,
+          0,
+          9004
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 10,
+    "monster_name": "화염 정령",
+    "revision": "V3-FSM",
+    "kind": "common",
+    "interrupt_policy": "delay",
+    "actions": [
+      {
+        "skill_id": 9237,
+        "weight": 6,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 0,
+        "action_kind": "support",
+        "weight": 1,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 1,
+        "recover_actions": 0,
+        "recover_hp_percent": 0.03,
+        "support_log": "🛡️ **화염 정령**이(가) 숨을 고르며 빈틈을 줄입니다."
+      },
+      {
+        "skill_id": 9011,
+        "weight": 2,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9237,
+          0,
+          9011
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 11,
+    "monster_name": "마그마 골렘",
+    "revision": "V3-FSM",
+    "kind": "elite",
+    "interrupt_policy": "delay",
+    "actions": [
+      {
+        "skill_id": 9237,
+        "weight": 3,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9145,
+        "weight": 3,
+        "telegraph": "⚠️ 마그마 골렘이(가) 용암 연소을 준비합니다.",
+        "interruptible": true,
+        "cooldown_actions": 2,
+        "recover_actions": 1
+      },
+      {
+        "skill_id": 9012,
+        "weight": 2,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9237,
+          9145,
+          9012
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 12,
+    "monster_name": "화염 임프",
+    "revision": "V3-FSM",
+    "kind": "common",
+    "interrupt_policy": "delay",
+    "actions": [
+      {
+        "skill_id": 9083,
+        "weight": 5,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 0,
+        "action_kind": "support",
+        "weight": 1,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 1,
+        "recover_actions": 0,
+        "recover_hp_percent": 0.03,
+        "support_log": "🛡️ **화염 임프**이(가) 숨을 고르며 빈틈을 줄입니다."
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9083,
+          0
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 13,
+    "monster_name": "불 박쥐",
+    "revision": "V3-FSM",
+    "kind": "common",
+    "interrupt_policy": "delay",
+    "actions": [
+      {
+        "skill_id": 9241,
+        "weight": 6,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 0,
+        "action_kind": "support",
+        "weight": 1,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 1,
+        "recover_actions": 0,
+        "recover_hp_percent": 0.03,
+        "support_log": "🛡️ **불 박쥐**이(가) 숨을 고르며 빈틈을 줄입니다."
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9241,
+          0
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 14,
+    "monster_name": "얼음 정령",
+    "revision": "V3-FSM",
+    "kind": "common",
+    "interrupt_policy": "delay",
+    "actions": [
+      {
+        "skill_id": 9088,
+        "weight": 6,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 0,
+        "action_kind": "support",
+        "weight": 1,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 1,
+        "recover_actions": 0,
+        "recover_hp_percent": 0.03,
+        "support_log": "🛡️ **얼음 정령**이(가) 숨을 고르며 빈틈을 줄입니다."
+      },
+      {
+        "skill_id": 9015,
+        "weight": 2,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9088,
+          0,
+          9015
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 15,
+    "monster_name": "서리 늑대",
+    "revision": "V3-FSM",
+    "kind": "common",
+    "interrupt_policy": "delay",
+    "actions": [
+      {
+        "skill_id": 9062,
+        "weight": 5,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 0,
+        "action_kind": "support",
+        "weight": 1,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 1,
+        "recover_actions": 0,
+        "recover_hp_percent": 0.03,
+        "support_log": "🛡️ **서리 늑대**이(가) 숨을 고르며 빈틈을 줄입니다."
+      },
+      {
+        "skill_id": 9016,
+        "weight": 2,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9062,
+          0,
+          9016
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 16,
+    "monster_name": "얼어붙은 좀비",
+    "revision": "V3-FSM",
+    "kind": "common",
+    "interrupt_policy": "delay",
+    "actions": [
+      {
+        "skill_id": 9242,
+        "weight": 6,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 0,
+        "action_kind": "support",
+        "weight": 1,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 1,
+        "recover_actions": 0,
+        "recover_hp_percent": 0.03,
+        "support_log": "🛡️ **얼어붙은 좀비**이(가) 숨을 고르며 빈틈을 줄입니다."
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9242,
+          0
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 17,
+    "monster_name": "눈보라 하피",
+    "revision": "V3-FSM",
+    "kind": "elite",
+    "interrupt_policy": "delay",
+    "actions": [
+      {
+        "skill_id": 9088,
+        "weight": 4,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9243,
+        "weight": 3,
+        "telegraph": "⚠️ 눈보라 하피이(가) 빙하 파쇄을 준비합니다.",
+        "interruptible": true,
+        "cooldown_actions": 2,
+        "recover_actions": 1
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9088,
+          9243
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 18,
+    "monster_name": "천둥 정령",
+    "revision": "V3-FSM",
+    "kind": "common",
+    "interrupt_policy": "delay",
+    "actions": [
+      {
+        "skill_id": 9060,
+        "weight": 6,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 0,
+        "action_kind": "support",
+        "weight": 1,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 1,
+        "recover_actions": 0,
+        "recover_hp_percent": 0.03,
+        "support_log": "🛡️ **천둥 정령**이(가) 숨을 고르며 빈틈을 줄입니다."
+      },
+      {
+        "skill_id": 9019,
+        "weight": 2,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9060,
+          0,
+          9019
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 19,
+    "monster_name": "폭풍 하피",
+    "revision": "V3-FSM",
+    "kind": "common",
+    "interrupt_policy": "delay",
+    "actions": [
+      {
+        "skill_id": 9222,
+        "weight": 5,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 0,
+        "action_kind": "support",
+        "weight": 1,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 1,
+        "recover_actions": 0,
+        "recover_hp_percent": 0.03,
+        "support_log": "🛡️ **폭풍 하피**이(가) 숨을 고르며 빈틈을 줄입니다."
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9222,
+          0
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 20,
+    "monster_name": "번개 늑대",
+    "revision": "V3-FSM",
+    "kind": "common",
+    "interrupt_policy": "delay",
+    "actions": [
+      {
+        "skill_id": 9246,
+        "weight": 5,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 0,
+        "action_kind": "support",
+        "weight": 1,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 1,
+        "recover_actions": 0,
+        "recover_hp_percent": 0.03,
+        "support_log": "🛡️ **번개 늑대**이(가) 숨을 고르며 빈틈을 줄입니다."
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9246,
+          0
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 21,
+    "monster_name": "번개 요정",
+    "revision": "V3-FSM",
+    "kind": "common",
+    "interrupt_policy": "delay",
+    "actions": [
+      {
+        "skill_id": 9244,
+        "weight": 6,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 0,
+        "action_kind": "support",
+        "weight": 1,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 1,
+        "recover_actions": 0,
+        "recover_hp_percent": 0.03,
+        "support_log": "🛡️ **번개 요정**이(가) 숨을 고르며 빈틈을 줄입니다."
+      },
+      {
+        "skill_id": 9020,
+        "weight": 2,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9244,
+          0,
+          9020
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 22,
+    "monster_name": "물 정령",
+    "revision": "V3-FSM",
+    "kind": "common",
+    "interrupt_policy": "delay",
+    "actions": [
+      {
+        "skill_id": 9101,
+        "weight": 6,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 0,
+        "action_kind": "support",
+        "weight": 1,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 1,
+        "recover_actions": 0,
+        "recover_hp_percent": 0.03,
+        "support_log": "🛡️ **물 정령**이(가) 숨을 고르며 빈틈을 줄입니다."
+      },
+      {
+        "skill_id": 9023,
+        "weight": 2,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9101,
+          0,
+          9023
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 23,
+    "monster_name": "바다뱀",
+    "revision": "V3-FSM",
+    "kind": "common",
+    "interrupt_policy": "delay",
+    "actions": [
+      {
+        "skill_id": 9247,
+        "weight": 5,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 0,
+        "action_kind": "support",
+        "weight": 1,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 1,
+        "recover_actions": 0,
+        "recover_hp_percent": 0.03,
+        "support_log": "🛡️ **바다뱀**이(가) 숨을 고르며 빈틈을 줄입니다."
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9247,
+          0
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 24,
+    "monster_name": "익사한 사제",
+    "revision": "V3-FSM",
+    "kind": "common",
+    "interrupt_policy": "delay",
+    "actions": [
+      {
+        "skill_id": 9216,
+        "weight": 7,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 0,
+        "action_kind": "support",
+        "weight": 1,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 1,
+        "recover_actions": 0,
+        "recover_hp_percent": 0.03,
+        "support_log": "🛡️ **익사한 사제**이(가) 숨을 고르며 빈틈을 줄입니다."
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9216,
+          0
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 25,
+    "monster_name": "거대 게",
+    "revision": "V3-FSM",
+    "kind": "common",
+    "interrupt_policy": "delay",
+    "actions": [
+      {
+        "skill_id": 9245,
+        "weight": 5,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 0,
+        "action_kind": "support",
+        "weight": 1,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 1,
+        "recover_actions": 0,
+        "recover_hp_percent": 0.03,
+        "support_log": "🛡️ **거대 게**이(가) 숨을 고르며 빈틈을 줄입니다."
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9245,
+          0
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 26,
+    "monster_name": "타락한 사제",
+    "revision": "V3-FSM",
+    "kind": "common",
+    "interrupt_policy": "delay",
+    "actions": [
+      {
+        "skill_id": 9127,
+        "weight": 6,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 0,
+        "action_kind": "support",
+        "weight": 1,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 1,
+        "recover_actions": 0,
+        "recover_hp_percent": 0.03,
+        "support_log": "🛡️ **타락한 사제**이(가) 숨을 고르며 빈틈을 줄입니다."
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9127,
+          0
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 27,
+    "monster_name": "타락한 기사",
+    "revision": "V3-FSM",
+    "kind": "common",
+    "interrupt_policy": "delay",
+    "actions": [
+      {
+        "skill_id": 9116,
+        "weight": 5,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 0,
+        "action_kind": "support",
+        "weight": 1,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 1,
+        "recover_actions": 0,
+        "recover_hp_percent": 0.03,
+        "support_log": "🛡️ **타락한 기사**이(가) 숨을 고르며 빈틈을 줄입니다."
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9116,
+          0
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 28,
+    "monster_name": "신성 가고일",
+    "revision": "V3-FSM",
+    "kind": "common",
+    "interrupt_policy": "delay",
+    "actions": [
+      {
+        "skill_id": 9250,
+        "weight": 5,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 0,
+        "action_kind": "support",
+        "weight": 1,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 1,
+        "recover_actions": 0,
+        "recover_hp_percent": 0.03,
+        "support_log": "🛡️ **신성 가고일**이(가) 숨을 고르며 빈틈을 줄입니다."
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9250,
+          0
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 29,
+    "monster_name": "빛의 정령",
+    "revision": "V3-FSM",
+    "kind": "common",
+    "interrupt_policy": "delay",
+    "actions": [
+      {
+        "skill_id": 9248,
+        "weight": 6,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 0,
+        "action_kind": "support",
+        "weight": 1,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 1,
+        "recover_actions": 0,
+        "recover_hp_percent": 0.03,
+        "support_log": "🛡️ **빛의 정령**이(가) 숨을 고르며 빈틈을 줄입니다."
+      },
+      {
+        "skill_id": 9025,
+        "weight": 2,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9248,
+          0,
+          9025
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 30,
+    "monster_name": "스켈레톤 전사",
+    "revision": "V3-FSM",
+    "kind": "common",
+    "interrupt_policy": "delay",
+    "actions": [
+      {
+        "skill_id": 9090,
+        "weight": 6,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 0,
+        "action_kind": "support",
+        "weight": 1,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 1,
+        "recover_actions": 0,
+        "recover_hp_percent": 0.03,
+        "support_log": "🛡️ **스켈레톤 전사**이(가) 숨을 고르며 빈틈을 줄입니다."
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9090,
+          0
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 31,
+    "monster_name": "좀비",
+    "revision": "V3-FSM",
+    "kind": "common",
+    "interrupt_policy": "delay",
+    "actions": [
+      {
+        "skill_id": 9249,
+        "weight": 6,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 0,
+        "action_kind": "support",
+        "weight": 1,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 1,
+        "recover_actions": 0,
+        "recover_hp_percent": 0.03,
+        "support_log": "🛡️ **좀비**이(가) 숨을 고르며 빈틈을 줄입니다."
+      },
+      {
+        "skill_id": 9027,
+        "weight": 2,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9249,
+          0,
+          9027
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 32,
+    "monster_name": "유령",
+    "revision": "V3-FSM",
+    "kind": "common",
+    "interrupt_policy": "delay",
+    "actions": [
+      {
+        "skill_id": 9089,
+        "weight": 7,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 0,
+        "action_kind": "support",
+        "weight": 1,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 1,
+        "recover_actions": 0,
+        "recover_hp_percent": 0.03,
+        "support_log": "🛡️ **유령**이(가) 숨을 고르며 빈틈을 줄입니다."
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9089,
+          0
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 33,
+    "monster_name": "망령",
+    "revision": "V3-FSM",
+    "kind": "common",
+    "interrupt_policy": "delay",
+    "actions": [
+      {
+        "skill_id": 9095,
+        "weight": 6,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 0,
+        "action_kind": "support",
+        "weight": 1,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 1,
+        "recover_actions": 0,
+        "recover_hp_percent": 0.03,
+        "support_log": "🛡️ **망령**이(가) 숨을 고르며 빈틈을 줄입니다."
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9095,
+          0
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 34,
+    "monster_name": "어린 드래곤",
+    "revision": "V3-FSM",
+    "kind": "common",
+    "interrupt_policy": "delay",
+    "actions": [
+      {
+        "skill_id": 9087,
+        "weight": 6,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 0,
+        "action_kind": "support",
+        "weight": 1,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 1,
+        "recover_actions": 0,
+        "recover_hp_percent": 0.03,
+        "support_log": "🛡️ **어린 드래곤**이(가) 숨을 고르며 빈틈을 줄입니다."
+      },
+      {
+        "skill_id": 9031,
+        "weight": 2,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9087,
+          0,
+          9031
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 35,
+    "monster_name": "드래곤 가드",
+    "revision": "V3-FSM",
+    "kind": "common",
+    "interrupt_policy": "delay",
+    "actions": [
+      {
+        "skill_id": 9103,
+        "weight": 4,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 0,
+        "action_kind": "support",
+        "weight": 1,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 1,
+        "recover_actions": 0,
+        "recover_hp_percent": 0.03,
+        "support_log": "🛡️ **드래곤 가드**이(가) 숨을 고르며 빈틈을 줄입니다."
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9103,
+          0
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 36,
+    "monster_name": "화염 드레이크",
+    "revision": "V3-FSM",
+    "kind": "common",
+    "interrupt_policy": "delay",
+    "actions": [
+      {
+        "skill_id": 9251,
+        "weight": 5,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 0,
+        "action_kind": "support",
+        "weight": 1,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 1,
+        "recover_actions": 0,
+        "recover_hp_percent": 0.03,
+        "support_log": "🛡️ **화염 드레이크**이(가) 숨을 고르며 빈틈을 줄입니다."
+      },
+      {
+        "skill_id": 9032,
+        "weight": 2,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9251,
+          0,
+          9032
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 37,
+    "monster_name": "번개 드레이크",
+    "revision": "V3-FSM",
+    "kind": "common",
+    "interrupt_policy": "delay",
+    "actions": [
+      {
+        "skill_id": 9252,
+        "weight": 5,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 0,
+        "action_kind": "support",
+        "weight": 1,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 1,
+        "recover_actions": 0,
+        "recover_hp_percent": 0.03,
+        "support_log": "🛡️ **번개 드레이크**이(가) 숨을 고르며 빈틈을 줄입니다."
+      },
+      {
+        "skill_id": 9033,
+        "weight": 2,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9252,
+          0,
+          9033
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 38,
+    "monster_name": "혼돈의 분신",
+    "revision": "V3-FSM",
+    "kind": "elite",
+    "interrupt_policy": "delay",
+    "actions": [
+      {
+        "skill_id": 0,
+        "action_kind": "basic",
+        "weight": 2,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9234,
+        "weight": 6,
+        "telegraph": "⚠️ 혼돈의 분신이(가) 혼돈의 일격을 준비합니다.",
+        "interruptible": true,
+        "cooldown_actions": 2,
+        "recover_actions": 1
+      },
+      {
+        "skill_id": 9036,
+        "weight": 2,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9234,
+          9036
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 39,
+    "monster_name": "공허의 보행자",
+    "revision": "V3-FSM",
+    "kind": "elite",
+    "interrupt_policy": "delay",
+    "actions": [
+      {
+        "skill_id": 0,
+        "action_kind": "basic",
+        "weight": 2,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9053,
+        "weight": 6,
+        "telegraph": "⚠️ 공허의 보행자이(가) 공허 이동을 준비합니다.",
+        "interruptible": true,
+        "cooldown_actions": 2,
+        "recover_actions": 1
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9053
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 40,
+    "monster_name": "차원의 공포",
+    "revision": "V3-FSM",
+    "kind": "elite",
+    "interrupt_policy": "delay",
+    "actions": [
+      {
+        "skill_id": 0,
+        "action_kind": "basic",
+        "weight": 2,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9254,
+        "weight": 6,
+        "telegraph": "⚠️ 차원의 공포이(가) 공포의 외침을 준비합니다.",
+        "interruptible": true,
+        "cooldown_actions": 2,
+        "recover_actions": 1
+      },
+      {
+        "skill_id": 9037,
+        "weight": 1,
+        "telegraph": "⚠️ 차원의 공포가 공간을 찢으려 합니다.",
+        "interruptible": true,
+        "cooldown_actions": 3,
+        "recover_actions": 1
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9254,
+          9037
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 41,
+    "monster_name": "엔트로피 위스프",
+    "revision": "V3-FSM",
+    "kind": "elite",
+    "interrupt_policy": "delay",
+    "actions": [
+      {
+        "skill_id": 0,
+        "action_kind": "basic",
+        "weight": 2,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9253,
+        "weight": 6,
+        "telegraph": "⚠️ 엔트로피 위스프이(가) 혼돈 파동을 준비합니다.",
+        "interruptible": true,
+        "cooldown_actions": 2,
+        "recover_actions": 1
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9253
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 42,
+    "monster_name": "폭풍 그리폰",
+    "revision": "V3-FSM",
+    "kind": "elite",
+    "interrupt_policy": "delay",
+    "actions": [
+      {
+        "skill_id": 9246,
+        "weight": 4,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9078,
+        "weight": 3,
+        "telegraph": "⚠️ 폭풍 그리폰이(가) 【몬】번개 연쇄을 준비합니다.",
+        "interruptible": true,
+        "cooldown_actions": 2,
+        "recover_actions": 1
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9246,
+          9078
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 43,
+    "monster_name": "심해 거북",
+    "revision": "V3-FSM",
+    "kind": "elite",
+    "interrupt_policy": "delay",
+    "actions": [
+      {
+        "skill_id": 9101,
+        "weight": 4,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9154,
+        "weight": 3,
+        "telegraph": "⚠️ 심해 거북이(가) 익사의 저주을 준비합니다.",
+        "interruptible": true,
+        "cooldown_actions": 2,
+        "recover_actions": 1
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9101,
+          9154
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 44,
+    "monster_name": "신성 수호상",
+    "revision": "V3-FSM",
+    "kind": "elite",
+    "interrupt_policy": "delay",
+    "actions": [
+      {
+        "skill_id": 9248,
+        "weight": 4,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9250,
+        "weight": 3,
+        "telegraph": "⚠️ 신성 수호상이(가) 결계의 시선을 준비합니다.",
+        "interruptible": true,
+        "cooldown_actions": 2,
+        "recover_actions": 1
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9248,
+          9250
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 45,
+    "monster_name": "죽음의 기사",
+    "revision": "V3-FSM",
+    "kind": "elite",
+    "interrupt_policy": "delay",
+    "actions": [
+      {
+        "skill_id": 9249,
+        "weight": 4,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9089,
+        "weight": 3,
+        "telegraph": "⚠️ 죽음의 기사이(가) 빙의을 준비합니다.",
+        "interruptible": true,
+        "cooldown_actions": 2,
+        "recover_actions": 1
+      },
+      {
+        "skill_id": 9028,
+        "weight": 2,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9249,
+          9089,
+          9028
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 46,
+    "monster_name": "용의 현자",
+    "revision": "V3-FSM",
+    "kind": "elite",
+    "interrupt_policy": "delay",
+    "actions": [
+      {
+        "skill_id": 9251,
+        "weight": 4,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9068,
+        "weight": 3,
+        "telegraph": "⚠️ 용의 현자이(가) 드래곤 클로을 준비합니다.",
+        "interruptible": true,
+        "cooldown_actions": 2,
+        "recover_actions": 1
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9251,
+          9068
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 47,
+    "monster_name": "시간의 감시자",
+    "revision": "V3-FSM",
+    "kind": "elite",
+    "interrupt_policy": "delay",
+    "actions": [
+      {
+        "skill_id": 9105,
+        "weight": 4,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9108,
+        "weight": 3,
+        "telegraph": "⚠️ 시간의 감시자이(가) 시간 흡수을 준비합니다.",
+        "interruptible": true,
+        "cooldown_actions": 2,
+        "recover_actions": 1
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9105,
+          9108
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 48,
+    "monster_name": "공허의 포식자",
+    "revision": "V3-FSM",
+    "kind": "elite",
+    "interrupt_policy": "delay",
+    "actions": [
+      {
+        "skill_id": 9054,
+        "weight": 4,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9169,
+        "weight": 3,
+        "telegraph": "⚠️ 공허의 포식자이(가) 【몬】존재 말소을 준비합니다.",
+        "interruptible": true,
+        "cooldown_actions": 2,
+        "recover_actions": 1
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9054,
+          9169
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 49,
+    "monster_name": "심해 아귀",
+    "revision": "V3-FSM",
+    "kind": "elite",
+    "interrupt_policy": "delay",
+    "actions": [
+      {
+        "skill_id": 9259,
+        "weight": 4,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9260,
+        "weight": 3,
+        "telegraph": "⚠️ 심해 아귀이(가) 촉수 휩쓸기을 준비합니다.",
+        "interruptible": true,
+        "cooldown_actions": 2,
+        "recover_actions": 1
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9259,
+          9260
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 50,
+    "monster_name": "시간의 망령",
+    "revision": "V3-FSM",
+    "kind": "common",
+    "interrupt_policy": "delay",
+    "actions": [
+      {
+        "skill_id": 9105,
+        "weight": 7,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 0,
+        "action_kind": "support",
+        "weight": 1,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 1,
+        "recover_actions": 0,
+        "recover_hp_percent": 0.03,
+        "support_log": "🛡️ **시간의 망령**이(가) 숨을 고르며 빈틈을 줄입니다."
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9105,
+          0
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 51,
+    "monster_name": "시간 골렘",
+    "revision": "V3-FSM",
+    "kind": "common",
+    "interrupt_policy": "delay",
+    "actions": [
+      {
+        "skill_id": 9255,
+        "weight": 3,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 0,
+        "action_kind": "support",
+        "weight": 1,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 1,
+        "recover_actions": 0,
+        "recover_hp_percent": 0.03,
+        "support_log": "🛡️ **시간 골렘**이(가) 숨을 고르며 빈틈을 줄입니다."
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9255,
+          0
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 52,
+    "monster_name": "시간 포식자",
+    "revision": "V3-FSM",
+    "kind": "common",
+    "interrupt_policy": "delay",
+    "actions": [
+      {
+        "skill_id": 9108,
+        "weight": 7,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 0,
+        "action_kind": "support",
+        "weight": 1,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 1,
+        "recover_actions": 0,
+        "recover_hp_percent": 0.03,
+        "support_log": "🛡️ **시간 포식자**이(가) 숨을 고르며 빈틈을 줄입니다."
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9108,
+          0
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 53,
+    "monster_name": "역설 정령",
+    "revision": "V3-FSM",
+    "kind": "common",
+    "interrupt_policy": "delay",
+    "actions": [
+      {
+        "skill_id": 9256,
+        "weight": 7,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 0,
+        "action_kind": "support",
+        "weight": 1,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 1,
+        "recover_actions": 0,
+        "recover_hp_percent": 0.03,
+        "support_log": "🛡️ **역설 정령**이(가) 숨을 고르며 빈틈을 줄입니다."
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9256,
+          0
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 54,
+    "monster_name": "공허의 선봉",
+    "revision": "V3-FSM",
+    "kind": "common",
+    "interrupt_policy": "delay",
+    "actions": [
+      {
+        "skill_id": 9054,
+        "weight": 6,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 0,
+        "action_kind": "support",
+        "weight": 1,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 1,
+        "recover_actions": 0,
+        "recover_hp_percent": 0.03,
+        "support_log": "🛡️ **공허의 선봉**이(가) 숨을 고르며 빈틈을 줄입니다."
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9054,
+          0
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 55,
+    "monster_name": "무(無) 보행자",
+    "revision": "V3-FSM",
+    "kind": "common",
+    "interrupt_policy": "delay",
+    "actions": [
+      {
+        "skill_id": 9258,
+        "weight": 7,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 0,
+        "action_kind": "support",
+        "weight": 1,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 1,
+        "recover_actions": 0,
+        "recover_hp_percent": 0.03,
+        "support_log": "🛡️ **무(無) 보행자**이(가) 숨을 고르며 빈틈을 줄입니다."
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9258,
+          0
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 56,
+    "monster_name": "허무의 화신",
+    "revision": "V3-FSM",
+    "kind": "common",
+    "interrupt_policy": "delay",
+    "actions": [
+      {
+        "skill_id": 9169,
+        "weight": 6,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 0,
+        "action_kind": "support",
+        "weight": 1,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 1,
+        "recover_actions": 0,
+        "recover_hp_percent": 0.03,
+        "support_log": "🛡️ **허무의 화신**이(가) 숨을 고르며 빈틈을 줄입니다."
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9169,
+          0
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 57,
+    "monster_name": "엔트로피 야수",
+    "revision": "V3-FSM",
+    "kind": "common",
+    "interrupt_policy": "delay",
+    "actions": [
+      {
+        "skill_id": 9257,
+        "weight": 5,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 0,
+        "action_kind": "support",
+        "weight": 1,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 1,
+        "recover_actions": 0,
+        "recover_hp_percent": 0.03,
+        "support_log": "🛡️ **엔트로피 야수**이(가) 숨을 고르며 빈틈을 줄입니다."
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9257,
+          0
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 58,
+    "monster_name": "심해 리바이어던",
+    "revision": "V3-FSM",
+    "kind": "common",
+    "interrupt_policy": "delay",
+    "actions": [
+      {
+        "skill_id": 9226,
+        "weight": 4,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 0,
+        "action_kind": "support",
+        "weight": 1,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 1,
+        "recover_actions": 0,
+        "recover_hp_percent": 0.03,
+        "support_log": "🛡️ **심해 리바이어던**이(가) 숨을 고르며 빈틈을 줄입니다."
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9226,
+          0
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 59,
+    "monster_name": "심연의 크라켄 새끼",
+    "revision": "V3-FSM",
+    "kind": "common",
+    "interrupt_policy": "delay",
+    "actions": [
+      {
+        "skill_id": 9260,
+        "weight": 5,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 0,
+        "action_kind": "support",
+        "weight": 1,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 1,
+        "recover_actions": 0,
+        "recover_hp_percent": 0.03,
+        "support_log": "🛡️ **심연의 크라켄 새끼**이(가) 숨을 고르며 빈틈을 줄입니다."
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9260,
+          0
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 60,
+    "monster_name": "압력 골렘",
+    "revision": "V3-FSM",
+    "kind": "common",
+    "interrupt_policy": "delay",
+    "actions": [
+      {
+        "skill_id": 9261,
+        "weight": 3,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 0,
+        "action_kind": "support",
+        "weight": 1,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 1,
+        "recover_actions": 0,
+        "recover_hp_percent": 0.03,
+        "support_log": "🛡️ **압력 골렘**이(가) 숨을 고르며 빈틈을 줄입니다."
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9261,
+          0
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 61,
+    "monster_name": "생체발광 공포",
+    "revision": "V3-FSM",
+    "kind": "common",
+    "interrupt_policy": "delay",
+    "actions": [
+      {
+        "skill_id": 9259,
+        "weight": 6,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 0,
+        "action_kind": "support",
+        "weight": 1,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 1,
+        "recover_actions": 0,
+        "recover_hp_percent": 0.03,
+        "support_log": "🛡️ **생체발광 공포**이(가) 숨을 고르며 빈틈을 줄입니다."
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9259,
+          0
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 62,
+    "monster_name": "각성한 용사",
+    "revision": "V3-FSM",
+    "kind": "common",
+    "interrupt_policy": "delay",
+    "actions": [
+      {
+        "skill_id": 9050,
+        "weight": 5,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 0,
+        "action_kind": "support",
+        "weight": 1,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 1,
+        "recover_actions": 0,
+        "recover_hp_percent": 0.03,
+        "support_log": "🛡️ **각성한 용사**이(가) 숨을 고르며 빈틈을 줄입니다."
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9050,
+          0
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 63,
+    "monster_name": "원소의 아바타",
+    "revision": "V3-FSM",
+    "kind": "common",
+    "interrupt_policy": "delay",
+    "actions": [
+      {
+        "skill_id": 9148,
+        "weight": 6,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 0,
+        "action_kind": "support",
+        "weight": 1,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 1,
+        "recover_actions": 0,
+        "recover_hp_percent": 0.03,
+        "support_log": "🛡️ **원소의 아바타**이(가) 숨을 고르며 빈틈을 줄입니다."
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9148,
+          0
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 64,
+    "monster_name": "원시 수호자",
+    "revision": "V3-FSM",
+    "kind": "common",
+    "interrupt_policy": "delay",
+    "actions": [
+      {
+        "skill_id": 9263,
+        "weight": 4,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 0,
+        "action_kind": "support",
+        "weight": 1,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 1,
+        "recover_actions": 0,
+        "recover_hp_percent": 0.03,
+        "support_log": "🛡️ **원시 수호자**이(가) 숨을 고르며 빈틈을 줄입니다."
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9263,
+          0
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 65,
+    "monster_name": "정수 포식자",
+    "revision": "V3-FSM",
+    "kind": "common",
+    "interrupt_policy": "delay",
+    "actions": [
+      {
+        "skill_id": 9262,
+        "weight": 6,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 0,
+        "action_kind": "support",
+        "weight": 1,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 1,
+        "recover_actions": 0,
+        "recover_hp_percent": 0.03,
+        "support_log": "🛡️ **정수 포식자**이(가) 숨을 고르며 빈틈을 줄입니다."
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9262,
+          0
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 66,
+    "monster_name": "고대 자동인형",
+    "revision": "V3-FSM",
+    "kind": "common",
+    "interrupt_policy": "delay",
+    "actions": [
+      {
+        "skill_id": 9135,
+        "weight": 3,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 0,
+        "action_kind": "support",
+        "weight": 1,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 1,
+        "recover_actions": 0,
+        "recover_hp_percent": 0.03,
+        "support_log": "🛡️ **고대 자동인형**이(가) 숨을 고르며 빈틈을 줄입니다."
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9135,
+          0
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 67,
+    "monster_name": "폐허의 감시자",
+    "revision": "V3-FSM",
+    "kind": "common",
+    "interrupt_policy": "delay",
+    "actions": [
+      {
+        "skill_id": 9265,
+        "weight": 4,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 0,
+        "action_kind": "support",
+        "weight": 1,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 1,
+        "recover_actions": 0,
+        "recover_hp_percent": 0.03,
+        "support_log": "🛡️ **폐허의 감시자**이(가) 숨을 고르며 빈틈을 줄입니다."
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9265,
+          0
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 68,
+    "monster_name": "잊힌 문명의 망령",
+    "revision": "V3-FSM",
+    "kind": "common",
+    "interrupt_policy": "delay",
+    "actions": [
+      {
+        "skill_id": 9266,
+        "weight": 7,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 0,
+        "action_kind": "support",
+        "weight": 1,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 1,
+        "recover_actions": 0,
+        "recover_hp_percent": 0.03,
+        "support_log": "🛡️ **잊힌 문명의 망령**이(가) 숨을 고르며 빈틈을 줄입니다."
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9266,
+          0
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 69,
+    "monster_name": "마법 구조물",
+    "revision": "V3-FSM",
+    "kind": "common",
+    "interrupt_policy": "delay",
+    "actions": [
+      {
+        "skill_id": 9264,
+        "weight": 6,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 0,
+        "action_kind": "support",
+        "weight": 1,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 1,
+        "recover_actions": 0,
+        "recover_hp_percent": 0.03,
+        "support_log": "🛡️ **마법 구조물**이(가) 숨을 고르며 빈틈을 줄입니다."
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9264,
+          0
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 70,
+    "monster_name": "시련의 용사",
+    "revision": "V3-FSM",
+    "kind": "common",
+    "interrupt_policy": "delay",
+    "actions": [
+      {
+        "skill_id": 9111,
+        "weight": 5,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 0,
+        "action_kind": "support",
+        "weight": 1,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 1,
+        "recover_actions": 0,
+        "recover_hp_percent": 0.03,
+        "support_log": "🛡️ **시련의 용사**이(가) 숨을 고르며 빈틈을 줄입니다."
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9111,
+          0
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 71,
+    "monster_name": "층 수호자",
+    "revision": "V3-FSM",
+    "kind": "common",
+    "interrupt_policy": "delay",
+    "actions": [
+      {
+        "skill_id": 9268,
+        "weight": 3,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 0,
+        "action_kind": "support",
+        "weight": 1,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 1,
+        "recover_actions": 0,
+        "recover_hp_percent": 0.03,
+        "support_log": "🛡️ **층 수호자**이(가) 숨을 고르며 빈틈을 줄입니다."
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9268,
+          0
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 72,
+    "monster_name": "시련의 정령",
+    "revision": "V3-FSM",
+    "kind": "common",
+    "interrupt_policy": "delay",
+    "actions": [
+      {
+        "skill_id": 9269,
+        "weight": 6,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 0,
+        "action_kind": "support",
+        "weight": 1,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 1,
+        "recover_actions": 0,
+        "recover_hp_percent": 0.03,
+        "support_log": "🛡️ **시련의 정령**이(가) 숨을 고르며 빈틈을 줄입니다."
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9269,
+          0
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 73,
+    "monster_name": "탑의 감시자",
+    "revision": "V3-FSM",
+    "kind": "common",
+    "interrupt_policy": "delay",
+    "actions": [
+      {
+        "skill_id": 9267,
+        "weight": 4,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 0,
+        "action_kind": "support",
+        "weight": 1,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 1,
+        "recover_actions": 0,
+        "recover_hp_percent": 0.03,
+        "support_log": "🛡️ **탑의 감시자**이(가) 숨을 고르며 빈틈을 줄입니다."
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9267,
+          0
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 74,
+    "monster_name": "현실 파편",
+    "revision": "V3-FSM",
+    "kind": "common",
+    "interrupt_policy": "delay",
+    "actions": [
+      {
+        "skill_id": 9229,
+        "weight": 6,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 0,
+        "action_kind": "support",
+        "weight": 1,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 1,
+        "recover_actions": 0,
+        "recover_hp_percent": 0.03,
+        "support_log": "🛡️ **현실 파편**이(가) 숨을 고르며 빈틈을 줄입니다."
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9229,
+          0
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 75,
+    "monster_name": "차원 붕괴자",
+    "revision": "V3-FSM",
+    "kind": "common",
+    "interrupt_policy": "delay",
+    "actions": [
+      {
+        "skill_id": 9271,
+        "weight": 6,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 0,
+        "action_kind": "support",
+        "weight": 1,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 1,
+        "recover_actions": 0,
+        "recover_hp_percent": 0.03,
+        "support_log": "🛡️ **차원 붕괴자**이(가) 숨을 고르며 빈틈을 줄입니다."
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9271,
+          0
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 76,
+    "monster_name": "혼돈의 현신",
+    "revision": "V3-FSM",
+    "kind": "common",
+    "interrupt_policy": "delay",
+    "actions": [
+      {
+        "skill_id": 9272,
+        "weight": 6,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 0,
+        "action_kind": "support",
+        "weight": 1,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 1,
+        "recover_actions": 0,
+        "recover_hp_percent": 0.03,
+        "support_log": "🛡️ **혼돈의 현신**이(가) 숨을 고르며 빈틈을 줄입니다."
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9272,
+          0
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 77,
+    "monster_name": "불안정한 존재",
+    "revision": "V3-FSM",
+    "kind": "common",
+    "interrupt_policy": "delay",
+    "actions": [
+      {
+        "skill_id": 9270,
+        "weight": 7,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 0,
+        "action_kind": "support",
+        "weight": 1,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 1,
+        "recover_actions": 0,
+        "recover_hp_percent": 0.03,
+        "support_log": "🛡️ **불안정한 존재**이(가) 숨을 고르며 빈틈을 줄입니다."
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9270,
+          0
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 78,
+    "monster_name": "초월한 기사",
+    "revision": "V3-FSM",
+    "kind": "common",
+    "interrupt_policy": "delay",
+    "actions": [
+      {
+        "skill_id": 9207,
+        "weight": 5,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 0,
+        "action_kind": "support",
+        "weight": 1,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 1,
+        "recover_actions": 0,
+        "recover_hp_percent": 0.03,
+        "support_log": "🛡️ **초월한 기사**이(가) 숨을 고르며 빈틈을 줄입니다."
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9207,
+          0
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 79,
+    "monster_name": "한계를 넘은 자",
+    "revision": "V3-FSM",
+    "kind": "common",
+    "interrupt_policy": "delay",
+    "actions": [
+      {
+        "skill_id": 9225,
+        "weight": 6,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 0,
+        "action_kind": "support",
+        "weight": 1,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 1,
+        "recover_actions": 0,
+        "recover_hp_percent": 0.03,
+        "support_log": "🛡️ **한계를 넘은 자**이(가) 숨을 고르며 빈틈을 줄입니다."
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9225,
+          0
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 80,
+    "monster_name": "한계 돌파자",
+    "revision": "V3-FSM",
+    "kind": "common",
+    "interrupt_policy": "delay",
+    "actions": [
+      {
+        "skill_id": 9274,
+        "weight": 7,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 0,
+        "action_kind": "support",
+        "weight": 1,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 1,
+        "recover_actions": 0,
+        "recover_hp_percent": 0.03,
+        "support_log": "🛡️ **한계 돌파자**이(가) 숨을 고르며 빈틈을 줄입니다."
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9274,
+          0
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 81,
+    "monster_name": "승천한 정령",
+    "revision": "V3-FSM",
+    "kind": "common",
+    "interrupt_policy": "delay",
+    "actions": [
+      {
+        "skill_id": 9273,
+        "weight": 7,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 0,
+        "action_kind": "support",
+        "weight": 1,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 1,
+        "recover_actions": 0,
+        "recover_hp_percent": 0.03,
+        "support_log": "🛡️ **승천한 정령**이(가) 숨을 고르며 빈틈을 줄입니다."
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9273,
+          0
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 82,
+    "monster_name": "몰락한 반신",
+    "revision": "V3-FSM",
+    "kind": "common",
+    "interrupt_policy": "delay",
+    "actions": [
+      {
+        "skill_id": 9122,
+        "weight": 6,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 0,
+        "action_kind": "support",
+        "weight": 1,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 1,
+        "recover_actions": 0,
+        "recover_hp_percent": 0.03,
+        "support_log": "🛡️ **몰락한 반신**이(가) 숨을 고르며 빈틈을 줄입니다."
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9122,
+          0
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 83,
+    "monster_name": "신성 전사",
+    "revision": "V3-FSM",
+    "kind": "common",
+    "interrupt_policy": "delay",
+    "actions": [
+      {
+        "skill_id": 9276,
+        "weight": 6,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 0,
+        "action_kind": "support",
+        "weight": 1,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 1,
+        "recover_actions": 0,
+        "recover_hp_percent": 0.03,
+        "support_log": "🛡️ **신성 전사**이(가) 숨을 고르며 빈틈을 줄입니다."
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9276,
+          0
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 84,
+    "monster_name": "신 살해자 야수",
+    "revision": "V3-FSM",
+    "kind": "common",
+    "interrupt_policy": "delay",
+    "actions": [
+      {
+        "skill_id": 9277,
+        "weight": 6,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 0,
+        "action_kind": "support",
+        "weight": 1,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 1,
+        "recover_actions": 0,
+        "recover_hp_percent": 0.03,
+        "support_log": "🛡️ **신 살해자 야수**이(가) 숨을 고르며 빈틈을 줄입니다."
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9277,
+          0
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 85,
+    "monster_name": "천상의 잔재",
+    "revision": "V3-FSM",
+    "kind": "common",
+    "interrupt_policy": "delay",
+    "actions": [
+      {
+        "skill_id": 9275,
+        "weight": 7,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 0,
+        "action_kind": "support",
+        "weight": 1,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 1,
+        "recover_actions": 0,
+        "recover_hp_percent": 0.03,
+        "support_log": "🛡️ **천상의 잔재**이(가) 숨을 고르며 빈틈을 줄입니다."
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9275,
+          0
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 86,
+    "monster_name": "원초의 타이탄",
+    "revision": "V3-FSM",
+    "kind": "common",
+    "interrupt_policy": "delay",
+    "actions": [
+      {
+        "skill_id": 9194,
+        "weight": 5,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 0,
+        "action_kind": "support",
+        "weight": 1,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 1,
+        "recover_actions": 0,
+        "recover_hp_percent": 0.03,
+        "support_log": "🛡️ **원초의 타이탄**이(가) 숨을 고르며 빈틈을 줄입니다."
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9194,
+          0
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 87,
+    "monster_name": "창세의 뱀",
+    "revision": "V3-FSM",
+    "kind": "common",
+    "interrupt_policy": "delay",
+    "actions": [
+      {
+        "skill_id": 9076,
+        "weight": 7,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 0,
+        "action_kind": "support",
+        "weight": 1,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 1,
+        "recover_actions": 0,
+        "recover_hp_percent": 0.03,
+        "support_log": "🛡️ **창세의 뱀**이(가) 숨을 고르며 빈틈을 줄입니다."
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9076,
+          0
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 88,
+    "monster_name": "기원의 정령",
+    "revision": "V3-FSM",
+    "kind": "common",
+    "interrupt_policy": "delay",
+    "actions": [
+      {
+        "skill_id": 9279,
+        "weight": 7,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 0,
+        "action_kind": "support",
+        "weight": 1,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 1,
+        "recover_actions": 0,
+        "recover_hp_percent": 0.03,
+        "support_log": "🛡️ **기원의 정령**이(가) 숨을 고르며 빈틈을 줄입니다."
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9279,
+          0
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 89,
+    "monster_name": "창조의 아바타",
+    "revision": "V3-FSM",
+    "kind": "common",
+    "interrupt_policy": "delay",
+    "actions": [
+      {
+        "skill_id": 9278,
+        "weight": 7,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 0,
+        "action_kind": "support",
+        "weight": 1,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 1,
+        "recover_actions": 0,
+        "recover_hp_percent": 0.03,
+        "support_log": "🛡️ **창조의 아바타**이(가) 숨을 고르며 빈틈을 줄입니다."
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9278,
+          0
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 90,
+    "monster_name": "각성의 현자",
+    "revision": "V3-FSM",
+    "kind": "elite",
+    "interrupt_policy": "delay",
+    "actions": [
+      {
+        "skill_id": 9050,
+        "weight": 4,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9262,
+        "weight": 3,
+        "telegraph": "⚠️ 각성의 현자이(가) 정수 흡수을 준비합니다.",
+        "interruptible": true,
+        "cooldown_actions": 2,
+        "recover_actions": 1
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9050,
+          9262
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 91,
+    "monster_name": "고대 집행자",
+    "revision": "V3-FSM",
+    "kind": "elite",
+    "interrupt_policy": "delay",
+    "actions": [
+      {
+        "skill_id": 9265,
+        "weight": 4,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9266,
+        "weight": 3,
+        "telegraph": "⚠️ 고대 집행자이(가) 망각의 저주을 준비합니다.",
+        "interruptible": true,
+        "cooldown_actions": 2,
+        "recover_actions": 1
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9265,
+          9266
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 92,
+    "monster_name": "시련의 검투사",
+    "revision": "V3-FSM",
+    "kind": "elite",
+    "interrupt_policy": "delay",
+    "actions": [
+      {
+        "skill_id": 9267,
+        "weight": 4,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9111,
+        "weight": 3,
+        "telegraph": "⚠️ 시련의 검투사이(가) 시련의 일격을 준비합니다.",
+        "interruptible": true,
+        "cooldown_actions": 2,
+        "recover_actions": 1
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9267,
+          9111
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 93,
+    "monster_name": "차원의 균열체",
+    "revision": "V3-FSM",
+    "kind": "elite",
+    "interrupt_policy": "delay",
+    "actions": [
+      {
+        "skill_id": 9271,
+        "weight": 4,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9229,
+        "weight": 3,
+        "telegraph": "⚠️ 차원의 균열체이(가) 현실 붕괴을 준비합니다.",
+        "interruptible": true,
+        "cooldown_actions": 2,
+        "recover_actions": 1
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9271,
+          9229
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 94,
+    "monster_name": "초월의 문지기",
+    "revision": "V3-FSM",
+    "kind": "elite",
+    "interrupt_policy": "delay",
+    "actions": [
+      {
+        "skill_id": 9207,
+        "weight": 4,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9274,
+        "weight": 3,
+        "telegraph": "⚠️ 초월의 문지기이(가) 한계 파쇄을 준비합니다.",
+        "interruptible": true,
+        "cooldown_actions": 2,
+        "recover_actions": 1
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9207,
+          9274
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 95,
+    "monster_name": "전쟁의 심판관",
+    "revision": "V3-FSM",
+    "kind": "elite",
+    "interrupt_policy": "delay",
+    "actions": [
+      {
+        "skill_id": 9275,
+        "weight": 4,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9277,
+        "weight": 3,
+        "telegraph": "⚠️ 전쟁의 심판관이(가) 신성 파괴을 준비합니다.",
+        "interruptible": true,
+        "cooldown_actions": 2,
+        "recover_actions": 1
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9275,
+          9277
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 96,
+    "monster_name": "원초의 사자",
+    "revision": "V3-FSM",
+    "kind": "elite",
+    "interrupt_policy": "delay",
+    "actions": [
+      {
+        "skill_id": 9076,
+        "weight": 4,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9278,
+        "weight": 3,
+        "telegraph": "⚠️ 원초의 사자이(가) 창조의 섬광을 준비합니다.",
+        "interruptible": true,
+        "cooldown_actions": 2,
+        "recover_actions": 1
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9076,
+          9278
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 101,
+    "monster_name": "고블린 족장",
+    "revision": "V3-FSM",
+    "kind": "boss",
+    "interrupt_policy": "cancel",
+    "actions": [
+      {
+        "skill_id": 9082,
+        "weight": 6,
+        "telegraph": "⚠️ 고블린 족장이(가) 분노의 일격을 준비합니다.",
+        "interruptible": true,
+        "cooldown_actions": 2,
+        "recover_actions": 1
+      },
+      {
+        "skill_id": 9168,
+        "weight": 1,
+        "telegraph": "⚠️ 고블린 족장이(가) 족장의 명령을 준비합니다.",
+        "interruptible": true,
+        "cooldown_actions": 2,
+        "recover_actions": 1
+      },
+      {
+        "skill_id": 9009,
+        "weight": 1,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 3,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9010,
+        "weight": 2,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9082,
+          9010
+        ]
+      },
+      {
+        "phase": 2,
+        "skill_ids": [
+          9082,
+          9168,
+          9009,
+          9010
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 102,
+    "monster_name": "화염의 군주",
+    "revision": "V3-FSM",
+    "kind": "boss",
+    "interrupt_policy": "cancel",
+    "actions": [
+      {
+        "skill_id": 9184,
+        "weight": 3,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9236,
+        "weight": 3,
+        "telegraph": "⚠️ 화염의 군주이(가) 【몬】화염 폭발을 준비합니다.",
+        "interruptible": true,
+        "cooldown_actions": 2,
+        "recover_actions": 1
+      },
+      {
+        "skill_id": 9086,
+        "weight": 2,
+        "telegraph": "⚠️ 화염의 군주이(가) 불의 비을 준비합니다.",
+        "interruptible": true,
+        "cooldown_actions": 2,
+        "recover_actions": 1
+      },
+      {
+        "skill_id": 9013,
+        "weight": 1,
+        "telegraph": "⚠️ 화염의 군주가 화염 폭풍을 응축합니다.",
+        "interruptible": true,
+        "cooldown_actions": 3,
+        "recover_actions": 1
+      },
+      {
+        "skill_id": 9014,
+        "weight": 1,
+        "telegraph": "⚠️ 화염의 군주가 전장을 용암으로 뒤덮으려 합니다.",
+        "interruptible": true,
+        "cooldown_actions": 4,
+        "recover_actions": 1
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9184,
+          9236
+        ]
+      },
+      {
+        "phase": 2,
+        "skill_ids": [
+          9184,
+          9236,
+          9086,
+          9013,
+          9014
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 103,
+    "monster_name": "서리 마녀",
+    "revision": "V3-FSM",
+    "kind": "boss",
+    "interrupt_policy": "cancel",
+    "actions": [
+      {
+        "skill_id": 9164,
+        "weight": 3,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9064,
+        "weight": 3,
+        "telegraph": "⚠️ 서리 마녀이(가) 【몬】눈보라을 준비합니다.",
+        "interruptible": true,
+        "cooldown_actions": 2,
+        "recover_actions": 1
+      },
+      {
+        "skill_id": 9133,
+        "weight": 2,
+        "telegraph": "⚠️ 서리 마녀이(가) 얼음 창을 준비합니다.",
+        "interruptible": true,
+        "cooldown_actions": 2,
+        "recover_actions": 1
+      },
+      {
+        "skill_id": 9017,
+        "weight": 1,
+        "telegraph": "⚠️ 서리 마녀가 거대한 눈보라를 불러냅니다.",
+        "interruptible": true,
+        "cooldown_actions": 3,
+        "recover_actions": 1
+      },
+      {
+        "skill_id": 9018,
+        "weight": 1,
+        "telegraph": "⚠️ 서리 마녀의 눈동자에 빙결의 마력이 모입니다.",
+        "interruptible": true,
+        "cooldown_actions": 4,
+        "recover_actions": 1
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9164,
+          9064
+        ]
+      },
+      {
+        "phase": 2,
+        "skill_ids": [
+          9164,
+          9064,
+          9133,
+          9017,
+          9018
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 104,
+    "monster_name": "천둥의 왕",
+    "revision": "V3-FSM",
+    "kind": "boss",
+    "interrupt_policy": "cancel",
+    "actions": [
+      {
+        "skill_id": 9202,
+        "weight": 3,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9078,
+        "weight": 3,
+        "telegraph": "⚠️ 천둥의 왕이(가) 【몬】번개 연쇄을 준비합니다.",
+        "interruptible": true,
+        "cooldown_actions": 2,
+        "recover_actions": 1
+      },
+      {
+        "skill_id": 9223,
+        "weight": 2,
+        "telegraph": "⚠️ 천둥의 왕이(가) 폭풍 과부하을 준비합니다.",
+        "interruptible": true,
+        "cooldown_actions": 2,
+        "recover_actions": 1
+      },
+      {
+        "skill_id": 9021,
+        "weight": 1,
+        "telegraph": "⚠️ 천둥의 왕이 천둥 강타를 준비합니다.",
+        "interruptible": true,
+        "cooldown_actions": 3,
+        "recover_actions": 1
+      },
+      {
+        "skill_id": 9022,
+        "weight": 1,
+        "telegraph": "⚠️ 천둥의 왕이 뇌신의 권능을 소환합니다.",
+        "interruptible": true,
+        "cooldown_actions": 4,
+        "recover_actions": 1
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9202,
+          9078
+        ]
+      },
+      {
+        "phase": 2,
+        "skill_ids": [
+          9202,
+          9078,
+          9223,
+          9021,
+          9022
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 105,
+    "monster_name": "심해의 사제",
+    "revision": "V3-FSM",
+    "kind": "boss",
+    "interrupt_policy": "cancel",
+    "actions": [
+      {
+        "skill_id": 9227,
+        "weight": 3,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9154,
+        "weight": 3,
+        "telegraph": "⚠️ 심해의 사제이(가) 익사의 저주을 준비합니다.",
+        "interruptible": true,
+        "cooldown_actions": 2,
+        "recover_actions": 1
+      },
+      {
+        "skill_id": 9128,
+        "weight": 2,
+        "telegraph": "⚠️ 심해의 사제이(가) 【몬】심해의 축복을 준비합니다.",
+        "interruptible": true,
+        "cooldown_actions": 2,
+        "recover_actions": 1
+      },
+      {
+        "skill_id": 9024,
+        "weight": 1,
+        "telegraph": "⚠️ 심해의 사제가 잠식의 촉수를 깨웁니다.",
+        "interruptible": true,
+        "cooldown_actions": 3,
+        "recover_actions": 1
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9227,
+          9154
+        ]
+      },
+      {
+        "phase": 2,
+        "skill_ids": [
+          9227,
+          9154,
+          9128,
+          9024
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 106,
+    "monster_name": "타락한 대주교",
+    "revision": "V3-FSM",
+    "kind": "boss",
+    "interrupt_policy": "cancel",
+    "actions": [
+      {
+        "skill_id": 9203,
+        "weight": 3,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9167,
+        "weight": 2,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9113,
+        "weight": 2,
+        "telegraph": "⚠️ 타락한 대주교이(가) 신성 결계을 준비합니다.",
+        "interruptible": true,
+        "cooldown_actions": 2,
+        "recover_actions": 1
+      },
+      {
+        "skill_id": 9079,
+        "weight": 1,
+        "telegraph": "⚠️ 타락한 대주교이(가) 부활의 기적을 준비합니다.",
+        "interruptible": true,
+        "cooldown_actions": 2,
+        "recover_actions": 1
+      },
+      {
+        "skill_id": 9026,
+        "weight": 1,
+        "telegraph": "⚠️ 타락한 대주교가 심판의 망치를 들어 올립니다.",
+        "interruptible": true,
+        "cooldown_actions": 3,
+        "recover_actions": 1
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9203,
+          9167
+        ]
+      },
+      {
+        "phase": 2,
+        "skill_ids": [
+          9203,
+          9167,
+          9113,
+          9079,
+          9026
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 107,
+    "monster_name": "리치 킹",
+    "revision": "V3-FSM",
+    "kind": "boss",
+    "interrupt_policy": "cancel",
+    "actions": [
+      {
+        "skill_id": 9179,
+        "weight": 3,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9180,
+        "weight": 2,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9140,
+        "weight": 2,
+        "telegraph": "⚠️ 리치 킹이(가) 【몬】영혼 수확을 준비합니다.",
+        "interruptible": true,
+        "cooldown_actions": 2,
+        "recover_actions": 1
+      },
+      {
+        "skill_id": 9132,
+        "weight": 1,
+        "telegraph": "⚠️ 리치 킹이(가) 언데드 군단을 준비합니다.",
+        "interruptible": true,
+        "cooldown_actions": 2,
+        "recover_actions": 1
+      },
+      {
+        "skill_id": 9029,
+        "weight": 1,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 2,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9030,
+        "weight": 1,
+        "telegraph": "⚠️ 리치 킹이 역병의 안개를 퍼뜨립니다.",
+        "interruptible": true,
+        "cooldown_actions": 4,
+        "recover_actions": 1
+      },
+      {
+        "skill_id": 9048,
+        "weight": 1,
+        "telegraph": "⚠️ 리치 킹이 죽음의 선고를 내립니다.",
+        "interruptible": true,
+        "cooldown_actions": 5,
+        "recover_actions": 1
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9179,
+          9180,
+          9029
+        ]
+      },
+      {
+        "phase": 2,
+        "skill_ids": [
+          9179,
+          9180,
+          9140,
+          9132,
+          9029,
+          9030,
+          9048
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 108,
+    "monster_name": "고대 드래곤",
+    "revision": "V3-FSM",
+    "kind": "boss",
+    "interrupt_policy": "cancel",
+    "actions": [
+      {
+        "skill_id": 9235,
+        "weight": 3,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9063,
+        "weight": 2,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9068,
+        "weight": 2,
+        "telegraph": "⚠️ 고대 드래곤이(가) 드래곤 클로을 준비합니다.",
+        "interruptible": true,
+        "cooldown_actions": 2,
+        "recover_actions": 1
+      },
+      {
+        "skill_id": 9147,
+        "weight": 1,
+        "telegraph": "⚠️ 고대 드래곤이(가) 용의 포효을 준비합니다.",
+        "interruptible": true,
+        "cooldown_actions": 2,
+        "recover_actions": 1
+      },
+      {
+        "skill_id": 9034,
+        "weight": 1,
+        "telegraph": "⚠️ 고대 드래곤이 고대의 브레스를 들이마십니다.",
+        "interruptible": true,
+        "cooldown_actions": 3,
+        "recover_actions": 1
+      },
+      {
+        "skill_id": 9035,
+        "weight": 1,
+        "telegraph": "⚠️ 고대 드래곤의 분노가 폭발하려 합니다.",
+        "interruptible": true,
+        "cooldown_actions": 4,
+        "recover_actions": 1
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9235,
+          9063
+        ]
+      },
+      {
+        "phase": 2,
+        "skill_ids": [
+          9235,
+          9063,
+          9068,
+          9034
+        ]
+      },
+      {
+        "phase": 3,
+        "skill_ids": [
+          9235,
+          9063,
+          9068,
+          9147,
+          9034,
+          9035
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 109,
+    "monster_name": "혼돈의 화신",
+    "revision": "V3-FSM",
+    "kind": "boss",
+    "interrupt_policy": "cancel",
+    "actions": [
+      {
+        "skill_id": 9233,
+        "weight": 2,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9185,
+        "weight": 2,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9074,
+        "weight": 2,
+        "telegraph": "⚠️ 혼돈의 화신이(가) 무작위 변이을 준비합니다.",
+        "interruptible": true,
+        "cooldown_actions": 2,
+        "recover_actions": 1
+      },
+      {
+        "skill_id": 9232,
+        "weight": 2,
+        "telegraph": "⚠️ 혼돈의 화신이(가) 혼돈 폭발을 준비합니다.",
+        "interruptible": true,
+        "cooldown_actions": 2,
+        "recover_actions": 1
+      },
+      {
+        "skill_id": 9038,
+        "weight": 1,
+        "telegraph": "⚠️ 혼돈의 화신이 자신을 분열시킵니다.",
+        "interruptible": true,
+        "cooldown_actions": 3,
+        "recover_actions": 1
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9233,
+          9185
+        ]
+      },
+      {
+        "phase": 2,
+        "skill_ids": [
+          9233,
+          9185,
+          9074,
+          9232,
+          9038
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 110,
+    "monster_name": "심연의 군주",
+    "revision": "V3-FSM",
+    "kind": "boss",
+    "interrupt_policy": "cancel",
+    "actions": [
+      {
+        "skill_id": 9125,
+        "weight": 2,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9093,
+        "weight": 2,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9126,
+        "weight": 2,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9130,
+        "weight": 1,
+        "telegraph": "⚠️ 심연의 군주이(가) 어둠의 지배을 준비합니다.",
+        "interruptible": true,
+        "cooldown_actions": 2,
+        "recover_actions": 1
+      },
+      {
+        "skill_id": 9163,
+        "weight": 1,
+        "telegraph": "⚠️ 심연의 군주이(가) 절대 암흑을 준비합니다.",
+        "interruptible": true,
+        "cooldown_actions": 2,
+        "recover_actions": 1
+      },
+      {
+        "skill_id": 9039,
+        "weight": 1,
+        "telegraph": "⚠️ 심연의 군주가 심연의 일격을 준비합니다.",
+        "interruptible": true,
+        "cooldown_actions": 3,
+        "recover_actions": 1
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9125,
+          9093,
+          9126
+        ]
+      },
+      {
+        "phase": 2,
+        "skill_ids": [
+          9125,
+          9093,
+          9126,
+          9130,
+          9163,
+          9039
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 111,
+    "monster_name": "심판자",
+    "revision": "V3-FSM",
+    "kind": "boss",
+    "interrupt_policy": "cancel",
+    "actions": [
+      {
+        "skill_id": 9120,
+        "weight": 2,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9166,
+        "weight": 2,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9204,
+        "weight": 2,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9080,
+        "weight": 1,
+        "telegraph": "⚠️ 심판자이(가) 부활의 빛을 준비합니다.",
+        "interruptible": true,
+        "cooldown_actions": 2,
+        "recover_actions": 1
+      },
+      {
+        "skill_id": 9215,
+        "weight": 1,
+        "telegraph": "⚠️ 심판자이(가) 최후의 심판을 준비합니다.",
+        "interruptible": true,
+        "cooldown_actions": 2,
+        "recover_actions": 1
+      },
+      {
+        "skill_id": 9040,
+        "weight": 1,
+        "telegraph": "⚠️ 심판자가 절대 심판을 선고합니다.",
+        "interruptible": true,
+        "cooldown_actions": 4,
+        "recover_actions": 1
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9120,
+          9166,
+          9204
+        ]
+      },
+      {
+        "phase": 2,
+        "skill_ids": [
+          9120,
+          9166,
+          9204,
+          9080,
+          9215,
+          9040
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 112,
+    "monster_name": "시간의 수호자",
+    "revision": "V3-FSM",
+    "kind": "boss",
+    "interrupt_policy": "cancel",
+    "actions": [
+      {
+        "skill_id": 9136,
+        "weight": 3,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9106,
+        "weight": 2,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9107,
+        "weight": 2,
+        "telegraph": "⚠️ 시간의 수호자이(가) 시간 폭발을 준비합니다.",
+        "interruptible": true,
+        "cooldown_actions": 2,
+        "recover_actions": 1
+      },
+      {
+        "skill_id": 9067,
+        "weight": 1,
+        "telegraph": "⚠️ 시간의 수호자이(가) 되돌리기을 준비합니다.",
+        "interruptible": true,
+        "cooldown_actions": 2,
+        "recover_actions": 1
+      },
+      {
+        "skill_id": 9041,
+        "weight": 1,
+        "telegraph": "⚠️ 시간의 수호자가 주변 시간을 비틉니다.",
+        "interruptible": true,
+        "cooldown_actions": 4,
+        "recover_actions": 1
+      },
+      {
+        "skill_id": 9109,
+        "weight": 1,
+        "telegraph": "⏳ 시간의 수호자가 모든 흐름을 멈추려 합니다.",
+        "interruptible": true,
+        "cooldown_actions": 5,
+        "recover_actions": 1
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9136,
+          9106
+        ]
+      },
+      {
+        "phase": 2,
+        "skill_ids": [
+          9136,
+          9106,
+          9107,
+          9067,
+          9041,
+          9109
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 113,
+    "monster_name": "공허의 지배자",
+    "revision": "V3-FSM",
+    "kind": "boss",
+    "interrupt_policy": "cancel",
+    "actions": [
+      {
+        "skill_id": 9055,
+        "weight": 2,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9186,
+        "weight": 2,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9170,
+        "weight": 2,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9056,
+        "weight": 1,
+        "telegraph": "⚠️ 공허의 지배자이(가) 공허의 손길을 준비합니다.",
+        "interruptible": true,
+        "cooldown_actions": 2,
+        "recover_actions": 1
+      },
+      {
+        "skill_id": 9228,
+        "weight": 1,
+        "telegraph": "⚠️ 공허의 지배자이(가) 허무의 영역을 준비합니다.",
+        "interruptible": true,
+        "cooldown_actions": 2,
+        "recover_actions": 1
+      },
+      {
+        "skill_id": 9042,
+        "weight": 1,
+        "telegraph": "⚠️ 공허의 지배자가 공허 침식을 확산시킵니다.",
+        "interruptible": true,
+        "cooldown_actions": 4,
+        "recover_actions": 1
+      },
+      {
+        "skill_id": 9057,
+        "weight": 1,
+        "telegraph": "☠️ 공허의 지배자가 존재 소거를 시작합니다. 행동 불가 효과로 끊어야 합니다.",
+        "interruptible": true,
+        "cooldown_actions": 8,
+        "recover_actions": 2
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9055,
+          9186,
+          9170
+        ]
+      },
+      {
+        "phase": 2,
+        "skill_ids": [
+          9055,
+          9186,
+          9170,
+          9056,
+          9228,
+          9042,
+          9057
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 114,
+    "monster_name": "심해의 크라켄",
+    "revision": "V3-FSM",
+    "kind": "boss",
+    "interrupt_policy": "cancel",
+    "actions": [
+      {
+        "skill_id": 9209,
+        "weight": 2,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9073,
+        "weight": 2,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9124,
+        "weight": 2,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9066,
+        "weight": 1,
+        "telegraph": "⚠️ 심해의 크라켄이(가) 【몬】대해일 II을 준비합니다.",
+        "interruptible": true,
+        "cooldown_actions": 2,
+        "recover_actions": 1
+      },
+      {
+        "skill_id": 9221,
+        "weight": 1,
+        "telegraph": "⚠️ 심해의 크라켄이(가) 포식을 준비합니다.",
+        "interruptible": true,
+        "cooldown_actions": 2,
+        "recover_actions": 1
+      },
+      {
+        "skill_id": 9043,
+        "weight": 1,
+        "telegraph": "⚠️ 심해의 크라켄이 대해일을 일으킵니다.",
+        "interruptible": true,
+        "cooldown_actions": 4,
+        "recover_actions": 1
+      },
+      {
+        "skill_id": 9044,
+        "weight": 1,
+        "telegraph": "⚠️ 심해의 크라켄의 촉수가 일제히 솟구칩니다.",
+        "interruptible": true,
+        "cooldown_actions": 4,
+        "recover_actions": 1
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9209,
+          9073
+        ]
+      },
+      {
+        "phase": 2,
+        "skill_ids": [
+          9209,
+          9073,
+          9124,
+          9066,
+          9043
+        ]
+      },
+      {
+        "phase": 3,
+        "skill_ids": [
+          9209,
+          9073,
+          9124,
+          9066,
+          9221,
+          9043,
+          9044
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 115,
+    "monster_name": "깨어난 고대신",
+    "revision": "V3-FSM",
+    "kind": "boss",
+    "interrupt_policy": "cancel",
+    "actions": [
+      {
+        "skill_id": 9052,
+        "weight": 2,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9123,
+        "weight": 2,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9149,
+        "weight": 2,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9112,
+        "weight": 1,
+        "telegraph": "⚠️ 깨어난 고대신이(가) 신격의 강림을 준비합니다.",
+        "interruptible": true,
+        "cooldown_actions": 2,
+        "recover_actions": 1
+      },
+      {
+        "skill_id": 9176,
+        "weight": 1,
+        "telegraph": "⚠️ 깨어난 고대신이(가) 종말의 선언을 준비합니다.",
+        "interruptible": true,
+        "cooldown_actions": 2,
+        "recover_actions": 1
+      },
+      {
+        "skill_id": 9045,
+        "weight": 1,
+        "telegraph": "⚠️ 깨어난 고대신이 원소를 하나로 압축합니다.",
+        "interruptible": true,
+        "cooldown_actions": 4,
+        "recover_actions": 1
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9052,
+          9123,
+          9149
+        ]
+      },
+      {
+        "phase": 2,
+        "skill_ids": [
+          9052,
+          9123,
+          9149,
+          9112,
+          9176,
+          9045
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 116,
+    "monster_name": "고대 문명의 수호자",
+    "revision": "V3-FSM",
+    "kind": "boss",
+    "interrupt_policy": "cancel",
+    "actions": [
+      {
+        "skill_id": 9051,
+        "weight": 2,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9134,
+        "weight": 2,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9155,
+        "weight": 2,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9058,
+        "weight": 1,
+        "telegraph": "⚠️ 고대 문명의 수호자이(가) 【몬】과부하을 준비합니다.",
+        "interruptible": true,
+        "cooldown_actions": 2,
+        "recover_actions": 1
+      },
+      {
+        "skill_id": 9214,
+        "weight": 1,
+        "telegraph": "⚠️ 고대 문명의 수호자이(가) 최종 프로토콜을 준비합니다.",
+        "interruptible": true,
+        "cooldown_actions": 2,
+        "recover_actions": 1
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9051,
+          9134,
+          9155
+        ]
+      },
+      {
+        "phase": 2,
+        "skill_ids": [
+          9051,
+          9134,
+          9155,
+          9058,
+          9214
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 117,
+    "monster_name": "탑의 최종 수호자",
+    "revision": "V3-FSM",
+    "kind": "boss",
+    "interrupt_policy": "cancel",
+    "actions": [
+      {
+        "skill_id": 9110,
+        "weight": 2,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9049,
+        "weight": 2,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9102,
+        "weight": 2,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9217,
+        "weight": 1,
+        "telegraph": "⚠️ 탑의 최종 수호자이(가) 탑의 심판을 준비합니다.",
+        "interruptible": true,
+        "cooldown_actions": 2,
+        "recover_actions": 1
+      },
+      {
+        "skill_id": 9211,
+        "weight": 1,
+        "telegraph": "⚠️ 탑의 최종 수호자이(가) 최종 시련을 준비합니다.",
+        "interruptible": true,
+        "cooldown_actions": 2,
+        "recover_actions": 1
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9110,
+          9049
+        ]
+      },
+      {
+        "phase": 2,
+        "skill_ids": [
+          9110,
+          9049,
+          9102,
+          9217
+        ]
+      },
+      {
+        "phase": 3,
+        "skill_ids": [
+          9110,
+          9049,
+          9102,
+          9217,
+          9211
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 118,
+    "monster_name": "차원의 파괴자",
+    "revision": "V3-FSM",
+    "kind": "boss",
+    "interrupt_policy": "cancel",
+    "actions": [
+      {
+        "skill_id": 9188,
+        "weight": 2,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9230,
+        "weight": 2,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9189,
+        "weight": 2,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9172,
+        "weight": 1,
+        "telegraph": "⚠️ 차원의 파괴자이(가) 【몬】존재의 붕괴을 준비합니다.",
+        "interruptible": true,
+        "cooldown_actions": 2,
+        "recover_actions": 1
+      },
+      {
+        "skill_id": 9210,
+        "weight": 1,
+        "telegraph": "⚠️ 차원의 파괴자이(가) 최종 붕괴을 준비합니다.",
+        "interruptible": true,
+        "cooldown_actions": 2,
+        "recover_actions": 1
+      },
+      {
+        "skill_id": 9191,
+        "weight": 1,
+        "telegraph": "⚠️ 차원의 파괴자가 방어를 가르는 절단을 준비합니다.",
+        "interruptible": true,
+        "cooldown_actions": 4,
+        "recover_actions": 1
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9188,
+          9230,
+          9189
+        ]
+      },
+      {
+        "phase": 2,
+        "skill_ids": [
+          9188,
+          9230,
+          9189,
+          9172,
+          9210,
+          9191
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 119,
+    "monster_name": "초월한 자",
+    "revision": "V3-FSM",
+    "kind": "boss",
+    "interrupt_policy": "cancel",
+    "actions": [
+      {
+        "skill_id": 9206,
+        "weight": 2,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9225,
+        "weight": 2,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9117,
+        "weight": 2,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9165,
+        "weight": 1,
+        "telegraph": "⚠️ 초월한 자이(가) 절대 영역을 준비합니다.",
+        "interruptible": true,
+        "cooldown_actions": 2,
+        "recover_actions": 1
+      },
+      {
+        "skill_id": 9205,
+        "weight": 1,
+        "telegraph": "⚠️ 초월한 자이(가) 초월의 끝을 준비합니다.",
+        "interruptible": true,
+        "cooldown_actions": 2,
+        "recover_actions": 1
+      },
+      {
+        "skill_id": 9208,
+        "weight": 1,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 5,
+        "recover_actions": 0
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9206,
+          9225
+        ]
+      },
+      {
+        "phase": 2,
+        "skill_ids": [
+          9206,
+          9225,
+          9117
+        ]
+      },
+      {
+        "phase": 3,
+        "skill_ids": [
+          9206,
+          9225,
+          9117,
+          9165,
+          9208
+        ]
+      },
+      {
+        "phase": 4,
+        "skill_ids": [
+          9206,
+          9225,
+          9117,
+          9165,
+          9205,
+          9208
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 120,
+    "monster_name": "전쟁의 신 아레스",
+    "revision": "V3-FSM",
+    "kind": "boss",
+    "interrupt_policy": "cancel",
+    "actions": [
+      {
+        "skill_id": 9161,
+        "weight": 2,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9119,
+        "weight": 2,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9160,
+        "weight": 2,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9085,
+        "weight": 1,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9212,
+        "weight": 1,
+        "telegraph": "⚠️ 전쟁의 신 아레스이(가) 최종 전쟁을 준비합니다.",
+        "interruptible": true,
+        "cooldown_actions": 2,
+        "recover_actions": 1
+      },
+      {
+        "skill_id": 9224,
+        "weight": 1,
+        "telegraph": "⚠️ 전쟁의 신 아레스이(가) 피의 제단을 준비합니다.",
+        "interruptible": true,
+        "cooldown_actions": 2,
+        "recover_actions": 1
+      },
+      {
+        "skill_id": 9046,
+        "weight": 1,
+        "telegraph": "⚠️ 전쟁의 신 아레스가 전쟁의 함성을 내지릅니다.",
+        "interruptible": true,
+        "cooldown_actions": 4,
+        "recover_actions": 1
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9161,
+          9119
+        ]
+      },
+      {
+        "phase": 2,
+        "skill_ids": [
+          9161,
+          9119,
+          9160,
+          9085
+        ]
+      },
+      {
+        "phase": 3,
+        "skill_ids": [
+          9161,
+          9119,
+          9160,
+          9085,
+          9212,
+          9224,
+          9046
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 121,
+    "monster_name": "창조신의 그림자",
+    "revision": "V3-FSM",
+    "kind": "boss",
+    "interrupt_policy": "cancel",
+    "actions": [
+      {
+        "skill_id": 9192,
+        "weight": 2,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9174,
+        "weight": 1,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9173,
+        "weight": 1,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9099,
+        "weight": 1,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9200,
+        "weight": 1,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9117,
+        "weight": 1,
+        "telegraph": "⚠️ 창조신의 그림자이(가) 신의 경지을 준비합니다.",
+        "interruptible": true,
+        "cooldown_actions": 2,
+        "recover_actions": 1
+      },
+      {
+        "skill_id": 9213,
+        "weight": 1,
+        "telegraph": "⚠️ 창조신의 그림자이(가) 최종 창세을 준비합니다.",
+        "interruptible": true,
+        "cooldown_actions": 2,
+        "recover_actions": 1
+      },
+      {
+        "skill_id": 9195,
+        "weight": 1,
+        "telegraph": "⚠️ 창조신의 그림자가 신의 경지에 들어섭니다.",
+        "interruptible": true,
+        "cooldown_actions": 7,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9196,
+        "weight": 1,
+        "telegraph": "⚠️ 창조신의 그림자가 창세의 빛을 방출합니다.",
+        "interruptible": true,
+        "cooldown_actions": 5,
+        "recover_actions": 1
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9192,
+          9174
+        ]
+      },
+      {
+        "phase": 2,
+        "skill_ids": [
+          9192,
+          9174,
+          9173,
+          9099
+        ]
+      },
+      {
+        "phase": 3,
+        "skill_ids": [
+          9192,
+          9174,
+          9173,
+          9099,
+          9200,
+          9117,
+          9195
+        ]
+      },
+      {
+        "phase": 4,
+        "skill_ids": [
+          9192,
+          9174,
+          9173,
+          9099,
+          9200,
+          9117,
+          9213,
+          9195,
+          9196
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 122,
+    "monster_name": "숲의 정령왕",
+    "revision": "V3-FSM",
+    "kind": "boss",
+    "interrupt_policy": "cancel",
+    "actions": [
+      {
+        "skill_id": 9156,
+        "weight": 3,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9104,
+        "weight": 2,
+        "telegraph": "⚠️ 숲의 정령왕이(가) 숲의 가호을 준비합니다.",
+        "interruptible": true,
+        "cooldown_actions": 2,
+        "recover_actions": 1
+      },
+      {
+        "skill_id": 9092,
+        "weight": 2,
+        "telegraph": "⚠️ 숲의 정령왕이(가) 뿌리 얽기을 준비합니다.",
+        "interruptible": true,
+        "cooldown_actions": 2,
+        "recover_actions": 1
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9156,
+          9104
+        ]
+      },
+      {
+        "phase": 2,
+        "skill_ids": [
+          9156,
+          9104,
+          9092
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 123,
+    "monster_name": "몰락한 왕",
+    "revision": "V3-FSM",
+    "kind": "boss",
+    "interrupt_policy": "cancel",
+    "actions": [
+      {
+        "skill_id": 9142,
+        "weight": 2,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9131,
+        "weight": 2,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9114,
+        "weight": 2,
+        "telegraph": "⚠️ 몰락한 왕이(가) 신성한 결계을 준비합니다.",
+        "interruptible": true,
+        "cooldown_actions": 2,
+        "recover_actions": 1
+      },
+      {
+        "skill_id": 9059,
+        "weight": 2,
+        "telegraph": "⚠️ 몰락한 왕이(가) 군대 소환을 준비합니다.",
+        "interruptible": true,
+        "cooldown_actions": 2,
+        "recover_actions": 1
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9142,
+          9131
+        ]
+      },
+      {
+        "phase": 2,
+        "skill_ids": [
+          9142,
+          9131,
+          9114,
+          9059
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 124,
+    "monster_name": "세계수의 수호자",
+    "revision": "V3-FSM",
+    "kind": "boss",
+    "interrupt_policy": "cancel",
+    "actions": [
+      {
+        "skill_id": 9098,
+        "weight": 2,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9096,
+        "weight": 2,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9091,
+        "weight": 2,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9157,
+        "weight": 1,
+        "telegraph": "⚠️ 세계수의 수호자이(가) 자연의 심판을 준비합니다.",
+        "interruptible": true,
+        "cooldown_actions": 2,
+        "recover_actions": 1
+      },
+      {
+        "skill_id": 9097,
+        "weight": 1,
+        "telegraph": "⚠️ 세계수의 수호자이(가) 세계수 현현을 준비합니다.",
+        "interruptible": true,
+        "cooldown_actions": 2,
+        "recover_actions": 1
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9098,
+          9096
+        ]
+      },
+      {
+        "phase": 2,
+        "skill_ids": [
+          9098,
+          9096,
+          9091,
+          9157
+        ]
+      },
+      {
+        "phase": 3,
+        "skill_ids": [
+          9098,
+          9096,
+          9091,
+          9157,
+          9097
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 125,
+    "monster_name": "마왕 발더스",
+    "revision": "V3-FSM",
+    "kind": "boss",
+    "interrupt_policy": "cancel",
+    "actions": [
+      {
+        "skill_id": 9184,
+        "weight": 2,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9129,
+        "weight": 2,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9094,
+        "weight": 2,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9071,
+        "weight": 1,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9072,
+        "weight": 1,
+        "telegraph": "⚠️ 마왕 발더스이(가) 마족 소환을 준비합니다.",
+        "interruptible": true,
+        "cooldown_actions": 2,
+        "recover_actions": 1
+      },
+      {
+        "skill_id": 9070,
+        "weight": 1,
+        "telegraph": "⚠️ 마왕 발더스이(가) 마왕의 결계을 준비합니다.",
+        "interruptible": true,
+        "cooldown_actions": 2,
+        "recover_actions": 1
+      },
+      {
+        "skill_id": 9069,
+        "weight": 1,
+        "telegraph": "⚠️ 마왕 발더스가 지옥불을 끌어올립니다.",
+        "interruptible": true,
+        "cooldown_actions": 4,
+        "recover_actions": 1
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9184,
+          9129
+        ]
+      },
+      {
+        "phase": 2,
+        "skill_ids": [
+          9184,
+          9129,
+          9094,
+          9071
+        ]
+      },
+      {
+        "phase": 3,
+        "skill_ids": [
+          9184,
+          9129,
+          9094,
+          9071,
+          9072,
+          9070,
+          9069
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 126,
+    "monster_name": "창세의 관찰자",
+    "revision": "V3-FSM",
+    "kind": "boss",
+    "interrupt_policy": "cancel",
+    "actions": [
+      {
+        "skill_id": 9193,
+        "weight": 2,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9231,
+        "weight": 2,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9170,
+        "weight": 2,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9106,
+        "weight": 1,
+        "telegraph": "⚠️ 창세의 관찰자이(가) 【몬】시간 정지을 준비합니다.",
+        "interruptible": true,
+        "cooldown_actions": 2,
+        "recover_actions": 1
+      },
+      {
+        "skill_id": 9192,
+        "weight": 1,
+        "telegraph": "⚠️ 창세의 관찰자이(가) 창세의 빛을 준비합니다.",
+        "interruptible": true,
+        "cooldown_actions": 2,
+        "recover_actions": 1
+      },
+      {
+        "skill_id": 9047,
+        "weight": 1,
+        "telegraph": "⚠️ 창세의 관찰자가 창세의 힘을 모방합니다.",
+        "interruptible": true,
+        "cooldown_actions": 4,
+        "recover_actions": 1
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9193,
+          9231,
+          9170
+        ]
+      },
+      {
+        "phase": 2,
+        "skill_ids": [
+          9193,
+          9231,
+          9170,
+          9106,
+          9192,
+          9047
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 127,
+    "monster_name": "차원의 구현체",
+    "revision": "V3-FSM",
+    "kind": "boss",
+    "interrupt_policy": "cancel",
+    "actions": [
+      {
+        "skill_id": 9188,
+        "weight": 2,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9065,
+        "weight": 2,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9187,
+        "weight": 2,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9186,
+        "weight": 1,
+        "telegraph": "⚠️ 차원의 구현체이(가) 【몬】차원 붕괴을 준비합니다.",
+        "interruptible": true,
+        "cooldown_actions": 2,
+        "recover_actions": 1
+      },
+      {
+        "skill_id": 9175,
+        "weight": 1,
+        "telegraph": "⚠️ 차원의 구현체이(가) 존재의 파편을 준비합니다.",
+        "interruptible": true,
+        "cooldown_actions": 2,
+        "recover_actions": 1
+      },
+      {
+        "skill_id": 9190,
+        "weight": 1,
+        "telegraph": "⚠️ 차원의 구현체가 차원 붕괴를 시작합니다.",
+        "interruptible": true,
+        "cooldown_actions": 4,
+        "recover_actions": 1
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9188,
+          9065,
+          9187
+        ]
+      },
+      {
+        "phase": 2,
+        "skill_ids": [
+          9188,
+          9065,
+          9187,
+          9186,
+          9175,
+          9190
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 128,
+    "monster_name": "용신 티아마트",
+    "revision": "V3-FSM",
+    "kind": "boss",
+    "interrupt_policy": "cancel",
+    "actions": [
+      {
+        "skill_id": 9141,
+        "weight": 2,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9144,
+        "weight": 2,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9146,
+        "weight": 2,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9115,
+        "weight": 1,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9143,
+        "weight": 1,
+        "telegraph": "⚠️ 용신 티아마트이(가) 【몬】용신의 심판을 준비합니다.",
+        "interruptible": true,
+        "cooldown_actions": 2,
+        "recover_actions": 1
+      },
+      {
+        "skill_id": 9158,
+        "weight": 1,
+        "telegraph": "⚠️ 용신 티아마트이(가) 재생의 힘을 준비합니다.",
+        "interruptible": true,
+        "cooldown_actions": 2,
+        "recover_actions": 1
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9141,
+          9144
+        ]
+      },
+      {
+        "phase": 2,
+        "skill_ids": [
+          9141,
+          9144,
+          9146
+        ]
+      },
+      {
+        "phase": 3,
+        "skill_ids": [
+          9141,
+          9144,
+          9146,
+          9115,
+          9143
+        ]
+      },
+      {
+        "phase": 4,
+        "skill_ids": [
+          9141,
+          9144,
+          9146,
+          9115,
+          9143,
+          9158
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 129,
+    "monster_name": "죽음의 지배자",
+    "revision": "V3-FSM",
+    "kind": "boss",
+    "interrupt_policy": "cancel",
+    "actions": [
+      {
+        "skill_id": 9178,
+        "weight": 2,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9140,
+        "weight": 2,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9180,
+        "weight": 1,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9132,
+        "weight": 1,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9081,
+        "weight": 1,
+        "telegraph": "⚠️ 죽음의 지배자이(가) 부활의 저주을 준비합니다.",
+        "interruptible": true,
+        "cooldown_actions": 2,
+        "recover_actions": 1
+      },
+      {
+        "skill_id": 9139,
+        "weight": 1,
+        "telegraph": "⚠️ 죽음의 지배자이(가) 영원한 죽음을 준비합니다.",
+        "interruptible": true,
+        "cooldown_actions": 2,
+        "recover_actions": 1
+      },
+      {
+        "skill_id": 9181,
+        "weight": 1,
+        "telegraph": "⚠️ 죽음의 지배자가 언데드 군단을 깨웁니다.",
+        "interruptible": true,
+        "cooldown_actions": 6,
+        "recover_actions": 1
+      },
+      {
+        "skill_id": 9182,
+        "weight": 1,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 3,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9183,
+        "weight": 1,
+        "telegraph": "⚠️ 죽음의 지배자가 죽음의 안개를 퍼뜨립니다.",
+        "interruptible": true,
+        "cooldown_actions": 5,
+        "recover_actions": 1
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9178,
+          9140,
+          9180
+        ]
+      },
+      {
+        "phase": 2,
+        "skill_ids": [
+          9178,
+          9140,
+          9180,
+          9132,
+          9081,
+          9139,
+          9181,
+          9182,
+          9183
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 130,
+    "monster_name": "태양신 라",
+    "revision": "V3-FSM",
+    "kind": "boss",
+    "interrupt_policy": "cancel",
+    "actions": [
+      {
+        "skill_id": 9220,
+        "weight": 2,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9084,
+        "weight": 2,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9118,
+        "weight": 1,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9218,
+        "weight": 1,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9080,
+        "weight": 1,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9138,
+        "weight": 1,
+        "telegraph": "⚠️ 태양신 라이(가) 영원한 낮을 준비합니다.",
+        "interruptible": true,
+        "cooldown_actions": 2,
+        "recover_actions": 1
+      },
+      {
+        "skill_id": 9215,
+        "weight": 1,
+        "telegraph": "⚠️ 태양신 라이(가) 최후의 심판을 준비합니다.",
+        "interruptible": true,
+        "cooldown_actions": 2,
+        "recover_actions": 1
+      },
+      {
+        "skill_id": 9219,
+        "weight": 1,
+        "telegraph": "☀️ 태양신 라가 최후의 심판을 준비합니다.",
+        "interruptible": true,
+        "cooldown_actions": 99,
+        "recover_actions": 2
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9220,
+          9084,
+          9118,
+          9218
+        ]
+      },
+      {
+        "phase": 2,
+        "skill_ids": [
+          9220,
+          9084,
+          9118,
+          9218,
+          9080,
+          9138,
+          9215,
+          9219
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 131,
+    "monster_name": "원초의 신",
+    "revision": "V3-FSM",
+    "kind": "boss",
+    "interrupt_policy": "cancel",
+    "actions": [
+      {
+        "skill_id": 9150,
+        "weight": 2,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9200,
+        "weight": 2,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9121,
+        "weight": 1,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9171,
+        "weight": 1,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9099,
+        "weight": 1,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9151,
+        "weight": 1,
+        "telegraph": "⚠️ 원초의 신이(가) 원초의 빛을 준비합니다.",
+        "interruptible": true,
+        "cooldown_actions": 2,
+        "recover_actions": 1
+      },
+      {
+        "skill_id": 9177,
+        "weight": 1,
+        "telegraph": "⚠️ 원초의 신이(가) 종말의 시작을 준비합니다.",
+        "interruptible": true,
+        "cooldown_actions": 2,
+        "recover_actions": 1
+      },
+      {
+        "skill_id": 9152,
+        "weight": 1,
+        "telegraph": "⚠️ 원초의 신이 세계의 법칙을 재편합니다.",
+        "interruptible": true,
+        "cooldown_actions": 5,
+        "recover_actions": 1
+      },
+      {
+        "skill_id": 9153,
+        "weight": 1,
+        "telegraph": "⚠️ 원초의 신이 창조와 파괴를 동시에 일으킵니다.",
+        "interruptible": true,
+        "cooldown_actions": 5,
+        "recover_actions": 1
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9150,
+          9200
+        ]
+      },
+      {
+        "phase": 2,
+        "skill_ids": [
+          9150,
+          9200,
+          9121,
+          9171
+        ]
+      },
+      {
+        "phase": 3,
+        "skill_ids": [
+          9150,
+          9200,
+          9121,
+          9171,
+          9099,
+          9151,
+          9152
+        ]
+      },
+      {
+        "phase": 4,
+        "skill_ids": [
+          9150,
+          9200,
+          9121,
+          9171,
+          9099,
+          9151,
+          9177,
+          9152,
+          9153
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 132,
+    "monster_name": "창조신",
+    "revision": "V3-FSM",
+    "kind": "boss",
+    "interrupt_policy": "cancel",
+    "actions": [
+      {
+        "skill_id": 9201,
+        "weight": 2,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9075,
+        "weight": 1,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9162,
+        "weight": 1,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9100,
+        "weight": 1,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9192,
+        "weight": 1,
+        "telegraph": "⚠️ 창조신이(가) 창세의 빛을 준비합니다.",
+        "interruptible": true,
+        "cooldown_actions": 2,
+        "recover_actions": 1
+      },
+      {
+        "skill_id": 9213,
+        "weight": 1,
+        "telegraph": "⚠️ 창조신이(가) 최종 창세을 준비합니다.",
+        "interruptible": true,
+        "cooldown_actions": 2,
+        "recover_actions": 1
+      },
+      {
+        "skill_id": 9197,
+        "weight": 1,
+        "telegraph": "⚠️ 창조신이 완전한 신의 경지에 들어섭니다.",
+        "interruptible": true,
+        "cooldown_actions": 7,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9198,
+        "weight": 1,
+        "telegraph": "⚠️ 창조신이 창세의 빛으로 자신을 재구성합니다.",
+        "interruptible": true,
+        "cooldown_actions": 5,
+        "recover_actions": 1
+      },
+      {
+        "skill_id": 9199,
+        "weight": 1,
+        "telegraph": "☠️ 창조신이 최종 창세를 시작합니다. 행동 불가 효과로 끊어야 합니다.",
+        "interruptible": true,
+        "cooldown_actions": 99,
+        "recover_actions": 2
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9201,
+          9075
+        ]
+      },
+      {
+        "phase": 2,
+        "skill_ids": [
+          9201,
+          9075,
+          9162
+        ]
+      },
+      {
+        "phase": 3,
+        "skill_ids": [
+          9201,
+          9075,
+          9162,
+          9100
+        ]
+      },
+      {
+        "phase": 4,
+        "skill_ids": [
+          9201,
+          9075,
+          9162,
+          9100,
+          9192,
+          9197,
+          9198
+        ]
+      },
+      {
+        "phase": 5,
+        "skill_ids": [
+          9201,
+          9075,
+          9162,
+          9100,
+          9192,
+          9213,
+          9197,
+          9198,
+          9199
+        ]
+      }
+    ]
+  },
+  {
+    "monster_id": 133,
+    "monster_name": "블랙 스완 집행자 마르크트 크래시",
+    "revision": "V3-FSM",
+    "kind": "boss",
+    "interrupt_policy": "cancel",
+    "actions": [
+      {
+        "skill_id": 9193,
+        "weight": 2,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9129,
+        "weight": 2,
+        "telegraph": null,
+        "interruptible": false,
+        "cooldown_actions": 0,
+        "recover_actions": 0
+      },
+      {
+        "skill_id": 9186,
+        "weight": 2,
+        "telegraph": "⚠️ 블랙 스완 집행자 마르크트 크래시이(가) 【몬】차원 붕괴을 준비합니다.",
+        "interruptible": true,
+        "cooldown_actions": 2,
+        "recover_actions": 1
+      },
+      {
+        "skill_id": 9072,
+        "weight": 2,
+        "telegraph": "⚠️ 블랙 스완 집행자 마르크트 크래시이(가) 마족 소환을 준비합니다.",
+        "interruptible": true,
+        "cooldown_actions": 2,
+        "recover_actions": 1
+      }
+    ],
+    "phase_patterns": [
+      {
+        "phase": 1,
+        "skill_ids": [
+          9193,
+          9129
+        ]
+      },
+      {
+        "phase": 2,
+        "skill_ids": [
+          9193,
+          9129,
+          9186
+        ]
+      },
+      {
+        "phase": 3,
+        "skill_ids": [
+          9193,
+          9129,
+          9186,
+          9072
+        ]
+      }
+    ]
+  }
+]

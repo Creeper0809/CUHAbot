@@ -1,0 +1,613 @@
+{
+  "revision": "beginner-2026-09-v2",
+  "changes": [
+    {
+      "id": 1,
+      "name": "슬라임",
+      "before": {
+        "HP": "130",
+        "Attack": "53",
+        "AP_Attack": "0",
+        "Defense": "18",
+        "AP_Defense": "18"
+      },
+      "after": {
+        "HP": 13,
+        "Attack": 8,
+        "AP_Attack": 8,
+        "Defense": 3,
+        "AP_Defense": 3
+      },
+      "reason": "minimum-area-level starter, no gear/enhancement/allocated stats; actual FSM action burst"
+    },
+    {
+      "id": 2,
+      "name": "고블린",
+      "before": {
+        "HP": "141",
+        "Attack": "59",
+        "AP_Attack": "0",
+        "Defense": "20",
+        "AP_Defense": "20"
+      },
+      "after": {
+        "HP": 17,
+        "Attack": 9,
+        "AP_Attack": 0,
+        "Defense": 3,
+        "AP_Defense": 3
+      },
+      "reason": "minimum-area-level starter, no gear/enhancement/allocated stats; actual FSM action burst"
+    },
+    {
+      "id": 3,
+      "name": "늑대",
+      "before": {
+        "HP": "153",
+        "Attack": "93",
+        "AP_Attack": "0",
+        "Defense": "21",
+        "AP_Defense": "21"
+      },
+      "after": {
+        "HP": 17,
+        "Attack": 9,
+        "AP_Attack": 0,
+        "Defense": 3,
+        "AP_Defense": 3
+      },
+      "reason": "minimum-area-level starter, no gear/enhancement/allocated stats; actual FSM action burst"
+    },
+    {
+      "id": 8,
+      "name": "독버섯",
+      "before": {
+        "HP": "153",
+        "Attack": "0",
+        "AP_Attack": "87",
+        "Defense": "21",
+        "AP_Defense": "21"
+      },
+      "after": {
+        "HP": 15,
+        "Attack": 0,
+        "AP_Attack": 10,
+        "Defense": 3,
+        "AP_Defense": 3
+      },
+      "reason": "minimum-area-level starter, no gear/enhancement/allocated stats; actual FSM action burst"
+    },
+    {
+      "id": 7,
+      "name": "대왕 슬라임",
+      "before": {
+        "HP": "306",
+        "Attack": "109",
+        "AP_Attack": "0",
+        "Defense": "32",
+        "AP_Defense": "32"
+      },
+      "after": {
+        "HP": 35,
+        "Attack": 12,
+        "AP_Attack": 0,
+        "Defense": 4,
+        "AP_Defense": 4
+      },
+      "reason": "minimum-area-level starter, no gear/enhancement/allocated stats; actual FSM action burst"
+    },
+    {
+      "id": 122,
+      "name": "숲의 정령왕",
+      "before": {
+        "HP": "651",
+        "Attack": "436",
+        "AP_Attack": "436",
+        "Defense": "34",
+        "AP_Defense": "34"
+      },
+      "after": {
+        "HP": 88,
+        "Attack": 27,
+        "AP_Attack": 38,
+        "Defense": 5,
+        "AP_Defense": 5
+      },
+      "reason": "minimum-area-level starter, no gear/enhancement/allocated stats; actual FSM action burst"
+    },
+    {
+      "id": 6,
+      "name": "동굴 박쥐",
+      "before": {
+        "HP": "164",
+        "Attack": "148",
+        "AP_Attack": "0",
+        "Defense": "23",
+        "AP_Defense": "23"
+      },
+      "after": {
+        "HP": 27,
+        "Attack": 15,
+        "AP_Attack": 0,
+        "Defense": 5,
+        "AP_Defense": 5
+      },
+      "reason": "minimum-area-level starter, no gear/enhancement/allocated stats; actual FSM action burst"
+    },
+    {
+      "id": 4,
+      "name": "고블린 궁수",
+      "before": {
+        "HP": "174",
+        "Attack": "91",
+        "AP_Attack": "0",
+        "Defense": "25",
+        "AP_Defense": "25"
+      },
+      "after": {
+        "HP": 30,
+        "Attack": 12,
+        "AP_Attack": 0,
+        "Defense": 5,
+        "AP_Defense": 5
+      },
+      "reason": "minimum-area-level starter, no gear/enhancement/allocated stats; actual FSM action burst"
+    },
+    {
+      "id": 5,
+      "name": "고블린 주술사",
+      "before": {
+        "HP": "342",
+        "Attack": "15528",
+        "AP_Attack": "0",
+        "Defense": "37",
+        "AP_Defense": "37"
+      },
+      "after": {
+        "HP": 55,
+        "Attack": 15,
+        "AP_Attack": 0,
+        "Defense": 6,
+        "AP_Defense": 6
+      },
+      "reason": "minimum-area-level starter, no gear/enhancement/allocated stats; actual FSM action burst"
+    },
+    {
+      "id": 101,
+      "name": "고블린 족장",
+      "before": {
+        "HP": "818",
+        "Attack": "319",
+        "AP_Attack": "0",
+        "Defense": "47",
+        "AP_Defense": "47"
+      },
+      "after": {
+        "HP": 150,
+        "Attack": 20,
+        "AP_Attack": 0,
+        "Defense": 7,
+        "AP_Defense": 7
+      },
+      "reason": "minimum-area-level starter, no gear/enhancement/allocated stats; actual FSM action burst"
+    },
+    {
+      "id": 13,
+      "name": "불 박쥐",
+      "before": {
+        "HP": "223",
+        "Attack": "0",
+        "AP_Attack": "130",
+        "Defense": "35",
+        "AP_Defense": "35"
+      },
+      "after": {
+        "HP": 105,
+        "Attack": 0,
+        "AP_Attack": 28,
+        "Defense": 15,
+        "AP_Defense": 15
+      },
+      "reason": "minimum-area-level starter, no gear/enhancement/allocated stats; actual FSM action burst"
+    },
+    {
+      "id": 10,
+      "name": "화염 정령",
+      "before": {
+        "HP": "232",
+        "Attack": "0",
+        "AP_Attack": "143",
+        "Defense": "37",
+        "AP_Defense": "37"
+      },
+      "after": {
+        "HP": 105,
+        "Attack": 0,
+        "AP_Attack": 28,
+        "Defense": 15,
+        "AP_Defense": 15
+      },
+      "reason": "minimum-area-level starter, no gear/enhancement/allocated stats; actual FSM action burst"
+    },
+    {
+      "id": 12,
+      "name": "화염 임프",
+      "before": {
+        "HP": "232",
+        "Attack": "0",
+        "AP_Attack": "155",
+        "Defense": "37",
+        "AP_Defense": "37"
+      },
+      "after": {
+        "HP": 105,
+        "Attack": 0,
+        "AP_Attack": 28,
+        "Defense": 15,
+        "AP_Defense": 15
+      },
+      "reason": "minimum-area-level starter, no gear/enhancement/allocated stats; actual FSM action burst"
+    },
+    {
+      "id": 14,
+      "name": "얼음 정령",
+      "before": {
+        "HP": "232",
+        "Attack": "0",
+        "AP_Attack": "143",
+        "Defense": "37",
+        "AP_Defense": "37"
+      },
+      "after": {
+        "HP": 115,
+        "Attack": 0,
+        "AP_Attack": 35,
+        "Defense": 15,
+        "AP_Defense": 15
+      },
+      "reason": "minimum-area-level starter, no gear/enhancement/allocated stats; actual FSM action burst"
+    },
+    {
+      "id": 16,
+      "name": "얼어붙은 좀비",
+      "before": {
+        "HP": "232",
+        "Attack": "134",
+        "AP_Attack": "0",
+        "Defense": "37",
+        "AP_Defense": "37"
+      },
+      "after": {
+        "HP": 115,
+        "Attack": 35,
+        "AP_Attack": 0,
+        "Defense": 15,
+        "AP_Defense": 15
+      },
+      "reason": "minimum-area-level starter, no gear/enhancement/allocated stats; actual FSM action burst"
+    },
+    {
+      "id": 15,
+      "name": "서리 늑대",
+      "before": {
+        "HP": "240",
+        "Attack": "147",
+        "AP_Attack": "0",
+        "Defense": "39",
+        "AP_Defense": "39"
+      },
+      "after": {
+        "HP": 115,
+        "Attack": 35,
+        "AP_Attack": 0,
+        "Defense": 15,
+        "AP_Defense": 15
+      },
+      "reason": "minimum-area-level starter, no gear/enhancement/allocated stats; actual FSM action burst"
+    },
+    {
+      "id": 11,
+      "name": "마그마 골렘",
+      "before": {
+        "HP": "437",
+        "Attack": "0",
+        "AP_Attack": "269",
+        "Defense": "53",
+        "AP_Defense": "53"
+      },
+      "after": {
+        "HP": 170,
+        "Attack": 28,
+        "AP_Attack": 40,
+        "Defense": 20,
+        "AP_Defense": 20
+      },
+      "reason": "minimum-area-level starter, no gear/enhancement/allocated stats; actual FSM action burst"
+    },
+    {
+      "id": 17,
+      "name": "눈보라 하피",
+      "before": {
+        "HP": "453",
+        "Attack": "0",
+        "AP_Attack": "185",
+        "Defense": "55",
+        "AP_Defense": "55"
+      },
+      "after": {
+        "HP": 180,
+        "Attack": 0,
+        "AP_Attack": 50,
+        "Defense": 20,
+        "AP_Defense": 20
+      },
+      "reason": "minimum-area-level starter, no gear/enhancement/allocated stats; actual FSM action burst"
+    },
+    {
+      "id": 102,
+      "name": "화염의 군주",
+      "before": {
+        "HP": "956",
+        "Attack": "0",
+        "AP_Attack": "393",
+        "Defense": "61",
+        "AP_Defense": "61"
+      },
+      "after": {
+        "HP": 310,
+        "Attack": 0,
+        "AP_Attack": 48,
+        "Defense": 25,
+        "AP_Defense": 25
+      },
+      "reason": "minimum-area-level starter, no gear/enhancement/allocated stats; actual FSM action burst"
+    },
+    {
+      "id": 103,
+      "name": "서리 마녀",
+      "before": {
+        "HP": "597",
+        "Attack": "0",
+        "AP_Attack": "349",
+        "Defense": "61",
+        "AP_Defense": "61"
+      },
+      "after": {
+        "HP": 210,
+        "Attack": 0,
+        "AP_Attack": 50,
+        "Defense": 25,
+        "AP_Defense": 25
+      },
+      "reason": "minimum-area-level starter, no gear/enhancement/allocated stats; actual FSM action burst"
+    },
+    {
+      "id": 21,
+      "name": "번개 요정",
+      "before": {
+        "HP": "267",
+        "Attack": "0",
+        "AP_Attack": "160",
+        "Defense": "44",
+        "AP_Defense": "44"
+      },
+      "after": {
+        "HP": 150,
+        "Attack": 0,
+        "AP_Attack": 40,
+        "Defense": 18,
+        "AP_Defense": 18
+      },
+      "reason": "minimum-area-level starter, no gear/enhancement/allocated stats; actual FSM action burst"
+    },
+    {
+      "id": 25,
+      "name": "거대 게",
+      "before": {
+        "HP": "267",
+        "Attack": "175",
+        "AP_Attack": "0",
+        "Defense": "44",
+        "AP_Defense": "44"
+      },
+      "after": {
+        "HP": 150,
+        "Attack": 40,
+        "AP_Attack": 0,
+        "Defense": 18,
+        "AP_Defense": 18
+      },
+      "reason": "minimum-area-level starter, no gear/enhancement/allocated stats; actual FSM action burst"
+    },
+    {
+      "id": 18,
+      "name": "천둥 정령",
+      "before": {
+        "HP": "275",
+        "Attack": "0",
+        "AP_Attack": "160",
+        "Defense": "46",
+        "AP_Defense": "46"
+      },
+      "after": {
+        "HP": 150,
+        "Attack": 0,
+        "AP_Attack": 40,
+        "Defense": 18,
+        "AP_Defense": 18
+      },
+      "reason": "minimum-area-level starter, no gear/enhancement/allocated stats; actual FSM action burst"
+    },
+    {
+      "id": 20,
+      "name": "번개 늑대",
+      "before": {
+        "HP": "275",
+        "Attack": "0",
+        "AP_Attack": "184",
+        "Defense": "46",
+        "AP_Defense": "46"
+      },
+      "after": {
+        "HP": 150,
+        "Attack": 0,
+        "AP_Attack": 40,
+        "Defense": 18,
+        "AP_Defense": 18
+      },
+      "reason": "minimum-area-level starter, no gear/enhancement/allocated stats; actual FSM action burst"
+    },
+    {
+      "id": 22,
+      "name": "물 정령",
+      "before": {
+        "HP": "275",
+        "Attack": "0",
+        "AP_Attack": "544",
+        "Defense": "46",
+        "AP_Defense": "46"
+      },
+      "after": {
+        "HP": 150,
+        "Attack": 0,
+        "AP_Attack": 40,
+        "Defense": 18,
+        "AP_Defense": 18
+      },
+      "reason": "minimum-area-level starter, no gear/enhancement/allocated stats; actual FSM action burst"
+    },
+    {
+      "id": 19,
+      "name": "폭풍 하피",
+      "before": {
+        "HP": "283",
+        "Attack": "0",
+        "AP_Attack": "204",
+        "Defense": "48",
+        "AP_Defense": "48"
+      },
+      "after": {
+        "HP": 150,
+        "Attack": 0,
+        "AP_Attack": 40,
+        "Defense": 18,
+        "AP_Defense": 18
+      },
+      "reason": "minimum-area-level starter, no gear/enhancement/allocated stats; actual FSM action burst"
+    },
+    {
+      "id": 23,
+      "name": "바다뱀",
+      "before": {
+        "HP": "283",
+        "Attack": "0",
+        "AP_Attack": "211",
+        "Defense": "48",
+        "AP_Defense": "48"
+      },
+      "after": {
+        "HP": 150,
+        "Attack": 0,
+        "AP_Attack": 40,
+        "Defense": 18,
+        "AP_Defense": 18
+      },
+      "reason": "minimum-area-level starter, no gear/enhancement/allocated stats; actual FSM action burst"
+    },
+    {
+      "id": 24,
+      "name": "익사한 사제",
+      "before": {
+        "HP": "290",
+        "Attack": "20026",
+        "AP_Attack": "0",
+        "Defense": "50",
+        "AP_Defense": "50"
+      },
+      "after": {
+        "HP": 150,
+        "Attack": 40,
+        "AP_Attack": 0,
+        "Defense": 18,
+        "AP_Defense": 18
+      },
+      "reason": "minimum-area-level starter, no gear/enhancement/allocated stats; actual FSM action burst"
+    },
+    {
+      "id": 42,
+      "name": "폭풍 그리폰",
+      "before": {
+        "HP": "516",
+        "Attack": "315",
+        "AP_Attack": "315",
+        "Defense": "69",
+        "AP_Defense": "69"
+      },
+      "after": {
+        "HP": 240,
+        "Attack": 45,
+        "AP_Attack": 45,
+        "Defense": 24,
+        "AP_Defense": 24
+      },
+      "reason": "minimum-area-level starter, no gear/enhancement/allocated stats; actual FSM action burst"
+    },
+    {
+      "id": 43,
+      "name": "심해 거북",
+      "before": {
+        "HP": "530",
+        "Attack": "510",
+        "AP_Attack": "510",
+        "Defense": "71",
+        "AP_Defense": "71"
+      },
+      "after": {
+        "HP": 240,
+        "Attack": 45,
+        "AP_Attack": 45,
+        "Defense": 24,
+        "AP_Defense": 24
+      },
+      "reason": "minimum-area-level starter, no gear/enhancement/allocated stats; actual FSM action burst"
+    },
+    {
+      "id": 104,
+      "name": "천둥의 왕",
+      "before": {
+        "HP": "1080",
+        "Attack": "552",
+        "AP_Attack": "552",
+        "Defense": "74",
+        "AP_Defense": "74"
+      },
+      "after": {
+        "HP": 420,
+        "Attack": 45,
+        "AP_Attack": 45,
+        "Defense": 28,
+        "AP_Defense": 28
+      },
+      "reason": "minimum-area-level starter, no gear/enhancement/allocated stats; actual FSM action burst"
+    },
+    {
+      "id": 105,
+      "name": "심해의 사제",
+      "before": {
+        "HP": "675",
+        "Attack": "607",
+        "AP_Attack": "607",
+        "Defense": "74",
+        "AP_Defense": "74"
+      },
+      "after": {
+        "HP": 270,
+        "Attack": 45,
+        "AP_Attack": 45,
+        "Defense": 28,
+        "AP_Defense": 28
+      },
+      "reason": "minimum-area-level starter, no gear/enhancement/allocated stats; actual FSM action burst"
+    }
+  ]
+}

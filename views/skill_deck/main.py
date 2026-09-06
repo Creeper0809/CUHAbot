@@ -166,6 +166,7 @@ class SkillDeckView(discord.ui.View):
         self._add_filter_info(embed)
         self._add_selected_slots_info(embed)
         self._add_deck_visualization(embed)
+        self._add_link_probability_info(embed)
         self._add_synergy_info(embed)
 
         return embed
@@ -237,6 +238,34 @@ class SkillDeckView(discord.ui.View):
                 inline=False
             )
 
+    def _add_link_probability_info(self, embed: discord.Embed) -> None:
+        """Show shuffle-bag setup/payoff odds without changing player order."""
+        from service.skill.design_v3 import deck_link_summary
+
+        configs = {
+            skill_id: skill.skill_model.config or {}
+            for skill_id, skill in skill_cache_by_id.items()
+        }
+        links = deck_link_summary(self.current_deck, configs)
+        if not links:
+            return
+        lines = []
+        for link in links[:8]:
+            setup = link["setup_copies"]
+            payoff = link["payoff_copies"]
+            if setup and payoff:
+                chance = link["first_link_probability"] * 100
+                lines.append(f"• **{link['tag']}** 생성 {setup} / 소비 {payoff} · 첫 연계 {chance:.0f}%")
+            elif setup:
+                lines.append(f"• **{link['tag']}** 생성 {setup} / 소비기 없음")
+            else:
+                lines.append(f"• **{link['tag']}** 생성기 없음 / 소비 {payoff} ⚠️")
+        embed.add_field(
+            name="🔗 셔플 연계 구성",
+            value="\n".join(lines),
+            inline=False,
+        )
+
     def _add_synergy_info(self, embed: discord.Embed) -> None:
         """시너지 요약 필드"""
         from config import ATTRIBUTE_SYNERGIES, EFFECT_SYNERGIES
@@ -296,6 +325,15 @@ class SkillDeckView(discord.ui.View):
         """스킬 장착 가능 여부 확인"""
         if skill_id == SKILL_ID.BASIC_ATTACK_ID:
             return True, ""
+
+        selected_skill = skill_cache_by_id.get(skill_id)
+        if selected_skill and selected_skill.is_passive:
+            non_selected_passives = sum(
+                1 for i, sid in enumerate(self.current_deck)
+                if sid == skill_id and i not in self.selected_slots
+            )
+            if non_selected_passives:
+                return False, "같은 패시브는 중복 적용되지 않아 한 장만 편성할 수 있습니다."
 
         owned = self.skill_quantities.get(skill_id)
         if not owned:

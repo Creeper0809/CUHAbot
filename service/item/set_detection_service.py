@@ -114,6 +114,17 @@ class SetDetectionService:
         return dict(total_bonuses)
 
     @staticmethod
+    async def get_modifier_bundle(user: User):
+        """Return all active set effects in the canonical V2 unit system."""
+        from service.combat.stats import ModifierBundle
+
+        return ModifierBundle.from_mapping(
+            await SetDetectionService.get_set_bonus_stats(user),
+            strict=True,
+            percentage_points=True,
+        )
+
+    @staticmethod
     async def get_set_summary(user: User) -> List[Tuple[str, int, List[str]]]:
         """
         사용자의 세트 장착 상황 요약

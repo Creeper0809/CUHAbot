@@ -9,6 +9,8 @@ from enum import Enum
 from typing import TYPE_CHECKING, Dict, Optional, Union
 import random
 
+from service.dungeon.combat_runtime_state import CombatRuntimeState
+
 if TYPE_CHECKING:
     from models.monster import Monster
     from models.users import User
@@ -43,7 +45,7 @@ class CombatContext:
     targeting_mode: TargetingMode = TargetingMode.LOWEST_HP
     """단일 타겟 스킬의 타겟 선택 방식"""
 
-    action_gauges: Dict[int, int] = field(default_factory=dict)
+    action_gauges: Dict[int, float] = field(default_factory=dict)
     """각 전투원의 행동 게이지 (entity_id: gauge_value)"""
 
     action_count: int = 0
@@ -52,7 +54,7 @@ class CombatContext:
     round_number: int = 1
     """현재 라운드 번호"""
 
-    round_marker_gauge: int = 0
+    round_marker_gauge: float = 0.0
     """라운드 마커 게이지 (속도 10 기준 더미)"""
 
     user: Optional["User"] = None
@@ -63,6 +65,9 @@ class CombatContext:
 
     combat_log: deque = field(default_factory=lambda: deque(maxlen=10))
     """전투 로그 (관전자에게 표시)"""
+
+    runtime_state: CombatRuntimeState = field(default_factory=CombatRuntimeState)
+    """V3 스킬 자원, 지연 효과와 몬스터 FSM의 전투 한정 상태."""
 
     def get_primary_monster(self) -> "Monster":
         """
@@ -149,12 +154,30 @@ class CombatContext:
         Args:
             user: 유저 엔티티
         """
+        self.runtime_state.bind(user)
         # 유저 게이지 초기화
         self.action_gauges[id(user)] = 0
 
         # 몬스터들 게이지 초기화
         for monster in self.monsters:
+            self.runtime_state.bind(monster)
             self.action_gauges[id(monster)] = 0
+
+    def rescale_for_party(self, previous_members: int, current_members: int) -> None:
+        """Apply the V2 party curve without compounding repeated joins."""
+        from config import BALANCE_V2
+
+        if current_members <= previous_members:
+            return
+        hp_ratio = BALANCE_V2.party_hp_scale(current_members) / BALANCE_V2.party_hp_scale(previous_members)
+        attack_ratio = BALANCE_V2.party_attack_scale(current_members) / BALANCE_V2.party_attack_scale(previous_members)
+        for monster in self.get_all_alive_monsters():
+            old_max_hp = max(1, monster.hp)
+            hp_fraction = monster.now_hp / old_max_hp
+            monster.hp = max(1, round(monster.hp * hp_ratio))
+            monster.now_hp = max(1, round(monster.hp * hp_fraction))
+            monster.attack = max(1, round(monster.attack * attack_ratio)) if monster.attack else 0
+            monster.ap_attack = max(1, round(monster.ap_attack * attack_ratio)) if monster.ap_attack else 0
 
     def fill_gauges(self, user: "User", participants: dict = None) -> None:
         """
@@ -167,30 +190,35 @@ class CombatContext:
             user: 유저 엔티티 (파티 리더)
             participants: 추가 참가자 딕셔너리 (user_id → User)
         """
-        from config import COMBAT
+        from config import COMBAT, BALANCE_V2
+
+        def fill_for(speed: float) -> float:
+            return COMBAT.ACTION_GAUGE_MAX * BALANCE_V2.action_rate(speed)
 
         # 유저 게이지 충전
         user_speed = self._get_entity_speed(user)
         user_id = id(user)
-        self.action_gauges[user_id] = self.action_gauges.get(user_id, 0) + int(user_speed * COMBAT.ACTION_GAUGE_SPEED_MULTIPLIER)
+        self.action_gauges[user_id] = self.action_gauges.get(user_id, 0.0) + fill_for(user_speed)
 
         # 신규: 추가 참가자 게이지 충전
         if participants:
             for participant in participants.values():
+                self.runtime_state.bind(participant)
                 if id(participant) == user_id:
                     continue  # 이미 충전됨
                 p_speed = self._get_entity_speed(participant)
                 p_id = id(participant)
-                self.action_gauges[p_id] = self.action_gauges.get(p_id, 0) + int(p_speed * COMBAT.ACTION_GAUGE_SPEED_MULTIPLIER)
+                self.action_gauges[p_id] = self.action_gauges.get(p_id, 0.0) + fill_for(p_speed)
 
         # 몬스터들 게이지 충전 (새로 추가된 몬스터도 안전하게 처리)
         for monster in self.get_all_alive_monsters():
+            self.runtime_state.bind(monster)
             monster_speed = self._get_entity_speed(monster)
             monster_id = id(monster)
-            self.action_gauges[monster_id] = self.action_gauges.get(monster_id, 0) + int(monster_speed * COMBAT.ACTION_GAUGE_SPEED_MULTIPLIER)
+            self.action_gauges[monster_id] = self.action_gauges.get(monster_id, 0.0) + fill_for(monster_speed)
 
-        # 라운드 마커 충전 (속도 10 고정)
-        self.round_marker_gauge += int(10 * COMBAT.ACTION_GAUGE_SPEED_MULTIPLIER)
+        # A round advances at the 100-speed baseline.
+        self.round_marker_gauge += COMBAT.ACTION_GAUGE_MAX
 
     def check_and_advance_round(self) -> bool:
         """
@@ -207,6 +235,7 @@ class CombatContext:
             self.round_number += 1
             self.round_marker_gauge -= COMBAT.ACTION_GAUGE_COST
             self.round_marker_gauge = max(0, self.round_marker_gauge)
+            self.runtime_state.advance_round(self.round_number)
             return True
         return False
 
@@ -292,6 +321,10 @@ class CombatContext:
         from models.users import User, UserStatEnum
 
         if isinstance(entity, User):
-            return entity.get_stat()[UserStatEnum.SPEED]
+            speed = float(entity.get_stat()[UserStatEnum.SPEED])
+            for component in getattr(entity, '_equipment_components_cache', []) or []:
+                if getattr(component, '_tag', '') == 'first_strike':
+                    speed *= component.get_speed_multiplier()
+            return round(speed)
         else:
             return entity.speed

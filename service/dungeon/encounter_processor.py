@@ -154,11 +154,14 @@ def _get_modified_encounter_weights(user) -> dict:
     if not isinstance(user, UserClass):
         return weights
 
-    # 장비 컴포넌트 확인
-    if not hasattr(user, '_equipment_components_cache'):
-        return weights
+    from service.dungeon.skill import get_passive_effect_bonuses
 
-    components = user._equipment_components_cache
+    passive = get_passive_effect_bonuses(user)
+    weights[EncounterType.MONSTER] *= max(0.10, 1.0 - passive.get("ambush_reduce", 0.0))
+    weights[EncounterType.HIDDEN_ROOM] *= max(0.0, 1.0 + passive.get("secret_find", 0.0))
+    weights[EncounterType.TREASURE] *= max(0.0, 1.0 + passive.get("chest_find", 0.0))
+
+    components = getattr(user, '_equipment_components_cache', []) or []
 
     for comp in components:
         tag = getattr(comp, '_tag', '')
@@ -187,16 +190,20 @@ async def _process_monster_encounter(session: DungeonSession, interaction: disco
             monsters = [_spawn_raid_boss(session.dungeon.id)]
             from service.raid.raid_service import init_raid_part_state_from_boss
             init_raid_part_state_from_boss(session, monsters[0])
+        elif session.roguelike_enabled and session.roguelike_combat_kind:
+            monsters = _spawn_roguelike_monsters(
+                session.dungeon.id,
+                session.roguelike_combat_kind,
+                progress,
+                rng=random.Random(session.roguelike_resolution_seed),
+            )
+            if session.roguelike_combat_kind != "boss":
+                _apply_roguelike_stat_scale(monsters, session.roguelike_stat_scale)
         else:
             monsters = _spawn_monster_group(session.dungeon.id, progress)
     except (MonsterNotFoundError, MonsterSpawnNotFoundError) as e:
         logger.error(f"Monster spawn error: {e}")
         return "몬스터 정보를 찾을 수 없습니다."
-
-    if os.getenv("E2E_UI_AUTOPILOT") == "TRUE":
-        for monster in monsters:
-            monster.hp = 1
-            monster.now_hp = 1
 
     # Phase 4: 보스방 대기실 체크
     from service.dungeon.reward_calculator import is_boss_monster
@@ -226,7 +233,7 @@ async def _process_monster_encounter(session: DungeonSession, interaction: disco
                 # 대기실 취소됨 → 일반 encounter로
                 logger.info(f"Boss waiting room cancelled, falling back to normal encounter")
 
-    will_fight = await _ask_fight_or_flee(session, interaction, monsters)
+    will_fight = True if session.roguelike_skip_flee else await _ask_fight_or_flee(session, interaction, monsters)
 
     if will_fight is None:
         return f"{session.user.get_name()}은 아무 행동도 하지 않았다..."
@@ -236,6 +243,15 @@ async def _process_monster_encounter(session: DungeonSession, interaction: disco
             return await _attempt_flee(session, monsters[0])
         except WeeklyTowerRestrictionError as e:
             return f"⚠️ {e}"
+
+    if session.roguelike_enabled and session.rest_shield_rate > 0:
+        from service.dungeon.status import ShieldBuff
+        max_hp = session.user.get_stat()[UserStatEnum.HP]
+        shield = ShieldBuff()
+        shield.shield_hp = max(1, int(max_hp * session.rest_shield_rate))
+        shield.duration = 999
+        session.user.status.append(shield)
+        session.rest_shield_rate = 0.0
 
     context = CombatContext.from_group(monsters)
     session.combat_context = context
@@ -262,8 +278,13 @@ async def _process_monster_encounter(session: DungeonSession, interaction: disco
 
     # 필드 효과 랜덤 발동 (30% 확률)
     if random.random() < COMBAT.FIELD_EFFECT_SPAWN_RATE:
-        from service.dungeon.field_effects import roll_random_field_effect
-        context.field_effect = roll_random_field_effect()
+        from config.beginner_balance import AREA_FIELDS
+        from service.dungeon.field_effects import roll_random_field_effect, create_field_effect, FieldEffectType
+        choices = AREA_FIELDS.get(session.dungeon.id) if session.content_type == ContentType.NORMAL_DUNGEON else None
+        if choices is None:
+            context.field_effect = roll_random_field_effect()
+        elif choices:
+            context.field_effect = create_field_effect(FieldEffectType(random.choice(choices)))
 
     # Phase 3: 교차로 만남 "같이 가기" 자동 합류
     team_up_partner_id = session.explore_buffs.pop("team_up_partner", None)
@@ -360,7 +381,58 @@ def _spawn_random_monster(dungeon_id: int, progress: float = 0.0) -> Monster:
     if not monster:
         raise MonsterNotFoundError(random_spawn.monster_id)
 
-    return monster
+    return monster.copy()
+
+
+def _spawn_roguelike_monsters(
+    dungeon_id: int,
+    kind: str,
+    progress: float,
+    *,
+    rng: random.Random | None = None,
+) -> list[Monster]:
+    """Spawn independent monster copies for a preselected roguelike route."""
+    from models.monster import MonsterTypeEnum
+    from service.dungeon.reward_calculator import normalize_monster_type
+
+    spawns = find_all_dungeon_spawn_monster_by(dungeon_id)
+    if not spawns:
+        raise MonsterSpawnNotFoundError(dungeon_id)
+    desired = {
+        "elite": MonsterTypeEnum.ELITE.value,
+        "boss": MonsterTypeEnum.BOSS.value,
+    }.get(kind, MonsterTypeEnum.COMMON.value)
+    candidates = []
+    for spawn in spawns:
+        monster = find_monster_by_id(spawn.monster_id)
+        if monster and normalize_monster_type(monster) == desired:
+            candidates.append(spawn)
+    if not candidates and kind == "elite":
+        candidates = [
+            spawn for spawn in spawns
+            if normalize_monster_type(find_monster_by_id(spawn.monster_id)) != MonsterTypeEnum.BOSS.value
+        ]
+    if not candidates:
+        raise MonsterSpawnNotFoundError(dungeon_id)
+    rng = rng or random
+    picked = rng.choices(candidates, weights=[max(0.0001, spawn.prob) for spawn in candidates], k=1)[0]
+    source = find_monster_by_id(picked.monster_id)
+    if not source:
+        raise MonsterNotFoundError(picked.monster_id)
+    monster = source.copy()
+    if kind == "elite" and normalize_monster_type(monster) != MonsterTypeEnum.ELITE.value:
+        monster.type = MonsterTypeEnum.ELITE
+    return [monster]
+
+
+def _apply_roguelike_stat_scale(monsters: list[Monster], scale: float) -> None:
+    """Scale combat copies only; cached static monsters must remain immutable."""
+    scale = max(0.1, float(scale))
+    for monster in monsters:
+        for attribute in ("hp", "attack", "defense", "ap_attack", "ap_defense", "speed"):
+            value = getattr(monster, attribute, 0)
+            setattr(monster, attribute, max(1 if attribute == "hp" else 0, int(value * scale)))
+        monster.now_hp = monster.hp
 
 
 def _spawn_raid_boss(dungeon_id: int) -> Monster:
@@ -387,7 +459,7 @@ def _spawn_raid_boss(dungeon_id: int) -> Monster:
     monster = find_monster_by_id(picked.monster_id)
     if not monster:
         raise MonsterNotFoundError(picked.monster_id)
-    return monster
+    return monster.copy()
 
 
 def _spawn_monster_group(dungeon_id: int, progress: float = 0.0) -> list[Monster]:

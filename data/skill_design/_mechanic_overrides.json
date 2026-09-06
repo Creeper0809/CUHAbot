@@ -1,0 +1,82 @@
+[
+  {
+    "id": 1001,
+    "contract": {"setup_tags": ["momentum"], "partner_skill_ids": [8504], "purpose": "조건 없이 피해를 주면서 기세를 1 생성하는 물리 덱의 기준 생성기다.", "decision": "출혈 폭발의 고점 대신 어떤 셔플 순서에서도 기세 엔진을 시동하고 싶을 때 넣는다.", "fallback": "기본 피해와 기세 생성은 항상 적용"},
+    "append_components": [{"tag": "combat_resource", "resource": "기세", "amount": 1, "maximum": 5}]
+  },
+  {
+    "id": 8504,
+    "contract": {"payoff_tags": ["bleed", "momentum"], "partner_skill_ids": [8501, 1001], "purpose": "출혈과 기세를 각각 피해로 바꾸는 물리 덱의 이중 소비기다.", "decision": "안정 피해를 포기하고 출혈 생성기와 기본 공격 생성기의 장수를 충분히 확보했을 때 선택한다.", "fallback": "출혈이나 기세가 없으면 기본 공격 피해만 적용"},
+    "append_components": [{"tag": "resource_payoff", "resource": "기세", "cost": 3, "ad_ratio": 0.55, "is_physical": true}]
+  },
+  {
+    "id": 1101,
+    "contract": {"setup_tags": ["burn", "ember"], "partner_skill_ids": [8003], "purpose": "화상과 불씨를 동시에 쌓아 두 종류의 연소 소비기를 여는 기본 생성기다.", "decision": "즉발 계수보다 후속 화상 폭발의 성립률을 높이고 싶을 때 편성한다.", "fallback": "화상 적용에 실패해도 기본 피해와 불씨 1은 남는다"},
+    "append_components": [{"tag": "combat_resource", "resource": "불씨", "amount": 1, "maximum": 5}]
+  },
+  {
+    "id": 8001,
+    "contract": {"setup_tags": ["burn", "ember"], "partner_skill_ids": [8003], "purpose": "직접 피해를 포기하고 화상 3스택과 불씨 2를 한 번에 준비하는 전용 생성기다.", "decision": "셔플백에 소비기가 두 장 이상 있어 한 행동을 준비에 투자할 가치가 있을 때 선택한다.", "fallback": "화상이 빗나가도 불씨 2는 획득"},
+    "append_components": [{"tag": "combat_resource", "resource": "불씨", "amount": 2, "maximum": 5}]
+  },
+  {
+    "id": 8003,
+    "contract": {"payoff_tags": ["burn", "ember"], "partner_skill_ids": [1101, 8001], "purpose": "쌓인 화상과 불씨를 폭발시켜 화염 덱의 준비 행동을 회수하는 피니셔다.", "decision": "화상 생성기와 불씨 생성기를 합쳐 최소 세 장 편성했을 때 고점을 위해 선택한다.", "fallback": "준비 자원이 없으면 기본 공격 피해만 적용"},
+    "append_components": [{"tag": "resource_payoff", "resource": "불씨", "cost": 3, "ap_ratio": 0.55, "is_physical": false}]
+  },
+  {
+    "id": 1201,
+    "contract": {"setup_tags": ["slow", "frost"], "partner_skill_ids": [8102], "purpose": "둔화와 서리를 함께 남겨 빙결 파쇄의 두 조건을 준비하는 냉기 기본기다.", "decision": "즉시 빙결보다 안정적인 파쇄 준비와 낮은 실패 비용을 원할 때 편성한다.", "fallback": "둔화가 빗나가도 기본 피해와 서리 1은 남는다"},
+    "append_components": [{"tag": "combat_resource", "resource": "서리", "amount": 1, "maximum": 5}]
+  },
+  {
+    "id": 8102,
+    "contract": {"payoff_tags": ["freeze", "frost"], "partner_skill_ids": [8101, 1201], "purpose": "빙결을 파쇄하고 저장한 서리까지 피해로 바꾸는 냉기 소비기다.", "decision": "빙결과 서리 생성기를 충분히 넣어 셔플 실패율을 감수할 수 있을 때 선택한다.", "fallback": "조건이 없으면 기본 공격 피해만 적용"},
+    "append_components": [{"tag": "resource_payoff", "resource": "서리", "cost": 3, "ap_ratio": 0.5, "is_physical": false}]
+  },
+  {
+    "id": 1301,
+    "contract": {"setup_tags": ["shock", "charge"], "partner_skill_ids": [8121], "purpose": "감전과 전하를 동시에 생성해 번개 덱의 마비 전환을 준비한다.", "decision": "단발 피해보다 과부하 소비기의 재현성을 높이려 할 때 편성한다.", "fallback": "감전이 실패해도 기본 피해와 전하 1은 남는다"},
+    "append_components": [{"tag": "combat_resource", "resource": "전하", "amount": 1, "maximum": 5}]
+  },
+  {
+    "id": 8121,
+    "contract": {"payoff_tags": ["shock", "charge"], "partner_skill_ids": [1301, 8120], "purpose": "감전을 마비로 전환하고 전하를 추가 피해로 방출하는 번개 피니셔다.", "decision": "감전·전하 생성 비율이 충분하고 제어와 폭딜을 한 장에 묶고 싶을 때 선택한다.", "fallback": "조건이 없으면 기본 공격 피해만 적용"},
+    "append_components": [{"tag": "resource_payoff", "resource": "전하", "cost": 3, "ap_ratio": 0.5, "is_physical": false}]
+  },
+  {
+    "id": 1401,
+    "contract": {"setup_tags": ["tide"], "partner_skill_ids": [1409], "purpose": "조류를 쌓아 회복과 범람 엔진을 여는 수속성의 무조건 생성기다.", "decision": "순수 피해보다 장기전의 회복 고점을 준비할 때 선택한다.", "fallback": "기본 피해와 조류 생성은 항상 적용"},
+    "append_components": [{"tag": "combat_resource", "resource": "조류", "amount": 1, "maximum": 5}]
+  },
+  {
+    "id": 1409,
+    "contract": {"payoff_tags": ["tide"], "partner_skill_ids": [1401, 8602], "purpose": "모은 조류를 추가 회복으로 바꿔 수속성 덱의 장기전 보상을 완성한다.", "decision": "짧은 전투의 공격 행동을 포기하고 보스전 생존을 확보할 때 선택한다.", "fallback": "조류가 없어도 기본 회복은 적용"},
+    "append_components": [{"tag": "resource_payoff", "resource": "조류", "cost": 3, "heal_percent": 0.12, "is_physical": false}]
+  },
+  {
+    "id": 1501,
+    "contract": {"setup_tags": ["conviction"], "partner_skill_ids": [8405], "purpose": "심판을 위한 신념을 안정적으로 축적하는 신성 기본기다.", "decision": "보호·정화 카드 사이에서도 피니셔 조건을 꾸준히 준비하고 싶을 때 편성한다.", "fallback": "기본 피해와 신념 생성은 항상 적용"},
+    "append_components": [{"tag": "combat_resource", "resource": "신념", "amount": 1, "maximum": 5}]
+  },
+  {
+    "id": 8405,
+    "contract": {"payoff_tags": ["blessing", "conviction"], "partner_skill_ids": [1504, 1501], "purpose": "축복과 신념을 심판 피해로 전환하는 신성 덱의 공격적 결말이다.", "decision": "회복 안정성을 일부 포기하고 축복 생성 행동을 폭딜로 회수할 때 선택한다.", "fallback": "조건이 없으면 기본 공격 피해만 적용"},
+    "append_components": [{"tag": "resource_payoff", "resource": "신념", "cost": 3, "ap_ratio": 0.5, "is_physical": false}]
+  },
+  {
+    "id": 1601,
+    "contract": {"setup_tags": ["curse", "soul"], "partner_skill_ids": [8303], "purpose": "저주와 영혼을 동시에 모아 희생 계열의 소비기를 준비하는 암흑 기본기다.", "decision": "즉발 안정성보다 저주 수확의 고점과 흡혈 전환을 원할 때 편성한다.", "fallback": "저주가 실패해도 기본 피해와 영혼 1은 남는다"},
+    "append_components": [{"tag": "combat_resource", "resource": "영혼", "amount": 1, "maximum": 5}]
+  },
+  {
+    "id": 8303,
+    "contract": {"payoff_tags": ["curse", "soul"], "partner_skill_ids": [1601, 8301], "purpose": "저주와 영혼을 동시에 태워 암흑 덱의 준비 행동을 공격으로 회수한다.", "decision": "저주 생성기와 영혼 생성기의 장수를 확보해 셔플 리스크를 감수할 때 선택한다.", "fallback": "조건이 없으면 기본 공격 피해만 적용"},
+    "append_components": [{"tag": "resource_payoff", "resource": "영혼", "cost": 3, "ap_ratio": 0.55, "is_physical": false}]
+  },
+  {
+    "id": 8602,
+    "contract": {"setup_tags": ["submerge"], "payoff_tags": ["erode"], "partner_skill_ids": [8601, 1409], "purpose": "침식을 침수로 바꿔 범람과 회복 계열 사이를 잇는 수속성 변환기다.", "decision": "침식 소비기의 즉발 피해 대신 긴 침수 유지와 조류 회복 연계를 선택할 때 편성한다.", "fallback": "침식이 없으면 기존 침수 부여만 적용"},
+    "append_components": [{"tag": "status_transform", "from_status": "erode", "to_status": "submerge", "minimum": 2, "duration": 3, "consume_all": true}]
+  }
+]

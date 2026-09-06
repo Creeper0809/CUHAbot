@@ -1,0 +1,87 @@
+version: "2.4"
+
+services:
+  db:
+    image: mirror.gcr.io/library/postgres:16-alpine
+    container_name: cuhabot-nas-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DATABASE_TABLE:?DATABASE_TABLE is required}
+      POSTGRES_USER: ${DATABASE_USER:?DATABASE_USER is required}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:?DATABASE_PASSWORD is required}
+      TZ: Asia/Seoul
+    volumes:
+      - ${CUHABOT_DATA_ROOT:-/volume1/docker/cuhabot}/postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+    mem_limit: 1g
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks: [cuhabot-internal]
+
+  db-init:
+    build:
+      context: .
+      args:
+        PYTHON_IMAGE: mirror.gcr.io/library/python:3.12-slim
+    container_name: cuhabot-nas-db-init
+    env_file: .env.nas
+    environment:
+      DATABASE_URL: db
+      DATABASE_PORT: 5432
+      TZ: Asia/Seoul
+    command:
+      - /bin/sh
+      - -ec
+      - |
+        python scripts/prepare_nas_database.py
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+    mem_limit: 1g
+    networks: [cuhabot-internal]
+
+  bot:
+    build:
+      context: .
+      args:
+        PYTHON_IMAGE: mirror.gcr.io/library/python:3.12-slim
+    container_name: cuhabot-nas-bot
+    env_file: .env.nas
+    environment:
+      DATABASE_URL: db
+      DATABASE_PORT: 5432
+      TZ: Asia/Seoul
+      E2E_API_ENABLED: "FALSE"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          python -c "import pathlib,sys;
+          sys.exit(0 if b'bot.py' in pathlib.Path('/proc/1/cmdline').read_bytes() else 1)"
+      interval: 15s
+      timeout: 5s
+      retries: 20
+      start_period: 45s
+    mem_limit: 1g
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks: [cuhabot-internal]
+
+networks:
+  cuhabot-internal:
+    name: cuhabot-nas-internal

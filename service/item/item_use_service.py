@@ -175,7 +175,7 @@ class ItemUseService:
             )
 
         # 귀환 스크롤: 던전 즉시 탈출 (보상 유지)
-        if item.id == 5701:
+        if item.id in {5701, 8701}:
             session = get_session(user.discord_id)
             if not session:
                 return ItemUseResult(
@@ -184,6 +184,8 @@ class ItemUseService:
                     item_name=item.name,
                 )
             session.ended = True
+            if hasattr(session, "run_end_event"):
+                session.run_end_event.set()
             inv_item.quantity -= 1
             if inv_item.quantity <= 0:
                 await inv_item.delete()

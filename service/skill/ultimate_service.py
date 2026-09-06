@@ -165,7 +165,8 @@ def _get_equipped_ultimate(user: User):
     skill_id = getattr(user, "equipped_ultimate_skill", 0)
     if not skill_id or not is_ultimate_skill(skill_id):
         return None
-    return get_skill_by_id(skill_id)
+    from service.dungeon.skill_augments import apply_session_augments
+    return apply_session_augments(user, get_skill_by_id(skill_id))
 
 
 def _should_cast_auto_ultimate(ultimate_skill, user: User, alive_monsters: Iterable) -> tuple[bool, str]:
@@ -293,7 +294,14 @@ def get_ultimate_cooldown(skill_id: int) -> int:
 
 def start_ultimate_cooldown(user: User, skill_id: int) -> None:
     _ensure_runtime_fields(user)
-    user.ultimate_cooldown_remaining = get_ultimate_cooldown(skill_id)
+    from service.dungeon.skill_augments import ultimate_cooldown_reduction
+    from service.dungeon.equipment_skill_modifier import get_equipment_cooldown_multiplier_sync
+    equipment_multiplier = get_equipment_cooldown_multiplier_sync(user)
+    user.ultimate_cooldown_remaining = max(
+        0,
+        round(get_ultimate_cooldown(skill_id) * equipment_multiplier)
+        - ultimate_cooldown_reduction(user, skill_id),
+    )
 
 
 def tick_ultimate_cooldown(user: User) -> int:

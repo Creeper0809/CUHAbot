@@ -52,7 +52,8 @@ class DamageCalculationEvent:
         Args:
             ratio: 무시 비율 (0.0 ~ 1.0)
         """
-        self.defense_ignore = min(self.defense_ignore + ratio, 0.7)
+        from config import BALANCE_V2
+        self.defense_ignore = min(self.defense_ignore + ratio, BALANCE_V2.max_penetration)
 
     def add_log(self, message: str):
         """전투 로그 추가"""

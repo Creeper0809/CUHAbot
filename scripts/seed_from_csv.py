@@ -18,6 +18,7 @@ sys.path.insert(0, PROJECT_ROOT)
 
 from dotenv import load_dotenv
 from tortoise import Tortoise
+from config import BALANCE_V2
 
 load_dotenv()
 
@@ -159,6 +160,20 @@ async def init_db():
         modules={"models": ["models"]}
     )
     await Tortoise.generate_schemas(safe=True)
+    # generate_schemas(safe=True) does not add columns to an existing table.
+    # Keep CSV reseeding compatible with pre-V2 isolated databases before any
+    # Monster bulk insert references the new fields.
+    connection = Tortoise.get_connection("default")
+    for statement in (
+        "ALTER TABLE monster ADD COLUMN IF NOT EXISTS ap_defense INT NOT NULL DEFAULT 0",
+        "ALTER TABLE monster ADD COLUMN IF NOT EXISTS accuracy INT NOT NULL DEFAULT 95",
+        "ALTER TABLE monster ADD COLUMN IF NOT EXISTS evasion INT NOT NULL DEFAULT 5",
+        "ALTER TABLE monster ADD COLUMN IF NOT EXISTS phase_config JSONB NOT NULL DEFAULT '{}'::jsonb",
+        "ALTER TABLE monster ADD COLUMN IF NOT EXISTS action_profile JSONB NOT NULL DEFAULT '{}'::jsonb",
+        "ALTER TABLE equipment_item ADD COLUMN IF NOT EXISTS set_key VARCHAR(64) NOT NULL DEFAULT ''",
+        "ALTER TABLE monster ALTER COLUMN speed SET DEFAULT 100",
+    ):
+        await connection.execute_query(statement)
 
 
 async def reset_all_tables():
@@ -227,14 +242,14 @@ async def seed_grades():
     from models.grade import Grade
 
     grades = [
-        Grade(id=1, name="D", description="일반 등급", shop_price=100),
-        Grade(id=2, name="C", description="고급 등급", shop_price=300),
-        Grade(id=3, name="B", description="희귀 등급", shop_price=800),
-        Grade(id=4, name="A", description="영웅 등급", shop_price=2000),
-        Grade(id=5, name="S", description="전설 등급", shop_price=5000),
-        Grade(id=6, name="SS", description="고대 등급", shop_price=12000),
-        Grade(id=7, name="SSS", description="신화 등급", shop_price=30000),
-        Grade(id=8, name="Mythic", description="창세 등급", shop_price=80000),
+        Grade(id=1, name="D", description="일반 등급", shop_price=BALANCE_V2.skill_shop_price(1)),
+        Grade(id=2, name="C", description="고급 등급", shop_price=BALANCE_V2.skill_shop_price(2)),
+        Grade(id=3, name="B", description="희귀 등급", shop_price=BALANCE_V2.skill_shop_price(3)),
+        Grade(id=4, name="A", description="영웅 등급", shop_price=BALANCE_V2.skill_shop_price(4)),
+        Grade(id=5, name="S", description="전설 등급", shop_price=BALANCE_V2.skill_shop_price(5)),
+        Grade(id=6, name="SS", description="고대 등급", shop_price=BALANCE_V2.skill_shop_price(6)),
+        Grade(id=7, name="SSS", description="신화 등급", shop_price=BALANCE_V2.skill_shop_price(7)),
+        Grade(id=8, name="Mythic", description="창세 등급", shop_price=BALANCE_V2.skill_shop_price(8)),
     ]
 
     await Grade.bulk_create(grades)
@@ -424,10 +439,15 @@ async def seed_monsters():
             attack=safe_int(row.get("Attack", "0")),
             ap_attack=safe_int(row.get("AP_Attack", "0")),
             defense=safe_int(row.get("Defense", "0")),
-            speed=safe_int(row.get("Speed", "10"), 10),
+            ap_defense=safe_int(row.get("AP_Defense", "0")),
+            accuracy=safe_int(row.get("Accuracy", "95"), 95),
+            evasion=safe_int(row.get("Evasion", "5"), 5),
+            speed=safe_int(row.get("Speed", "100"), 100),
             attribute=row.get("속성", "무속성") or "무속성",
             skill_ids=skill_ids,
             drop_skill_ids=drop_skill_ids,
+            phase_config=json.loads(row.get("phase_config") or "{}"),
+            action_profile=json.loads(row.get("action_profile") or "{}"),
             group_ids=group_ids,
         ))
 
@@ -440,6 +460,7 @@ async def seed_equipment_items():
     from models.item import Item
     from models.equipment_item import EquipmentItem
     from resources.item_emoji import ItemType
+    from config import BALANCE_V2
 
     rows = read_csv("items_equipment.csv")
     items = []
@@ -450,12 +471,17 @@ async def seed_equipment_items():
         slot = row.get("슬롯", "")
         equip_pos = SLOT_TO_EQUIP_POS.get(slot)
         require_level = parse_level(row.get("Lv", "1"))
+        budget_slot = {
+            1: "helmet", 2: "armor", 3: "boots", 4: "weapon",
+            5: "sub_weapon", 6: "gloves", 7: "necklace", 8: "ring1",
+        }.get(equip_pos, "weapon")
+        purchase_price = BALANCE_V2.equipment_purchase_price(require_level, budget_slot)
 
         items.append(Item(
             id=item_id,
             name=row["이름"],
             description=row.get("description", "") or row.get("특수 효과", "") or "",
-            cost=0,
+            cost=purchase_price,
             type=ItemType.EQUIP,
         ))
 
@@ -480,6 +506,7 @@ async def seed_equipment_items():
             require_luk=safe_int(row.get("Req_LUK", "0")),
             config=config,
             acquisition_source=row.get("획득처", "").strip(),
+            set_key=row.get("set_key", "").strip(),
         ))
 
     await Item.bulk_create(items)
@@ -687,11 +714,9 @@ async def seed_sets():
     members = []
 
     for row in equip_rows:
-        set_raw = row.get("세트", "").strip()
-        if not set_raw:
+        set_name = row.get("set_key", "").strip()
+        if not set_name:
             continue
-
-        set_name = strip_emoji(set_raw)
         set_id = seen_sets.get(set_name)
         if set_id is None:
             continue
@@ -909,16 +934,22 @@ async def seed_raids():
 # 메인
 # ============================================================
 
-async def main():
+async def main(*, fresh=False):
+    if not fresh:
+        raise RuntimeError("Fresh installation only: pass --fresh. Existing databases must use scripts/update_beginner_static.py")
     print("=" * 60)
     print("CUHABot 데이터베이스 초기화 및 CSV 시드")
     print("=" * 60)
 
     await init_db()
 
-    # 1. 전체 초기화
-    print("\n[1/3] 테이블 초기화")
-    await reset_all_tables()
+    # Refuse to touch populated databases. Normal updates never truncate or
+    # delete static definitions (their cascading FKs contain user progress).
+    from models import User, Skill_Model, Item, Monster, Dungeon
+    for model in (User, Skill_Model, Item, Monster, Dungeon):
+        if await model.all().exists():
+            await Tortoise.close_connections()
+            raise RuntimeError("Database is not empty; fresh installation refused")
 
     # 2. 기본 설정 데이터
     print("[2/3] 기본 설정 데이터 삽입")
@@ -957,4 +988,4 @@ async def main():
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    asyncio.run(main(fresh="--fresh" in sys.argv))

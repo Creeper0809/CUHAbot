@@ -1,0 +1,50 @@
+{
+  "passed": true,
+  "revision": "monster-skill-connectivity-2026-09-06-v1",
+  "monster_skill_contracts": 321,
+  "connected_monster_skills": 321,
+  "active_monster_skills": 279,
+  "fsm_registered_active_skills": 279,
+  "phase_reachable_active_skills": 279,
+  "repaired_orphans": 65,
+  "common_monsters_with_authored_core": "72/72",
+  "runtime_runs": 40000,
+  "cases": [
+    {
+      "label": "Lv1 숲 무작위",
+      "runs": 10000,
+      "clear_rate": 1.0,
+      "minimum": 0.99,
+      "maximum_action_damage": 23,
+      "player_hp": 300,
+      "source": "connectivity-forest-10000.json"
+    },
+    {
+      "label": "Lv1 숲 정예 우선",
+      "runs": 10000,
+      "clear_rate": 1.0,
+      "minimum": 0.95,
+      "maximum_action_damage": 23,
+      "player_hp": 300,
+      "source": "connectivity-forest-elite-10000.json"
+    },
+    {
+      "label": "Lv5 동굴 무작위",
+      "runs": 10000,
+      "clear_rate": 1.0,
+      "minimum": 0.97,
+      "maximum_action_damage": 41,
+      "player_hp": 372,
+      "source": "connectivity-cave-10000.json"
+    },
+    {
+      "label": "Lv5 동굴 정예 우선",
+      "runs": 10000,
+      "clear_rate": 1.0,
+      "minimum": 0.95,
+      "maximum_action_damage": 43,
+      "player_hp": 372,
+      "source": "connectivity-cave-elite-10000.json"
+    }
+  ]
+}

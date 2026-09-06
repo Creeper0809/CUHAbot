@@ -5,7 +5,7 @@ from models import UserStatEnum
 from service.dungeon.components.base import SkillComponent, register_skill_with_tag
 from service.dungeon.components.targeting_utils import resolve_targets
 from service.dungeon.status import (
-    ShieldBuff, has_curse_effect, remove_status_effects, StatusEffect,
+    ShieldBuff, HealingOverTimeBuff, has_curse_effect, remove_status_effects, StatusEffect,
 )
 from service.player.stat_synergy_combat import get_heal_bonus_pct, get_buff_duration_bonus
 
@@ -27,6 +27,9 @@ def _heal_received_multiplier(entity) -> float:
             continue
         amount = float(getattr(status, "amount", 0.0))
         multiplier *= max(0.0, 1.0 + amount)
+    from service.dungeon.skill import get_passive_effect_bonuses
+    if get_passive_effect_bonuses(entity).get("heal_seal", 0.0) > 0:
+        return 0.0
     return max(0.0, multiplier)
 
 
@@ -49,6 +52,10 @@ class HealComponent(SkillComponent):
         self.ap_ratio = 0.0
         self.flat = 0
         self.target_type = "self"
+        self.heal_type = "instant"
+        self.snapshot_turns = 0
+        self.heal_duration = 0
+        self.trigger = ""
 
     def apply_config(self, config, skill_name, priority=0):
         super().apply_config(config, skill_name, priority)
@@ -59,6 +66,10 @@ class HealComponent(SkillComponent):
         self.ap_ratio = config.get("ap_ratio", 0.0)
         self.flat = int(config.get("flat", config.get("base_amount", 0)))
         self.target_type = config.get("target", "self")
+        self.heal_type = str(config.get("heal_type", "instant"))
+        self.snapshot_turns = max(0, int(config.get("snapshot_turns", 0) or 0))
+        self.heal_duration = max(0, int(config.get("duration", 0) or 0))
+        self.trigger = str(config.get("trigger", ""))
 
         if "amount" in config and self.percent == 0.0:
             self.percent = _normalize_ratio(config.get("amount"), 0.15)
@@ -67,6 +78,8 @@ class HealComponent(SkillComponent):
             self.percent = 0.15
 
     def on_turn(self, attacker, target):
+        if self.trigger == "on_kill" and getattr(target, "now_hp", 1) > 0:
+            return ""
         attacker_stat = attacker.get_stat()
         ad = attacker_stat.get(UserStatEnum.ATTACK, 0)
         ap = attacker_stat.get(UserStatEnum.AP_ATTACK, 0)
@@ -84,12 +97,37 @@ class HealComponent(SkillComponent):
             )
 
         heal_bonus_mult = 1.0 + (get_heal_bonus_pct(attacker) / 100.0)
+        runtime_modifier = getattr(attacker, "modifier_bundle", None)
+        runtime_heal_mult = max(
+            0.0,
+            1.0 + (runtime_modifier.healing_pct if runtime_modifier is not None else 0.0),
+        )
         results = []
 
         for each in targets:
             max_hp = each.get_stat().get(UserStatEnum.HP, each.hp)
+            if self.heal_type == "hp_restore_snapshot":
+                history = list(getattr(each, "_hp_history", []) or [])
+                offset = self.snapshot_turns + 1
+                restored = history[-offset] if len(history) >= offset else max(history or [each.now_hp])
+                old_hp = each.now_hp
+                each.now_hp = min(max_hp, max(each.now_hp, int(restored)))
+                results.append(f"**{each.get_name()}** +{each.now_hp - old_hp} (과거 HP 복구)")
+                continue
+
+            if self.heal_type == "regen" and self.heal_duration > 0:
+                regen = HealingOverTimeBuff()
+                regen.duration = self.heal_duration
+                regen.percent_per_turn = max(0.0, self.percent / self.heal_duration)
+                each.status.append(regen)
+                results.append(
+                    f"**{each.get_name()}** 턴당 {regen.percent_per_turn * 100:.1f}% ({regen.duration}턴)"
+                )
+                continue
+
             total_heal = int(max_hp * self.percent) + int(ad * self.ad_ratio) + int(ap * self.ap_ratio) + self.flat
-            total_heal = int(total_heal * synergy_mult * heal_bonus_mult)
+            total_heal = int(total_heal * synergy_mult * heal_bonus_mult * runtime_heal_mult)
+            total_heal = int(total_heal * float(getattr(attacker, "_roguelike_effect_multiplier", 1.0) or 1.0))
 
             # 저주 효과 시 회복량 감소
             if has_curse_effect(each):
@@ -104,6 +142,16 @@ class HealComponent(SkillComponent):
             old_hp = each.now_hp
             each.now_hp = min(each.now_hp + total_heal, max_hp)
             actual_heal = each.now_hp - old_hp
+            excess_heal = max(0, total_heal - actual_heal)
+            if excess_heal and getattr(self, "roguelike_overheal", False):
+                shield_amount = min(int(max_hp * 0.20), int(excess_heal * 0.60))
+                if shield_amount > 0:
+                    shield = ShieldBuff()
+                    shield.shield_hp = shield_amount
+                    shield.duration = 3
+                    each.status.append(shield)
+            if getattr(self, "roguelike_cleanse", False):
+                remove_status_effects(each, count=1, filter_debuff=True)
             results.append(f"**{each.get_name()}** +{actual_heal}")
 
         return f"💚 **{attacker.get_name()}** 「{self.skill_name}」 → " + ", ".join(results) + " HP"
@@ -139,12 +187,18 @@ class ShieldComponent(SkillComponent):
         if not targets:
             return f"🛡️ **{attacker.get_name()}** 「{self.skill_name}」 → 보호막 대상 없음"
 
+        from service.dungeon.skill import get_passive_effect_bonuses
+
         duration = self.shield_duration + get_buff_duration_bonus(attacker)
+        duration += max(0, int(round(get_passive_effect_bonuses(attacker).get("buff_duration", 0.0))))
+        from service.dungeon.equipment_skill_modifier import get_equipment_buff_duration_multiplier_sync
+        duration = max(1, round(duration * get_equipment_buff_duration_multiplier_sync(attacker)))
         applied = []
 
         for each in targets:
             max_hp = each.get_stat().get(UserStatEnum.HP, each.hp)
             shield_amount = max(1, int(max_hp * self.percent) + self.flat)
+            shield_amount = int(shield_amount * float(getattr(attacker, "_roguelike_effect_multiplier", 1.0) or 1.0))
             shield = ShieldBuff()
             shield.shield_hp = shield_amount
             shield.duration = duration
@@ -167,11 +221,13 @@ class CleanseComponent(SkillComponent):
         super().__init__()
         self.count = 99
         self.target_type = "self"
+        self.cleanse_type = "debuffs"
 
     def apply_config(self, config, skill_name, priority=0):
         super().apply_config(config, skill_name, priority)
         self.count = config.get("count", 99)
         self.target_type = config.get("target", "self")
+        self.cleanse_type = str(config.get("cleanse_type", "debuffs"))
 
     @staticmethod
     def _remove_positive_buffs(entity, count: int) -> str:
@@ -201,7 +257,11 @@ class CleanseComponent(SkillComponent):
         enemy_dispel = self.target_type in {"enemy", "all_enemies", "all_enemy", "enemies", "all"}
         results = []
         for each in targets:
-            if enemy_dispel:
+            if self.cleanse_type == "all":
+                first = self._remove_positive_buffs(each, self.count)
+                second = remove_status_effects(each, count=self.count, filter_debuff=True)
+                result = "\n".join(value for value in (first, second) if value)
+            elif self.cleanse_type == "buffs" or enemy_dispel:
                 result = self._remove_positive_buffs(each, self.count)
             else:
                 result = remove_status_effects(each, count=self.count, filter_debuff=True)

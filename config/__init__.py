@@ -26,6 +26,13 @@ from config.skills import (
     ULTIMATE_AUTO_DAMAGE_SCALE, ULTIMATE_SKILL_IDS,
 )
 from config.shop import ShopConfig, SHOP, InventoryConfig, INVENTORY
+from config.itemization_v4 import (
+    FEATURE_FLAGS as ITEMIZATION_V4_FLAGS, AFFIX_DEFINITIONS, AFFIX_BY_ID,
+    AFFIX_COUNT_BY_GRADE, AFFIX_TIERS_BY_GRADE, SALVAGE_ESSENCE,
+    REFORGE_ESSENCE, PRESERVED_AFFIX_MULTIPLIER, SOURCE_PROGRESS_THRESHOLDS,
+    TARGET_CRAFT_ESSENCE, TARGET_CRAFT_GRADE, BUILD_PRESET_LIMIT,
+    EQUIPMENT_STORAGE_BASE, EQUIPMENT_STORAGE_MAX,
+)
 from config.leveling import LEVELING_EXP_TABLE, LEVELING_EXP_DEFAULT
 from config.synergies import (
     SynergyTier, ATTRIBUTE_SYNERGIES, EFFECT_SYNERGIES,
@@ -44,6 +51,12 @@ from config.multiplayer import (
 )
 from config.social_encounter import SocialEncounterConfig, SOCIAL_ENCOUNTER
 from config.notification import NotificationConfig, NOTIFICATION
+from config.roguelike import (
+    RouteKind, RoguelikeConfig, ROGUELIKE,
+    PityRule, BOX_PITY_RULES, BOX_PITY_BY_ID,
+    FIXED_GRADE_BOX_IDS, SOFT_PITY_INCREMENT, SOFT_PITY_CAP,
+)
+from config.balance_v2 import BaseStats, BalanceProfile, BALANCE_V2, clamp, round10
 
 __all__ = [
     # combat
@@ -75,6 +88,12 @@ __all__ = [
     "ULTIMATE_AUTO_DAMAGE_SCALE", "ULTIMATE_SKILL_IDS",
     # shop & inventory
     "ShopConfig", "SHOP", "InventoryConfig", "INVENTORY",
+    # farming and buildcraft V4
+    "ITEMIZATION_V4_FLAGS", "AFFIX_DEFINITIONS", "AFFIX_BY_ID",
+    "AFFIX_COUNT_BY_GRADE", "AFFIX_TIERS_BY_GRADE", "SALVAGE_ESSENCE",
+    "REFORGE_ESSENCE", "PRESERVED_AFFIX_MULTIPLIER", "SOURCE_PROGRESS_THRESHOLDS",
+    "TARGET_CRAFT_ESSENCE", "TARGET_CRAFT_GRADE", "BUILD_PRESET_LIMIT",
+    "EQUIPMENT_STORAGE_BASE", "EQUIPMENT_STORAGE_MAX",
     # leveling
     "LEVELING_EXP_TABLE", "LEVELING_EXP_DEFAULT",
     # synergies
@@ -91,4 +110,10 @@ __all__ = [
     "InstanceGrade", "GradeInfo", "GRADE_TABLE",
     "GRADE_DROP_WEIGHTS", "SpecialEffectDef", "SPECIAL_EFFECT_POOL",
     "get_grade_info", "get_grade_name_map",
+    # roguelike & box pity
+    "RouteKind", "RoguelikeConfig", "ROGUELIKE",
+    "PityRule", "BOX_PITY_RULES", "BOX_PITY_BY_ID",
+    "FIXED_GRADE_BOX_IDS", "SOFT_PITY_INCREMENT", "SOFT_PITY_CAP",
+    # canonical Balance V2 profile
+    "BaseStats", "BalanceProfile", "BALANCE_V2", "clamp", "round10",
 ]

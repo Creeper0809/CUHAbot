@@ -37,7 +37,7 @@ class DropConfig:
     EQUIPMENT_DROP_RATE: float = 0.005
     """몬스터 장비 드롭 확률 (0.5%)"""
 
-    DUNGEON_EQUIPMENT_DROP_RATE: float = 0.10
+    DUNGEON_EQUIPMENT_DROP_RATE: float = 0.20
     """던전 클리어 장비 드롭 확률 (10%)"""
 
     # 보물상자 골드

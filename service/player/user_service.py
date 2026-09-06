@@ -9,8 +9,7 @@ from typing import Optional
 
 from models import User
 from models.user_skill_deck import UserSkillDeck
-from config import USER_STATS, SKILL_DECK_SIZE, SKILL_ID
-from config.leveling import LEVELING_EXP_TABLE, LEVELING_EXP_DEFAULT
+from config import USER_STATS, SKILL_DECK_SIZE, SKILL_ID, BALANCE_V2
 from exceptions import (
     UserNotFoundError,
     UserAlreadyExistsError,
@@ -25,23 +24,31 @@ logger = logging.getLogger(__name__)
 class UserService:
     """사용자 비즈니스 로직"""
 
-    # 기본 스킬 덱 구성 (10개)
-    # 공격 7 + 회복 2 + 버프 1의 균형잡힌 덱
+    # 기본 스킬 덱 구성: 공격 7 + 회복 2 + 회복/해독 1.
     DEFAULT_SKILL_DECK = [
         SKILL_ID.BASIC_ATTACK_ID,  # 슬롯 0: 강타 (100% 데미지)
         SKILL_ID.BASIC_ATTACK_ID,  # 슬롯 1: 강타
         SKILL_ID.BASIC_ATTACK_ID,  # 슬롯 2: 강타
-        SKILL_ID.BASIC_ATTACK_ID,  # 슬롯 3: 연속 베기 (60% x 2회)
-        SKILL_ID.BASIC_ATTACK_ID,  # 슬롯 4: 연속 베기
-        SKILL_ID.BASIC_ATTACK_ID,  # 슬롯 5: 급소 찌르기 (120% + 치명타 보너스)
-        SKILL_ID.BASIC_ATTACK_ID,  # 슬롯 6: 급소 찌르기
-        SKILL_ID.BASIC_ATTACK_ID,  # 슬롯 7: 응급 처치 (HP 15% 회복)
-        SKILL_ID.BASIC_ATTACK_ID,  # 슬롯 8: 응급 처치
-        SKILL_ID.BASIC_ATTACK_ID,  # 슬롯 9: 결의 (공격력/방어력 +15%)
+        1002,  # 연속 베기
+        1002,
+        1003,  # 급소 찌르기
+        1003,
+        2001,  # 응급 처치
+        2001,
+        2003,  # 간이 해독
     ]
 
     @staticmethod
     async def create_user(discord_id: int, username: str) -> User:
+        from tortoise.transactions import in_transaction
+        from service.player.starter_recovery import lock_registration
+
+        async with in_transaction() as conn:
+            await lock_registration(conn, discord_id)
+            return await UserService._create_user(discord_id, username)
+
+    @staticmethod
+    async def _create_user(discord_id: int, username: str) -> User:
         """
         신규 사용자 생성 및 초기화
 
@@ -68,11 +75,22 @@ class UserService:
             hp=base_stats["hp"],
             now_hp=base_stats["hp"],
             level=USER_STATS.INITIAL_LEVEL,
-            attack=base_stats["attack"]
+            attack=base_stats["attack"],
+            ap_attack=base_stats["ap_attack"],
+            defense=base_stats["ad_defense"],
+            ap_defense=base_stats["ap_defense"],
+            speed=base_stats["speed"],
+            accuracy=base_stats["accuracy"],
+            evasion=base_stats["evasion"],
+            critical_rate=base_stats["critical_rate"],
+            critical_damage=base_stats["critical_damage"],
         )
 
         # 기본 스킬 덱 초기화
         await UserService._initialize_default_deck(user)
+        from models.game_system import UserStarterRecovery
+        await UserStarterRecovery.create(user=user, hp_recovered=True)
+        user.equipped_skill = list(UserService.DEFAULT_SKILL_DECK)
 
         logger.info(f"Created new user: {discord_id} ({username})")
         return user
@@ -87,7 +105,7 @@ class UserService:
         - 연속 베기 x2 (20%): 다단히트
         - 급소 찌르기 x2 (20%): 치명타 보너스
         - 응급 처치 x2 (20%): 회복
-        - 결의 x1 (10%): 버프
+        - 간이 해독 x1 (10%): 회복/해독
 
         Args:
             user: 대상 사용자
@@ -122,41 +140,7 @@ class UserService:
         Returns:
             기본 스탯 딕셔너리
         """
-        S = USER_STATS
-        threshold = S.HIGH_LEVEL_THRESHOLD
-
-        if level <= threshold:
-            hp = S.INITIAL_HP + level * S.HP_PER_LEVEL
-            attack = S.INITIAL_ATTACK + int(level * S.ATTACK_PER_LEVEL)
-            ap_attack = S.INITIAL_AP_ATTACK + int(level * S.AP_ATTACK_PER_LEVEL)
-            ad_defense = S.INITIAL_DEFENSE + int(level * S.DEFENSE_PER_LEVEL)
-            ap_defense = S.INITIAL_AP_DEFENSE + int(level * S.AP_DEFENSE_PER_LEVEL)
-        else:
-            over = level - threshold
-            hp = (S.INITIAL_HP + threshold * S.HP_PER_LEVEL
-                  + over * S.HIGH_HP_PER_LEVEL
-                  + int(over ** 2 * S.HIGH_HP_QUADRATIC))
-            attack = (S.INITIAL_ATTACK + int(threshold * S.ATTACK_PER_LEVEL)
-                      + over * S.HIGH_ATTACK_PER_LEVEL
-                      + int(over / S.HIGH_ATTACK_BONUS_INTERVAL))
-            ap_attack = (S.INITIAL_AP_ATTACK + int(threshold * S.AP_ATTACK_PER_LEVEL)
-                         + int(over * S.HIGH_AP_ATTACK_PER_LEVEL)
-                         + int(over / S.HIGH_AP_ATTACK_BONUS_INTERVAL))
-            ad_defense = (S.INITIAL_DEFENSE + int(threshold * S.DEFENSE_PER_LEVEL)
-                          + int(over * S.HIGH_DEFENSE_PER_LEVEL)
-                          + int(over / S.HIGH_DEFENSE_BONUS_INTERVAL))
-            ap_defense = (S.INITIAL_AP_DEFENSE + int(threshold * S.AP_DEFENSE_PER_LEVEL)
-                          + int(over * S.HIGH_DEFENSE_PER_LEVEL)
-                          + int(over / S.HIGH_DEFENSE_BONUS_INTERVAL))
-
-        return {
-            "hp": hp,
-            "attack": attack,
-            "ap_attack": ap_attack,
-            "ad_defense": ad_defense,
-            "ap_defense": ap_defense,
-            "speed": S.INITIAL_SPEED,
-        }
+        return BALANCE_V2.base_stats(level).as_dict()
 
     @staticmethod
     async def process_attendance(user: User) -> dict:
@@ -219,35 +203,14 @@ class UserService:
         Returns:
             레벨업 결과 딕셔너리
         """
-        user.exp += amount
         old_level = user.level
-        new_level = old_level
+        from service.economy.reward_service import RewardService
 
-        # 레벨업 체크
-        while user.exp >= UserService._get_required_exp(new_level + 1):
-            required_exp = UserService._get_required_exp(new_level + 1)
-            user.exp -= required_exp
-            new_level += 1
-            user.stat_points += USER_STATS.STAT_POINTS_PER_LEVEL
+        result = await RewardService.apply_rewards(user, amount, 0)
+        new_level = user.level
 
-        # 경험치가 음수가 되지 않도록 보호
-        if user.exp < 0:
-            user.exp = 0
-
-        leveled_up = new_level > old_level
-
-        if leveled_up:
-            user.level = new_level
-            base_stats = UserService.calculate_base_stats(new_level)
-            old_max_hp = UserService.calculate_base_stats(old_level)["hp"]
-            user.hp = base_stats["hp"]
-            user.attack = base_stats["attack"]
-            # HP 비율 유지 (단, 100%를 초과하지 않도록)
-            hp_ratio = min(user.now_hp / old_max_hp, 1.0) if old_max_hp > 0 else 1.0
-            user.now_hp = int(base_stats["hp"] * hp_ratio)
-
-        # User 저장
-        await user.save()
+        # RewardService owns the cumulative EXP, stat update, and persistence contract.
+        leveled_up = result.level_up is not None
 
         return {
             "leveled_up": leveled_up,
@@ -269,7 +232,6 @@ class UserService:
         Returns:
             필요 경험치
         """
-        for max_level, exp_mult in LEVELING_EXP_TABLE:
-            if level <= max_level:
-                return exp_mult * level
-        return LEVELING_EXP_DEFAULT * level
+        from service.economy.reward_service import get_exp_to_next_level
+
+        return get_exp_to_next_level(max(1, level - 1))

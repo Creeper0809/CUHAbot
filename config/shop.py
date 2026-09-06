@@ -9,8 +9,8 @@ class ShopConfig:
     DEFAULT_SKILL_PRICE: int = 500
     """등급 정보 없는 스킬 기본 가격"""
 
-    SELL_PRICE_RATIO: float = 0.5
-    """판매 가격 비율 (구매가의 50%)"""
+    SELL_PRICE_RATIO: float = 0.25
+    """판매 가격 비율 (구매가의 25%)"""
 
 
 SHOP = ShopConfig()

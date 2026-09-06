@@ -91,6 +91,12 @@ async def distribute_rewards(
 
     rewards = {}
 
+    from config import BALANCE_V2
+    member_count = max(1, 1 + len(session.participants))
+    reward_scale = BALANCE_V2.party_reward_scale(member_count)
+    total_exp = round(total_exp * reward_scale)
+    total_gold = round(total_gold * reward_scale)
+
     # 총 기여도 계산
     total_contribution = sum(session.contribution.values())
     if total_contribution == 0:

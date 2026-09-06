@@ -291,11 +291,12 @@ class TrapEncounter(Encounter):
         if not isinstance(user, UserClass):
             return False, 0.0
 
-        # 장비 컴포넌트 캐시에서 확인
-        if not hasattr(user, '_equipment_components_cache'):
-            return False, 0.0
+        from service.dungeon.skill import get_passive_effect_bonuses
 
-        components = user._equipment_components_cache
+        passive = get_passive_effect_bonuses(user)
+        detection_chance = max(0.0, passive.get("trap_detect", 0.0))
+        reduction = min(0.90, max(0.0, passive.get("trap_damage_reduce", 0.0)))
+        components = getattr(user, '_equipment_components_cache', []) or []
 
         for comp in components:
             tag = getattr(comp, '_tag', '')
@@ -303,14 +304,14 @@ class TrapEncounter(Encounter):
                 # 감지 확률 체크
                 if hasattr(comp, 'can_detect_trap') and comp.can_detect_trap():
                     # 피해 감소율 가져오기
-                    reduction = getattr(comp, 'trap_damage_reduction', 0.0)
-                    return True, reduction
+                    equipment_reduction = getattr(comp, 'trap_damage_reduction', 0.0)
+                    return True, min(0.90, max(reduction, equipment_reduction))
 
                 # 감지 실패해도 피해 감소는 적용
-                reduction = getattr(comp, 'trap_damage_reduction', 0.0)
-                return False, reduction
+                equipment_reduction = getattr(comp, 'trap_damage_reduction', 0.0)
+                reduction = min(0.90, max(reduction, equipment_reduction))
 
-        return False, 0.0
+        return random.random() < min(1.0, detection_chance), reduction
 
 
 class RandomEventEncounter(Encounter):
@@ -470,6 +471,9 @@ class NPCEncounter(Encounter):
 
     encounter_type = EncounterType.NPC
 
+    def __init__(self, npc_type: str | None = None):
+        self.npc_type = npc_type
+
     async def execute(
         self,
         session: "DungeonSession",
@@ -478,7 +482,9 @@ class NPCEncounter(Encounter):
         """NPC 만남"""
         user = session.user
 
-        npc_type = random.choice(["merchant", "healer", "sage"])
+        npc_type = self.npc_type or random.choice(["merchant", "healer", "sage"])
+        if npc_type not in {"merchant", "healer", "sage"}:
+            raise ValueError(f"Unsupported NPC type: {npc_type}")
 
         if not _e2e_autopilot_enabled():
             # View 표시
@@ -510,6 +516,7 @@ class NPCEncounter(Encounter):
                     shop_items=await ShopService.get_shop_items_for_display(
                         dungeon_level=session.dungeon.require_level,
                         dungeon_name=session.dungeon.name if session.dungeon else "",
+                        user=user,
                     ),
                     timeout=60,
                     dungeon_session=session

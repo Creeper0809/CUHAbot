@@ -6,6 +6,7 @@ from typing import Optional
 
 from models import UserStatEnum
 from service.dungeon.turn_config import TurnConfig
+from utils.game_text import status_label
 
 logger = logging.getLogger(__name__)
 
@@ -92,6 +93,8 @@ class StatusEffect(Buff):
         self.stacks: int = 1
         self.max_stacks: int = 99
         self.is_debuff = True
+        self.cleansable: bool = True
+        self.source = None
 
     def can_act(self) -> bool:
         """행동 가능 여부 (CC 체크)"""
@@ -103,4 +106,4 @@ class StatusEffect(Buff):
 
     def get_description(self) -> str:
         stack_text = f" x{self.stacks}" if self.stacks > 1 else ""
-        return f"{self.get_emoji()} {self.effect_type}{stack_text} ({self.duration}턴)"
+        return f"{self.get_emoji()} {status_label(self.effect_type)}{stack_text} ({self.duration}턴)"

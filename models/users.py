@@ -14,6 +14,22 @@ if TYPE_CHECKING:
     from service.dungeon.skill import Skill
 
 
+def _equipment_skill_rank(skill) -> float:
+    """Deterministic autoplay preference used by reroll/double-draw gear."""
+    grade = float(getattr(getattr(skill, 'skill_model', None), 'grade', 1) or 1)
+    action = 0.0
+    for component in getattr(skill, 'components', []) or []:
+        tag = getattr(component, '_tag', '')
+        if tag in {'attack', 'damage'}:
+            action += (
+                float(getattr(component, 'ad_ratio', 0.0))
+                + float(getattr(component, 'ap_ratio', 0.0))
+            ) * max(1, int(getattr(component, 'hit_count', 1)))
+        elif tag in {'heal', 'shield', 'buff', 'cleanse'}:
+            action += 0.75
+    return grade * 10.0 + action
+
+
 class UserStatEnum(str, Enum):
     """사용자 스탯 열거형"""
     HP = "HP"
@@ -48,13 +64,13 @@ class User(models.Model):
 
     # 기본 전투 스탯 (레벨에 따라 고정 성장)
     hp = fields.IntField(default=300)  # 기본 HP
-    attack = fields.IntField(default=10)  # 물리 공격력
-    defense = fields.IntField(default=5)  # 물리 방어력
-    speed = fields.IntField(default=10)  # 속도
+    attack = fields.IntField(default=15)  # 물리 공격력
+    defense = fields.IntField(default=8)  # 물리 방어력
+    speed = fields.IntField(default=100)  # 속도
 
     # 마법 스탯
-    ap_attack = fields.IntField(default=5)  # 마법 공격력
-    ap_defense = fields.IntField(default=5)  # 마법 방어력
+    ap_attack = fields.IntField(default=15)  # 마법 공격력
+    ap_defense = fields.IntField(default=8)  # 마법 방어력
 
     # 레벨 및 경험치
     level = fields.IntField(default=1)
@@ -69,7 +85,7 @@ class User(models.Model):
     bonus_luk = fields.IntField(default=0)  # 행운
 
     # 보조 스탯 (퍼센트 기반, 레벨 기본값)
-    accuracy = fields.IntField(default=90)  # 명중률 (100 = 100%)
+    accuracy = fields.IntField(default=95)  # 명중률 (100 = 100%)
     evasion = fields.IntField(default=5)  # 회피율
     critical_rate = fields.IntField(default=5)  # 치명타 확률
     critical_damage = fields.IntField(default=150)  # 치명타 데미지 (150 = 150%)
@@ -117,6 +133,8 @@ class User(models.Model):
             "ap_defense": 0,
             "speed": 0,
         }
+        from service.combat.stats import ModifierBundle
+        self.modifier_bundle = ModifierBundle()
 
     def next_skill(self) -> Optional["Skill"]:
         """
@@ -126,24 +144,50 @@ class User(models.Model):
         Returns:
             선택된 스킬 객체, 스킬이 없으면 None
         """
-        from models.repos.skill_repo import get_skill_by_id
-        from service.dungeon.skill import is_passive_skill
+        def draw_raw():
+            from models.repos.skill_repo import get_skill_by_id
+            from service.dungeon.skill import is_passive_skill
 
-        if not self.skill_queue:
-            active_ids = [
-                sid for sid in self.equipped_skill
-                if sid != 0 and not is_passive_skill(sid)
-            ]
-            if not active_ids:
-                return None
-            self.skill_queue = active_ids[:]
-            random.shuffle(self.skill_queue)
+            if not self.skill_queue:
+                active_ids = [
+                    sid for sid in self.equipped_skill
+                    if sid != 0 and not is_passive_skill(sid)
+                ]
+                if not active_ids:
+                    return None
+                self.skill_queue = active_ids[:]
+                random.shuffle(self.skill_queue)
+            return get_skill_by_id(self.skill_queue.pop()) if self.skill_queue else None
 
-        if not self.skill_queue:
+        chosen = draw_raw()
+        if chosen is None:
             return None
 
-        skill_id = self.skill_queue.pop()
-        return get_skill_by_id(skill_id)
+        logs = []
+        components = getattr(self, '_equipment_components_cache', []) or []
+        for component in components:
+            tag = getattr(component, '_tag', '')
+            if tag == 'double_draw' and random.random() <= component.proc_chance:
+                alternate = draw_raw()
+                if alternate is not None:
+                    if component.auto_select_better:
+                        chosen = max((chosen, alternate), key=_equipment_skill_rank)
+                    else:
+                        chosen = random.choice((chosen, alternate))
+                    logs.append(f"🎴 이중 드로우 → {chosen.name}")
+            elif tag == 'skill_reroll':
+                candidates = [chosen]
+                for _ in range(max(0, component.rerolls_per_turn)):
+                    candidate = draw_raw()
+                    if candidate is not None:
+                        candidates.append(candidate)
+                if len(candidates) > 1:
+                    chosen = max(candidates, key=_equipment_skill_rank)
+                    logs.append(f"🎲 자동 리롤 → {chosen.name}")
+
+        self._equipment_draw_logs = logs
+        from service.dungeon.skill_augments import apply_session_augments
+        return apply_session_augments(self, chosen)
 
     def get_name(self) -> str:
         """사용자 표시 이름 반환"""
@@ -182,10 +226,10 @@ class User(models.Model):
             UserStatEnum.SPEED: self.speed + ability_bonus.speed + equipment_stats.get("speed", 0),
             UserStatEnum.AP_ATTACK: self.ap_attack + ability_bonus.ap_attack + equipment_stats.get("ap_attack", 0),
             UserStatEnum.AP_DEFENSE: self.ap_defense + ability_bonus.ap_defense + equipment_stats.get("ap_defense", 0),
-            UserStatEnum.ACCURACY: int(self.accuracy + ability_bonus.accuracy),
-            UserStatEnum.EVASION: int(self.evasion + ability_bonus.evasion),
-            UserStatEnum.CRITICAL_RATE: int(self.critical_rate + ability_bonus.crit_rate),
-            UserStatEnum.CRITICAL_DAMAGE: int(self.critical_damage + ability_bonus.crit_damage),
+            UserStatEnum.ACCURACY: self.accuracy + ability_bonus.accuracy + equipment_stats.get("accuracy", 0),
+            UserStatEnum.EVASION: self.evasion + ability_bonus.evasion + equipment_stats.get("evasion", 0),
+            UserStatEnum.CRITICAL_RATE: self.critical_rate + ability_bonus.crit_rate,
+            UserStatEnum.CRITICAL_DAMAGE: self.critical_damage + ability_bonus.crit_damage,
         }
 
         # 장비 전투 효과 (crit_rate, crit_damage 등)
@@ -196,6 +240,7 @@ class User(models.Model):
         passive = get_passive_stat_bonuses(getattr(self, 'equipped_skill', []))
         stat[UserStatEnum.ATTACK] = int(stat[UserStatEnum.ATTACK] * (1 + passive["attack_percent"]))
         stat[UserStatEnum.DEFENSE] = int(stat[UserStatEnum.DEFENSE] * (1 + passive["defense_percent"]))
+        stat[UserStatEnum.AP_DEFENSE] = int(stat[UserStatEnum.AP_DEFENSE] * (1 + passive["defense_percent"]))
         stat[UserStatEnum.SPEED] = int(stat[UserStatEnum.SPEED] * (1 + passive["speed_percent"]))
         stat[UserStatEnum.HP] = int(stat[UserStatEnum.HP] * (1 + passive["hp_percent"]))
         stat[UserStatEnum.EVASION] = int(stat[UserStatEnum.EVASION] + passive["evasion_percent"] * 100)
@@ -203,8 +248,44 @@ class User(models.Model):
         stat[UserStatEnum.CRITICAL_RATE] = int(stat[UserStatEnum.CRITICAL_RATE] + passive["crit_rate"] * 100)
         stat[UserStatEnum.CRITICAL_DAMAGE] = int(stat[UserStatEnum.CRITICAL_DAMAGE] + passive["crit_damage"] * 100)
 
+        from service.dungeon.skill import get_passive_effect_bonuses
+
+        conditional = get_passive_effect_bonuses(self)
+        all_stats = max(-0.9, conditional.get("all_stats", 0.0))
+        attack_bonus = conditional.get("attack_bonus", 0.0)
+        if all_stats:
+            for key in (
+                UserStatEnum.HP, UserStatEnum.ATTACK, UserStatEnum.AP_ATTACK,
+                UserStatEnum.DEFENSE, UserStatEnum.AP_DEFENSE, UserStatEnum.SPEED,
+            ):
+                stat[key] *= 1.0 + all_stats
+        if attack_bonus:
+            stat[UserStatEnum.ATTACK] *= 1.0 + attack_bonus
+            stat[UserStatEnum.AP_ATTACK] *= 1.0 + attack_bonus
+
+        modifier = getattr(self, "modifier_bundle", None)
+        if modifier is not None:
+            stat[UserStatEnum.HP] *= 1 + modifier.hp_pct
+            stat[UserStatEnum.ATTACK] *= 1 + modifier.attack_pct
+            stat[UserStatEnum.AP_ATTACK] *= 1 + modifier.ap_attack_pct
+            stat[UserStatEnum.DEFENSE] *= 1 + modifier.ad_defense_pct
+            stat[UserStatEnum.AP_DEFENSE] *= 1 + modifier.ap_defense_pct
+            stat[UserStatEnum.SPEED] *= 1 + modifier.speed_pct
+
         for buff in self.status:
             buff.apply_stat(stat)
+
+        from config import BALANCE_V2
+        for key in stat:
+            stat[key] = round(stat[key])
+        stat[UserStatEnum.CRITICAL_RATE] = min(
+            round(100 * BALANCE_V2.max_critical_rate),
+            max(0, stat[UserStatEnum.CRITICAL_RATE]),
+        )
+        stat[UserStatEnum.CRITICAL_DAMAGE] = min(
+            round(100 * BALANCE_V2.max_critical_damage),
+            max(100, stat[UserStatEnum.CRITICAL_DAMAGE]),
+        )
 
         return stat
 
@@ -241,7 +322,13 @@ class User(models.Model):
             self.bonus_str, self.bonus_int, self.bonus_dex,
             self.bonus_vit, self.bonus_luk
         )
-        return ability_bonus.drop_rate
+        from config import BALANCE_V2
+        from service.dungeon.skill import get_passive_stat_bonuses
+
+        equipment_stats = getattr(self, "equipment_stats", {})
+        passive = get_passive_stat_bonuses(getattr(self, "equipped_skill", []))
+        bonus = ability_bonus.drop_rate + equipment_stats.get("drop_rate", 0) + passive["drop_rate"] * 100
+        return min(100 * BALANCE_V2.max_drop_bonus, max(0.0, bonus))
 
     def get_hp_regen_rate(self) -> float:
         """

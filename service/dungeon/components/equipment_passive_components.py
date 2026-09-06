@@ -57,14 +57,14 @@ class OnAttackProcComponent(SkillComponent):
         if self.status_effect and self.status_duration > 0:
             from service.dungeon.status import apply_status_effect
 
-            success = apply_status_effect(
-                target=target,
+            status_log = apply_status_effect(
+                entity=target,
                 effect_type=self.status_effect,
                 duration=self.status_duration,
                 stacks=self.status_stacks
             )
 
-            if success:
+            if status_log:
                 status_names = {
                     "burn": "화상",
                     "poison": "중독",

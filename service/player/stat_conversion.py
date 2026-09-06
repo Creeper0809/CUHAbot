@@ -12,12 +12,12 @@ from config import STAT_CONVERSION as C
 @dataclass(frozen=True)
 class CombatStatBonus:
     """능력치에서 변환된 전투 스탯 보너스"""
-    hp: int = 0
-    attack: int = 0
-    ap_attack: int = 0
-    ad_defense: int = 0
-    ap_defense: int = 0
-    speed: int = 0
+    hp: float = 0
+    attack: float = 0
+    ap_attack: float = 0
+    ad_defense: float = 0
+    ap_defense: float = 0
+    speed: float = 0
     accuracy: float = 0.0       # %
     evasion: float = 0.0        # %
     crit_rate: float = 0.0      # %
@@ -46,12 +46,12 @@ def convert_abilities_to_combat_stats(
         변환된 전투 스탯 보너스
     """
     return CombatStatBonus(
-        hp=int(str_val * C.HP_STR + int_val * C.HP_INT + vit * C.HP_VIT),
-        attack=int(str_val * C.ATTACK_STR + dex * C.ATTACK_DEX + luk * C.ATTACK_LUK),
-        ap_attack=int(int_val * C.AP_ATTACK_INT),
-        ad_defense=int(str_val * C.AD_DEFENSE_STR + vit * C.AD_DEFENSE_VIT),
-        ap_defense=int(int_val * C.AP_DEFENSE_INT + vit * C.AP_DEFENSE_VIT),
-        speed=int(dex * C.SPEED_DEX),
+        hp=str_val * C.HP_STR + int_val * C.HP_INT + vit * C.HP_VIT,
+        attack=str_val * C.ATTACK_STR + dex * C.ATTACK_DEX + luk * C.ATTACK_LUK,
+        ap_attack=int_val * C.AP_ATTACK_INT + luk * C.AP_ATTACK_LUK,
+        ad_defense=str_val * C.AD_DEFENSE_STR + vit * C.AD_DEFENSE_VIT,
+        ap_defense=int_val * C.AP_DEFENSE_INT + vit * C.AP_DEFENSE_VIT,
+        speed=dex * C.SPEED_DEX,
         accuracy=dex * C.ACCURACY_DEX,
         evasion=dex * C.EVASION_DEX + luk * C.EVASION_LUK,
         crit_rate=dex * C.CRIT_RATE_DEX + luk * C.CRIT_RATE_LUK,

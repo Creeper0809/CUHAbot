@@ -1,5 +1,6 @@
 # bot.py
 import os
+import asyncio
 import discord
 from discord.app_commands import CommandSignatureMismatch
 from discord.ext import commands, tasks
@@ -61,6 +62,9 @@ class MyBot(commands.Bot):
         # 이벤트 시스템 (싱글톤)
         self.event_bus = None
         self.achievement_tracker = None
+        self.e2e_runtime = None
+        self._runtime_initialized = False
+        self._runtime_init_lock = asyncio.Lock()
 
     async def setup_hook(self):
         should_sync = is_dev == "TRUE" or FORCE_SYNC
@@ -145,34 +149,55 @@ class MyBot(commands.Bot):
         await self.wait_until_ready()
 
     async def on_ready(self):
-        logging.info("데이터 베이스 연결 시작")
-        await self.init_db()
-        logging.info("데이터 베이스 연결 완료")
+        async with self._runtime_init_lock:
+            if self._runtime_initialized:
+                logging.info(f"Reconnected as {self.user} (ID: {self.user.id})")
+                return
 
-        # 이모지 초기화
-        try:
-            ItemEmoji.initialize(self)
-            logging.info("이모지 초기화 완료")
-        except Exception as e:
-            logging.error(f"이모지 초기화 실패: {e}")
+            logging.info("데이터 베이스 연결 시작")
+            await self.init_db()
+            logging.info("데이터 베이스 연결 완료")
 
-        # 이벤트 시스템 초기화
-        try:
-            self.event_bus = EventBus()
-            self.achievement_tracker = AchievementProgressTracker(self.event_bus)
-            logging.info("이벤트 시스템 및 업적 추적기 초기화 완료")
-        except Exception as e:
-            logging.error(f"이벤트 시스템 초기화 실패: {e}")
+            # 이모지 초기화
+            try:
+                ItemEmoji.initialize(self)
+                logging.info("이모지 초기화 완료")
+            except Exception as e:
+                logging.error(f"이모지 초기화 실패: {e}")
 
-        # 경매 만료 처리 루프 시작
-        if not self.process_auction_expirations.is_running():
-            self.process_auction_expirations.start()
-            logging.info("경매 만료 처리 루프 시작 (5분 간격)")
+            # 이벤트 시스템 초기화
+            try:
+                self.event_bus = EventBus()
+                self.achievement_tracker = AchievementProgressTracker(self.event_bus)
+                logging.info("이벤트 시스템 및 업적 추적기 초기화 완료")
+            except Exception as e:
+                logging.error(f"이벤트 시스템 초기화 실패: {e}")
 
-        await start_season_reset_task()
-        logging.info("주간 타워 시즌 리셋 태스크 시작")
+            # 경매 만료 처리 루프 시작
+            if not self.process_auction_expirations.is_running():
+                self.process_auction_expirations.start()
+                logging.info("경매 만료 처리 루프 시작 (5분 간격)")
 
-        logging.info(f"Logged in as {self.user} (ID: {self.user.id})")
+            await start_season_reset_task()
+            logging.info("주간 타워 시즌 리셋 태스크 시작")
+
+            if os.getenv("E2E_API_ENABLED") == "TRUE":
+                from e2e_runtime import E2ERuntime
+
+                self.e2e_runtime = E2ERuntime(self, GUILD_ID)
+                await self.e2e_runtime.start()
+
+            self._runtime_initialized = True
+            logging.info(f"Logged in as {self.user} (ID: {self.user.id})")
+
+    async def close(self):
+        if self.e2e_runtime:
+            await self.e2e_runtime.close()
+            self.e2e_runtime = None
+        if self.process_auction_expirations.is_running():
+            self.process_auction_expirations.cancel()
+        await Tortoise.close_connections()
+        await super().close()
 
     async def on_voice_state_update(
         self,

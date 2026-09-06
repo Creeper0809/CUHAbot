@@ -35,7 +35,7 @@ class RandomAttributeComponent(SkillComponent):
         self.damage_bonus = config.get("damage_bonus", 0.0)
         self.attributes = config.get("attributes", self.attributes)
 
-    def on_turn_start(self, attacker, target):
+    def on_combat_start(self, attacker, target):
         """전투 시작 시 랜덤 속성 선택 (per_combat 모드)"""
         if self.mode == "per_combat" and self._current_attribute is None:
             self._current_attribute = random.choice(self.attributes)
@@ -317,11 +317,11 @@ class SacrificeEffectComponent(SkillComponent):
         self.buff_duration = config.get("buff_duration", 0)
         self.stat_bonus = config.get("stat_bonus", {})
 
-    def on_turn_start(self, attacker, target):
+    def on_combat_start(self, attacker, target):
         """
         전투 시작 시 HP 소모 및 버프 적용
 
-        Note: 실제 버프 시스템과 통합 필요
+        The cost and buffs are applied exactly once at combat start.
         """
         if self.hp_cost_percent <= 0:
             return ""
@@ -335,6 +335,18 @@ class SacrificeEffectComponent(SkillComponent):
             return ""
 
         attacker.now_hp -= hp_cost
+
+        from service.dungeon.status import AttackBuff, DefenseBuff
+        for stat, value in self.stat_bonus.items():
+            if stat == "attack":
+                buff = AttackBuff()
+            elif stat in {"defense", "ad_defense"}:
+                buff = DefenseBuff()
+            else:
+                continue
+            buff.amount = int(value)
+            buff.duration = max(1, self.buff_duration)
+            attacker.status.append(buff)
 
         bonus_desc = ", ".join([f"{k} +{v}%" for k, v in self.stat_bonus.items()])
 
@@ -974,20 +986,17 @@ class HealBlockingComponent(SkillComponent):
         if random.random() > self.on_hit_chance:
             return ""
 
-        # 회복 봉인 디버프 부여
-        from service.dungeon.helpers import apply_status_effect
+        # HealReceivedBuff is consumed directly by HealComponent.  The former
+        # code called a non-existent helper and therefore never applied it.
+        from service.dungeon.status import HealReceivedBuff
 
         block_level = int(self.block_percent * 100)
-        effect_name = f"회복봉인{block_level}%" if block_level < 100 else "회복봉인"
-
-        apply_status_effect(
-            target=target,
-            effect_type=effect_name,
-            duration=self.duration,
-            value=self.block_percent
-        )
-
-        return f"🚫 **{target.get_name()}** {effect_name} ({self.duration}턴)"
+        effect_name = f"회복 봉인 {block_level}%"
+        effect = HealReceivedBuff()
+        effect.amount = -min(1.0, max(0.0, self.block_percent))
+        effect.duration = max(1, self.duration)
+        target.status.append(effect)
+        return f"🚫 **{target.get_name()}** {effect_name} ({effect.duration}턴)"
 
     def get_heal_block_multiplier(self) -> float:
         """

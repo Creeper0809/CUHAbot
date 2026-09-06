@@ -9,6 +9,7 @@ import discord
 
 from models import Item, Monster
 from resources.item_emoji import ItemType
+from utils.game_text import design_tag_label, design_tags_text, localize_internal_terms, role_label
 
 
 async def create_item_embed(item: Item, is_collected: bool) -> discord.Embed:
@@ -96,6 +97,7 @@ async def create_monster_embed(monster: Monster, is_collected: bool, user=None) 
 
     # 몬스터 타입 변환 (BossMob/EliteMob/CommonMob → boss/elite/normal)
     raw_type = getattr(monster, 'type', 'CommonMob')
+    raw_type = getattr(raw_type, "value", raw_type)
     type_mapping = {
         'BossMob': 'boss',
         'EliteMob': 'elite',
@@ -138,10 +140,11 @@ def create_keyword_embed(keyword: str) -> Optional[discord.Embed]:
         return None
 
     color = _get_keyword_color(keyword)
+    keyword_label = design_tag_label(keyword)
     embed = discord.Embed(
-        title=f"🔑 키워드: {keyword}",
+        title=f"🔑 키워드: {keyword_label}",
         color=color,
-        description=f"**{keyword}** 키워드를 가진 스킬 목록"
+        description=f"**{keyword_label}** 키워드를 가진 스킬 목록"
     )
 
     if keyword in ATTRIBUTE_SYNERGIES:
@@ -221,11 +224,25 @@ def _add_skill_basic_info(embed: discord.Embed, skill) -> None:
         from service.skill.synergy_service import SynergyService
         keywords = SynergyService.parse_keywords(skill.skill_model.keyword)
         if keywords:
-            info_lines.append(f"**키워드**: {', '.join(keywords)}")
+            info_lines.append(f"**키워드**: {', '.join(design_tag_label(value) for value in keywords)}")
 
     acquisition = getattr(skill.skill_model, 'acquisition_source', None)
     if acquisition:
         info_lines.append(f"**획득처**: {acquisition}")
+
+    design = (getattr(skill.skill_model, 'config', None) or {}).get("design", {})
+    if design.get("intent"):
+        info_lines.append(f"**덱 역할**: {role_label(design.get('role'))} · {localize_internal_terms(design['intent'])}")
+        if design.get("setup_tags"):
+            info_lines.append(f"**연계 준비**: {design_tags_text(design['setup_tags'])}")
+        if design.get("payoff_tags"):
+            info_lines.append(f"**연계 소비/증폭**: {design_tags_text(design['payoff_tags'])}")
+        if design.get("decision"):
+            info_lines.append(f"**선택할 때**: {localize_internal_terms(design['decision'])}")
+        if design.get("tradeoffs"):
+            info_lines.append(f"**포기하는 것**: {', '.join(localize_internal_terms(value) for value in design['tradeoffs'])}")
+        if design.get("fallback"):
+            info_lines.append(f"**조건 실패 시**: {localize_internal_terms(design['fallback'])}")
 
     embed.add_field(name="📋 기본 정보", value="\n".join(info_lines), inline=False)
 
@@ -235,25 +252,10 @@ def _add_skill_components_info(embed: discord.Embed, skill) -> None:
     if not skill.components:
         return
 
-    components_info = []
-    for comp in skill.components:
-        comp_type = type(comp).__name__.replace("Component", "")
-        comp_detail = f"• **{comp_type}**"
+    from service.skill.design_v3 import describe_skill_config
 
-        if hasattr(comp, 'damage_multiplier'):
-            comp_detail += f"\n  └ 데미지: {int(comp.damage_multiplier * 100)}%"
-        if hasattr(comp, 'heal_percent'):
-            comp_detail += f"\n  └ 회복량: 최대 HP의 {int(comp.heal_percent * 100)}%"
-        elif hasattr(comp, 'heal_amount'):
-            comp_detail += f"\n  └ 회복량: {comp.heal_amount}"
-        if hasattr(comp, 'stat_type'):
-            comp_detail += f"\n  └ 효과: {comp.stat_type}"
-            if hasattr(comp, 'value'):
-                comp_detail += f" +{comp.value}"
-            if hasattr(comp, 'duration'):
-                comp_detail += f" ({comp.duration}턴)"
-
-        components_info.append(comp_detail)
+    config = getattr(skill.skill_model, "config", None) or {}
+    components_info = [f"• {part}" for part in describe_skill_config(config).split(" / ")]
 
     embed.add_field(
         name="⚔️ 스킬 효과",
@@ -279,7 +281,7 @@ def _add_skill_synergy_info(embed: discord.Embed, skill) -> None:
             if tiers:
                 first_tier = tiers[0]
                 related_synergies.append(
-                    f"• **{keyword} 밀도**: {first_tier.effect} (×{first_tier.threshold}개 이상)"
+                    f"• **{design_tag_label(keyword)} 밀도**: {first_tier.effect} (×{first_tier.threshold}개 이상)"
                 )
 
     for combo in COMBO_SYNERGIES:
@@ -640,7 +642,7 @@ def _add_combo_conditions(embed: discord.Embed, combo) -> None:
         elif keyword == "__heal_buff_count__":
             condition_lines.append(f"• 회복/버프 스킬 {count}개 이상")
         else:
-            condition_lines.append(f"• **{keyword}** 키워드 {count}개 이상")
+            condition_lines.append(f"• **{design_tag_label(keyword)}** 키워드 {count}개 이상")
 
     embed.add_field(name="🎯 발동 조건", value="\n".join(condition_lines), inline=False)
 

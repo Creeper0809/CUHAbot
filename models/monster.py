@@ -46,8 +46,10 @@ class Monster(models.Model):
     """마법 공격력"""
     ap_defense = fields.IntField(default=0)
     """마법 방어력"""
-    speed = fields.IntField(default=10)
+    speed = fields.IntField(default=100)
     """속도"""
+    accuracy = fields.IntField(default=95)
+    """명중률 (%)"""
     evasion = fields.IntField(default=0)
     """회피율 (%)"""
     skill_ids = fields.JSONField(default=[])
@@ -60,6 +62,9 @@ class Monster(models.Model):
     """몬스터 종족 (슬라임/고블린/언데드/드래곤/마수/정령/골렘/인간형/수생/야수/미지)"""
 
     drop_skill_ids = fields.JSONField(default=[])
+    phase_config = fields.JSONField(default=dict)
+    action_profile = fields.JSONField(default=dict)
+    """V3 몬스터 행동 FSM의 전조, 실행, 회복 및 중단 규칙."""
     """처치 시 드롭 가능한 스킬 ID 목록"""
 
     group_ids = fields.JSONField(default=[])
@@ -156,10 +161,13 @@ class Monster(models.Model):
             defense=getattr(self, 'defense', 0),
             ap_attack=getattr(self, 'ap_attack', 0),
             ap_defense=getattr(self, 'ap_defense', 0),
-            speed=getattr(self, 'speed', 10),
+            speed=getattr(self, 'speed', 100),
+            accuracy=getattr(self, 'accuracy', 95),
             evasion=getattr(self, 'evasion', 0),
             skill_ids=getattr(self, 'skill_ids', []),
             drop_skill_ids=getattr(self, 'drop_skill_ids', []),
+            phase_config=deepcopy(getattr(self, 'phase_config', {}) or {}),
+            action_profile=deepcopy(getattr(self, 'action_profile', {}) or {}),
             attribute=getattr(self, 'attribute', '무속성'),
             race=getattr(self, 'race', '미지'),
             group_ids=getattr(self, 'group_ids', []),
@@ -168,6 +176,7 @@ class Monster(models.Model):
         new_monster.status = deepcopy(getattr(self, 'status', []))
         new_monster.use_skill = getattr(self, 'use_skill', [0] * 10)[:]
         new_monster.skill_queue = []
+        new_monster.phase_index = 0
         return new_monster
 
     def on_turn_start(self) -> None:
@@ -191,27 +200,47 @@ class Monster(models.Model):
 
         stat = {
             UserStatEnum.HP: self.hp,
-            UserStatEnum.SPEED: getattr(self, 'speed', 10),
+            UserStatEnum.SPEED: getattr(self, 'speed', 100),
             UserStatEnum.ATTACK: self.attack,
             UserStatEnum.DEFENSE: getattr(self, 'defense', 0),
             UserStatEnum.AP_ATTACK: getattr(self, 'ap_attack', 0),
             UserStatEnum.AP_DEFENSE: getattr(self, 'ap_defense', 0),
-            UserStatEnum.ACCURACY: DAMAGE.DEFAULT_ACCURACY,
+            UserStatEnum.ACCURACY: getattr(self, 'accuracy', DAMAGE.DEFAULT_ACCURACY),
             UserStatEnum.EVASION: getattr(self, 'evasion', 0),
+            UserStatEnum.CRITICAL_RATE: 5,
+            UserStatEnum.CRITICAL_DAMAGE: 150,
         }
 
         # 패시브 스킬 스탯 보너스 적용
         passive = get_passive_stat_bonuses(getattr(self, 'use_skill', []))
         stat[UserStatEnum.ATTACK] = int(stat[UserStatEnum.ATTACK] * (1 + passive["attack_percent"]))
         stat[UserStatEnum.DEFENSE] = int(stat[UserStatEnum.DEFENSE] * (1 + passive["defense_percent"]))
+        stat[UserStatEnum.AP_DEFENSE] = int(stat[UserStatEnum.AP_DEFENSE] * (1 + passive["defense_percent"]))
         stat[UserStatEnum.SPEED] = int(stat[UserStatEnum.SPEED] * (1 + passive["speed_percent"]))
         stat[UserStatEnum.HP] = int(stat[UserStatEnum.HP] * (1 + passive["hp_percent"]))
         stat[UserStatEnum.AP_ATTACK] = int(stat[UserStatEnum.AP_ATTACK] * (1 + passive["ap_attack_percent"]))
+        stat[UserStatEnum.EVASION] = int(stat[UserStatEnum.EVASION] + passive["evasion_percent"] * 100)
+        stat[UserStatEnum.CRITICAL_RATE] = int(stat[UserStatEnum.CRITICAL_RATE] + passive["crit_rate"] * 100)
+        stat[UserStatEnum.CRITICAL_DAMAGE] = int(stat[UserStatEnum.CRITICAL_DAMAGE] + passive["crit_damage"] * 100)
+
+        from service.dungeon.skill import get_passive_effect_bonuses
+
+        conditional = get_passive_effect_bonuses(self)
+        all_stats = max(-0.9, conditional.get("all_stats", 0.0))
+        attack_bonus = conditional.get("attack_bonus", 0.0)
+        if all_stats:
+            for key in (
+                UserStatEnum.HP, UserStatEnum.ATTACK, UserStatEnum.AP_ATTACK,
+                UserStatEnum.DEFENSE, UserStatEnum.AP_DEFENSE, UserStatEnum.SPEED,
+            ):
+                stat[key] *= 1.0 + all_stats
+        if attack_bonus:
+            stat[UserStatEnum.ATTACK] *= 1.0 + attack_bonus
+            stat[UserStatEnum.AP_ATTACK] *= 1.0 + attack_bonus
 
         for buff in self.status:
             buff.apply_stat(stat)
-
-        return stat
+        return {key: round(value) for key, value in stat.items()}
 
     def is_dead(self) -> bool:
         """사망 여부 확인"""

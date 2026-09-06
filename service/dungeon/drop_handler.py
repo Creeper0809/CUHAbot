@@ -28,6 +28,40 @@ _GRADE_DROP_RATES = {
 }
 
 
+def _passive_loot_bonuses(user) -> dict[str, float]:
+    from service.dungeon.skill import get_passive_effect_bonuses
+
+    return get_passive_effect_bonuses(user)
+
+
+def _drop_multiplier(user) -> float:
+    return max(0.0, 1.0 + _passive_loot_bonuses(user).get("drop_rate", 0.0))
+
+
+def _material_family(item) -> str:
+    text = f"{getattr(item, 'name', '')} {getattr(item, 'description', '')}".lower()
+    if any(token in text for token in ("광석", "원석", "철", "ore", "mineral")):
+        return "ore"
+    if any(token in text for token in ("가죽", "피혁", "leather", "hide")):
+        return "leather"
+    if any(token in text for token in ("약초", "꽃", "herb")):
+        return "herb"
+    return "material"
+
+
+def _special_material_drop_profile(user, item) -> tuple[float, float]:
+    multiplier = 1.0
+    quality_chance = 0.0
+    family = _material_family(item)
+    for component in getattr(user, '_equipment_components_cache', []) or []:
+        if getattr(component, '_tag', '') != 'special_drop_bonus':
+            continue
+        multiplier *= component.get_drop_rate_multiplier(family)
+        if getattr(component, 'item_type', '') in {family, 'material'}:
+            quality_chance += float(getattr(component, 'quality_bonus', 0.0))
+    return min(multiplier, 2.0), min(quality_chance, 0.50)
+
+
 def _get_grade_drop_rate(grade_id: int) -> float:
     """등급 ID에 따른 드롭 확률 반환"""
     attr = _GRADE_DROP_RATES.get(grade_id, "DROP_RATE_D")
@@ -51,6 +85,9 @@ async def try_drop_monster_box(session, monster: Monster) -> Optional[str]:
     luck = session.user.get_luck()
     luck_multiplier = 1.0 + (luck * DUNGEON.LUCK_DROP_BONUS_PER_POINT)
     drop_rate = base_rate * luck_multiplier
+    passive = _passive_loot_bonuses(session.user)
+    drop_rate *= max(0.0, 1.0 + passive.get("drop_rate", 0.0))
+    drop_rate *= max(0.0, 1.0 + passive.get("chest_find", 0.0))
 
     # 탐험 드롭률 버프 적용
     drop_bonus = session.explore_buffs.get("drop_bonus", 0)
@@ -91,6 +128,11 @@ async def try_drop_monster_box(session, monster: Monster) -> Optional[str]:
         logger.warning(f"Box item not found: {box_id}")
         return None
 
+    session.items_found.append(box_id)
+    from service.dungeon.reward_calculator import is_boss_monster
+    if is_boss_monster(monster):
+        session.boss_reward_item_ids.append(box_id)
+
     item = await Item.get_or_none(id=box_id)
     item_name = item.name if item else "상자"
     return f"📦 「{item_name}({prev_level}~{dungeon_level}Lv)」 획득!"
@@ -121,7 +163,7 @@ async def try_drop_boss_special_item(user: User, monster: Monster) -> Optional[s
         return None
 
     # 인스턴스 등급 롤링 (보스 컨텍스트)
-    grade = GradeService.roll_grade("boss")
+    grade = GradeService.roll_grade("boss", user=user)
     effects = GradeService.roll_special_effects(grade)
     grade_display = GradeService.get_grade_display(grade)
 
@@ -169,14 +211,18 @@ async def try_drop_monster_material(user: User, monster: Monster) -> Optional[st
         if prob <= 0:
             continue
 
-        if random.random() <= prob:
-            item = await Item.get_or_none(id=row.item_id)
-            if not item:
-                continue
+        item = await Item.get_or_none(id=row.item_id)
+        if not item:
+            continue
+        drop_multiplier, quality_chance = _special_material_drop_profile(user, item)
+        if random.random() <= min(1.0, prob * drop_multiplier * _drop_multiplier(user)):
+            quantity = 2 if random.random() < quality_chance else 1
+            material_bonus = _passive_loot_bonuses(user).get("material_double", 0.0)
+            quantity *= 1 + max(0, int(round(material_bonus)))
 
             try:
-                await InventoryService.add_item(user, item.id, 1)
-                dropped_items.append(item.name)
+                await InventoryService.add_item(user, item.id, quantity)
+                dropped_items.append(f"{item.name} x{quantity}" if quantity > 1 else item.name)
                 logger.info(
                     f"Material drop: user={user.discord_id}, monster={monster.name}, "
                     f"item_id={item.id}, item_name={item.name}"
@@ -220,7 +266,7 @@ async def try_drop_monster_skill(user: User, monster: Monster) -> Optional[str]:
     if not valid_skills:
         return None
 
-    if random.random() > DROP.SKILL_DROP_RATE:
+    if random.random() > min(1.0, DROP.SKILL_DROP_RATE * _drop_multiplier(user)):
         return None
 
     # 플레이어 획득 가능한 스킬만 필터링
@@ -278,7 +324,7 @@ async def try_drop_dungeon_skill(session) -> Optional[str]:
     # 각 스킬을 등급 확률로 개별 롤링
     winners = []
     for skill in skills:
-        rate = _get_grade_drop_rate(skill.grade or 1)
+        rate = _get_grade_drop_rate(skill.grade or 1) * _drop_multiplier(session.user)
         if random.random() <= rate:
             winners.append(skill)
 
@@ -318,7 +364,7 @@ async def try_drop_monster_equipment(user: User, monster: Monster) -> Optional[s
     if not equipment_ids:
         return None
 
-    if random.random() > DROP.EQUIPMENT_DROP_RATE:
+    if random.random() > min(1.0, DROP.EQUIPMENT_DROP_RATE * _drop_multiplier(user)):
         return None
 
     dropped_item_id = random.choice(equipment_ids)
@@ -327,21 +373,24 @@ async def try_drop_monster_equipment(user: User, monster: Monster) -> Optional[s
         return None
 
     context = "boss" if is_boss_monster(monster) else "normal"
-    grade = GradeService.roll_grade(context)
+    grade = GradeService.roll_grade(context, user=user)
     effects = GradeService.roll_special_effects(grade)
     grade_display = GradeService.get_grade_display(grade)
 
     try:
-        await InventoryService.add_item(
+        inv_item = await InventoryService.add_item(
             user, dropped_item_id, 1,
             instance_grade=grade,
             special_effects=effects,
         )
+        from service.item.auto_salvage_service import process_auto_salvage
+        auto_result = await process_auto_salvage(user, inv_item)
         logger.info(
             f"Equipment drop: user={user.discord_id}, monster={monster.name}, "
             f"item_id={dropped_item_id}, item_name={item.name}, grade={grade}"
         )
-        return f"⚔️ **장비 드롭!** {grade_display} 「{item.name}」 획득!"
+        suffix = f" → 자동 분해 (+{auto_result['essence']} 정수)" if auto_result else ""
+        return f"⚔️ **장비 드롭!** {grade_display} 「{item.name}」 획득!{suffix}"
     except InventoryFullError:
         return f"⚔️ 장비를 얻었지만 인벤토리가 가득 찼다..."
     except ItemNotFoundError:
@@ -372,7 +421,7 @@ async def try_drop_dungeon_equipment(session) -> Optional[str]:
     if not equipment_ids:
         return None
 
-    if random.random() > DROP.DUNGEON_EQUIPMENT_DROP_RATE:
+    if random.random() > min(1.0, DROP.DUNGEON_EQUIPMENT_DROP_RATE * _drop_multiplier(session.user)):
         return None
 
     dropped_item_id = random.choice(equipment_ids)
@@ -380,22 +429,25 @@ async def try_drop_dungeon_equipment(session) -> Optional[str]:
     if not item:
         return None
 
-    grade = GradeService.roll_grade("boss")
+    grade = GradeService.roll_grade("boss", user=session.user)
     effects = GradeService.roll_special_effects(grade)
     grade_display = GradeService.get_grade_display(grade)
 
     try:
-        await InventoryService.add_item(
+        inv_item = await InventoryService.add_item(
             session.user, dropped_item_id, 1,
             instance_grade=grade,
             special_effects=effects,
         )
+        from service.item.auto_salvage_service import process_auto_salvage
+        auto_result = await process_auto_salvage(session.user, inv_item)
         logger.info(
             f"Dungeon equipment drop: user={session.user.discord_id}, "
             f"dungeon={dungeon_name}, item_id={dropped_item_id}, "
             f"item_name={item.name}, grade={grade}"
         )
-        return f"🗡️ **던전 장비 드롭!** {grade_display} 「{item.name}」 획득!"
+        suffix = f" → 자동 분해 (+{auto_result['essence']} 정수)" if auto_result else ""
+        return f"🗡️ **던전 장비 드롭!** {grade_display} 「{item.name}」 획득!{suffix}"
     except InventoryFullError:
         return f"🗡️ 던전 장비를 얻었지만 인벤토리가 가득 찼다..."
     except ItemNotFoundError:

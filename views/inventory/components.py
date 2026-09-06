@@ -96,7 +96,17 @@ class ItemSelectDropdown(discord.ui.Select):
 
         view.selected_item_id = item_id
 
-        selected_inv = await UserInventory.get_or_none(id=item_id).prefetch_related("item")
+        selected_inv = await UserInventory.get_or_none(
+            id=item_id,
+            user=view.db_user,
+        ).prefetch_related("item")
+
+        if not selected_inv or selected_inv.item.type != view.item_type:
+            await interaction.response.send_message(
+                "현재 분류에 없는 아이템은 선택할 수 없습니다.",
+                ephemeral=True,
+            )
+            return
 
         view.selected_inventory_item = selected_inv
         embed = view.create_embed()
@@ -199,7 +209,7 @@ class SearchModal(discord.ui.Modal, title="아이템 검색"):
 
         embed = self.view.create_embed()
         if query:
-            embed.set_footer(text=f"🔍 검색: '{query}' | 아이템 사용 버튼 → 선택 창에서 사용")
+            embed.set_footer(text=f"🔍 검색: '{query}'")
         await interaction.response.edit_message(embed=embed, view=self.view)
 
 

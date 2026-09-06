@@ -152,9 +152,10 @@ class InventoryView(discord.ui.View):
         self.add_item(DescriptionButton())
 
     def _add_select_button(self) -> None:
-        """아이템 선택 버튼 추가"""
+        """현재 탭에서 실행 가능한 동작만 추가한다."""
         from views.inventory.select_view import InventorySelectButton
-        self.add_item(InventorySelectButton(self.current_tab))
+        if self.current_tab in (ItemType.CONSUME, ItemType.EQUIP, ItemType.SKILL):
+            self.add_item(InventorySelectButton(self.current_tab))
 
     def _add_enhancement_button(self) -> None:
         """장비 탭일 때 강화 버튼 추가"""
@@ -227,7 +228,13 @@ class InventoryView(discord.ui.View):
         else:
             self._add_item_list(embed, page_items)
 
-        embed.set_footer(text="아이템 사용 버튼 → 선택 창에서 사용")
+        footer = {
+            ItemType.CONSUME: "아이템 사용 → 사용할 소모품과 수량 선택",
+            ItemType.EQUIP: "장비 장착 → 장착할 장비 선택",
+            ItemType.ETC: "재료는 제작·교환 콘텐츠에서 사용되며 직접 소비할 수 없습니다.",
+            ItemType.SKILL: "스킬 장착 → 10칸 덱 편집",
+        }
+        embed.set_footer(text=footer.get(self.current_tab, "아이템 상세는 설명 버튼에서 확인"))
         return embed
 
     def _add_empty_message(self, embed: discord.Embed) -> None:
@@ -253,6 +260,8 @@ class InventoryView(discord.ui.View):
                 item_list.append(self._format_equip_item(inv))
             elif self.current_tab == ItemType.CONSUME:
                 item_list.append(self._format_consume_item(inv))
+            elif self.current_tab == ItemType.ETC:
+                item_list.append(self._format_material_item(inv))
 
         chunk_size = (len(item_list) + 2) // 3
         for i in range(3):
@@ -326,6 +335,11 @@ class InventoryView(discord.ui.View):
             prev_level = get_previous_dungeon_level(instance_grade)
             formatted_name = f"{formatted_name}({prev_level}~{instance_grade}Lv)"
         return f"🧪 **{formatted_name}** x{inv.quantity}"
+
+    @staticmethod
+    def _format_material_item(inv) -> str:
+        """직접 사용하는 소모품과 구분되는 제작/교환 재료."""
+        return f"📦 **{inv.item.name}** x{inv.quantity} · 재료"
 
     async def refresh_message(self) -> None:
         """인벤토리 새로고침"""

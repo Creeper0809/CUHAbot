@@ -159,12 +159,23 @@ class ShopService:
         else:
             raise ItemNotFoundError(shop_item.id)
 
+        from service.telemetry import record_game_event
+        await record_game_event(
+            "shop_purchase", user=user, content_type="economy",
+            metrics={
+                "shop_item_id": shop_item.id,
+                "item_type": shop_item.item_type.value,
+                "quantity": quantity,
+                "cost": total_cost,
+            },
+        )
         return result
 
     @staticmethod
     async def get_shop_items_for_display(
         dungeon_level: int = 1,
         dungeon_name: str = "",
+        user: User | None = None,
     ) -> List[ShopItem]:
         """상점 드롭다운에 표시할 아이템 구성"""
         potions = await ShopService._build_potion_items()
@@ -172,9 +183,16 @@ class ShopService:
             count=5, dungeon_level=dungeon_level
         )
         random_skills = await ShopService._build_random_skill_items(
-            count=5, dungeon_name=dungeon_name
+            count=5, dungeon_name=dungeon_name, user=user
         )
-        return potions + random_equipment + random_skills
+        items = potions + random_equipment + random_skills
+        if user is not None:
+            from service.dungeon.skill import get_passive_effect_bonuses
+
+            discount = min(0.50, max(0.0, get_passive_effect_bonuses(user).get("shop_discount", 0.0)))
+            for item in items:
+                item.price = max(1, round(item.price * (1.0 - discount)))
+        return items
 
     @staticmethod
     async def _build_potion_items() -> List[ShopItem]:
@@ -199,7 +217,7 @@ class ShopService:
         return shop_items
 
     # 상점 인스턴스 등급 상한 (A등급 = 4)
-    SHOP_MAX_INSTANCE_GRADE = 4
+    SHOP_MAX_INSTANCE_GRADE = 6
 
     @staticmethod
     async def _build_random_equipment_items(
@@ -246,6 +264,7 @@ class ShopService:
     async def _build_random_skill_items(
         count: int = 5,
         dungeon_name: str = "",
+        user: User | None = None,
     ) -> List[ShopItem]:
         """스킬을 등급 확률에 따라 랜덤 선택 (DB 조회)"""
         grade_map = {grade.id: grade.name for grade in await Grade.all()}
@@ -285,6 +304,12 @@ class ShopService:
             attempts += 1
             grades, weights = zip(*grade_weights)
             grade = random.choices(grades, weights=weights, k=1)[0]
+            if user is not None:
+                from service.dungeon.skill import get_passive_effect_bonuses
+
+                rare_steps = max(0, int(get_passive_effect_bonuses(user).get("shop_rare", 0.0)))
+                order = ["D", "C", "B", "A", "S", "SS", "SSS", "Mythic"]
+                grade = order[min(len(order) - 1, order.index(grade) + rare_steps)]
 
             candidates = skills_by_grade.get(grade, [])
             if not candidates:
@@ -451,7 +476,10 @@ class ShopService:
         # 장비 아이템이면 인스턴스 등급 부여 (상점은 A등급까지)
         if item.type == ItemType.EQUIP:
             for _ in range(quantity):
-                instance_grade = GradeService.roll_grade("normal")
+                from config import BALANCE_V2
+
+                instance_grade = GradeService.roll_grade("normal", user=user, shop=True)
+                instance_grade = max(instance_grade, BALANCE_V2.shop_grade_floor(user.level))
                 instance_grade = min(instance_grade, ShopService.SHOP_MAX_INSTANCE_GRADE)
                 special_effects = GradeService.roll_special_effects(instance_grade)
                 await InventoryService.add_item(
@@ -506,6 +534,10 @@ class ShopService:
         # 판매 가격
         base_price = inventory.item.cost or 50
         sell_price = int(base_price * SHOP.SELL_PRICE_RATIO) * quantity
+        from service.dungeon.skill import get_passive_effect_bonuses
+
+        sell_bonus = min(1.0, max(0.0, get_passive_effect_bonuses(user).get("sell_bonus", 0.0)))
+        sell_price = round(sell_price * (1.0 + sell_bonus))
 
         # 골드 추가
         user.gold += sell_price

@@ -32,6 +32,10 @@ from service.dungeon.status.stat_buffs import (
     HealReceivedBuff,
     InvulnerabilityBuff,
     ShieldBuff,
+    CriticalRateBuff,
+    DamageReductionBuff,
+    HealingOverTimeBuff,
+    HitStackAttackBuff,
 )
 
 # DOT 효과 (임포트 시 자동 등록)
@@ -60,6 +64,20 @@ from service.dungeon.status.debuff_effects import (
     ComboEffect,
 )
 
+# V3 authored special states (import registers each type)
+from service.dungeon.status.special_effects import (
+    FearEffect,
+    RootEffect,
+    CharmEffect,
+    BlindEffect,
+    TauntEffect,
+    BlessingEffect,
+    TimedDamageEffect,
+    DeathMarkEffect,
+    SkillSealEffect,
+    SelfDestructMarkEffect,
+)
+
 # 헬퍼 함수
 from service.dungeon.status.helpers import (
     apply_status_effect,
@@ -73,4 +91,5 @@ from service.dungeon.status.helpers import (
     get_damage_taken_multiplier,
     has_curse_effect,
     get_status_icons,
+    get_taunt_source,
 )

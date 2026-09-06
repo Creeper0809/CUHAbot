@@ -1,0 +1,586 @@
+{
+  "passed": true,
+  "audit": {
+    "profile": "V2",
+    "counts": {
+      "equipment": 486,
+      "skills": 647,
+      "monsters": 128,
+      "sets": 31
+    },
+    "equipment_max_cp_deviation": 0.008064516129032228,
+    "equipment_outside_10_percent": 0,
+    "final_equipment_cp_violations": [],
+    "zero_attack_monsters": [],
+    "skills_evaluated": 647,
+    "active_action_values_evaluated": 553,
+    "passive_contracts_evaluated": 94,
+    "skill_action_value_outliers": [],
+    "passive_contract_errors": [],
+    "missing_runtime_component_tags": [],
+    "equipment_components_evaluated": 399,
+    "missing_equipment_component_tags": [],
+    "missing_equipment_runtime_consumers": [],
+    "unknown_set_effects": [],
+    "set_budget_violations": [],
+    "phase_monsters": 29,
+    "phase_transition_errors": [],
+    "skill_ecosystem": {
+      "skills_designed": 647,
+      "player_skills_designed": 326,
+      "missing_design": [],
+      "orphan_payoffs": [],
+      "roles": {
+        "monster:engine": 42,
+        "monster:guardian": 27,
+        "monster:payoff": 10,
+        "monster:recovery": 3,
+        "monster:setup": 114,
+        "monster:striker": 90,
+        "monster:summoner": 10,
+        "monster:sustain": 25,
+        "player:engine": 52,
+        "player:finisher": 10,
+        "player:guardian": 23,
+        "player:payoff": 39,
+        "player:setup": 107,
+        "player:striker": 59,
+        "player:sustain": 36
+      },
+      "archetypes": {
+        "monster:blood_hunt": 3,
+        "monster:commander": 13,
+        "monster:enemy_pattern": 101,
+        "monster:engine": 42,
+        "monster:frost_shatter": 13,
+        "monster:guardian": 1,
+        "monster:pyromancer": 29,
+        "monster:radiance": 26,
+        "monster:shadow_decay": 36,
+        "monster:storm_overload": 14,
+        "monster:sustain": 24,
+        "monster:tide_control": 14,
+        "monster:vanguard": 5,
+        "player:blood_hunt": 7,
+        "player:engine": 52,
+        "player:execution": 2,
+        "player:frost_shatter": 23,
+        "player:guardian": 6,
+        "player:neutral_combo": 77,
+        "player:pyromancer": 26,
+        "player:radiance": 17,
+        "player:shadow_decay": 35,
+        "player:storm_overload": 23,
+        "player:sustain": 35,
+        "player:tide_control": 17,
+        "player:vanguard": 6
+      },
+      "passed": true
+    },
+    "errors": [],
+    "passed": true
+  },
+  "simulation": {
+    "iterations_per_build": 100000,
+    "engine": "data-driven-headless-v2",
+    "combat_iterations_per_build": 100000,
+    "economy_seasons": 100000,
+    "levels": {
+      "10": {
+        "physical": {
+          "clear_rate": 0.8047,
+          "previous_gear_clear_rate": 0.61302,
+          "elite_route_clear_rate": 0.65831,
+          "common_actions": 2.06137,
+          "elite_actions": 5.66698,
+          "boss_actions": 9.812979585190613,
+          "encounter_samples": {
+            "common": 100000,
+            "elite": 100000,
+            "boss": 98262
+          }
+        },
+        "magical": {
+          "clear_rate": 0.82781,
+          "previous_gear_clear_rate": 0.69952,
+          "elite_route_clear_rate": 0.69405,
+          "common_actions": 2.00679,
+          "elite_actions": 5.57487,
+          "boss_actions": 9.672505307855626,
+          "encounter_samples": {
+            "common": 100000,
+            "elite": 100000,
+            "boss": 97968
+          }
+        },
+        "speed_crit": {
+          "clear_rate": 0.81439,
+          "previous_gear_clear_rate": 0.64491,
+          "elite_route_clear_rate": 0.68414,
+          "common_actions": 2.14379,
+          "elite_actions": 5.48431,
+          "boss_actions": 9.77220810893202,
+          "encounter_samples": {
+            "common": 100000,
+            "elite": 100000,
+            "boss": 98410
+          }
+        },
+        "tank": {
+          "clear_rate": 0.84502,
+          "previous_gear_clear_rate": 0.71433,
+          "elite_route_clear_rate": 0.72843,
+          "common_actions": 2.81925,
+          "elite_actions": 5.85628,
+          "boss_actions": 10.898441109704896,
+          "encounter_samples": {
+            "common": 100000,
+            "elite": 100000,
+            "boss": 99558
+          }
+        },
+        "balanced": {
+          "clear_rate": 0.80784,
+          "previous_gear_clear_rate": 0.70777,
+          "elite_route_clear_rate": 0.67483,
+          "common_actions": 2.0,
+          "elite_actions": 4.86816,
+          "boss_actions": 9.35504692430638,
+          "encounter_samples": {
+            "common": 100000,
+            "elite": 100000,
+            "boss": 97604
+          }
+        },
+        "nine_passive": {
+          "clear_rate": 0.88501,
+          "previous_gear_clear_rate": 0.7574,
+          "elite_route_clear_rate": 0.74042,
+          "common_actions": 2.41587,
+          "elite_actions": 5.13595,
+          "boss_actions": 8.898794915203302,
+          "encounter_samples": {
+            "common": 100000,
+            "elite": 100000,
+            "boss": 99827
+          }
+        }
+      },
+      "30": {
+        "physical": {
+          "clear_rate": 0.81633,
+          "previous_gear_clear_rate": 0.72461,
+          "elite_route_clear_rate": 0.52811,
+          "common_actions": 2.00093,
+          "elite_actions": 4.50655,
+          "boss_actions": 9.323291136699025,
+          "encounter_samples": {
+            "common": 100000,
+            "elite": 100000,
+            "boss": 99613
+          }
+        },
+        "magical": {
+          "clear_rate": 0.8128,
+          "previous_gear_clear_rate": 0.71145,
+          "elite_route_clear_rate": 0.55391,
+          "common_actions": 2.00083,
+          "elite_actions": 4.46609,
+          "boss_actions": 9.165126928020566,
+          "encounter_samples": {
+            "common": 100000,
+            "elite": 100000,
+            "boss": 99584
+          }
+        },
+        "speed_crit": {
+          "clear_rate": 0.82976,
+          "previous_gear_clear_rate": 0.72472,
+          "elite_route_clear_rate": 0.57024,
+          "common_actions": 2.0027,
+          "elite_actions": 4.4853,
+          "boss_actions": 9.23481899181249,
+          "encounter_samples": {
+            "common": 100000,
+            "elite": 100000,
+            "boss": 99664
+          }
+        },
+        "tank": {
+          "clear_rate": 0.83087,
+          "previous_gear_clear_rate": 0.67318,
+          "elite_route_clear_rate": 0.59962,
+          "common_actions": 2.89557,
+          "elite_actions": 5.67505,
+          "boss_actions": 11.159910766091114,
+          "encounter_samples": {
+            "common": 100000,
+            "elite": 100000,
+            "boss": 99962
+          }
+        },
+        "balanced": {
+          "clear_rate": 0.79927,
+          "previous_gear_clear_rate": 0.69168,
+          "elite_route_clear_rate": 0.52413,
+          "common_actions": 1.99517,
+          "elite_actions": 4.42217,
+          "boss_actions": 8.956795209292045,
+          "encounter_samples": {
+            "common": 100000,
+            "elite": 100000,
+            "boss": 99526
+          }
+        },
+        "nine_passive": {
+          "clear_rate": 0.87163,
+          "previous_gear_clear_rate": 0.73752,
+          "elite_route_clear_rate": 0.5776,
+          "common_actions": 2.01086,
+          "elite_actions": 4.50628,
+          "boss_actions": 8.68454268140221,
+          "encounter_samples": {
+            "common": 100000,
+            "elite": 100000,
+            "boss": 99985
+          }
+        }
+      },
+      "50": {
+        "physical": {
+          "clear_rate": 0.86769,
+          "previous_gear_clear_rate": 0.72602,
+          "elite_route_clear_rate": 0.60945,
+          "common_actions": 2.0,
+          "elite_actions": 4.56189,
+          "boss_actions": 9.237321699621033,
+          "encounter_samples": {
+            "common": 100000,
+            "elite": 100000,
+            "boss": 99481
+          }
+        },
+        "magical": {
+          "clear_rate": 0.8924,
+          "previous_gear_clear_rate": 0.76261,
+          "elite_route_clear_rate": 0.68328,
+          "common_actions": 2.0,
+          "elite_actions": 4.54337,
+          "boss_actions": 9.21485852625208,
+          "encounter_samples": {
+            "common": 100000,
+            "elite": 100000,
+            "boss": 99135
+          }
+        },
+        "speed_crit": {
+          "clear_rate": 0.81129,
+          "previous_gear_clear_rate": 0.58795,
+          "elite_route_clear_rate": 0.55657,
+          "common_actions": 2.06809,
+          "elite_actions": 4.69663,
+          "boss_actions": 9.3895027060145,
+          "encounter_samples": {
+            "common": 100000,
+            "elite": 100000,
+            "boss": 97930
+          }
+        },
+        "tank": {
+          "clear_rate": 0.86874,
+          "previous_gear_clear_rate": 0.75696,
+          "elite_route_clear_rate": 0.68885,
+          "common_actions": 2.90719,
+          "elite_actions": 5.80626,
+          "boss_actions": 11.494197630991358,
+          "encounter_samples": {
+            "common": 100000,
+            "elite": 100000,
+            "boss": 99873
+          }
+        },
+        "balanced": {
+          "clear_rate": 0.85511,
+          "previous_gear_clear_rate": 0.66996,
+          "elite_route_clear_rate": 0.60888,
+          "common_actions": 2.00182,
+          "elite_actions": 4.57843,
+          "boss_actions": 9.330730432668936,
+          "encounter_samples": {
+            "common": 100000,
+            "elite": 100000,
+            "boss": 98736
+          }
+        },
+        "nine_passive": {
+          "clear_rate": 0.8352,
+          "previous_gear_clear_rate": 0.62041,
+          "elite_route_clear_rate": 0.53535,
+          "common_actions": 2.5352,
+          "elite_actions": 4.95587,
+          "boss_actions": 8.802058947115674,
+          "encounter_samples": {
+            "common": 100000,
+            "elite": 100000,
+            "boss": 99954
+          }
+        }
+      },
+      "70": {
+        "physical": {
+          "clear_rate": 0.87969,
+          "previous_gear_clear_rate": 0.72254,
+          "elite_route_clear_rate": 0.65037,
+          "common_actions": 1.99969,
+          "elite_actions": 4.2762,
+          "boss_actions": 8.84335406120979,
+          "encounter_samples": {
+            "common": 100000,
+            "elite": 100000,
+            "boss": 98579
+          }
+        },
+        "magical": {
+          "clear_rate": 0.84775,
+          "previous_gear_clear_rate": 0.65256,
+          "elite_route_clear_rate": 0.53194,
+          "common_actions": 1.99661,
+          "elite_actions": 4.26497,
+          "boss_actions": 9.058681621655492,
+          "encounter_samples": {
+            "common": 100000,
+            "elite": 100000,
+            "boss": 95754
+          }
+        },
+        "speed_crit": {
+          "clear_rate": 0.81387,
+          "previous_gear_clear_rate": 0.55611,
+          "elite_route_clear_rate": 0.56533,
+          "common_actions": 2.00854,
+          "elite_actions": 4.05408,
+          "boss_actions": 9.115692126704719,
+          "encounter_samples": {
+            "common": 100000,
+            "elite": 100000,
+            "boss": 91804
+          }
+        },
+        "tank": {
+          "clear_rate": 0.89802,
+          "previous_gear_clear_rate": 0.78044,
+          "elite_route_clear_rate": 0.75386,
+          "common_actions": 2.88289,
+          "elite_actions": 5.51185,
+          "boss_actions": 11.000432152117545,
+          "encounter_samples": {
+            "common": 100000,
+            "elite": 100000,
+            "boss": 99502
+          }
+        },
+        "balanced": {
+          "clear_rate": 0.82972,
+          "previous_gear_clear_rate": 0.55564,
+          "elite_route_clear_rate": 0.55732,
+          "common_actions": 2.06447,
+          "elite_actions": 4.28447,
+          "boss_actions": 9.308679348053799,
+          "encounter_samples": {
+            "common": 100000,
+            "elite": 100000,
+            "boss": 95468
+          }
+        },
+        "nine_passive": {
+          "clear_rate": 0.86823,
+          "previous_gear_clear_rate": 0.59769,
+          "elite_route_clear_rate": 0.55383,
+          "common_actions": 2.25869,
+          "elite_actions": 4.11855,
+          "boss_actions": 8.357728055766996,
+          "encounter_samples": {
+            "common": 100000,
+            "elite": 100000,
+            "boss": 99844
+          }
+        }
+      },
+      "90": {
+        "physical": {
+          "clear_rate": 0.8859,
+          "previous_gear_clear_rate": 0.79901,
+          "elite_route_clear_rate": 0.59454,
+          "common_actions": 1.99745,
+          "elite_actions": 4.2409,
+          "boss_actions": 8.73615293830376,
+          "encounter_samples": {
+            "common": 100000,
+            "elite": 100000,
+            "boss": 98288
+          }
+        },
+        "magical": {
+          "clear_rate": 0.87147,
+          "previous_gear_clear_rate": 0.7575,
+          "elite_route_clear_rate": 0.53771,
+          "common_actions": 1.99577,
+          "elite_actions": 4.23735,
+          "boss_actions": 9.00748928257838,
+          "encounter_samples": {
+            "common": 100000,
+            "elite": 100000,
+            "boss": 96805
+          }
+        },
+        "speed_crit": {
+          "clear_rate": 0.86915,
+          "previous_gear_clear_rate": 0.74503,
+          "elite_route_clear_rate": 0.63294,
+          "common_actions": 2.39265,
+          "elite_actions": 4.33898,
+          "boss_actions": 9.347734833300102,
+          "encounter_samples": {
+            "common": 100000,
+            "elite": 100000,
+            "boss": 95291
+          }
+        },
+        "tank": {
+          "clear_rate": 0.85368,
+          "previous_gear_clear_rate": 0.69043,
+          "elite_route_clear_rate": 0.61363,
+          "common_actions": 2.99028,
+          "elite_actions": 5.50567,
+          "boss_actions": 10.913253334431088,
+          "encounter_samples": {
+            "common": 100000,
+            "elite": 100000,
+            "boss": 97168
+          }
+        },
+        "balanced": {
+          "clear_rate": 0.88952,
+          "previous_gear_clear_rate": 0.72791,
+          "elite_route_clear_rate": 0.58949,
+          "common_actions": 2.01913,
+          "elite_actions": 4.17989,
+          "boss_actions": 8.98092988716764,
+          "encounter_samples": {
+            "common": 100000,
+            "elite": 100000,
+            "boss": 96958
+          }
+        },
+        "nine_passive": {
+          "clear_rate": 0.90115,
+          "previous_gear_clear_rate": 0.71497,
+          "elite_route_clear_rate": 0.48723,
+          "common_actions": 2.16708,
+          "elite_actions": 4.04159,
+          "boss_actions": 8.133565900797947,
+          "encounter_samples": {
+            "common": 100000,
+            "elite": 100000,
+            "boss": 99756
+          }
+        }
+      },
+      "100": {
+        "physical": {
+          "clear_rate": 0.81567,
+          "previous_gear_clear_rate": 0.70209,
+          "elite_route_clear_rate": 0.57833,
+          "common_actions": 1.99751,
+          "elite_actions": 4.42696,
+          "boss_actions": 8.794859504484352,
+          "encounter_samples": {
+            "common": 100000,
+            "elite": 100000,
+            "boss": 93882
+          }
+        },
+        "magical": {
+          "clear_rate": 0.77879,
+          "previous_gear_clear_rate": 0.61993,
+          "elite_route_clear_rate": 0.50248,
+          "common_actions": 1.99253,
+          "elite_actions": 4.37737,
+          "boss_actions": 9.075465485921889,
+          "encounter_samples": {
+            "common": 100000,
+            "elite": 100000,
+            "boss": 88080
+          }
+        },
+        "speed_crit": {
+          "clear_rate": 0.82373,
+          "previous_gear_clear_rate": 0.69697,
+          "elite_route_clear_rate": 0.64167,
+          "common_actions": 2.13288,
+          "elite_actions": 4.66169,
+          "boss_actions": 9.506824597332152,
+          "encounter_samples": {
+            "common": 100000,
+            "elite": 100000,
+            "boss": 90335
+          }
+        },
+        "tank": {
+          "clear_rate": 0.79462,
+          "previous_gear_clear_rate": 0.53843,
+          "elite_route_clear_rate": 0.58313,
+          "common_actions": 3.02252,
+          "elite_actions": 5.53513,
+          "boss_actions": 10.957547701110585,
+          "encounter_samples": {
+            "common": 100000,
+            "elite": 100000,
+            "boss": 88782
+          }
+        },
+        "balanced": {
+          "clear_rate": 0.82409,
+          "previous_gear_clear_rate": 0.64877,
+          "elite_route_clear_rate": 0.58396,
+          "common_actions": 1.98126,
+          "elite_actions": 4.34567,
+          "boss_actions": 8.975742012277783,
+          "encounter_samples": {
+            "common": 100000,
+            "elite": 100000,
+            "boss": 90733
+          }
+        },
+        "nine_passive": {
+          "clear_rate": 0.83165,
+          "previous_gear_clear_rate": 0.63279,
+          "elite_route_clear_rate": 0.50662,
+          "common_actions": 2.00561,
+          "elite_actions": 4.02619,
+          "boss_actions": 8.033287510819205,
+          "encounter_samples": {
+            "common": 100000,
+            "elite": 100000,
+            "boss": 98205
+          }
+        }
+      }
+    },
+    "target_runs_to_100": 226,
+    "median_hours_to_100": 37.66669762357253,
+    "economy": {
+      "target_runs": 226,
+      "median_hours_to_100": 37.66669762357253,
+      "meaningful_replacement_runs": 2.0,
+      "gold_spend_ratio": 0.7070954943327548,
+      "median_level_50_grade": "A",
+      "median_level_70_grade": "S",
+      "median_level_90_grade": "SS",
+      "level_100_ss_slots": 9.0,
+      "level_100_sss_items": 2.0,
+      "mythic_required": false
+    },
+    "targets_passed": true
+  }
+}

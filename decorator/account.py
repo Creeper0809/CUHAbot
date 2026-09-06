@@ -1,7 +1,6 @@
 from discord import Interaction, app_commands
 
-from models import User
-from models.repos import find_account_by_discordid
+from service.player.starter_recovery import ensure_account
 
 
 def requires_account():
@@ -10,14 +9,7 @@ def requires_account():
     계정이 없으면 자동으로 Discord ID로 가입시킵니다.
     """
     async def predicate(interaction: Interaction):
-        user = await find_account_by_discordid(interaction.user.id)
-        if user is None:
-            # 자동 가입
-            user = User(
-                discord_id=interaction.user.id,
-                username=interaction.user.display_name
-            )
-            await user.save()
+        await ensure_account(interaction.user.id, interaction.user.display_name)
         return True
 
     return app_commands.check(predicate)

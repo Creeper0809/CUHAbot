@@ -16,6 +16,7 @@ from resources.item_emoji import ItemType
 from service.item.item_use_service import ItemUseService
 from service.item.inventory_service import InventoryService
 from service.item.grade_service import GradeService
+from service.game_settings import is_box_reveal_enabled
 from exceptions import (
     CombatRestrictionError,
     ItemNotFoundError,
@@ -45,14 +46,14 @@ class InventorySelectView(discord.ui.View):
         self.user = user
         self.db_user = db_user
         self.list_view = list_view
-        self.inventory = list_view.inventory
+        self.item_type = list_view.current_tab
+        self.inventory = self._filter_for_originating_tab(list_view.inventory)
         self.selected_item_id: Optional[int] = None
         self.selected_inventory_item: Optional[UserInventory] = None
         self.use_quantity: int = 1
 
-        usable_items = [inv for inv in self.inventory if inv.item.type != ItemType.SKILL]
-        if usable_items:
-            self.add_item(ItemSelectDropdown(usable_items))
+        if self.inventory:
+            self.add_item(ItemSelectDropdown(self.inventory))
 
         self.add_item(QuantityButton("+1", 1, row=1))
         self.add_item(QuantityButton("+5", 5, row=1))
@@ -71,8 +72,11 @@ class InventorySelectView(discord.ui.View):
         )
         if self.selected_inventory_item:
             item = self.selected_inventory_item.item
-            item_type = "장비" if item.type == ItemType.EQUIP else "소모품"
-            action = "장착" if item.type == ItemType.EQUIP else "사용"
+            item_type = {
+                ItemType.EQUIP: "장비", ItemType.CONSUME: "소모품",
+                ItemType.ETC: "재료/기타", ItemType.SKILL: "스킬",
+            }.get(item.type, "기타")
+            action = "장착" if item.type == ItemType.EQUIP else "사용" if item.type == ItemType.CONSUME else "확인"
 
             max_quantity = self.selected_inventory_item.quantity if item.type == ItemType.CONSUME else 1
             self.use_quantity = max(1, min(self.use_quantity, max_quantity))
@@ -96,8 +100,9 @@ class InventorySelectView(discord.ui.View):
                     f"{grade_info}"
                     f"**설명**: {item.description or '없음'}\n"
                     f"**보유 수량**: {self.selected_inventory_item.quantity}\n"
-                    f"**사용 수량**: {self.use_quantity}\n"
-                    f"'{action}' 버튼을 눌러 {action}하세요."
+                    f"**수량**: {self.use_quantity}\n"
+                    + (f"'{action}' 버튼을 눌러 {action}하세요." if item.type in (ItemType.EQUIP, ItemType.CONSUME)
+                       else "이 항목은 직접 소비할 수 없습니다.")
                 ),
                 inline=False
             )
@@ -106,16 +111,23 @@ class InventorySelectView(discord.ui.View):
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         return interaction.user == self.user
 
+    def _filter_for_originating_tab(self, items) -> list[UserInventory]:
+        """Never let a stale parent list widen this action view's category."""
+        return [
+            inv for inv in items
+            if getattr(inv, "item", None) is not None and inv.item.type == self.item_type
+        ]
+
     async def refresh_items(self) -> None:
-        self.inventory = await UserInventory.filter(
+        rows = await UserInventory.filter(
             user=self.db_user
         ).prefetch_related("item")
-        usable_items = [inv for inv in self.inventory if inv.item.type != ItemType.SKILL]
+        self.inventory = self._filter_for_originating_tab(rows)
         to_remove = [child for child in self.children if isinstance(child, ItemSelectDropdown)]
         for child in to_remove:
             self.remove_item(child)
-        if usable_items:
-            self.add_item(ItemSelectDropdown(usable_items))
+        if self.inventory:
+            self.add_item(ItemSelectDropdown(self.inventory))
 
 
 class QuantityButton(discord.ui.Button):
@@ -132,8 +144,8 @@ class QuantityButton(discord.ui.Button):
             await interaction.response.send_message("먼저 아이템을 선택하세요!", ephemeral=True)
             return
 
-        if view.selected_inventory_item.item.type == ItemType.EQUIP:
-            await interaction.response.send_message("장비는 개수 조절이 불가능합니다!", ephemeral=True)
+        if view.selected_inventory_item.item.type not in (ItemType.CONSUME,):
+            await interaction.response.send_message("이 항목은 개수 조절이 불가능합니다!", ephemeral=True)
             return
 
         max_quantity = view.selected_inventory_item.quantity
@@ -156,6 +168,10 @@ class InventoryUseButton(discord.ui.Button):
             return
 
         try:
+            from config import BOX_CONFIGS
+            if is_box_reveal_enabled() and view.selected_inventory_item.item.id in BOX_CONFIGS:
+                await self._open_boxes(view, interaction)
+                return
             success_count, last_result = await self._use_items(view)
 
             if success_count > 0:
@@ -201,6 +217,33 @@ class InventoryUseButton(discord.ui.Button):
                 break
 
         return success_count, last_result
+
+    @staticmethod
+    async def _open_boxes(view: InventorySelectView, interaction: discord.Interaction) -> None:
+        from service.item.box_announcement import announce_notable_box_results
+        from service.item.box_open_service import BoxOpenService
+        from views.box_reveal import animate_box_reveal
+
+        batch = await BoxOpenService.open_boxes(
+            view.db_user,
+            view.selected_inventory_item.id,
+            view.use_quantity,
+            interaction.id,
+        )
+        if view.list_view:
+            await view.list_view.refresh_message()
+        await view.refresh_items()
+        await animate_box_reveal(interaction, batch)
+        try:
+            await announce_notable_box_results(
+                interaction.client,
+                interaction.guild_id,
+                interaction.user,
+                batch,
+            )
+        except Exception:
+            import logging
+            logging.getLogger(__name__).exception("Box brag announcement failed after commit")
 
     @staticmethod
     async def _handle_success(view: InventorySelectView, interaction, success_count, last_result):
@@ -306,12 +349,19 @@ class InventorySelectButton(discord.ui.Button):
     """아이템 사용 버튼 (선택 창 열기)"""
 
     def __init__(self, current_tab: ItemType = ItemType.CONSUME):
-        # 장비 탭이면 "장비 장착", 아니면 "아이템 사용"
-        label = "장비 장착" if current_tab == ItemType.EQUIP else "아이템 사용"
+        label = {
+            ItemType.EQUIP: "장비 장착",
+            ItemType.SKILL: "스킬 장착",
+            ItemType.CONSUME: "아이템 사용",
+        }.get(current_tab, "항목 선택")
+        self.current_tab = current_tab
         super().__init__(label=label, style=discord.ButtonStyle.success, emoji="✅", row=2)
 
     async def callback(self, interaction: discord.Interaction):
         view = self.view
+        if self.current_tab == ItemType.SKILL:
+            await _open_inventory_skill_deck(interaction, view.db_user)
+            return
         select_view = InventorySelectView(
             user=interaction.user,
             db_user=view.db_user,
@@ -319,6 +369,50 @@ class InventorySelectButton(discord.ui.Button):
         )
         embed = select_view.create_embed()
         await interaction.response.send_message(embed=embed, view=select_view, ephemeral=True)
+
+
+async def _open_inventory_skill_deck(interaction: discord.Interaction, db_user: User) -> None:
+    """Open the same persisted editor used by /덱 from the inventory skill tab."""
+    from config import SKILL_ID
+    from models.repos import static_cache
+    from models.user_owned_skill import UserOwnedSkill
+    from service.collection_service import CollectionService
+    from service.skill.skill_deck_service import SkillDeckService
+    from service.skill.skill_ownership_service import SkillOwnershipService
+    from views.skill_deck import SkillDeckView
+
+    current_deck = await SkillDeckService.get_deck_as_list(db_user)
+    await SkillOwnershipService.migrate_existing_user(db_user, current_deck)
+    for skill_id in set(current_deck) - {0}:
+        await CollectionService.register_skill(db_user, skill_id)
+    owned = await SkillOwnershipService.get_all_owned_skills(db_user)
+    available = [static_cache.skill_cache_by_id[row.skill_id] for row in owned
+                 if row.skill_id in static_cache.skill_cache_by_id]
+    quantities = {row.skill_id: row for row in owned}
+    basic_id = SKILL_ID.BASIC_ATTACK_ID
+    if basic_id in static_cache.skill_cache_by_id:
+        if static_cache.skill_cache_by_id[basic_id] not in available:
+            available.insert(0, static_cache.skill_cache_by_id[basic_id])
+        quantities.setdefault(basic_id, UserOwnedSkill(
+            user=db_user, skill_id=basic_id, quantity=999, equipped_count=0))
+    if not available:
+        await interaction.response.send_message("⚠️ 보유한 스킬 정보를 불러오지 못했습니다.", ephemeral=True)
+        return
+    deck_view = SkillDeckView(interaction.user, current_deck, available, db_user, quantities)
+    await deck_view.initialize()
+    await interaction.response.send_message(embed=deck_view.create_embed(), view=deck_view, ephemeral=True)
+    deck_view.message = await interaction.original_response()
+    await deck_view.wait()
+    if not (deck_view.saved and deck_view.changes_made):
+        return
+    can_change, error = await SkillOwnershipService.can_change_deck(db_user, current_deck, deck_view.current_deck)
+    if not can_change:
+        await interaction.followup.send(f"⚠️ 덱 저장 실패: {error}", ephemeral=True)
+        return
+    await SkillOwnershipService.apply_deck_change(db_user, current_deck, deck_view.current_deck)
+    for slot, skill_id in enumerate(deck_view.current_deck):
+        await SkillDeckService.set_skill(db_user, slot, skill_id)
+    await SkillDeckService.load_deck_to_user(db_user)
 
 
 class EnhancementSelectButton(discord.ui.Button):

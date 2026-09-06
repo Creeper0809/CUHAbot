@@ -46,10 +46,15 @@ class AuctionMainView(discord.ui.View):
         self.filters = {
             "item_type": None,
             "item_grade": None,
+            "min_grade": 0,
+            "max_grade": 8,
             "min_enhancement": 0,
             "max_enhancement": 99,
             "min_price": 0,
-            "max_price": 999999999
+            "max_price": 999999999,
+            "affix_id": None,
+            "min_affix_tier": None,
+            "min_affix_value": None,
         }
 
     async def initialize(self):
@@ -62,10 +67,15 @@ class AuctionMainView(discord.ui.View):
             self.listings = await AuctionService.search_listings(
                 item_type=self.filters["item_type"],
                 item_grade=self.filters["item_grade"],
+                min_grade=self.filters["min_grade"],
+                max_grade=self.filters["max_grade"],
                 min_enhancement=self.filters["min_enhancement"],
                 max_enhancement=self.filters["max_enhancement"],
                 min_price=self.filters["min_price"],
                 max_price=self.filters["max_price"],
+                affix_id=self.filters["affix_id"],
+                min_affix_tier=self.filters["min_affix_tier"],
+                min_affix_value=self.filters["min_affix_value"],
                 sort_by="created_at",
                 offset=0,
                 limit=100

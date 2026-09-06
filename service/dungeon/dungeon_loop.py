@@ -10,7 +10,7 @@ from collections import deque
 
 import discord
 
-from config import COMBAT, DUNGEON
+from config import COMBAT, DUNGEON, ROGUELIKE
 from models import UserStatEnum
 from views.dungeon_control import DungeonControlView
 from service.economy.reward_service import RewardService
@@ -31,6 +31,12 @@ async def start_dungeon(session: DungeonSession, interaction: discord.Interactio
     Returns:
         탐험 완료 여부 (True: 클리어/귀환, False: 사망)
     """
+    if session.content_type == ContentType.NORMAL_DUNGEON:
+        from service.game_settings import is_roguelike_enabled
+        if await is_roguelike_enabled(interaction.guild_id):
+            from service.dungeon.roguelike_loop import start_roguelike_dungeon
+            return await start_roguelike_dungeon(session, interaction)
+
     from service.dungeon.encounter_processor import process_encounter
     from service.dungeon.dungeon_ui import create_dungeon_embed
 
@@ -197,6 +203,26 @@ def _calculate_dungeon_steps(dungeon) -> int:
 # =============================================================================
 
 
+async def _record_run_telemetry(session, *, result: str, exp: int, gold: int) -> None:
+    from service.telemetry import record_game_event
+
+    await record_game_event(
+        "dungeon_run_finished",
+        user=session.user,
+        guild_id=getattr(session, "origin_guild_id", None),
+        content_type="roguelike" if session.roguelike_enabled else str(session.content_type),
+        run_nonce=str(getattr(session, "run_nonce", "") or "") or None,
+        metrics={
+            "result": result,
+            "cleared": result == "clear",
+            "dungeon_id": getattr(getattr(session, "dungeon", None), "id", None),
+            "room": int(getattr(session, "exploration_step", 0) or 0),
+            "exp": int(exp), "gold": int(gold),
+            "augments": len(getattr(session, "skill_augments", {}) or {}),
+        },
+    )
+
+
 async def _handle_dungeon_clear(session, interaction, event_queue) -> bool:
     """던전 클리어 처리"""
     if session.content_type == ContentType.WEEKLY_TOWER:
@@ -273,8 +299,32 @@ async def _handle_dungeon_clear(session, interaction, event_queue) -> bool:
             final_exp, final_gold = _apply_race_reward_multiplier(session, event, session.total_exp, session.total_gold)
             logger.info(f"Applied race reward multiplier: user={session.user_id}, exp={final_exp}, gold={final_gold}")
 
+    from service.item.progression_service import (
+        complete_source, is_featured_source, source_type_for_session,
+    )
+    source_key = session.dungeon.name
+    source_type = source_type_for_session(session)
+    farm_result = await complete_source(
+        session.user, source_type, source_key,
+        featured=is_featured_source(source_type, source_key),
+    )
+    event_queue.append(
+        f"🧭 지역 인장 진척 **{farm_result.progress}/{farm_result.threshold}**"
+        + (f" · 완성 인장 +{farm_result.seals_awarded}" if farm_result.seals_awarded else "")
+        + (" · 오늘의 추천 +1" if farm_result.featured_bonus else "")
+    )
+
     reward_result = await RewardService.apply_rewards(session.user, final_exp, final_gold)
     await _send_dungeon_summary(session, interaction, "클리어", reward_result)
+
+    if session.roguelike_enabled:
+        from service.dungeon.roguelike_announcement import record_and_announce_clear
+        try:
+            await record_and_announce_clear(session, interaction)
+        except Exception:
+            logger.exception("Roguelike brag announcement failed after reward settlement")
+
+    await _record_run_telemetry(session, result="clear", exp=final_exp, gold=final_gold)
 
     session.ended = True
     return True
@@ -303,14 +353,19 @@ async def _handle_player_death(session, interaction, event_queue) -> bool:
         except Exception as e:
             logger.error(f"Failed to leave shared instance: {e}")
 
-    gold_lost = int(session.total_gold * DUNGEON.DEATH_GOLD_LOSS)
-    session.total_gold = max(0, session.total_gold - gold_lost)
+    if session.roguelike_enabled:
+        from service.dungeon.roguelike_settlement import apply_failure_penalty
+        exp_lost, gold_lost = apply_failure_penalty(session)
+    else:
+        exp_lost = 0
+        gold_lost = int(session.total_gold * DUNGEON.DEATH_GOLD_LOSS)
+        session.total_gold = max(0, session.total_gold - gold_lost)
     session.user.now_hp = 1
 
     event_queue.append("━━━ 💀 **사망** ━━━")
     event_queue.append(
         f"💀 쓰러졌다...\n"
-        f"💸 골드 **-{gold_lost}** 손실\n"
+        f"💸 경험치 **-{exp_lost}**, 골드 **-{gold_lost}** 손실\n"
         f"⚠️ HP가 1로 감소! 회복이 필요합니다."
     )
 
@@ -329,6 +384,7 @@ async def _handle_player_death(session, interaction, event_queue) -> bool:
 
     reward_result = await RewardService.apply_rewards(session.user, final_exp, final_gold)
     await _send_dungeon_summary(session, interaction, "사망", reward_result)
+    await _record_run_telemetry(session, result="death", exp=final_exp, gold=final_gold)
 
     session.ended = True
     return False
@@ -375,6 +431,7 @@ async def _handle_dungeon_return(session, interaction, event_queue) -> bool:
 
     reward_result = await RewardService.apply_rewards(session.user, final_exp, final_gold)
     await _send_dungeon_summary(session, interaction, "귀환", reward_result)
+    await _record_run_telemetry(session, result="return", exp=final_exp, gold=final_gold)
 
     return True
 

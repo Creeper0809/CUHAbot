@@ -170,6 +170,14 @@ class InsufficientSkillError(CUHABotError):
 # =============================================================================
 
 
+class DuplicatePassiveSkillError(CUHABotError):
+    """The same passive has no additional effect and cannot occupy two slots."""
+
+    def __init__(self, skill_name: str):
+        self.skill_name = skill_name
+        super().__init__(f"'{skill_name}' 패시브는 같은 덱에 한 장만 편성할 수 있습니다.")
+
+
 class CombatError(CUHABotError):
     """전투 관련 기본 예외"""
     pass

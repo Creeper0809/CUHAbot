@@ -63,8 +63,8 @@ class DungeonConfig:
     BASE_GOLD_PER_MONSTER: int = 10
     """몬스터당 기본 골드"""
 
-    CLEAR_BONUS_MULTIPLIER: float = 0.2
-    """던전 클리어 보너스 배율 (20%)"""
+    CLEAR_BONUS_MULTIPLIER: float = 0.25
+    """사전 보상 80에 20을 더해 최종 보상의 20%가 되도록 하는 내부 배율"""
 
     DEATH_GOLD_LOSS: float = 0.1
     """사망 시 골드 손실 비율 (10%)"""

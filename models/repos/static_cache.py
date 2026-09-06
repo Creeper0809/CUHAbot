@@ -52,31 +52,47 @@ async def load_static_data():
     global raid_minigame_rule_by_minigame_id
     logger.info("Loading static data...")
 
+    # Authored V4 affixes are mirrored to the database for indexed auction
+    # filtering.  This is idempotent and does not touch equipment instances.
+    try:
+        from service.item.affix_service import sync_affix_definitions
+        await sync_affix_definitions()
+    except Exception as exc:
+        logger.warning("V4 affix tables are not available yet: %s", exc)
+
     # 던전 로딩
     dungeons = await Dungeon.all()
-    dungeon_cache = {d.id: d for d in dungeons}
-    _dungeon_levels_sorted = sorted(set(d.require_level for d in dungeons))
+    # These caches are imported directly by several cogs/views before on_ready.
+    # Preserve object identity on reload so those modules do not retain an empty,
+    # detached dictionary.
+    dungeon_cache.clear()
+    dungeon_cache.update({d.id: d for d in dungeons})
+    _dungeon_levels_sorted[:] = sorted(set(d.require_level for d in dungeons))
     logger.info(f"Loaded {len(dungeon_cache)} dungeons")
 
     # 몬스터 로딩
     monsters = await Monster.all()
-    monster_cache_by_id = {m.id: m for m in monsters}
+    monster_cache_by_id.clear()
+    monster_cache_by_id.update({m.id: m for m in monsters})
     logger.info(f"Loaded {len(monster_cache_by_id)} monsters")
 
     # 스폰 정보 로딩
     all_spawns = await DungeonSpawn.all()
+    spawn_info.clear()
     for spawn in all_spawns:
         spawn_info.setdefault(spawn.dungeon_id, []).append(spawn)
     logger.info(f"Loaded spawn info for {len(spawn_info)} dungeons")
 
     # 아이템 로딩
     items = await Item.all()
-    item_cache = {i.id: i for i in items}
+    item_cache.clear()
+    item_cache.update({i.id: i for i in items})
     logger.info(f"Loaded {len(item_cache)} items")
 
     # 스킬 로딩
     logger.info(f"Registered skill component tags: {list(skill_component_register.keys())}")
     skills = await Skill_Model.all()
+    skill_cache_by_id.clear()
     for skill in skills:
         components = []
         # config 구조: {"components": [{"tag": "attack", ...}, ...]}
@@ -108,46 +124,49 @@ async def load_static_data():
     # 레이드 정적 데이터 로딩
     try:
         raids = await Raid.all()
-        raid_cache_by_id = {r.raid_id: r for r in raids}
-        raid_cache_by_dungeon_id = {r.dungeon_id: r for r in raids}
+        raid_cache_by_id.clear()
+        raid_cache_by_id.update({r.raid_id: r for r in raids})
+        raid_cache_by_dungeon_id.clear()
+        raid_cache_by_dungeon_id.update({r.dungeon_id: r for r in raids})
         logger.info(f"Loaded {len(raid_cache_by_id)} raids")
 
         targeting_rules = await RaidTargetingRule.all()
-        raid_targeting_rules_by_raid_id = {r.raid_id: r for r in targeting_rules}
+        raid_targeting_rules_by_raid_id.clear()
+        raid_targeting_rules_by_raid_id.update({r.raid_id: r for r in targeting_rules})
 
         special_actions = await RaidSpecialAction.all()
-        raid_special_actions_by_key = {a.action_key: a for a in special_actions}
+        raid_special_actions_by_key.clear()
+        raid_special_actions_by_key.update({a.action_key: a for a in special_actions})
 
-        raid_minigames_by_raid_id = {}
+        raid_minigames_by_raid_id.clear()
         for row in await RaidMinigame.all():
             raid_minigames_by_raid_id.setdefault(row.raid_id, []).append(row)
 
-        raid_phase_transitions_by_raid_id = {}
+        raid_phase_transitions_by_raid_id.clear()
         for row in await RaidPhaseTransition.all():
             raid_phase_transitions_by_raid_id.setdefault(row.raid_id, []).append(row)
 
-        raid_parts_by_raid_id = {}
+        raid_parts_by_raid_id.clear()
         for row in await RaidPart.all():
             raid_parts_by_raid_id.setdefault(row.raid_id, []).append(row)
 
-        raid_gimmicks_by_raid_id = {}
+        raid_gimmicks_by_raid_id.clear()
         for row in await RaidGimmick.all():
             raid_gimmicks_by_raid_id.setdefault(row.raid_id, []).append(row)
 
-        raid_boss_skills_by_raid_id = {}
+        raid_boss_skills_by_raid_id.clear()
         for row in await RaidBossSkill.all():
             raid_boss_skills_by_raid_id.setdefault(row.raid_id, []).append(row)
     except Exception as e:
         logger.warning(f"Raid tables not available yet. Skipping raid cache load: {e}")
-        raid_cache_by_id = {}
-        raid_cache_by_dungeon_id = {}
-        raid_targeting_rules_by_raid_id = {}
-        raid_special_actions_by_key = {}
-        raid_minigames_by_raid_id = {}
-        raid_phase_transitions_by_raid_id = {}
-        raid_parts_by_raid_id = {}
-        raid_gimmicks_by_raid_id = {}
-        raid_boss_skills_by_raid_id = {}
+        for cache in (
+            raid_cache_by_id, raid_cache_by_dungeon_id,
+            raid_targeting_rules_by_raid_id, raid_special_actions_by_key,
+            raid_minigames_by_raid_id, raid_phase_transitions_by_raid_id,
+            raid_parts_by_raid_id, raid_gimmicks_by_raid_id,
+            raid_boss_skills_by_raid_id,
+        ):
+            cache.clear()
 
     # 장비 캐시 로딩
     await _load_equipment_cache()
@@ -175,15 +194,19 @@ async def _load_equipment_cache():
 
     # EquipmentItem: item_id -> EquipmentItem
     all_equip = await EquipmentItem.all()
-    equipment_cache = {eq.item_id: eq for eq in all_equip}
+    set_name_by_item_id.clear()
+    equipment_cache.clear()
+    equipment_cache.update({eq.item_id: eq for eq in all_equip})
     logger.info(f"Loaded {len(equipment_cache)} equipment items into cache")
 
     # 획득처별 장비 캐시 (acquisition_source -> [item_id, ...])
-    equipment_by_source = {}
+    equipment_by_source.clear()
     for eq in all_equip:
         source = getattr(eq, 'acquisition_source', None)
         if source:
             equipment_by_source.setdefault(source, []).append(eq.item_id)
+        if getattr(eq, "set_key", ""):
+            set_name_by_item_id[eq.item_id] = eq.set_key
     logger.info(f"Loaded equipment_by_source: {len(equipment_by_source)} sources")
 
     # SetItemMember -> SetItem: item_id -> set_name
@@ -197,7 +220,7 @@ async def _load_equipment_cache():
     for member in all_members:
         item_id = equip_pk_to_item_id.get(member.equipment_item_id)
         set_name = set_name_map.get(member.set_item_id)
-        if item_id and set_name:
+        if item_id and set_name and item_id not in set_name_by_item_id:
             set_name_by_item_id[item_id] = set_name
 
     logger.info(f"Loaded {len(set_name_by_item_id)} set memberships into cache")
@@ -236,6 +259,7 @@ async def load_box_drop_table():
     """상자 드랍 테이블 CSV 로드"""
     import csv
     global box_drop_table
+    box_drop_table.clear()
 
     csv_path = "data/box_drop_table.csv"
     try:
@@ -253,7 +277,7 @@ async def load_box_drop_table():
         logger.info(f"Loaded box drop table: {len(box_drop_table)} monster types")
     except FileNotFoundError:
         logger.warning(f"Box drop table not found: {csv_path}")
-        box_drop_table = {}
+        box_drop_table.clear()
 
 
 def get_box_pool_by_monster_type(monster_type: str) -> list[tuple[int, float]]:
@@ -266,7 +290,7 @@ async def load_raid_minigame_rules():
     import csv
     global raid_minigame_rule_by_minigame_id
 
-    raid_minigame_rule_by_minigame_id = {}
+    raid_minigame_rule_by_minigame_id.clear()
     csv_path = "data/raid_minigame_rules.csv"
 
     try:
@@ -305,7 +329,7 @@ async def load_raid_minigame_rules():
         logger.info(f"Loaded raid minigame rules: {len(raid_minigame_rule_by_minigame_id)}")
     except FileNotFoundError:
         logger.warning(f"Raid minigame rules not found: {csv_path}")
-        raid_minigame_rule_by_minigame_id = {}
+        raid_minigame_rule_by_minigame_id.clear()
 
 
 def _resolve_skill_components(skill_config):

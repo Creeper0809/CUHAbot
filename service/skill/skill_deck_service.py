@@ -14,6 +14,7 @@ from exceptions import (
     DeckSlotLimitError,
     DeckEmptyError,
     CombatRestrictionError,
+    DuplicatePassiveSkillError,
 )
 from service.collection_service import CollectionService
 from service.session import get_session
@@ -61,6 +62,17 @@ class SkillDeckService:
         skill = await Skill_Model.get_or_none(id=skill_id)
         if not skill:
             raise SkillNotFoundError(skill_id)
+
+        from service.dungeon.skill import PASSIVE_TAGS
+
+        components = (skill.config or {}).get("components", [])
+        is_passive = bool(components) and all(
+            component.get("tag") in PASSIVE_TAGS for component in components
+        )
+        if is_passive and await UserSkillDeck.filter(
+            user=user, skill_id=skill_id
+        ).exclude(slot_index=slot_index).exists():
+            raise DuplicatePassiveSkillError(skill.name)
 
         # 기존 슬롯 업데이트 또는 생성
         deck_slot, created = await UserSkillDeck.update_or_create(

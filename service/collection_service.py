@@ -11,7 +11,6 @@ import discord
 from models import User, Item, Monster
 from models.user_collection import CollectionType
 from models.repos import collection_repo
-from models.repos import static_cache
 from views.embeds.collection_embeds import (
     create_item_embed,
     create_skill_embed,
@@ -313,4 +312,9 @@ class CollectionService:
             if monster.name == name:
                 return monster
         return None
+
+
+# Delayed until CollectionService exists so static_cache -> shop -> skill
+# ownership can safely import this module during cold startup.
+from models.repos import static_cache
 

@@ -48,6 +48,13 @@ class FilterModal(discord.ui.Modal, title="🔍 검색/필터"):
         max_length=30,
     )
 
+    affix_input = discord.ui.TextInput(
+        label="옵션 ID / 최소 티어 / 최소 수치",
+        placeholder="예: burn_power / 2 / 8 (선택사항)",
+        required=False,
+        max_length=60,
+    )
+
     def __init__(self, parent_view: "AuctionMainView"):
         super().__init__()
         self.parent_view = parent_view
@@ -59,10 +66,10 @@ class FilterModal(discord.ui.Modal, title="🔍 검색/필터"):
         # 1. 아이템 타입 파싱
         item_type_str = self.item_type_input.value.strip()
         if item_type_str:
-            if item_type_str in ["장비", "EQUIPMENT"]:
-                filters["item_type"] = ItemType.EQUIPMENT
-            elif item_type_str in ["소비", "CONSUMABLE"]:
-                filters["item_type"] = ItemType.CONSUMABLE
+            if item_type_str in ["장비", "EQUIPMENT", "EQUIP"]:
+                filters["item_type"] = ItemType.EQUIP
+            elif item_type_str in ["소비", "CONSUMABLE", "CONSUME"]:
+                filters["item_type"] = ItemType.CONSUME
             else:
                 await interaction.response.send_message(
                     "⚠️ 아이템 타입은 '장비' 또는 '소비'만 입력 가능합니다.",
@@ -145,8 +152,37 @@ class FilterModal(discord.ui.Modal, title="🔍 검색/필터"):
                 )
                 return
 
+        # 5. 관계형 옵션 필터: affix_id / minimum tier / minimum value
+        affix_str = self.affix_input.value.strip()
+        if affix_str:
+            try:
+                parts = [part.strip() for part in affix_str.split("/")]
+                from config.itemization_v4 import AFFIX_BY_ID
+                if parts[0] not in AFFIX_BY_ID:
+                    raise ValueError("알 수 없는 옵션 ID입니다")
+                filters["affix_id"] = parts[0]
+                if len(parts) >= 2 and parts[1]:
+                    tier = int(parts[1])
+                    if not 1 <= tier <= 5:
+                        raise ValueError("티어는 1~5여야 합니다")
+                    filters["min_affix_tier"] = tier
+                if len(parts) >= 3 and parts[2]:
+                    filters["min_affix_value"] = float(parts[2])
+            except Exception as exc:
+                await interaction.response.send_message(
+                    f"⚠️ 옵션 필터 형식이 올바르지 않습니다: {exc}", ephemeral=True,
+                )
+                return
+
         # 필터 적용
-        self.parent_view.filters = filters
+        defaults = {
+            "item_type": None, "item_grade": None, "min_grade": 0, "max_grade": 8,
+            "min_enhancement": 0, "max_enhancement": 99,
+            "min_price": 0, "max_price": 999999999,
+            "affix_id": None, "min_affix_tier": None, "min_affix_value": None,
+        }
+        defaults.update(filters)
+        self.parent_view.filters = defaults
         self.parent_view.page = 0  # 첫 페이지로 리셋
 
         # 데이터 재로드 및 UI 갱신

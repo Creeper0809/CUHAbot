@@ -59,6 +59,8 @@ class EquipmentItem(BaseItem):
 
     acquisition_source = fields.CharField(max_length=50, default="", null=True)
     """획득처 (상점, 몬스터명, 던전명 등)"""
+    set_key = fields.CharField(max_length=64, default="", null=True)
+    """V4 canonical set identifier; never inferred from display emoji."""
 
     class Meta:
         table = "equipment_item"

@@ -12,6 +12,7 @@ from service.dungeon.status.base import (
     Buff, StatusEffect,
     status_effect_register, get_status_effect_by_type,
 )
+from utils.game_text import status_label
 
 logger = logging.getLogger(__name__)
 
@@ -21,6 +22,9 @@ def apply_status_effect(
     effect_type: str,
     stacks: int = 1,
     duration: int = 0,
+    *,
+    source=None,
+    effect_config: Optional[dict] = None,
 ) -> str:
     """
     엔티티에 상태이상 적용 (기존 효과가 있으면 스택/지속시간 갱신)
@@ -42,11 +46,13 @@ def apply_status_effect(
     from service.dungeon.damage_pipeline import get_status_immunities, get_debuff_reduction
     immunities = get_status_immunities(entity)
     if immunities["all"] or effect_type in immunities["types"]:
-        return f"🛡️ **{entity.get_name()}** {effect_type} 면역!"
+        return f"🛡️ **{entity.get_name()}** {status_label(effect_type)} 면역!"
 
     # 스탯 시너지: 상태이상 저항 (유령)
     from service.player.stat_synergy_combat import get_status_resist_pct
     resist_pct = get_status_resist_pct(entity)
+    from service.dungeon.skill import get_passive_effect_bonuses
+    resist_pct += get_passive_effect_bonuses(entity).get("status_resist", 0.0) * 100.0
     if resist_pct > 0 and random.random() < resist_pct / 100:
         return f"🛡️ **{entity.get_name()}** 상태이상 저항!"
 
@@ -60,18 +66,23 @@ def apply_status_effect(
         existing.add_stacks(stacks)
         if duration > 0:
             existing.duration = max(existing.duration, duration)
+        if source is not None:
+            existing.source = source
+        _apply_effect_config(existing, effect_config)
         emoji = existing.get_emoji()
         stack_text = f" x{existing.stacks}" if existing.stacks > 1 else ""
-        return f"{emoji} **{entity.get_name()}** {effect_type}{stack_text}!"
+        return f"{emoji} **{entity.get_name()}** {status_label(effect_type)}{stack_text}!"
 
     effect = get_status_effect_by_type(effect_type)
     effect.stacks = min(stacks, effect.max_stacks)
     effect.duration = duration if duration > 0 else _get_default_duration(effect_type)
+    effect.source = source
+    _apply_effect_config(effect, effect_config)
 
     entity.status.append(effect)
     emoji = effect.get_emoji()
     stack_text = f" x{effect.stacks}" if effect.stacks > 1 else ""
-    return f"{emoji} **{entity.get_name()}** {effect_type}{stack_text} ({effect.duration}턴)!"
+    return f"{emoji} **{entity.get_name()}** {status_label(effect_type)}{stack_text} ({effect.duration}턴)!"
 
 
 def remove_status_effects(
@@ -106,7 +117,7 @@ def remove_status_effects(
         elif filter_debuff and status.is_debuff and not filter_type:
             should_remove = True
 
-        if should_remove and len(removed) < count:
+        if should_remove and getattr(status, "cleansable", True) and len(removed) < count:
             removed.append(status)
         else:
             remaining.append(status)
@@ -116,7 +127,7 @@ def remove_status_effects(
     if not removed:
         return ""
 
-    names = ", ".join(r.effect_type for r in removed)
+    names = ", ".join(status_label(r.effect_type) for r in removed)
     return f"✨ **{entity.get_name()}** {names} 해제!"
 
 
@@ -124,10 +135,11 @@ def process_status_ticks(entity) -> list[str]:
     """모든 상태이상 tick 처리 (DOT 데미지 등)"""
     logs = []
     for status in entity.status:
-        if isinstance(status, StatusEffect):
-            log = status.tick(entity)
-            if log:
-                logs.append(log)
+        if not isinstance(status, Buff):
+            continue
+        log = status.tick(entity)
+        if log:
+            logs.append(log)
     return logs
 
 
@@ -154,7 +166,7 @@ def get_cc_effect_name(entity) -> str:
     """행동불가 상태의 이름 반환"""
     for status in entity.status:
         if isinstance(status, StatusEffect) and not status.can_act():
-            return status.effect_type
+            return status_label(status.effect_type)
     return ""
 
 
@@ -168,7 +180,7 @@ def decay_all_durations(entity) -> list[str]:
         if buff.is_expired():
             emoji = buff.get_emoji()
             if isinstance(buff, StatusEffect):
-                logs.append(f"{emoji} **{entity.get_name()}** {buff.effect_type} 해제")
+                logs.append(f"{emoji} **{entity.get_name()}** {status_label(buff.effect_type)} 해제")
             else:
                 logs.append(f"{emoji} **{entity.get_name()}** 버프 만료")
         else:
@@ -211,6 +223,15 @@ def get_status_icons(entity) -> str:
     return " ".join(icons)
 
 
+def get_taunt_source(entity):
+    """Return a live source that currently forces this entity's target."""
+    effect = _find_status_effect(entity, "taunt")
+    source = getattr(effect, "source", None) if effect else None
+    if source is not None and getattr(source, "now_hp", 0) > 0:
+        return source
+    return None
+
+
 # =============================================================================
 # 내부 헬퍼
 # =============================================================================
@@ -241,5 +262,31 @@ def _get_default_duration(effect_type: str) -> int:
         "shock": 2,
         "infection": 3,
         "combo": 5,
+        "fear": 1,
+        "root": 1,
+        "charm": 1,
+        "blind": 2,
+        "taunt": 2,
+        "blessing": 3,
+        "dot": 3,
+        "death_mark": 5,
+        "skill_seal": 2,
+        "self_destruct": 3,
     }
     return defaults.get(effect_type, 3)
+
+
+def _apply_effect_config(effect: StatusEffect, config: Optional[dict]) -> None:
+    """Copy the small, explicit payload understood by configurable statuses."""
+    if not config:
+        return
+    if "cannot_cleanse" in config:
+        effect.cleansable = not bool(config["cannot_cleanse"])
+    elif "cleansable" in config:
+        effect.cleansable = bool(config["cleansable"])
+    for key in ("damage_type", "value", "damage", "damage_bonus"):
+        if key not in config:
+            continue
+        destination = "value" if key == "damage" and hasattr(effect, "value") else key
+        if hasattr(effect, destination):
+            setattr(effect, destination, config[key])
